@@ -27,7 +27,7 @@ import {
   logoNavbar,
   menuNavbar,
   mobileExtraLinksNavbar,
-} from "@/config/routes";
+} from "@/_config/routes";
 import SmartLink from "../common/SmartLink";
 import Image from "next/image";
 

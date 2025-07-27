@@ -16,22 +16,22 @@ export const menuNavbar = [
     url: "#",
     items: [
       {
-        title: "Nossa Senhora do Amor Misericordioso",
-        description: "Conheça nossa Mãe e Padroeira",
-        icon: Star, // ou Heart, Crown, etc.
-        url: "/nossa-senhora",
-      },
-      {
         title: "Quem Somos",
         description: "Conheça nossa história e missão",
         icon: Sunset,
         url: "#",
       },
       {
+        title: "Nossa Senhora do Amor Misericordioso",
+        description: "Conheça nossa Mãe e Padroeira",
+        icon: Star, // ou Heart, Crown, etc.
+        url: "/nossa-senhora",
+      },
+      {
         title: "Espiritualidade / Carisma",
         description: "Entenda nossa espiritualidade e carisma",
         icon: Trees,
-        url: "#",
+        url: "/espritualidade",
       },
       {
         title: "Estrutura / Vida Comunitária",

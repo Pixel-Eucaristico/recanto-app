@@ -1,5 +1,6 @@
 // features/nossa-senhora/NossaSenhoraPage.tsx
 "use client";
+
 import Image from "next/image";
 import CardInfografico from "./CardInfografico";
 import NossaSenhoraDoAmorMissericordioso from "./images/NSenhoraAM.svg";
