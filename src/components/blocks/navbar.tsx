@@ -30,6 +30,7 @@ import {
 } from "@/_config/routes";
 import SmartLink from "../common/SmartLink";
 import Image from "next/image";
+import ThemeController from "../ui/daisyui/theme-controller";
 
 interface MenuItem {
   title: string;
@@ -75,7 +76,13 @@ const Navbar = ({
         <nav className="hidden justify-between lg:flex">
           <div className="flex items-center gap-6">
             <SmartLink href={logo.url} className="flex items-center gap-2">
-              <Image src={logo.src} className="w-8" alt={logo.alt} width={32} height={32} />
+              <Image
+                src={logo.src}
+                className="w-8"
+                alt={logo.alt}
+                width={32}
+                height={32}
+              />
               <span className="text-lg font-semibold">{logo.title}</span>
             </SmartLink>
             <div className="flex items-center">
@@ -87,6 +94,7 @@ const Navbar = ({
             </div>
           </div>
           <div className="flex gap-2">
+            <ThemeController />
             <Button asChild variant="outline" size="sm">
               <SmartLink href={auth.login.url}>{auth.login.text}</SmartLink>
             </Button>
@@ -98,7 +106,13 @@ const Navbar = ({
         <div className="block lg:hidden">
           <div className="flex items-center justify-between">
             <a href={logo.url} className="flex items-center gap-2">
-              <Image src={logo.src} className="w-8" alt={logo.alt} width={32} height={32} />
+              <Image
+                src={logo.src}
+                className="w-8"
+                alt={logo.alt}
+                width={32}
+                height={32}
+              />
               <span className="text-lg font-semibold">{logo.title}</span>
             </a>
             <Sheet>
@@ -114,7 +128,13 @@ const Navbar = ({
                       href={logo.url}
                       className="flex items-center gap-2"
                     >
-                      <Image src={logo.src} className="w-8" alt={logo.alt} />
+                      <Image
+                        src={logo.src}
+                        className="w-8"
+                        alt={logo.alt}
+                        width={32}
+                        height={32}
+                      />
                       <span className="text-lg font-semibold">
                         {logo.title}
                       </span>
@@ -143,6 +163,7 @@ const Navbar = ({
                     </div>
                   </div>
                   <div className="flex flex-col gap-3">
+                    <ThemeController />
                     <Button asChild variant="outline">
                       <SmartLink href={auth.login.url}>
                         {auth.login.text}

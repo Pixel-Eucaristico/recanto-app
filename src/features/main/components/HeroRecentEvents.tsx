@@ -1,3 +1,7 @@
+'use client';
+
+import { motion } from 'framer-motion';
+
 export default function HeroRecentEvents() {
   const events = [
     {
@@ -41,9 +45,13 @@ export default function HeroRecentEvents() {
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 justify-items-center">
           {events.map((event, index) => (
-            <div
+            <motion.div
               key={index}
               className="w-full max-w-sm card bg-base-200 shadow-xl"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: index * 0.15 }}
+              viewport={{ once: true, amount: 0.2 }}
             >
               <div className="card-body">
                 <h3 className="card-title text-xl font-semibold">
@@ -57,7 +65,7 @@ export default function HeroRecentEvents() {
                   <button className="btn btn-primary btn-sm">Saiba mais</button>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>

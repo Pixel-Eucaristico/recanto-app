@@ -871,3 +871,4 @@ FodyWeavers.xsd
 
 # End of https://www.toptal.com/developers/gitignore/api/nextjs,node,rust,macos,windows,linux,visualstudiocode,visualstudio,android,androidstudio
 pnpm-lock.yaml
+pnpm-workspace.yaml

@@ -9,21 +9,21 @@
   --font-body: "Open Sans", "Lato", "Roboto", sans-serif;
 
   /* Paleta personalizada */
-  --color-base-100: oklch(0.9759 0.0232 82.12); /* creme claro */
+  --color-base-100: oklch(0.9759 0.0232 82.12);
   --color-base-200: oklch(0.8694 0.0209 81.78);
   --color-base-300: oklch(0.7471 0.0175 79.33);
-  --color-base-content: oklch(0.165 0.0564 258.52); /* texto escuro */
+  --color-base-content: oklch(0.165 0.0564 258.52);
 
-  --color-primary: oklch(0.2038 0.0927 262.75); /* texto escuro */
-  --color-primary-content:  oklch(0.97 0.01 95); /* dourado claro (#e7d3aa) */
+  --color-primary: oklch(0.2038 0.0927 262.75);
+  --color-primary-content:  oklch(0.97 0.01 95); 
 
-  --color-secondary: oklch(0.83 0.18 90); /* azul marinho suave (#0c2d57) */
-  --color-secondary-content: oklch(0.15 0.02 30); /* creme claro */
+  --color-secondary: oklch(0.83 0.18 90);
+  --color-secondary-content: oklch(0.15 0.02 30);
 
-  --color-accent: oklch(0.3058 0.087 251.18); /* creme claro (#f8f5f0) */
-  --color-accent-content: oklch(0.18 0.02 40);
+  --color-neutral: oklch(0.2 0.04 250);
+  --color-neutral-content: oklch(0.98 0.01 95);
 
-  --color-neutral: oklch(0.24 0.04 20); /* azul marinho para bordas */
+  --color-neutral: oklch(0.24 0.04 20);
   --color-neutral-content: oklch(0.98 0.005 95);
 
   --color-info: oklch(0.7 0.2 240);
@@ -32,10 +32,10 @@
   --color-success: oklch(0.65 0.2 140);
   --color-success-content: oklch(0.98 0.01 140);
 
-  --color-warning: oklch(0.9 0.15 85); /* variação dourada mais vibrante */
+  --color-warning: oklch(0.9 0.15 85);
   --color-warning-content: oklch(0.25 0.03 80);
 
-  --color-error: oklch(0.45 0.25 25); /* vinho litúrgico (#721c24) */
+  --color-error: oklch(0.45 0.25 25);
   --color-error-content: oklch(0.98 0.01 95);
 
   /* Estética */
