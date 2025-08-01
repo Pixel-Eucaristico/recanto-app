@@ -15,7 +15,7 @@
 
 * [ ] **1.1 Configuração do Monorepo:**
     * [ ] Criar o repositório `recanto-app` no GitHub.
-    * [ ] Configurar o Turborepo/Nx (ou similar) no diretório raiz.
+    * [ ] Configurar o [Turborepo](https://turborepo.com)/[Nx](https://nx.dev) (ou similar) no diretório raiz.
     * [ ] Criar pacotes iniciais: `apps/web` (Next.js), `apps/tauri` (configuração inicial Tauri apontando para `web`), `packages/ui` (componentes React), `packages/types` (tipos TypeScript comuns), `packages/config` (ESLint, Prettier, TSConfig).
     * [ ] Configurar integração contínua (CI) básica no GitHub Actions (testes e lint).
 * [ ] **1.2 Configuração do Backend (Supabase):**
