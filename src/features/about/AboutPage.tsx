@@ -19,7 +19,7 @@ export default function AboutPage() {
       {/* Hero Section */}
       <section className="w-full min-h-screen flex flex-col items-center justify-center text-center px-6 relative">
         <Image
-          src="https://source.unsplash.com/featured/?light,cross,sky"
+          src="https://images.unsplash.com/photo-1555892727-55b51e5fceae?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
           alt="Céu e Cruz"
           layout="fill"
           objectFit="cover"
@@ -61,7 +61,7 @@ export default function AboutPage() {
       </section>
 
       {/* História e Fundação */}
-      <section className="w-full py-20 px-6 bg-white text-base-content max-w-6xl">
+      <section className="card w-full py-20 px-6 bg-base-100 text-base-content max-w-6xl">
         <motion.h2
           initial={{ opacity: 0, x: -40 }}
           whileInView={{ opacity: 1, x: 0 }}
@@ -89,7 +89,7 @@ export default function AboutPage() {
       </section>
 
       {/* Carisma */}
-      <section className="w-full py-20 px-6 bg-base-100 max-w-6xl">
+      <section className="card w-full py-20 px-6 bg-base-100 max-w-6xl">
         <motion.h2
           initial={{ opacity: 0, x: 40 }}
           whileInView={{ opacity: 1, x: 0 }}
@@ -119,7 +119,7 @@ export default function AboutPage() {
       </section>
 
       {/* Padroeira */}
-      <section className="w-full py-20 px-6 bg-white max-w-6xl">
+      <section className="card w-full py-20 px-6 max-w-6xl">
         <motion.h2
           initial={{ opacity: 0, x: -40 }}
           whileInView={{ opacity: 1, x: 0 }}
@@ -144,7 +144,7 @@ export default function AboutPage() {
       </section>
 
       {/* Pilares */}
-      <section className="w-full py-20 px-6 bg-base-100 max-w-6xl">
+      <section className="card w-full py-20 px-6 bg-base-100 max-w-6xl">
         <motion.h2
           initial={{ opacity: 0, x: 40 }}
           whileInView={{ opacity: 1, x: 0 }}
@@ -186,7 +186,7 @@ export default function AboutPage() {
       </section>
 
       {/* Call to Action */}
-      <section className="w-full py-20 px-6 text-center bg-white">
+      <section className="w-full py-20 px-6 text-center">
         <motion.h2
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}

@@ -12,7 +12,7 @@ export default function ActionsProjectsPage() {
       {/* Hero */}
       <section className="relative w-full h-screen">
         <Image
-          src="https://source.unsplash.com/featured/?service,community"
+          src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
           alt="Serviço e compaixão"
           layout="fill"
           objectFit="cover"
@@ -44,26 +44,46 @@ export default function ActionsProjectsPage() {
           Vivendo Mateus 18:33
         </motion.h2>
         <motion.p className="mt-4 text-lg text-justify">
-          &quot;Não devias tu, igualmente, ter compaixão do teu conservo, como eu também tive misericórdia de ti?&quot;.
-          Cada ação do Recanto é expressão concreta desse chamado divino à compaixão.
+          &quot;Não devias tu, igualmente, ter compaixão do teu conservo, como
+          eu também tive misericórdia de ti?&quot;. Cada ação do Recanto é
+          expressão concreta desse chamado divino à compaixão.
         </motion.p>
       </section>
 
       {/* Seção Ações */}
-      <section className="py-16 px-6 bg-white w-full max-w-5xl">
+      <section className="card py-16 px-6 bg-base-100 w-full max-w-5xl">
         <motion.h3 className="text-3xl font-semibold text-primary mb-8 text-center">
           Nossas Ações
         </motion.h3>
         <div className="grid md:grid-cols-2 gap-8">
           {[
-            { title: "Acolhimento Fraterno", desc: "Oferecemos descanso e escuta sincera.", imgQ: "welcome" },
-            { title: "Escuta Compassiva", desc: "Tempo dedicado para ouvir e acolher.", imgQ: "listening" },
-            { title: "Suporte Espiritual", desc: "Guia para cura interior e esperança.", imgQ: "support" },
-            { title: "Cuidado Essencial", desc: "Atendimento às necessidades básicas.", imgQ: "care" }
+            {
+              title: "Acolhimento Fraterno",
+              desc: "Oferecemos descanso e escuta sincera.",
+              imgQ: "https://images.unsplash.com/photo-1580191947416-62d35a55e71d?q=80&w=871&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            },
+            {
+              title: "Escuta Compassiva",
+              desc: "Tempo dedicado para ouvir e acolher.",
+              imgQ: "https://images.unsplash.com/photo-1603518784464-22d0fe80c546?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            },
+            {
+              title: "Suporte Espiritual",
+              desc: "Guia para cura interior e esperança.",
+              imgQ: "https://images.unsplash.com/photo-1584515933487-779824d29309?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            },
+            {
+              title: "Cuidado Essencial",
+              desc: "Atendimento às necessidades básicas.",
+              imgQ: "https://images.unsplash.com/photo-1617080090911-91409e3496ad?q=80&w=864&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            },
           ].map(({ title, desc, imgQ }) => (
-            <motion.div key={title} className="flex flex-col items-center text-center space-y-4">
+            <motion.div
+              key={title}
+              className="flex flex-col items-center text-center space-y-4"
+            >
               <Image
-                src={`https://source.unsplash.com/featured/?${imgQ}`}
+                src={imgQ}
                 alt={title}
                 width={300}
                 height={200}
@@ -91,18 +111,18 @@ export default function ActionsProjectsPage() {
             {
               title: "Educação Integral",
               desc: "Formação cristã para crianças e jovens.",
-              anim: project
+              anim: project,
             },
             {
               title: "Formação Missionária",
               desc: "Capacitação contínua para servir com sabedoria.",
-              anim: project
+              anim: project,
             },
             {
               title: "Expansão do Acolhimento",
               desc: "Ampliação dos espaços para acolher mais vidas.",
-              anim: project
-            }
+              anim: project,
+            },
           ].map(({ title, desc, anim }) => (
             <div key={title} className="space-y-4 text-center">
               <Lottie animationData={anim} className="h-32 mx-auto" loop />
@@ -114,16 +134,32 @@ export default function ActionsProjectsPage() {
       </section>
 
       {/* Seção Evangelização */}
-      <section className="py-16 px-6 bg-white w-full max-w-5xl">
+      <section className="card py-16 px-6 bg-base-100 w-full max-w-5xl">
         <motion.h3 className="text-3xl font-semibold text-primary mb-8 text-center">
           Nossa Evangelização
         </motion.h3>
         <div className="grid md:grid-cols-2 gap-8">
           {[
-            { title: "Escola da Confiança", desc: "Aprender a entregar-se a Deus.", anim: evangelize },
-            { title: "Testemunho Comunitário", desc: "Nossa vida é anúncio do Amor Misericordioso.", anim: evangelize },
-            { title: "Eventos e Retiros", desc: "Missas, adorações e formação aberta.", anim: evangelize },
-            { title: "Presença Digital", desc: "Compartilhamos fé e oração online.", anim: evangelize }
+            {
+              title: "Escola da Confiança",
+              desc: "Aprender a entregar-se a Deus.",
+              anim: evangelize,
+            },
+            {
+              title: "Testemunho Comunitário",
+              desc: "Nossa vida é anúncio do Amor Misericordioso.",
+              anim: evangelize,
+            },
+            {
+              title: "Eventos e Retiros",
+              desc: "Missas, adorações e formação aberta.",
+              anim: evangelize,
+            },
+            {
+              title: "Presença Digital",
+              desc: "Compartilhamos fé e oração online.",
+              anim: evangelize,
+            },
           ].map(({ title, desc, anim }) => (
             <div key={title} className="space-y-4 text-center">
               <Lottie animationData={anim} className="h-32 mx-auto" loop />
@@ -136,11 +172,14 @@ export default function ActionsProjectsPage() {
 
       {/* Footer com galeria simples */}
       <footer className="py-12 w-full bg-base-100 text-center">
-        <motion.div className="grid grid-cols-3 md:grid-cols-6 gap-2 max-w-md mx-auto" layout>
+        <motion.div
+          className="grid grid-cols-3 md:grid-cols-6 gap-2 max-w-md mx-auto"
+          layout
+        >
           {[...Array(6)].map((_, i) => (
             <Image
               key={i}
-              src={`https://source.unsplash.com/featured/?charity,help,people?sig=${i}`}
+              src={`https://images.unsplash.com/photo-1544026230-488aeae72c0d?q=80&w=871&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D`}
               alt=""
               width={80}
               height={80}

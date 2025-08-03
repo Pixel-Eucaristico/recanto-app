@@ -12,7 +12,7 @@ export default function DonationsPage() {
       {/* Hero */}
       <section className="relative w-full h-screen">
         <Image
-          src="https://source.unsplash.com/featured/?donation,hope"
+          src="https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
           alt="Mãos unidas em oração e serviço"
           layout="fill"
           objectFit="cover"
@@ -50,7 +50,7 @@ export default function DonationsPage() {
       </section>
 
       {/* Formas de doação */}
-      <section className="py-16 px-6 bg-white w-full max-w-5xl">
+      <section className="card py-16 px-6 bg-base-100 w-full max-w-5xl">
         <motion.h3 className="text-3xl font-semibold text-secondary mb-8 text-center">
           Escolha como semear a Misericórdia
         </motion.h3>
@@ -89,7 +89,7 @@ export default function DonationsPage() {
       </section>
 
       {/* Oração */}
-      <section className="py-16 px-6 bg-white max-w-4xl text-center">
+      <section className="card py-16 px-6 bg-base-100 max-w-4xl text-center">
         <motion.h3 className="text-2xl font-semibold text-secondary mb-4">
           Orar é Amar
         </motion.h3>
@@ -100,19 +100,7 @@ export default function DonationsPage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 w-full bg-base-100 text-center">
-        <motion.div className="grid grid-cols-3 md:grid-cols-6 gap-2 max-w-md mx-auto" layout>
-          {[...Array(6)].map((_, i) => (
-            <Image
-              key={i}
-              src={`https://source.unsplash.com/featured/?charity,hands?sig=${i}`}
-              alt=""
-              width={80}
-              height={80}
-              className="rounded-full shadow-sm"
-            />
-          ))}
-        </motion.div>
+      <footer className="py-12 w-full text-center">
         <p className="mt-6 text-xl font-semibold">Paz e Unção!</p>
       </footer>
     </main>

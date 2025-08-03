@@ -36,7 +36,7 @@ const HeroMissionOverview = () => {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="btn btn-primary"
+            className="btn btn-primary text-primary-content"
           >
             Participe de um Retiro
           </motion.button>

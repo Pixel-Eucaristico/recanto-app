@@ -11,7 +11,7 @@ export default function ContactPage() {
       {/* Hero */}
       <section className="relative w-full h-screen">
         <Image
-          src="https://source.unsplash.com/featured/?community,connection"
+          src="https://images.unsplash.com/photo-1491438590914-bc09fcaaf77a?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
           alt="Conexão e acolhimento"
           layout="fill"
           objectFit="cover"
@@ -49,7 +49,7 @@ export default function ContactPage() {
       </section>
 
       {/* Formulário e contatos */}
-      <section className="py-16 px-6 bg-white w-full max-w-4xl">
+      <section className="card py-16 px-6 bg-base-100 w-full max-w-4xl">
         <motion.h3 className="text-3xl font-semibold text-secondary mb-8 text-center">
           Fale Conosco
         </motion.h3>
@@ -106,7 +106,7 @@ export default function ContactPage() {
       </section>
 
       {/* Redes sociais */}
-      <section className="py-16 px-6 bg-white text-center">
+      <section className="card py-16 px-6 bg-base-100 text-center">
         <motion.h3 className="text-3xl font-semibold text-secondary mb-4">
           Conecte-se Conosco nas Redes
         </motion.h3>

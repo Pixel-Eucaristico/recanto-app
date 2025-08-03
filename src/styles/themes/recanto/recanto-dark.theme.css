@@ -45,7 +45,7 @@
   --depth: 1;
   --noise: 0;
 
-  --color-background: var(--color-base-100);
+  /* --color-background: var(--color-base-100);
   --color-foreground: var(--color-base-content);
 
   --font-sans: var(--font-geist-sans);
@@ -81,8 +81,8 @@
   --color-card: var(--color-base-200);
 
   --chart-1: oklch(0.75 0.22 85);        /* dourado permanece */
-  --chart-2: oklch(0.18 0.015 30);       /* fundo marrom escuro */
-  --chart-3: oklch(0.95 0.01 95);        /* texto claro */
-  --chart-4: oklch(0.6 0.05 60);         /* neutro quente */
-  --chart-5: oklch(0.7 0.1 80);
-}
+  /* --chart-2: oklch(0.18 0.015 30);       fundo marrom escuro */
+  /* --chart-3: oklch(0.95 0.01 95);        texto claro */
+  /* --chart-4: oklch(0.6 0.05 60);         neutro quente */
+  /* --chart-5: oklch(0.7 0.1 80); */
+} 

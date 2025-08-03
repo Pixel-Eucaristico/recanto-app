@@ -13,7 +13,7 @@ export default function VocationalPage() {
       {/* Banner */}
       <section className="relative w-full h-screen">
         <Image
-          src="https://source.unsplash.com/featured/?sunrise,path"
+          src="https://images.unsplash.com/photo-1683009427513-28e163402d16?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDF8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
           alt="Caminho iluminado"
           layout="fill"
           objectFit="cover"
@@ -74,7 +74,7 @@ export default function VocationalPage() {
       </section>
 
       {/* Seção 2: Formação */}
-      <section className="py-20 bg-white px-6 max-w-5xl">
+      <section className="card py-20 bg-base-100 px-6 max-w-5xl">
         <motion.h2
           initial={{ opacity: 0, x: 30 }}
           whileInView={{ opacity: 1, x: 0 }}
@@ -110,7 +110,7 @@ export default function VocationalPage() {
                 loop
               />
               <h3 className="text-xl font-semibold">{etapa.title}</h3>
-              <p className="text-gray-700">{etapa.desc}</p>
+              <p className="text-base-content">{etapa.desc}</p>
             </div>
           ))}
         </motion.div>
@@ -142,7 +142,7 @@ export default function VocationalPage() {
       </section>
 
       {/* Seção 4: Formulário */}
-      <section className="py-20 bg-base-100 px-6 w-full max-w-md">
+      <section className="card py-20 bg-base-100 px-6 w-full max-w-md">
         <motion.h2
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
@@ -181,7 +181,7 @@ export default function VocationalPage() {
       <footer className="py-12 text-center">
         <p className="text-lg font-semibold">Paz e Unção!</p>
         <Image
-          src="https://source.unsplash.com/featured/?virgin,mary"
+          src="https://images.unsplash.com/photo-1655604005148-6afa6b64d6de?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
           alt="Nossa Senhora Mãe do Amor Misericordioso"
           width={100}
           height={150}

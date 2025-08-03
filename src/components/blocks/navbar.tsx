@@ -164,7 +164,7 @@ const Navbar = ({
                   </div>
                   <div className="flex flex-col gap-3">
                     <ThemeController />
-                    <Button asChild variant="outline">
+                    <Button asChild variant="outline" className="text-white">
                       <SmartLink href={auth.login.url}>
                         {auth.login.text}
                       </SmartLink>
