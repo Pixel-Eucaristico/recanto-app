@@ -1,9 +1,9 @@
 "use client";
 import { motion } from "framer-motion";
 import Lottie from "lottie-react";
-import prayerAnimation from "./animations/mudar.json";
-import heartAnimation from "./animations/mudar.json";
-import lightAnimation from "./animations/mudar.json";
+import prayerAnimation from "@/assets/animations/mudar.json";
+import heartAnimation from "@/assets/animations/mudar.json";
+import lightAnimation from "@/assets/animations/mudar.json";
 import Image from "next/image";
 
 export default function SpiritualityAndCharismaPage() {

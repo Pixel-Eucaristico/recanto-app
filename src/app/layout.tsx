@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "../styles/globals.css";
 import { Navbar } from "@/components/blocks/navbar";
 import { ThemeProvider } from "@/components/ui/daisyui/theme-controller";
+import { PropsNextThemes } from "@/components/ui/daisyui/theme-controller/theme.provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,6 +25,13 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const nextThemesProps: PropsNextThemes = {
+    attribute: "class",
+    defaultTheme: "system",
+    enableSystem: true,
+    disableTransitionOnChange: false,
+  };
+
   return (
     <html suppressHydrationWarning lang="pt-br">
       <body
@@ -33,6 +41,7 @@ export default function RootLayout({
           lightTheme={"recanto-light"}
           darkTheme={"recanto-dark"}
           className="h-full flex-1"
+          propsNextThemes={nextThemesProps}
         >
           <header className="w-full bg-base-100 shadow sticky px-4 top-0 right-0 left-0 z-20">
             <Navbar />

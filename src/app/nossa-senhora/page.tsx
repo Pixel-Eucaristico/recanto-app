@@ -1,14 +1,14 @@
 import { ThemeProvider } from "@/components/ui/daisyui/theme-controller";
-import NossaSenhoraPage from "@/features/nossa-senhora/NossaSenhoraPage";
+import OurLadyPage from "@/features/our-lady/OurLadyPage";
 
-export default function InfograficoPage() {
+export default function NossaSenhoraPage() {
   return (
     <ThemeProvider
       lightTheme={"nossa-senhora-light"}
       darkTheme={"nossa-senhora-dark"}
       className="h-full flex-1"
     >
-      <NossaSenhoraPage />
+      <OurLadyPage />
     </ThemeProvider>
   );
 }

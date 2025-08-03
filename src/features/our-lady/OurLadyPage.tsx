@@ -7,7 +7,7 @@ import NossaSenhoraDoAmorMissericordioso from "./images/NSenhoraAM.svg";
 // import { cormorant, lora } from './fonts';
 import { infograficoData } from "./infograficoData";
 
-export default function NossaSenhoraPage() {
+export default function OurLadyPage() {
   return (
     <div className={`px-6 py-12 max-w-4xl mx-auto font-nossa-senhora-body`}>
       <header className="text-center mb-10">

@@ -1,4 +1,4 @@
-import { Book, Star, Sunset, Trees, Zap } from "lucide-react";
+import { Book, Crown, Sunset, Trees, Zap } from "lucide-react";
 
 import Logo from "@/assets/img/logo.svg";
 
@@ -19,12 +19,12 @@ export const menuNavbar = [
         title: "Quem Somos",
         description: "Conheça nossa história e missão",
         icon: Sunset,
-        url: "#",
+        url: "/sobre",
       },
       {
         title: "Nossa Senhora do Amor Misericordioso",
         description: "Conheça nossa Mãe e Padroeira",
-        icon: Star, // ou Heart, Crown, etc.
+        icon: Crown, // ou Heart, Crown, etc.
         url: "/nossa-senhora",
       },
       {
@@ -37,7 +37,7 @@ export const menuNavbar = [
         title: "Estrutura / Vida Comunitária",
         description: "Descubra nossa estrutura e vida comunitária",
         icon: Book,
-        url: "#",
+        url: "/estutura-vida",
       },
     ],
   },
@@ -49,48 +49,48 @@ export const menuNavbar = [
         title: "Vocacional",
         description: "Acompanhe nosso processo de formação",
         icon: Zap,
-        url: "#",
+        url: "/vocacional",
       },
       {
         title: "Ações / Projetos / Evangelização",
         description: "Participe de nossas ações e projetos",
         icon: Sunset,
-        url: "#",
+        url: "/acoes-projetos-evangelizacao",
       },
     ],
   },
-  {
-    title: "Mídia",
-    url: "#",
-    items: [
-      {
-        title: "Blog",
-        description: "Leia nossos artigos e notícias",
-        icon: Trees,
-        url: "#",
-      },
-      {
-        title: "Redes Sociais",
-        description: "Siga-nos nas redes sociais",
-        icon: Book,
-        url: "#",
-      },
-      {
-        title: "Newsletter",
-        description: "Inscreva-se para receber novidades",
-        icon: Zap,
-        url: "#",
-      },
-      {
-        title: "Loja",
-        description: "Conheça nossa loja online",
-        icon: Sunset,
-        url: "#",
-      },
-    ],
-  },
-  { title: "Doações", url: "#" },
-  { title: "Contato", url: "#" },
+  // {
+  //   title: "Mídia",
+  //   url: "#",
+  //   items: [
+  //     {
+  //       title: "Blog",
+  //       description: "Leia nossos artigos e notícias",
+  //       icon: Trees,
+  //       url: "#",
+  //     },
+  //     {
+  //       title: "Redes Sociais",
+  //       description: "Siga-nos nas redes sociais",
+  //       icon: Book,
+  //       url: "#",
+  //     },
+  //     {
+  //       title: "Newsletter",
+  //       description: "Inscreva-se para receber novidades",
+  //       icon: Zap,
+  //       url: "#",
+  //     },
+  //     {
+  //       title: "Loja",
+  //       description: "Conheça nossa loja online",
+  //       icon: Sunset,
+  //       url: "#",
+  //     },
+  //   ],
+  // },
+  { title: "Doações", url: "/doacoes" },
+  { title: "Contato", url: "/contatos" },
   // {
   //   title: "Resources",
   //   url: "#",

@@ -1,5 +1,5 @@
 import SpiritualityAndCharismaPage from "@/features/spirituality/SpiritualityAndCharismaPage";
 
-export default function SpiritualityPage() {
+export default function EspritualidadePage() {
   return <SpiritualityAndCharismaPage />;
 }

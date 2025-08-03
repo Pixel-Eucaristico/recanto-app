@@ -8,10 +8,10 @@ import {
   FaStar,
   FaCompass,
 } from "react-icons/fa";
-// import prayer from'./animations/prayer.json';
-// import angel from './animations/angel.json';
-// import rosary from './animations/rosary.json'
-import Church from "./animations/wired-lineal-482-church-hover-pinch.json";
+// import prayer from "@/assets/animations/mudar.json";
+// import angel from "@/assets/animations/mudar.json";
+// import rosary from "@/assets/animations/mudar.json";
+import Church from "@/assets/animations/mudar.json";
 
 export const infograficoData = [
   {
