@@ -200,4 +200,10 @@ Este projeto utiliza e agradece às seguintes bibliotecas e ferramentas:
 - [React Icons](https://react-icons.github.io/react-icons/) - Biblioteca de ícones React
 - [Motion One](https://github.com/motiondivision/motion) - Biblioteca de animações para a web
 
+## Estudo de uso
+
+- [@use-gesture](https://use-gesture.netlify.app) - move it, zoom it, drag it, scroll it, pinch it.
+- [Hammer.js](https://hammerjs.github.io/) - Add touch gestures to your webapp.
+- [React Finger](https://github.com/Houfeng/react-finger) - React Finger is a library of gesture/shortcuts events for React that allows developers to use a single set of events for both desktop and mobile devices.
+
 > Todos os direitos pertencem aos respectivos autores e mantenedores. Este projeto apenas integra essas ferramentas conforme suas licenças.
