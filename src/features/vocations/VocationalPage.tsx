@@ -4,8 +4,8 @@ import { motion } from "framer-motion";
 import Lottie from "lottie-react";
 import Image from "next/image";
 
-import callingAnimation from "@/assets/animations/mudar.json";
-import formationAnimation from "@/assets/animations/mudar.json";
+import callingAnimation from "@/assets/animations/career-animation.json";
+import formationAnimation from "@/assets/animations/glurtr-anmation.json";
 
 export default function VocationalPage() {
   return (

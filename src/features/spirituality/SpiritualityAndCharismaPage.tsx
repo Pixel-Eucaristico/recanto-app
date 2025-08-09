@@ -1,9 +1,10 @@
 "use client";
 import { motion } from "framer-motion";
+import { FaBookBible } from "react-icons/fa6";
 import Lottie from "lottie-react";
 import prayerAnimation from "@/assets/animations/mudar.json";
-import heartAnimation from "@/assets/animations/mudar.json";
-import lightAnimation from "@/assets/animations/mudar.json";
+import heartAnimation from "@/assets/animations/heart.json";
+import lightAnimation from "@/assets/animations/reward-light-effect.json";
 import Image from "next/image";
 
 export default function SpiritualityAndCharismaPage() {
@@ -40,9 +41,19 @@ export default function SpiritualityAndCharismaPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6, duration: 1 }}
-            className="w-48 h-48 mt-6 mx-auto"
+            className="relative w-48 h-48 mt-6 mx-auto"
           >
-            <Lottie animationData={lightAnimation} loop />
+            {/* Lottie como fundo */}
+            <Lottie
+              animationData={lightAnimation}
+              loop
+              className="w-full h-full"
+            />
+
+            {/* Ícone sobreposto centralizado */}
+            <div className="absolute inset-0 flex items-center justify-center z-10">
+              <FaBookBible className="text-4xl text-primary" />
+            </div>
           </motion.div>
         </div>
       </section>

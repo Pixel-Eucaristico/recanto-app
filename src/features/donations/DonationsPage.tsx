@@ -3,8 +3,8 @@
 import { motion } from "framer-motion";
 import Lottie from "lottie-react";
 import Image from "next/image";
-import givingAnim from "@/assets/animations/mudar.json";
-import donationAnim from "@/assets/animations/mudar.json";
+import givingAnim from "@/assets/animations/saving-the-money.json";
+import donationAnim from "@/assets/animations/donate.json";
 
 export default function DonationsPage() {
   return (
@@ -33,7 +33,8 @@ export default function DonationsPage() {
             transition={{ delay: 0.3 }}
             className="mt-4 text-lg md:text-xl text-secondary max-w-xl drop-shadow"
           >
-            Cada gesto é uma semente que floresce em vidas transformadas. Seja providência!
+            Cada gesto é uma semente que floresce em vidas transformadas. Seja
+            providência!
           </motion.p>
         </div>
       </section>
@@ -44,8 +45,9 @@ export default function DonationsPage() {
           Por que o seu SIM faz a diferença?
         </motion.h2>
         <motion.p className="mt-4 text-lg text-justify">
-          Aqui no Recanto do Amor Misericordioso vivemos o chamado de Jesus (Mateus 18:33), oferecendo educação,
-          cura e sentido para crianças e famílias. Sua doação é um ato de compaixão e esperança.
+          Aqui no Recanto do Amor Misericordioso vivemos o chamado de Jesus
+          (Mateus 18:33), oferecendo educação, cura e sentido para crianças e
+          famílias. Sua doação é um ato de compaixão e esperança.
         </motion.p>
       </section>
 
@@ -59,15 +61,18 @@ export default function DonationsPage() {
             {
               label: "Doação Mensal",
               desc: "Torne‑se benfeitor e sustente nossos projetos com generosidade constante.",
-              anim: donationAnim
+              anim: donationAnim,
             },
             {
               label: "Doação Única",
               desc: "Contribua com o valor que desejar. Cada ajuda é bem-vinda e faz diferença.",
-              anim: givingAnim
-            }
+              anim: givingAnim,
+            },
           ].map((opt) => (
-            <motion.div key={opt.label} className="flex flex-col items-center text-center space-y-4 p-6 bg-base-100 rounded-box">
+            <motion.div
+              key={opt.label}
+              className="flex flex-col items-center text-center space-y-4 p-6 bg-base-100 rounded-box"
+            >
               <Lottie animationData={opt.anim} className="h-40 mx-auto" loop />
               <h4 className="text-xl font-semibold">{opt.label}</h4>
               <p>{opt.desc}</p>
@@ -83,8 +88,9 @@ export default function DonationsPage() {
           Sua Confiança é Nosso Tesouro
         </motion.h3>
         <p>
-          A Associação Padre Pio Angelotti, entidade responsável pelo Recanto, administra cada
-          recurso com integridade e transparência, em prol da compaixão e educação contínua.
+          A Associação Padre Pio Angelotti, entidade responsável pelo Recanto,
+          administra cada recurso com integridade e transparência, em prol da
+          compaixão e educação contínua.
         </p>
       </section>
 
@@ -94,7 +100,8 @@ export default function DonationsPage() {
           Orar é Amar
         </motion.h3>
         <p className="mb-6">
-          A sua intercessão nos fortalece. Ore conosco pelos nossos missionários, recantianos e famílias.
+          A sua intercessão nos fortalece. Ore conosco pelos nossos
+          missionários, recantianos e famílias.
         </p>
         <button className="btn btn-outline">Enviar Intenção de Oração</button>
       </section>

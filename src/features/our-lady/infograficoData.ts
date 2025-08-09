@@ -11,7 +11,7 @@ import {
 // import prayer from "@/assets/animations/mudar.json";
 // import angel from "@/assets/animations/mudar.json";
 // import rosary from "@/assets/animations/mudar.json";
-import Church from "@/assets/animations/mudar.json";
+import Church from "@/assets/animations/church.json";
 
 export const infograficoData = [
   {

@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import Lottie from "lottie-react";
 import Image from "next/image";
-import contactAnim from "@/assets/animations/mudar.json";
+import contactAnim from "@/assets/animations/contact-us.json";
 
 export default function ContactPage() {
   return (

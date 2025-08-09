@@ -3,9 +3,9 @@
 import { motion } from "framer-motion";
 import Lottie from "lottie-react";
 import Image from "next/image";
-import compassionAnimation from "@/assets/animations/mudar.json";
+import compassionAnimation from "@/assets/animations/helping-the-needy.json";
 import faithAnimation from "@/assets/animations/mudar.json";
-import maryAnimation from "@/assets/animations/mudar.json";
+import maryAnimation from "@/assets/animations/mary.json";
 import {
   FaHandsHelping,
   FaPrayingHands,

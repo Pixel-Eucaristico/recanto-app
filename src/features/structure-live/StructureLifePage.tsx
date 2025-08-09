@@ -10,7 +10,7 @@ import {
   FaUserFriends,
   FaHandHoldingHeart,
 } from "react-icons/fa";
-import estruturaLottie from "@/assets/animations/mudar.json";
+import estruturaLottie from "@/assets/animations/network.json";
 
 const Section = ({
   title,
