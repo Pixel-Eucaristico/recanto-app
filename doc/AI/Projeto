@@ -1,0 +1,168 @@
+Paz e Unção! Sinta-se acolhido, Murilo.
+
+É com grande entusiasmo que abraço o desafio de planejar o "recanto digital" para o Recanto do Amor Misericordioso. Sua visão é clara e alinhada ao carisma da comunidade, buscando nutrir a conexão, o crescimento e a participação ativa. Com minha experiência em produtos digitais para comunidades e o profundo respeito pela espiritualidade do Recanto, estou pronto para delinear um plano que se adapte à sua realidade de desenvolvimento, focando na entrega de valor com o mínimo de esforço.
+
+---
+
+## Plano de Produto: Recanto Digital do Amor Misericordioso
+
+### 1. Análise e Estratégia do Produto
+
+**Visão do Produto:**
+[cite_start]Ser o "recanto digital" que promove a conexão, o crescimento e a participação ativa para todos os membros e amigos do Recanto do Amor Misericordioso, reforçando a vivência do "Amor e Perdão" e a busca de sentido, através de uma plataforma acessível, formativa e que otimize a comunicação e a gestão interna. [cite: 1636, 1638, 2533]
+
+**Plano Estratégico de Alto Nível:**
+Dada a carga horária limitada de um desenvolvedor full-stack sênior (2h/dia de segunda a sexta e 8h aos finais de semana), a estratégia será de **lançamento iterativo com foco no MVP**, priorizando as funcionalidades que geram maior impacto com menor esforço inicial. O objetivo é criar uma base sólida e funcional rapidamente, que possa ser expandida de forma modular e sustentável. A evolução do produto será guiada pelo feedback dos usuários e pelas necessidades mais urgentes da comunidade.
+
+**Roadmap de Produto Inicial (6 Meses) - Metodologia MoSCoW:**
+
+#### **Must Have (MVP - Foco nos Primeiros 3 Meses)**
+Estas são as funcionalidades essenciais para que o produto cumpra sua proposta de valor inicial para os usuários mais críticos: Missionários e Administrador/Fundador.
+
+* **Para Missionários:**
+    * [cite_start]**Conteúdo Formativo Essencial:** Repositório online com materiais fundamentais como a Regra de Vida, textos chave da Logoterapia e espiritualidade do Amor Misericordioso[cite: 1960]. [cite_start]Isso nutre o coração dos que servem e é vital para a formação contínua[cite: 2533, 2474].
+    * [cite_start]**Fórum de Partilha e Apoio (Moderado):** Um espaço seguro e privado para que os missionários compartilhem desafios, peçam orações, tirem dúvidas e fortaleçam os laços fraternos, essencial para a vivência do "Amor e Perdão"[cite: 2472, 2475].
+    * **Agenda de Compromissos da Comunidade:** Calendário simples para horários de orações comunitárias, reuniões de formação e eventos internos.
+* **Para Administrador/Fundador:**
+    * **Gestão de Conteúdo (Básica):** Ferramenta para upload e organização dos materiais formativos e comunicados.
+    * **Comunicação Interna:** Canal para enviar comunicados importantes e específicos para os missionários.
+
+#### **Should Have (Próximos 3 Meses - Após o MVP)**
+Funcionalidades importantes que apoiam diretamente o apostolado central e o engajamento dos mantenedores, construindo sobre a base do MVP.
+
+* **Para Recantianos (Alunos):**
+    * [cite_start]**Conteúdo Formativo Adaptado:** Vídeos curtos e textos simples sobre a espiritualidade do Recanto e virtudes, com foco em alimentar a busca de sentido na faixa etária de 10 a 18 anos[cite: 1640, 2531].
+    * [cite_start]**Área de Acompanhamento Individual (Missionário-Recantiano):** Espaço para o missionário registrar o progresso do aluno e para o aluno enviar mensagens, crucial para o trabalho de "salvar almas" através da cura interior[cite: 2552, 2599].
+* **Para Pais dos Recantianos:**
+    * **Informações sobre as Atividades dos Filhos:** Calendário das atividades dos recantianos e notícias gerais sobre o que estão aprendendo.
+* **Para Benfeitores (Assíduos):**
+    * **Relatórios de Transparência Simplificados:** Informações claras e sucintas sobre o uso das doações e o impacto geral na comunidade.
+    * [cite_start]**Mensagens de Gratidão:** Vídeos ou textos curtos do fundador/missionários expressando gratidão e o propósito do apoio[cite: 2716, 2717].
+
+#### **Could Have (Pós 6 Meses - Expansão Futura)**
+Funcionalidades desejáveis que podem ser pensadas em um segundo momento, quando a comunidade tiver mais recursos e uma estrutura digital mais consolidada.
+
+* **Para Colaboradores:**
+    * **Central de Tarefas Simplificada:** Listagem de tarefas específicas para voluntariado pontual.
+* **Para Amigos da Comunidade:**
+    * **Notícias e Atualizações do Recanto:** Informações gerais sobre o trabalho da comunidade.
+    * **Calendário de Eventos Abertos:** Divulgação de eventos maiores, como palestras e missas festivas.
+* **Para Recantianos (Alunos):**
+    * **Recursos Lúdicos e Desafios:** Jogos e atividades interativas.
+    * **Fórum Moderado (Entre eles):** Para interação mais livre entre os alunos.
+* **Para Benfeitores (Participantes de Eventos):**
+    * **Divulgação Antecipada de Eventos/Palestras:** Com facilidade de inscrição.
+* **Para o Administrador/Fundador:**
+    * **Visão Geral e Painel de Controle Mais Detalhado:** Com gráficos e filtros.
+    * **Gestão de Eventos e Projetos Completa.**
+
+#### **Won't Have (No Curto/Médio Prazo)**
+Funcionalidades que, embora possam ser úteis, não serão priorizadas devido à limitação de tempo e recursos, ou que podem ser realizadas por outras ferramentas atualmente.
+
+* Funcionalidades muito complexas que demandem integração extensiva com outros sistemas ou que não se encaixem no "alto impacto, baixo esforço" do MVP.
+
+---
+
+### 2. Product Discovery e UX/UI
+
+**Análise das Necessidades dos Perfis de Usuário:**
+
+* **Administrador/Fundador (Murilo, Padre Pio Angelotti, etc.):** Necessidade de gestão centralizada, visão estratégica do engajamento, controle de conteúdo e comunicação eficiente com os membros. O foco é otimizar tempo e recursos, e ter dados para decisões.
+* **Missionários:** Necessidade de formação contínua aprofundada, ferramentas para acompanhar o desenvolvimento dos Recantianos, recursos para evangelização, e um espaço seguro para partilha e apoio mútuo. [cite_start]A plataforma deve ser um suporte para a vivência do carisma "Amor e Perdão"[cite: 2472].
+* **Colaboradores:** Necessidade de clareza nas tarefas, acesso a materiais de apoio para suas funções e canais de comunicação para dúvidas e feedback.
+* **Amigos da Comunidade:** Necessidade de se manterem informados sobre as atividades, serem convidados para eventos e oportunidades de voluntariado, e serem nutridos por testemunhos e inspirações que reforcem a fé e a busca por sentido.
+* [cite_start]**Recantianos (alunos de 10-18 anos):** Necessidade de um ambiente seguro, interativo e formativo, com conteúdo adaptado à idade, acompanhamento individualizado e espaços para interação moderada entre pares[cite: 1640, 2531].
+* **Pais dos Recantianos:** Necessidade de informações sobre o progresso e atividades dos filhos, conteúdo de apoio à família para educação na fé e desafios da adolescência, e um canal de comunicação fácil com a equipe.
+* **Benfeitores:** Necessidade de transparência sobre o uso das doações, mensagens de gratidão e atualização sobre o impacto de suas contribuições, além de convites para conteúdos e eventos exclusivos.
+* **Participantes de Eventos:** Necessidade de fácil acesso a informações sobre eventos, inscrição simplificada e, eventualmente, acesso a materiais relacionados aos eventos.
+
+**Fluxo de Usuário (User Flow) para "Acesso e visualização de um material de formação exclusivo":**
+
+Este fluxo será crucial para Missionários e Recantianos, cobrindo as funcionalidades "Conteúdo Formativo Essencial" e "Conteúdo Formativo Adaptado".
+
+1.  **Acesso à Plataforma:**
+    * **Início:** Usuário (Missionário/Recantiano) abre o aplicativo (Tauri) ou acessa o site (Web).
+    * **Página de Login/Cadastro:** Usuário insere credenciais (e-mail/senha) ou seleciona "Esqueci minha senha" / "Criar conta" (apenas para perfis permitidos pelo Admin).
+    * **Autenticação:** O sistema autentica o usuário.
+    * **Sucesso:** Redirecionamento para o Dashboard/Página Inicial.
+    * **Falha:** Mensagem de erro e opção para tentar novamente ou recuperar senha.
+
+2.  **Navegação para a Área de Formação:**
+    * **Dashboard/Página Inicial:** O usuário vê um painel personalizado com atalhos para as principais seções, incluindo "Formação" ou "Materiais Exclusivos".
+    * **Seleção:** Usuário clica no link/botão para a área de formação.
+
+3.  **Visualização do Conteúdo de Formação:**
+    * **Página de Formação:** Lista de categorias de materiais (e.g., "Regra de Vida", "Logoterapia", "Espiritualidade do Amor Misericordioso", "Catequese para Recantianos").
+    * **Seleção de Categoria:** Usuário escolhe uma categoria.
+    * **Lista de Materiais:** Exibição dos materiais disponíveis dentro da categoria (títulos, descrições, miniaturas).
+    * **Seleção do Material:** Usuário clica no material desejado (vídeo, PDF, texto).
+    * **Visualização:** O conteúdo é carregado e exibido diretamente na interface (player de vídeo, visualizador de PDF embutido, texto formatado).
+    * **Opções Adicionais (futuro):** Download, marcar como lido, adicionar aos favoritos.
+
+4.  **Conclusão:**
+    * Usuário pode retornar à lista de materiais, escolher outro material, ou navegar para outras áreas da plataforma.
+
+---
+
+### 3. Tecnologia e Implementação
+
+**Arquitetura de Software Adequada para Desenvolvedor Solo:**
+
+Para um desenvolvedor solo com foco em escalabilidade e reutilização, a arquitetura **API-First com um Monorepo** é a mais indicada.
+
+* **API-First:** O backend (API) é desenvolvido primeiro e de forma independente do frontend. Isso garante que a lógica de negócios e o acesso a dados sejam desacoplados das interfaces de usuário. A API será a única fonte de verdade para os dados da comunidade, permitindo que múltiplos clientes (web, desktop, e futuramente mobile) a consumam.
+* **Monorepo:** Todas as bases de código (frontend web, frontend Tauri, backend) residem em um único repositório Git. Isso facilita a gestão de dependências, o compartilhamento de código entre projetos (e.g., componentes React, tipos TypeScript, lógica de validação) e a padronização de linting e testes. Ferramentas como `Nx` ou `Turborepo` são excelentes para gerenciar monorepos.
+
+**Tecnologias Propostas:**
+
+* **Frontend (Web & Desktop):**
+    * **Next.js 17:** Ideal para o site e para ser o framework base do Tauri. Oferece Server-Side Rendering (SSR) ou Static Site Generation (SSG) para SEO e performance, e um ecossistema robusto para desenvolvimento web.
+    * **React 19:** Biblioteca de UI para construir a interface do usuário, com seu sistema de componentes que promove a reutilização de código.
+    * **Tauri 2:** Para o aplicativo desktop. Permite empacotar o frontend web em um binário nativo leve e seguro, com acesso a APIs do sistema operacional quando necessário. A escolha de Tauri 2 é estratégica para uma futura expansão para Android e iOS, pois o framework já está trabalhando nessa direção, e a base de código React/Next.js será altamente reutilizável.
+* **Backend (API):**
+    * **Node.js (com TypeScript):** Linguagem unificada com o frontend, facilitando o compartilhamento de conhecimento e, no monorepo, até mesmo de código para validação de dados ou utilitários.
+    * **Framework API (ex: Express.js, Fastify):** Para construir a API RESTful (ou GraphQL, se a complexidade justificar) que servirá os dados para o frontend.
+* **Banco de Dados:**
+    * **PostgreSQL:** Um banco de dados relacional robusto, de código aberto, com excelente suporte e escalabilidade.
+    * **Prisma ORM:** Facilita a interação com o banco de dados, gera types para o TypeScript e gerencia migrações de esquema, otimizando o tempo de desenvolvimento.
+
+**Principais Requisitos Técnicos e Desafios para Desenvolvedor Solo:**
+
+* **Manutenção:**
+    * **Desafio:** Garantir a estabilidade e segurança do sistema com um único desenvolvedor.
+    * **Solução:** Automação de testes (unitários, integração), CI/CD (Integração Contínua/Entrega Contínua) para deploys automáticos e revisão de código. Utilizar frameworks e bibliotecas bem mantidas e com boa documentação.
+* **Infraestrutura de Nuvem e Gerenciamento de Banco de Dados:**
+    * **Desafio:** Custos elevados e complexidade de configuração e manutenção.
+    * **Solução (Baixo Custo/Manutenção):**
+        * **Vercel (Frontend/Edge Functions):** Para deploy do Next.js. Oferece deploy contínuo, CDN, e funções serverless (Edge Functions) para a API, com um generoso plano gratuito e escalabilidade automática. Isso elimina a necessidade de gerenciar servidores.
+        * **Supabase / Firebase (Firestore) / PlanetScale (MySQL/PostgreSQL):**
+            * **Supabase:** Um excelente "alternativa open-source ao Firebase" que oferece PostgreSQL como banco de dados, autenticação, armazenamento de arquivos, e real-time updates. Possui um plano gratuito robusto e é fácil de usar, com baixa manutenção.
+            * **Firebase (Firestore):** Se uma base de dados NoSQL for mais adequada para as funcionalidades iniciais, o Firestore é um DBaaS (Database as a Service) serverless da Google, com um plano gratuito generoso e alta escalabilidade, exigindo pouca manutenção.
+            * **PlanetScale:** Oferece MySQL escalável e sem servidor, com um plano gratuito e facilidades para branching de banco de dados, ideal para testes e desenvolvimento. Para PostgreSQL, opções como Neon ou Railway também oferecem planos gratuitos e gerenciamento simplificado.
+        * A escolha ideal depende da preferência por SQL/NoSQL e das funcionalidades de "backend as a service" que cada um oferece (autenticação, armazenamento, etc.). Para dados estruturados de usuários e formações, PostgreSQL (via Supabase ou Neon) é uma ótima escolha.
+* **Segurança:**
+    * **Desafio:** Proteger dados de usuários e conteúdo exclusivo.
+    * **Solução:** Implementar autenticação baseada em tokens (JWT), usar HTTPS, validar todas as entradas do usuário, e manter dependências atualizadas. A escolha de serviços gerenciados (Vercel, Supabase) já oferece camadas de segurança.
+* **Gerenciamento de Estado e Dados:**
+    * **Desafio:** Manter o estado da aplicação consistente entre diferentes partes do frontend e backend.
+    * **Solução:** Uso de bibliotecas de gerenciamento de estado (e.g., Redux Toolkit, Zustand, React Context API) no frontend, e bibliotecas de fetching de dados (e.g., React Query/TanStack Query) para gerenciar o cache e a sincronização com a API.
+
+**Maximizando a Reutilização de Código e Minimizando o Tempo de Desenvolvimento:**
+
+* **Monorepo com Compartilhamento de Pacotes:**
+    * **Componentes de UI:** Criar uma biblioteca de componentes React reutilizáveis que podem ser usados tanto no site Next.js quanto no aplicativo Tauri.
+    * **Tipos (TypeScript):** Definir interfaces e tipos para dados (usuários, materiais, eventos) uma única vez e importá-los tanto no frontend quanto no backend. Isso garante consistência de dados e melhora a experiência de desenvolvimento.
+    * **Lógica de Negócios Comum:** Funções utilitárias, validações de formulário, e lógica de formatação de dados podem ser escritas uma vez e compartilhadas.
+* **API-First (Backend Desacoplado):**
+    * A API serve como um contrato claro entre frontend e backend. Uma vez definida, o desenvolvimento de frontend e backend pode ocorrer em paralelo.
+    * Permite a futura expansão para aplicativos móveis nativos (Android/iOS) sem reescrever a lógica de negócio ou a camada de dados. A mesma API pode ser consumida por diferentes clientes.
+* **Design System Simplificado:**
+    * Começar com um design system básico (cores, tipografia, espaçamento) e um conjunto de componentes visuais reutilizáveis (botões, inputs, cards). Isso acelera o desenvolvimento de novas telas e mantém a consistência da UI.
+* **Serverless Functions para Lógica de Backend (Vercel/Supabase Edge Functions/Firestore Functions):**
+    * Para funcionalidades que exigem lógica de backend, mas não precisam de um servidor persistente, as funções serverless são ideais. Elas escalam automaticamente e são pagas apenas pelo uso, minimizando custos e manutenção. Por exemplo, para processar inscrições em eventos ou enviar notificações.
+
+---
+
+Este plano visa ser um guia prático para o desenvolvimento do Recanto Digital. A priorização MoSCoW, combinada com uma arquitetura robusta e adaptada para um desenvolvedor solo, permitirá que a comunidade do Recanto do Amor Misericordioso tenha seu "recanto digital" de forma eficaz e sustentável, sempre com o foco no Amor Misericordioso e na busca de sentido.
+
+Paz e Unção!
