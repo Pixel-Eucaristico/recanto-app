@@ -1,91 +1,18 @@
-# 🧱 Arquitetura limpa para aplicativos 🔥 React escaláveis
+# 📚 Central de Documentação do Projeto
 
-"Estruture sua base de código React como um profissional."
+Paz e Unção!
 
-Quando você está criando aplicativos React de nível de produção, coisas como escalabilidade, modularidade e capacidade de manutenção não são opcionais - elas são essenciais.
+Bem-vindo(a) à central de documentação detalhada do nosso projeto. Aqui você encontrará os guias e as referências essenciais para entender a arquitetura, o planejamento e as convenções de desenvolvimento.
 
-Aqui está uma estrutura de pastas comprovada e uma estratégia de arquitetura que sigo em projetos do mundo real:
+A documentação está dividida nos seguintes arquivos:
 
-🔍 Princípios fundamentais:
+-   **[ROADMAP.md](ROADMAP.md):** O plano de produto, cronograma e as prioridades do projeto (MVP, expansão, etc.), utilizando a metodologia MoSCoW.
+-   **[ARCHITECTURE.md](ARCHITECTURE.md):** Uma visão geral e detalhada da arquitetura de software, princípios de design e as tecnologias que utilizamos (Monorepo, Next.js, Tauri, Supabase).
+-   **[CONTRIBUTING.md](CONTRIBUTING.md):** Um guia para novos colaboradores, com instruções sobre como configurar o ambiente, reportar bugs e enviar Pull Requests.
+-   **[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md):** O nosso código de conduta, que estabelece as regras de convivência para garantir um ambiente acolhedor e respeitoso.
+-   **[TESTING.md](TESTING.md):** Detalhes sobre a nossa estratégia de testes e como escrever testes para o projeto.
+-   **[STATE-MANAGEMENT.md](STATE-MANAGEMENT.md):** Informações sobre como o estado global da aplicação é gerenciado com Jotai e as melhores práticas de organização.
 
-✅ [Estrutura de recursos em primeiro lugar (Feature-first structure)](../src/features/)<br>
-→ Organize componentes, serviços, tipos e testes por recurso, não por tipo de arquivo.
- features/products/, features/users/
+Para uma visão rápida sobre o que é o projeto e a pilha de tecnologia, volte ao **[README.md](../../README.md)** na raiz do repositório.
 
-✅ [Sistema de interface do usuário reutilizável (Reusable UI system)](../src/components/)<br>
-→ Componentes e layouts compartilhados residem em:
- components/common/, components/layouts/
-
-✅ [Camada de API tipada e modular (Typed modular API layer)](../services/)<br>
-→ Limpe os clientes da API com tratamento de erros:
- services/apiClient.ts, utils/errorHandler.ts
-
-✅ [Gerenciamento de estado com o Redux Toolkit (Redux Toolkit modular state management)](STORE.md)<br>
-→ Fatias modulares e ganchos digitados:
- store/slices/, store/hooks.ts
-
-✅ [Ganchos personalizados reutilizáveis (Reusable custom hooks)](../src/hooks/)<br>
-→ Lógica de negócios abstraída para:
- hooks/useXyz.ts
-
-✅ [Sistema de estilo consistente (Consistent styling system)](../src/styles/)<br>
-→ Módulos SCSS com temas globais:
- styles/variables.module.scss, styles/global.scss
-
-✅ [Código testável (Testable code structure)](TESTS.md)<br>
-→ Testes próximos a recursos/componentes:
- `__tests__`/ folders or *.test.tsx
-
-✅ [Organização de ativos e configuração (Assets and config organization)](../src/assets/)<br>
-→ Arquivos estáticos e configurações de ambiente:
- assets/, config/routes.ts
-
-[EXTRAS](EXTRAS.md)
-
-🛠 Tech Stack
-▪️ React + TypeScript
-▪️ Redux Toolkit
-▪️ React Router v6
-▪️ SCSS Modules
-▪️ Axios
-
-📂 Exemplo de estrutura de pastas
-
-```
-src/
-├── assets/
-├── components/
-│  ├── common/
-│  └── layouts/
-├── config/
-│  └── routes.ts
-├── features/
-│  ├── auth/
-│  └── products/
-├── hooks/
-├── services/
-│  └── apiClient.ts
-├── store/
-│  ├── slices/
-│  └── hooks.ts
-├── styles/
-│  ├── global.scss
-│  └── variables.module.scss
-├── utils/
-└── App.tsx
-```
-
-📈 Por que isso funciona<br>
-✔️ Separação clara de preocupações<br>
-✔️ Integração amigável para a equipe<br>
-✔️ Código modular e reutilizável<br>
-✔️ Melhores diferenças do Git e revisão de PR<br>
-✔️ Fácil de dimensionar, depurar e testar<br>
-
-💡 Esteja você começando do zero ou reestruturando um aplicativo em crescimento, uma arquitetura limpa economizará tempo, dívidas técnicas e dores de cabeça mais tarde.
-
-Você gostaria de um modelo do GitHub baseado nessa estrutura? Deixe um 🔁 nos comentários!
-
-![clean-code](clean-code.jpeg)
-
-**Fonte:** [Rafael Santos - LinkedIn](https://www.linkedin.com/posts/activity-7347961287940763648-C_Hg/?utm_source=share&utm_medium=member_android&rcm=ACoAAAYBPzIBKffzZrF4YJedjkIZDaIitl-iiIA)
+Paz e Unção!
