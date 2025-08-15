@@ -11,6 +11,9 @@
     "build:web": "next build && serve out",
     "start": "next start",
     "lint": "next lint",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
     "tauri": "tauri"
   },
   "dependencies": {
@@ -54,6 +57,9 @@
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
     "@tauri-apps/cli": "^2.6.2",
+    "@testing-library/jest-dom": "^6.7.0",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
@@ -61,6 +67,8 @@
     "daisyui": "^5.0.46",
     "eslint": "^9",
     "eslint-config-next": "15.3.5",
+    "jest": "^30.0.5",
+    "jest-environment-jsdom": "^30.0.5",
     "serve": "^14.2.4",
     "tailwindcss": "^4",
     "tw-animate-css": "^1.3.5",
