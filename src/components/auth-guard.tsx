@@ -5,20 +5,25 @@ import { useRouter } from 'next/navigation';
 import { useAtomValue } from 'jotai';
 import { userAtom, loadingAtom } from '@/lib/auth-store';
 
-export default function Home() {
+interface AuthGuardProps {
+  children: React.ReactNode;
+  requireAuth?: boolean;
+}
+
+export function AuthGuard({ children, requireAuth = true }: AuthGuardProps) {
   const user = useAtomValue(userAtom);
   const loading = useAtomValue(loadingAtom);
   const router = useRouter();
 
   useEffect(() => {
     if (!loading) {
-      if (user) {
-        router.push('/dashboard');
-      } else {
+      if (requireAuth && !user) {
         router.push('/login');
+      } else if (!requireAuth && user) {
+        router.push('/dashboard');
       }
     }
-  }, [user, loading, router]);
+  }, [user, loading, requireAuth, router]);
 
   if (loading) {
     return (
@@ -28,5 +33,13 @@ export default function Home() {
     );
   }
 
-  return null;
+  if (requireAuth && !user) {
+    return null;
+  }
+
+  if (!requireAuth && user) {
+    return null;
+  }
+
+  return <>{children}</>;
 }
