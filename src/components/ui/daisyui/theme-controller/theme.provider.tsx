@@ -25,22 +25,19 @@ export function ThemeProvider({
   const [theme] = useLocalTheme();
   const { setTheme } = useNextTheme();
   const systemTheme = useSystemTheme();
-  const [resolvedTheme, setResolvedTheme] = useState<string>(lightTheme);
-  const [mounted, setMounted] = useState(false);
+  const [resolvedTheme, setResolvedTheme] = useState<string | null>(null);
 
   useEffect(() => {
-    setMounted(true);
     setTheme(theme);
     const selectedTheme = theme === "system" ? systemTheme : theme;
     const appliedTheme = selectedTheme === "dark" ? darkTheme : lightTheme;
     setResolvedTheme(appliedTheme);
   }, [theme, systemTheme, darkTheme, lightTheme, setTheme]);
 
-  // Sempre renderiza, mas com fallback seguro
-  const currentTheme = mounted ? resolvedTheme : lightTheme;
+  if (!resolvedTheme) return null; // ou algum fallback/loader
 
   return (
-    <div data-theme={currentTheme} {...divProps}>
+    <div data-theme={resolvedTheme} {...divProps}>
       <NextThemesProvider {...propsNextThemes}>{children}</NextThemesProvider>
     </div>
   );
