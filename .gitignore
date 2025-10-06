@@ -872,3 +872,10 @@ FodyWeavers.xsd
 # End of https://www.toptal.com/developers/gitignore/api/nextjs,node,rust,macos,windows,linux,visualstudiocode,visualstudio,android,androidstudio
 pnpm-lock.yaml
 pnpm-workspace.yaml
+
+# SEGURANÇA: Não commitar whitelist de admins (contém emails e UIDs autorizados)
+src/config/admin-whitelist.ts
+
+# Firebase Service Account (NUNCA commitar - acesso admin ao Firebase!)
+firebase-service-account.json
+*-service-account.json

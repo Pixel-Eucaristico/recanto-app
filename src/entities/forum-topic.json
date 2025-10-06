@@ -1,0 +1,18 @@
+{
+    "name": "ForumTopic",
+    "type": "object",
+    "properties": {
+      "title": {
+        "type": "string",
+        "description": "Título do tópico do fórum"
+      },
+      "content": {
+        "type": "string",
+        "description": "Conteúdo inicial do tópico"
+      }
+    },
+    "required": [
+      "title",
+      "content"
+    ]
+  }

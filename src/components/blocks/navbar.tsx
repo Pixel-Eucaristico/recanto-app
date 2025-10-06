@@ -27,7 +27,7 @@ import {
   logoNavbar,
   menuNavbar,
   mobileExtraLinksNavbar,
-} from "@/_config/routes";
+} from "@/_config/routes_main";
 import SmartLink from "../common/SmartLink";
 import Image from "next/image";
 import ThemeController from "../ui/daisyui/theme-controller";
@@ -192,9 +192,9 @@ const renderMenuItem = (item: MenuItem) => {
         <NavigationMenuTrigger>{item.title}</NavigationMenuTrigger>
         <NavigationMenuContent>
           <ul className="w-80 p-3">
-            <NavigationMenuLink>
-              {item.items.map((subItem) => (
-                <li key={subItem.title}>
+            {item.items.map((subItem) => (
+              <li key={subItem.title}>
+                <NavigationMenuLink asChild>
                   <SmartLink
                     className="flex select-none gap-4 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground"
                     href={subItem.url}
@@ -213,9 +213,9 @@ const renderMenuItem = (item: MenuItem) => {
                       )}
                     </div>
                   </SmartLink>
-                </li>
-              ))}
-            </NavigationMenuLink>
+                </NavigationMenuLink>
+              </li>
+            ))}
           </ul>
         </NavigationMenuContent>
       </NavigationMenuItem>

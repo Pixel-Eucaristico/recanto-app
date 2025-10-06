@@ -1,0 +1,26 @@
+{
+    "name": "Acompanhamento",
+    "type": "object",
+    "properties": {
+      "recantiano_id": {
+        "type": "string"
+      },
+      "missionario_id": {
+        "type": "string"
+      },
+      "content": {
+        "type": "string",
+        "description": "Registro do acompanhamento ou mensagem."
+      },
+      "private_note": {
+        "type": "boolean",
+        "default": false,
+        "description": "Se a nota é visível apenas para o missionário."
+      }
+    },
+    "required": [
+      "recantiano_id",
+      "missionario_id",
+      "content"
+    ]
+  }

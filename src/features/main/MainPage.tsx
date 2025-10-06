@@ -2,12 +2,12 @@
 
 import HeroCommunityFeedback from "./components/HeroCommunityFeedback";
 import HeroMissionOverview from "./components/HeroMissionOverview";
-import HeroRecentEvents from "./components/HeroRecentEvents";
+import PublicEvents from "@/components/blocks/public-events";
 
 export const MainPage = () => {
   return (<div>
     <HeroMissionOverview />
-    <HeroRecentEvents />
+    <PublicEvents />
     <HeroCommunityFeedback />
   </div>);
 };

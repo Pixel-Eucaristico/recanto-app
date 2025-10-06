@@ -1,0 +1,46 @@
+{
+    "name": "Donation",
+    "type": "object",
+    "properties": {
+      "value": {
+        "type": "number",
+        "description": "Valor da doação"
+      },
+      "method": {
+        "type": "string",
+        "enum": [
+          "pix",
+          "transferencia",
+          "outro"
+        ],
+        "description": "Método de pagamento"
+      },
+      "donor_name": {
+        "type": "string",
+        "description": "Nome do doador"
+      },
+      "donor_email": {
+        "type": "string",
+        "description": "Email do doador para contato"
+      },
+      "date": {
+        "type": "string",
+        "format": "date-time",
+        "description": "Data da doação"
+      },
+      "status": {
+        "type": "string",
+        "enum": [
+          "pendente",
+          "confirmado"
+        ],
+        "default": "pendente",
+        "description": "Status da doação"
+      },
+      "notes": {
+        "type": "string",
+        "description": "Observações adicionais"
+      }
+    },
+    "required": []
+  }

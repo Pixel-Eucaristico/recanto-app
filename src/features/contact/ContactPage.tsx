@@ -13,9 +13,8 @@ export default function ContactPage() {
         <Image
           src="https://images.unsplash.com/photo-1491438590914-bc09fcaaf77a?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
           alt="Conexão e acolhimento"
-          layout="fill"
-          objectFit="cover"
-          className="opacity-20"
+          fill
+          className="opacity-20 object-cover"
         />
         <div className="relative z-10 flex flex-col items-center justify-center h-full text-center px-6">
           <motion.h1
@@ -64,8 +63,8 @@ export default function ContactPage() {
             <input type="text" placeholder="Nome Completo" className="input input-bordered w-full" />
             <input type="email" placeholder="E‑mail" className="input input-bordered w-full" />
             <input type="tel" placeholder="Telefone (opcional)" className="input input-bordered w-full" />
-            <select className="select select-bordered w-full">
-              <option disabled selected>Assunto</option>
+            <select className="select select-bordered w-full" defaultValue="">
+              <option disabled value="">Assunto</option>
               <option>Dúvida Geral</option>
               <option>Ajuda/Apoio</option>
               <option>Vocação</option>

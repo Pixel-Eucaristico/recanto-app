@@ -8,7 +8,6 @@ Este documento detalha a arquitetura de software e as escolhas de tecnologia do 
 
 Acreditamos que uma arquitetura bem definida é a base para um projeto durável e escalável. Nosso projeto foi desenhado com os seguintes princípios em mente:
 
--   **Monorepo:** Utilizamos o Turborepo para gerenciar todos os pacotes (aplicativos e bibliotecas de código compartilhado) em um único repositório. Isso maximiza a reutilização de código entre o site e o aplicativo desktop, e centraliza a gestão de ferramentas.
 -   **API-First:** O backend, hospedado no Supabase, é a única fonte de verdade para os dados. Ele é desacoplado do frontend, garantindo que o mesmo backend possa ser utilizado no futuro para as plataformas mobile (Android/iOS) sem reescrita de código.
 -   **Eficiência e Baixa Manutenção:** A pilha de tecnologia foi escolhida para otimizar o tempo de um desenvolvedor solo. Soluções como Supabase (BaaS) e Vercel (PaaS) reduzem drasticamente a carga de infraestrutura e DevOps.
 -   **Reutilização e Modularidade:** O código é estruturado em módulos e componentes, com uma forte separação de responsabilidades (UI ≠ Lógica ≠ API), o que facilita a manutenção e a adição de novas funcionalidades.
@@ -43,13 +42,7 @@ A base da nossa interface de usuário é o React. Para acelerar o desenvolviment
 
 ---
 
-### 💻 **Backend Desktop & Estado**
-
-#### ✅ [Tauri](https://v2.tauri.app)
-
-* Separe a lógica de chamadas com `invoke` em **arquivos isolados** (`src-tauri/api/xyz.rs`).
-* Crie wrappers JS/TS para chamadas Tauri (ex: `tauriClient.ts`) para manter a tipagem entre as camadas.
-* Use um adaptador entre o React e o Tauri para manter o React desacoplado do `window.__TAURI__`.
+### 💻 **Gerenciamento de Estado**
 
 #### ✅ [Jotai](https://jotai.org)
 

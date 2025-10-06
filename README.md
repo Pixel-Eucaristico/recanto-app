@@ -10,18 +10,15 @@ Nosso propósito central é refletido na passagem bíblica que nos guia: **"Não
 
 ## 🚀 Visão Geral do Projeto
 
-Este projeto consiste em uma plataforma integrada, desenvolvida como um **monorepo**, que inclui:
+Este projeto consiste em uma plataforma web moderna e performática, desenvolvida com Next.js:
 
 -   **Site (Next.js):** Uma aplicação web moderna e performática, acessível a todos os membros e amigos da comunidade.
--   **Aplicativo Desktop (Tauri):** Uma versão desktop leve e nativa, construída a partir do mesmo código-fonte do site, garantindo uma experiência otimizada.
--   **API (Node.js/Supabase):** Uma API robusta para gerenciar dados de usuários, conteúdos, doações e muito mais, servindo tanto o site quanto o aplicativo.
+-   **API (Node.js/Supabase):** Uma API robusta para gerenciar dados de usuários, conteúdos, doações e muito mais.
 
 ## 🌟 Pilha de Tecnologia
 
--   **Frontend:** [Next.js 17](https://nextjs.org/) & [React 19](https://react.dev/)
+-   **Frontend:** [Next.js 15](https://nextjs.org/) & [React 19](https://react.dev/)
 -   **Backend as a Service (BaaS):** [Supabase](https://supabase.com/) (PostgreSQL, Auth, Storage)
--   **Desktop App:** [Tauri 2](https://tauri.app/)
--   **Monorepo:** [Turborepo](https://turbo.build/repo)
 -   **Linguagem:** [TypeScript](https://www.typescriptlang.org/)
 -   **Infraestrutura Cloud:** [Vercel](https://vercel.com/) (para o deploy do site)
 

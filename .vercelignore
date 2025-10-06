@@ -1,0 +1,42 @@
+# Test files
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+__tests__/
+coverage/
+jest.config.js
+jest.setup.js
+
+# Documentation
+*.md
+!README.md
+CLAUDE.md
+GOOGLE_CALENDAR_SETUP.md
+VERCEL_DEPLOYMENT.md
+MIGRATION_GUIDE.md
+SECURITY*.md
+SET_ADMIN_INSTRUCTIONS.md
+RECUPERAR_ADMIN.md
+DEV_ROLE_SELECTOR.md
+
+# Development files
+.vscode/
+.idea/
+scripts/
+src/components/dev/
+
+# Source maps (optional - keep commented to include them)
+# **/*.map
+
+# Git files
+.git/
+.gitignore
+.gitattributes
+
+# CI/CD
+.github/
+
+# Local environment
+.env.local
+.env*.local

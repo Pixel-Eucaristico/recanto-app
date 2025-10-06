@@ -1,0 +1,20 @@
+{
+    "name": "DesafioRegistro",
+    "type": "object",
+    "properties": {
+      "recantiano_id": {
+        "type": "string"
+      },
+      "desafio_id": {
+        "type": "string"
+      },
+      "diario": {
+        "type": "string",
+        "description": "Relato pessoal do recantiano sobre o desafio."
+      }
+    },
+    "required": [
+      "recantiano_id",
+      "desafio_id"
+    ]
+  }

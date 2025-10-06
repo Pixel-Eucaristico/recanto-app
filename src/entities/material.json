@@ -1,0 +1,42 @@
+{
+    "name": "Material",
+    "type": "object",
+    "properties": {
+      "title": {
+        "type": "string",
+        "description": "Título do material formativo"
+      },
+      "description": {
+        "type": "string",
+        "description": "Uma breve descrição do material"
+      },
+      "type": {
+        "type": "string",
+        "enum": [
+          "pdf",
+          "video",
+          "text"
+        ],
+        "description": "Tipo de material"
+      },
+      "file_url": {
+        "type": "string",
+        "description": "URL do arquivo no Supabase Storage"
+      },
+      "category": {
+        "type": "string",
+        "description": "Categoria do material (ex: Regra de Vida, Logoterapia)"
+      },
+      "authorized_roles": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Quais papéis podem ver este material (ex: missionario, recantiano)"
+      }
+    },
+    "required": [
+      "title",
+      "type"
+    ]
+  }

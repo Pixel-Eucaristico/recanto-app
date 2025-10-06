@@ -1,0 +1,70 @@
+# Claude Code Ignore - Reduzir uso de tokens
+
+# Dependencies
+node_modules/
+.next/
+out/
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Firebase
+firebase-service-account.json
+*-service-account.json
+
+# Documentation (já integrada ao CLAUDE.md)
+doc/ARCHITECTURE.md
+doc/README.md
+
+# Assets grandes
+public/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.ico
+*.mp4
+*.webm
+
+# Tests
+coverage/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+__tests__/
+
+# Config files menos importantes
+.prettierrc
+.eslintrc.json
+jest.config.js
+jest.setup.js
+tsconfig.tsbuildinfo
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml

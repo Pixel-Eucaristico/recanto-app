@@ -1,4 +1,4 @@
-import { logoNavbar, menuNavbar, mobileExtraLinksNavbar, authNavbar } from '@/_config/routes'
+import { logoNavbar, menuNavbar, mobileExtraLinksNavbar, authNavbar } from '@/_config/routes_main'
 
 describe('Routes Configuration', () => {
   describe('logoNavbar', () => {

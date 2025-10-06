@@ -15,9 +15,8 @@ export default function SpiritualityAndCharismaPage() {
         <Image
           src="https://cdn2.picryl.com/photo/1672/12/31/santa-teresa-doutora-mistica-inspirada-pelo-espirito-santo-c-1672-josefa-de-73ffbc-640.png"
           alt="Luz divina"
-          layout="fill"
-          objectFit="cover"
-          className="absolute inset-0 opacity-20 z-0"
+          fill
+          className="absolute inset-0 opacity-20 z-0 object-cover"
         />
         <div className="z-10">
           <motion.h1
