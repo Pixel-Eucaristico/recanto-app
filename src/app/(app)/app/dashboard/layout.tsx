@@ -2,7 +2,6 @@ import { AuthProvider } from "@/features/dashboard/contexts/AuthContext";
 import "@/styles/globals.css";
 import Sidebar from "@/features/dashboard/components/Sidebar";
 import ProtectedRoute from "@/components/common/ProtectedRoute";
-import { DevRoleSelector } from "@/components/dev/DevRoleSelector";
 
 export default function RootLayout({
   children,
@@ -18,7 +17,6 @@ export default function RootLayout({
             {children}
           </main>
         </div>
-        <DevRoleSelector />
       </ProtectedRoute>
     </AuthProvider>
   );
