@@ -1,15 +1,18 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/features/dashboard/contexts/AuthContext';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/features/dashboard/contexts/AuthContext";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   fallbackPath?: string;
 }
 
-export default function ProtectedRoute({ children, fallbackPath = '/' }: ProtectedRouteProps) {
+export default function ProtectedRoute({
+  children,
+  fallbackPath = "/",
+}: ProtectedRouteProps) {
   const { user } = useAuth();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
@@ -17,8 +20,12 @@ export default function ProtectedRoute({ children, fallbackPath = '/' }: Protect
   useEffect(() => {
     // Verificar autenticação
     const checkAuth = () => {
-      const hasSession = localStorage.getItem('session');
-      
+      if (typeof window === "undefined") {
+        return;
+      }
+
+      const hasSession = localStorage.getItem("session");
+
       if (!user && !hasSession) {
         // Redirecionar para a página inicial se não estiver autenticado
         router.push(fallbackPath);

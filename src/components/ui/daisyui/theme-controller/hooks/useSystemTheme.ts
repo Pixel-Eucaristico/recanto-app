@@ -4,8 +4,11 @@ import { useState, useEffect } from 'react'
 
 export function useSystemTheme(): 'dark' | 'light' {
   const [theme, setTheme] = useState<'dark' | 'light'>('light')
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
+    
     let media: MediaQueryList | null = null
     let handler: ((e: MediaQueryListEvent) => void) | null = null
 
@@ -27,5 +30,6 @@ export function useSystemTheme(): 'dark' | 'light' {
     }
   }, [])
 
-  return theme
+  // Retorna 'light' como fallback até montar
+  return mounted ? theme : 'light'
 }

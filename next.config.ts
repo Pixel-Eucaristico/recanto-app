@@ -11,6 +11,7 @@ const nextConfig: NextConfig = {
     // Temporarily ignore TypeScript errors during builds
     ignoreBuildErrors: true,
   },
+  reactStrictMode: true,
   images: {
     remotePatterns: [
       {

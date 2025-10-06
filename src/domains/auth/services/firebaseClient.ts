@@ -14,35 +14,44 @@ import { getAnalytics } from "firebase/analytics";
 // ----------------------------------------------------
 // Verificação de variáveis de ambiente
 // ----------------------------------------------------
-const requiredEnv = [
-  "NEXT_PUBLIC_FIREBASE_API_KEY",
-  "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN",
-  "NEXT_PUBLIC_FIREBASE_PROJECT_ID",
-  "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET",
-  "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID",
-  "NEXT_PUBLIC_FIREBASE_APP_ID",
-  "NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID",
-  "NEXT_PUBLIC_FIREBASE_DATABASE_URL",
-];
+function validateFirebaseConfig() {
+  const requiredEnv = {
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+    measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+    databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
+  };
 
-requiredEnv.forEach((key) => {
-  if (!process.env[key]) {
-    console.warn(`[Firebase] Variável de ambiente ${key} não definida!`);
+  const missing = Object.entries(requiredEnv)
+    .filter(([_, value]) => !value)
+    .map(([key]) => key);
+
+  if (missing.length > 0) {
+    console.error(`[Firebase] Variáveis de ambiente faltando: ${missing.join(', ')}`);
+    throw new Error(`Firebase configuration incomplete. Missing: ${missing.join(', ')}`);
   }
-});
+
+  return requiredEnv;
+}
 
 // ----------------------------------------------------
 // Configuração Firebase
 // ----------------------------------------------------
+const config = validateFirebaseConfig();
+
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN!,
-  databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL!,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET!,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID!,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID!,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID!,
+  apiKey: config.apiKey!,
+  authDomain: config.authDomain!,
+  databaseURL: config.databaseURL!,
+  projectId: config.projectId!,
+  storageBucket: config.storageBucket!,
+  messagingSenderId: config.messagingSenderId!,
+  appId: config.appId!,
+  measurementId: config.measurementId!,
 };
 
 // Evita reinicializar Firebase no hot reload do Next.js
@@ -54,7 +63,17 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
 export const auth = getAuth(app);
 export const database = getDatabase(app); // Realtime Database (legacy)
 export const firestore = getFirestore(app); // Firestore (novo!)
-export const analytics = typeof window !== "undefined" ? getAnalytics(app) : null;
+
+// Analytics apenas no lado do cliente e em produção
+let analytics = null;
+if (typeof window !== "undefined" && process.env.NODE_ENV === "production") {
+  try {
+    analytics = getAnalytics(app);
+  } catch (error) {
+    console.warn("[Firebase] Analytics não pôde ser inicializado:", error);
+  }
+}
+export { analytics };
 
 // ----------------------------------------------------
 // Provedores de Auth
