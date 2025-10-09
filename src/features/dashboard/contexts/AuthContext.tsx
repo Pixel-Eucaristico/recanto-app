@@ -4,6 +4,7 @@ import { Role, User } from "@/features/auth/types/user";
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { authService } from "@/services/firebase/AuthService";
 import { FirebaseUser } from "@/types/firebase-entities";
+import { isFirebaseConfigured } from "@/domains/auth/services/firebaseClient";
 
 interface AuthContextProps {
   user: FirebaseUser | null;
@@ -102,6 +103,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       throw error;
     }
   };
+
+  // Se Firebase não está configurado, mostra mensagem informativa
+  if (!isFirebaseConfigured) {
+    return (
+      <AuthContext.Provider value={{ user: null, login, register, loginWithProvider, loginAs, logout, loading: false }}>
+        <div className="flex items-center justify-center h-screen bg-gray-50">
+          <div className="max-w-md p-6 bg-white rounded-lg shadow-lg text-center">
+            <div className="mb-4">
+              <svg className="mx-auto h-12 w-12 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.314 18.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              Firebase não configurado
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              As variáveis de ambiente do Firebase não estão configuradas. 
+              Configure-as para usar a autenticação.
+            </p>
+            <div className="text-xs text-gray-500">
+              <p>Consulte o arquivo <code>.env.example</code> para mais informações.</p>
+            </div>
+          </div>
+        </div>
+      </AuthContext.Provider>
+    );
+  }
 
   return (
     <AuthContext.Provider value={{ user, login, register, loginWithProvider, loginAs, logout, loading }}>

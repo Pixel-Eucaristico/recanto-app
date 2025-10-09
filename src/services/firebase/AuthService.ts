@@ -3,7 +3,8 @@ import {
   firestore,
   googleProvider,
   facebookProvider,
-  twitterProvider
+  twitterProvider,
+  isFirebaseConfigured
 } from '@/domains/auth/services/firebaseClient';
 import {
   createUserWithEmailAndPassword,
@@ -21,6 +22,15 @@ import { Role } from '@/features/auth/types/user';
 
 class AuthService {
   /**
+   * Verifica se Firebase está configurado
+   */
+  private checkFirebaseConfig(): void {
+    if (!isFirebaseConfigured || !auth || !firestore) {
+      throw new Error('Firebase não está configurado. Configure as variáveis de ambiente para usar autenticação.');
+    }
+  }
+
+  /**
    * Registra novo usuário
    */
   async register(
@@ -29,9 +39,11 @@ class AuthService {
     name: string,
     role: Role = null
   ): Promise<FirebaseUser> {
+    this.checkFirebaseConfig();
+    
     try {
       // Cria usuário no Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth!, email, password);
       const { uid } = userCredential.user;
 
       // Cria registro no Firestore usando UID do Firebase Auth
@@ -48,9 +60,11 @@ class AuthService {
    * Login de usuário
    */
   async login(email: string, password: string): Promise<FirebaseUser | null> {
+    this.checkFirebaseConfig();
+    
     try {
       // Autentica no Firebase Auth
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth!, email, password);
       const { uid, displayName, email: userEmail } = userCredential.user;
 
       // Busca dados do usuário no Firestore pelo UID do Firebase Auth
@@ -78,6 +92,8 @@ class AuthService {
     email: string,
     role: Role = null
   ): Promise<FirebaseUser> {
+    this.checkFirebaseConfig();
+    
     const userData: FirebaseUser = {
       id: uid,
       name,
@@ -87,7 +103,7 @@ class AuthService {
     };
 
     // Usar o UID como ID do documento no Firestore
-    const userRef = doc(firestore, 'users', uid);
+    const userRef = doc(firestore!, 'users', uid);
     await setDoc(userRef, userData);
 
     return userData;
@@ -97,24 +113,26 @@ class AuthService {
    * Login com provedor social (Google, Facebook, Twitter)
    */
   async loginWithProvider(providerName: 'google' | 'facebook' | 'twitter'): Promise<FirebaseUser> {
+    this.checkFirebaseConfig();
+    
     try {
       let provider: AuthProvider;
 
       switch (providerName) {
         case 'google':
-          provider = googleProvider;
+          provider = googleProvider!;
           break;
         case 'facebook':
-          provider = facebookProvider;
+          provider = facebookProvider!;
           break;
         case 'twitter':
-          provider = twitterProvider;
+          provider = twitterProvider!;
           break;
         default:
           throw new Error('Provedor inválido');
       }
 
-      const result = await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth!, provider);
       const { uid, displayName, email } = result.user;
 
       // Busca ou cria usuário
@@ -139,8 +157,10 @@ class AuthService {
    * Logout
    */
   async logout(): Promise<void> {
+    this.checkFirebaseConfig();
+    
     try {
-      await signOut(auth);
+      await signOut(auth!);
     } catch (error) {
       console.error('Error logging out:', error);
       throw error;
@@ -151,6 +171,12 @@ class AuthService {
    * Observa mudanças no estado de autenticação
    */
   onAuthStateChange(callback: (user: FirebaseUser | null) => void): () => void {
+    if (!isFirebaseConfigured || !auth) {
+      // Se Firebase não está configurado, chama callback com null
+      callback(null);
+      return () => {}; // Retorna função vazia para unsubscribe
+    }
+    
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         // Busca dados completos do usuário pelo UID
@@ -178,6 +204,10 @@ class AuthService {
    * Obtém usuário atual
    */
   async getCurrentUser(): Promise<FirebaseUser | null> {
+    if (!isFirebaseConfigured || !auth) {
+      return null;
+    }
+    
     const firebaseUser = auth.currentUser;
     if (firebaseUser) {
       let user = await userService.get(firebaseUser.uid);
