@@ -322,7 +322,65 @@ This project follows an **API-first** approach with **low maintenance** infrastr
 
 ---
 
+## Documentation Resources
+
+### LLM-Optimized Documentation
+
+This project includes **offline documentation** optimized for Claude Code and other LLMs, stored in `docs/llms/`.
+
+**Available Documentation:**
+
+#### UI/Frontend
+- **DaisyUI v5** - [`docs/llms/docs/daisyui/llms.txt`](docs/llms/docs/daisyui/llms.txt)
+- **Tailwind CSS v4** - [`docs/llms/docs/tailwindcss/custom-guide.md`](docs/llms/docs/tailwindcss/custom-guide.md)
+- **Shadcn UI** - [`docs/llms/docs/shadcn/custom-guide.md`](docs/llms/docs/shadcn/custom-guide.md)
+- **React** - [`docs/llms/docs/react/custom-guide.md`](docs/llms/docs/react/custom-guide.md)
+
+#### Framework & Build Tools
+- **Next.js 15+** - [`docs/llms/docs/nextjs/llms-optimized.md`](docs/llms/docs/nextjs/llms-optimized.md) ⚡ Optimized
+
+#### Validation & Utilities
+- **Zod v4** - [`docs/llms/docs/zod/llms.txt`](docs/llms/docs/zod/llms.txt)
+- **Prettier** - [`docs/llms/docs/prettier/llms.txt`](docs/llms/docs/prettier/llms.txt)
+
+#### State Management
+- **Jotai** - [`docs/llms/docs/jotai/custom-guide.md`](docs/llms/docs/jotai/custom-guide.md)
+
+#### Data Fetching
+- **SWR** - [`docs/llms/docs/swr/custom-guide.md`](docs/llms/docs/swr/custom-guide.md)
+
+#### Forms
+- **React Hook Form** - [`docs/llms/docs/react-hook-form/custom-guide.md`](docs/llms/docs/react-hook-form/custom-guide.md)
+
+#### Backend & Database
+- **Firebase** - [`docs/llms/docs/firebase/llms.txt`](docs/llms/docs/firebase/llms.txt)
+- **NextAuth.js** - [`docs/llms/docs/nextauth/custom-guide.md`](docs/llms/docs/nextauth/custom-guide.md)
+
+### Documentation Priority
+
+When working with this codebase, follow this consultation order:
+
+1. **FIRST**: Local documentation in `docs/llms/docs/`
+2. **SECOND**: Internal Claude knowledge base
+3. **THIRD**: Web search (only if necessary)
+
+### Documentation Index
+
+Full documentation index available at [`docs/llms/docs/INDEX.md`](docs/llms/docs/INDEX.md)
+
+**Maintained by**: [claude-llms-docs](https://github.com/WillianQuintino/claude-llms-docs)
+
+---
+
 ## Recent Updates
+
+### 2025-10-12: LLM-Optimized Documentation Integration ✅
+- Integrated [claude-llms-docs](https://github.com/WillianQuintino/claude-llms-docs) repository
+- Added 12 libraries used in project: Firebase, Tailwind CSS, Jotai, SWR, React Hook Form, etc.
+- Contributed 5 new docs to claude-llms-docs universal repository
+- Removed unused docs (TurboRepo, Tauri, Vite, MySQL2) from project
+- Documentation stored in `docs/llms/` for faster Claude Code responses
+- Priority consultation order: local docs → Claude knowledge → web search
 
 ### 2025-10-06: Firestore Migration ✅
 - Migrated from Realtime Database to Firestore
