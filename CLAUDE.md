@@ -356,6 +356,9 @@ This project includes **offline documentation** optimized for Claude Code and ot
 - **Firebase** - [`docs/llms/docs/firebase/llms.txt`](docs/llms/docs/firebase/llms.txt)
 - **NextAuth.js** - [`docs/llms/docs/nextauth/custom-guide.md`](docs/llms/docs/nextauth/custom-guide.md)
 
+#### Messaging & Communication
+- **WhatsApp Web.js** - [`docs/llms/docs/whatsapp-web-js/custom-guide.md`](docs/llms/docs/whatsapp-web-js/custom-guide.md)
+
 ### Documentation Priority
 
 When working with this codebase, follow this consultation order:
