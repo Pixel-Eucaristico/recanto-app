@@ -1,0 +1,76 @@
+{
+  "communityFeedbacks": [
+    {
+      "id": 1,
+      "name": "Willian",
+      "role": "Participante do evento 2024",
+      "avatar": "https://randomuser.me/api/portraits/women/65.jpg",
+      "comment": "Participar da comunidade mudou minha forma de ver os jogos digitais. Os eventos são incríveis e muito inspiradores!",
+      "date": "Mar 2024"
+    },
+    {
+      "id": 2,
+      "name": "Carlos Pereira",
+      "role": "Membro ativo da comunidade",
+      "avatar": "https://randomuser.me/api/portraits/men/43.jpg",
+      "comment": "Os workshops e palestras ajudaram muito no meu desenvolvimento profissional. Ambiente super acolhedor!",
+      "date": "Fev 2024"
+    },
+    {
+      "id": 3,
+      "name": "Mariana Costa",
+      "role": "Voluntária e entusiasta",
+      "avatar": "https://randomuser.me/api/portraits/women/22.jpg",
+      "comment": "A troca de experiências e o networking são os pontos altos da comunidade. Recomendo para todos que querem crescer.",
+      "date": "Jan 2024"
+    }
+  ],
+  "projects": [
+    {
+      "id": 1,
+      "title": "Retiros Espirituais",
+      "description": "Retiros de fim de semana para crianças, jovens e famílias, promovendo encontro com Cristo e renovação espiritual.",
+      "image": "https://images.unsplash.com/photo-1507692049790-de58290a4334?w=400",
+      "category": "retiro",
+      "link": "/sobre"
+    },
+    {
+      "id": 2,
+      "title": "Formação Continuada",
+      "description": "Encontros semanais de formação humana e espiritual para todas as idades, focando no desenvolvimento de virtudes.",
+      "image": "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=400",
+      "category": "formacao",
+      "link": "/espritualidade"
+    },
+    {
+      "id": 3,
+      "title": "Evangelização de Rua",
+      "description": "Ações missionárias nas ruas de Sumaré, levando a Palavra de Deus e o amor misericordioso às pessoas.",
+      "image": "https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?w=400",
+      "category": "evangelizacao"
+    }
+  ],
+  "evangelization": [
+    {
+      "id": 1,
+      "title": "Catequese Infantil",
+      "description": "Formação catequética para crianças de 7 a 12 anos, preparando para os sacramentos da Eucaristia e Crisma.",
+      "icon": "BookOpen",
+      "audience": "Crianças de 7 a 12 anos"
+    },
+    {
+      "id": 2,
+      "title": "Grupos de Jovens",
+      "description": "Encontros semanais para jovens de 13 a 25 anos, com partilhas, orações e atividades recreativas.",
+      "icon": "Users",
+      "audience": "Jovens de 13 a 25 anos"
+    },
+    {
+      "id": 3,
+      "title": "Pastoral Familiar",
+      "description": "Acompanhamento e formação para famílias, fortalecendo os laços conjugais e a educação dos filhos na fé.",
+      "icon": "Heart",
+      "audience": "Famílias e casais"
+    }
+  ]
+}

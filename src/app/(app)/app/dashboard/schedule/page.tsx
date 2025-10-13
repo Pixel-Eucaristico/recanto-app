@@ -13,6 +13,7 @@ import { Loader2, Calendar, Plus, Clock, RefreshCw, CheckCircle2, Globe } from '
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useToast } from '@/components/ui/use-toast';
 
 const eventIcons = {
     oracao: <Calendar className="w-6 h-6 text-amber-500" />,
@@ -24,10 +25,12 @@ const eventIcons = {
 
 export default function SchedulePage() {
     const { user } = useAuth();
+    const { toast } = useToast();
     const [events, setEvents] = useState<EventType[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [openDialog, setOpenDialog] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
+    const [isCreating, setIsCreating] = useState(false);
     const [syncMessage, setSyncMessage] = useState('');
     const [isCalendarConnected, setIsCalendarConnected] = useState(false);
 
@@ -66,15 +69,45 @@ export default function SchedulePage() {
 
     const createEvent = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!user) return;
+        if (!user) {
+            toast({
+                title: "Erro",
+                description: "Você precisa estar autenticado.",
+                variant: "destructive"
+            });
+            return;
+        }
 
+        // Validação de datas
+        if (!startTime) {
+            toast({
+                title: "Erro",
+                description: "Por favor, preencha a data de início.",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        const startDate = new Date(startTime);
+        const endDate = endTime ? new Date(endTime) : startDate;
+
+        if (endDate < startDate) {
+            toast({
+                title: "Erro",
+                description: "A data de término não pode ser anterior à data de início.",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        setIsCreating(true);
         try {
             const newEvent: Partial<EventType> = {
                 title,
-                description,
+                description: description || undefined,
                 type,
-                start: new Date(startTime).toISOString(),
-                end: new Date(endTime || startTime).toISOString(),
+                start: startDate.toISOString(),
+                end: endDate.toISOString(),
                 location: location || undefined,
                 is_public: isPublic,
                 target_audience: ['admin', 'missionario', 'recantiano', 'pai', 'colaborador', 'benfeitor'],
@@ -83,8 +116,18 @@ export default function SchedulePage() {
             };
 
             const createdEvent = await eventService.create(newEvent as EventType);
+
+            if (!createdEvent || !createdEvent.id) {
+                throw new Error('Evento criado mas ID não retornado');
+            }
+
             setEvents([createdEvent, ...events].sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()));
             setOpenDialog(false);
+
+            toast({
+                title: "Sucesso!",
+                description: `Evento "${title}" criado com sucesso.`
+            });
 
             // Reset form
             setTitle('');
@@ -97,10 +140,17 @@ export default function SchedulePage() {
 
             // Trigger sync if calendar connected
             if (isCalendarConnected) {
-                handleSync();
+                setTimeout(() => handleSync(), 500);
             }
         } catch (error) {
             console.error("Failed to create event:", error);
+            toast({
+                title: "Erro",
+                description: error instanceof Error ? error.message : "Falha ao criar evento. Tente novamente.",
+                variant: "destructive"
+            });
+        } finally {
+            setIsCreating(false);
         }
     };
 
@@ -204,7 +254,10 @@ export default function SchedulePage() {
                                                 Tornar público (visível na página inicial)
                                             </label>
                                         </div>
-                                        <Button type="submit">Criar Evento</Button>
+                                        <Button type="submit" disabled={isCreating} className="gap-2">
+                                            {isCreating && <Loader2 className="w-4 h-4 animate-spin" />}
+                                            {isCreating ? 'Criando...' : 'Criar Evento'}
+                                        </Button>
                                     </form>
                                 </DialogContent>
                             </Dialog>

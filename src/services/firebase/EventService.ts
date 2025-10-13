@@ -53,7 +53,7 @@ class EventService extends BaseFirebaseService<Event> {
     );
 
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => doc.data() as Event);
+    return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Event));
   }
 
   /**
@@ -75,7 +75,7 @@ class EventService extends BaseFirebaseService<Event> {
     );
 
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => doc.data() as Event);
+    return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Event));
   }
 
   /**
