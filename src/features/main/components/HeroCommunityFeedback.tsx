@@ -1,9 +1,10 @@
 'use client';
 import Image from 'next/image';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, TargetAndTransition } from 'framer-motion';
+import { CommunityFeedback } from '@/types/main-content';
 
-const feedbacks = [
+const defaultFeedbacks: CommunityFeedback[] = [
   {
     id: 1,
     name: 'Ana Silva',
@@ -50,6 +51,26 @@ const variants = {
 };
 
 const HeroCommunityFeedback = () => {
+  const [feedbacks, setFeedbacks] = useState<CommunityFeedback[]>(defaultFeedbacks);
+
+  useEffect(() => {
+    const loadFeedbacks = async () => {
+      try {
+        const response = await fetch('/api/main-content');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.communityFeedbacks && data.communityFeedbacks.length > 0) {
+            setFeedbacks(data.communityFeedbacks);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load feedbacks:', error);
+        // Usa os feedbacks padrão em caso de erro
+      }
+    };
+    loadFeedbacks();
+  }, []);
+
   return (
     <section className="max-w-6xl mx-auto px-6 py-12">
       <h2 className="text-3xl font-bold text-center mb-10 text-base-content">

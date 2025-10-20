@@ -12,27 +12,25 @@ import { verifySession } from '@/domains/auth/services/sessionService';
 
 export async function GET(req: NextRequest) {
   try {
-    // Verify user is authenticated and is admin
+    // Verify user is authenticated (ANY authenticated user can connect)
     const session = await verifySession();
+
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      console.error('❌ [Calendar Auth] Sessão não encontrada');
+      // Redirect to login instead of returning JSON error
+      return NextResponse.redirect(new URL('/app/login?error=session_expired&redirect=/app/dashboard/schedule', req.url));
     }
 
-    // Only admins can configure Google Calendar
-    if (session.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    console.log('✅ [Calendar Auth] Usuário autenticado - role:', session.role);
 
-    // Generate OAuth URL
-    const authUrl = googleCalendarService.getAuthUrl();
+    // Generate OAuth URL with userId as state
+    const authUrl = googleCalendarService.getAuthUrl(session.uid);
 
     // Redirect to Google OAuth consent screen
     return NextResponse.redirect(authUrl);
   } catch (error) {
-    console.error('Error generating OAuth URL:', error);
-    return NextResponse.json(
-      { error: 'Failed to generate OAuth URL' },
-      { status: 500 }
-    );
+    console.error('❌ [Calendar Auth] Erro:', error instanceof Error ? error.message : 'Unknown error');
+    // Redirect to schedule with error message
+    return NextResponse.redirect(new URL('/app/dashboard/schedule?error=auth_failed', req.url));
   }
 }

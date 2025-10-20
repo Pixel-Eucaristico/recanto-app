@@ -23,8 +23,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Observa mudanças no estado de autenticação
   useEffect(() => {
-    const unsubscribe = authService.onAuthStateChange((firebaseUser) => {
+    const unsubscribe = authService.onAuthStateChange(async (firebaseUser) => {
       if (firebaseUser) {
+        // ✅ RENOVAR SESSÃO DO SERVIDOR
+        try {
+          const { auth } = await import('@/domains/auth/services/firebaseClient');
+          const currentUser = auth.currentUser;
+          if (currentUser) {
+            const token = await currentUser.getIdToken(true); // Force refresh
+            await fetch('/api/auth/login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ token })
+            });
+          }
+        } catch (error) {
+          console.error('❌ Erro ao renovar sessão');
+        }
+
         // DESENVOLVIMENTO: Aplicar role temporário se existir
         const tempRole = localStorage.getItem('dev_temp_role');
         if (tempRole && tempRole !== 'null' && process.env.NODE_ENV !== 'production') {
@@ -50,6 +66,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (email: string, password: string) => {
     try {
       const firebaseUser = await authService.login(email, password);
+
+      // ✅ CRIAR COOKIE DE SESSÃO NO SERVIDOR
+      const { auth } = await import('@/domains/auth/services/firebaseClient');
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        const token = await currentUser.getIdToken();
+        await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token })
+        });
+      }
+
       setUser(firebaseUser);
     } catch (error) {
       console.error('Erro ao fazer login:', error);
@@ -60,6 +89,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const register = async (email: string, password: string, name: string, role: Role = null) => {
     try {
       const firebaseUser = await authService.register(email, password, name, role);
+
+      // ✅ CRIAR COOKIE DE SESSÃO NO SERVIDOR
+      const { auth } = await import('@/domains/auth/services/firebaseClient');
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        const token = await currentUser.getIdToken();
+        await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token })
+        });
+      }
+
       setUser(firebaseUser);
     } catch (error) {
       console.error('Erro ao registrar:', error);
@@ -70,6 +112,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const loginWithProvider = async (provider: 'google' | 'facebook' | 'twitter') => {
     try {
       const firebaseUser = await authService.loginWithProvider(provider);
+
+      // ✅ CRIAR COOKIE DE SESSÃO NO SERVIDOR
+      const { auth } = await import('@/domains/auth/services/firebaseClient');
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        const token = await currentUser.getIdToken();
+        await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token })
+        });
+      }
+
       setUser(firebaseUser);
     } catch (error) {
       console.error('Erro ao fazer login com provedor:', error);

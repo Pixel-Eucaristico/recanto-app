@@ -1,5 +1,7 @@
-import { Menu } from "lucide-react";
+'use client';
 
+import { Menu, LayoutDashboard, User as UserIcon, LogOut } from "lucide-react";
+import { useEffect, useState } from "react";
 import {
   Accordion,
   AccordionContent,
@@ -31,6 +33,8 @@ import {
 import SmartLink from "../common/SmartLink";
 import Image from "next/image";
 import ThemeController from "../ui/daisyui/theme-controller";
+import { auth } from "@/domains/auth/services/firebaseClient";
+import { onAuthStateChanged, User } from "firebase/auth";
 
 interface MenuItem {
   title: string;
@@ -68,8 +72,19 @@ const Navbar = ({
   logo = logoNavbar,
   menu = menuNavbar,
   mobileExtraLinks = mobileExtraLinksNavbar,
-  auth = authNavbar,
+  auth: authConfig = authNavbar,
 }: NavbarProps) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
   return (
     <section className="py-4">
       <div className="container">
@@ -93,14 +108,55 @@ const Navbar = ({
               </NavigationMenu>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
             <ThemeController />
-            <Button asChild variant="outline" size="sm">
-              <SmartLink href={auth.login.url}>{auth.login.text}</SmartLink>
-            </Button>
-            <Button asChild size="sm">
-              <SmartLink href={auth.signup.url}>{auth.signup.text}</SmartLink>
-            </Button>
+            {!loading && (
+              <>
+                {user ? (
+                  <div className="dropdown dropdown-end">
+                    <div tabIndex={0} role="button" className="btn btn-ghost btn-sm gap-2">
+                      <div className="avatar placeholder">
+                        <div className="bg-primary text-primary-content rounded-full w-8 h-8 flex items-center justify-center">
+                          <span className="text-sm font-semibold">
+                            {(user.displayName || user.email?.split('@')[0] || 'U').charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="text-sm font-medium">
+                        {(user.displayName || user.email?.split('@')[0] || 'Usuário').split(' ')[0]}
+                      </span>
+                    </div>
+                    <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow-lg bg-base-100 rounded-box w-64 mt-2 border border-base-300">
+                      <li className="menu-title px-3 py-2">
+                        <span className="text-xs opacity-60 truncate max-w-full block">{user.email}</span>
+                      </li>
+                      <div className="divider my-0"></div>
+                      <li>
+                        <SmartLink href="/app/dashboard" className="gap-3 py-2">
+                          <LayoutDashboard className="w-4 h-4 flex-shrink-0" />
+                          <span>Dashboard</span>
+                        </SmartLink>
+                      </li>
+                      <li>
+                        <a onClick={() => auth.signOut()} className="gap-3 py-2 text-error hover:bg-error/10">
+                          <LogOut className="w-4 h-4 flex-shrink-0" />
+                          <span>Sair</span>
+                        </a>
+                      </li>
+                    </ul>
+                  </div>
+                ) : (
+                  <>
+                    <Button asChild variant="outline" size="sm">
+                      <SmartLink href={authConfig.login.url}>{authConfig.login.text}</SmartLink>
+                    </Button>
+                    <Button asChild size="sm">
+                      <SmartLink href={authConfig.signup.url}>{authConfig.signup.text}</SmartLink>
+                    </Button>
+                  </>
+                )}
+              </>
+            )}
           </div>
         </nav>
         <div className="block lg:hidden">
@@ -164,16 +220,44 @@ const Navbar = ({
                   </div>
                   <div className="flex flex-col gap-3">
                     <ThemeController />
-                    <Button asChild variant="outline" className="text-white">
-                      <SmartLink href={auth.login.url}>
-                        {auth.login.text}
-                      </SmartLink>
-                    </Button>
-                    <Button asChild>
-                      <SmartLink href={auth.signup.url}>
-                        {auth.signup.text}
-                      </SmartLink>
-                    </Button>
+                    {!loading && (
+                      <>
+                        {user ? (
+                          <>
+                            <div className="flex items-center gap-2 px-3 py-2 bg-green-50 text-green-700 rounded-md border border-green-200">
+                              <UserIcon className="w-5 h-5" />
+                              <div className="flex flex-col">
+                                <span className="text-sm font-medium">
+                                  {user.displayName || user.email?.split('@')[0]}
+                                </span>
+                                <span className="text-xs text-green-600">
+                                  {user.email}
+                                </span>
+                              </div>
+                            </div>
+                            <Button asChild className="gap-2">
+                              <SmartLink href="/app/dashboard">
+                                <LayoutDashboard className="w-4 h-4" />
+                                Ir para Dashboard
+                              </SmartLink>
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <Button asChild variant="outline" className="text-white">
+                              <SmartLink href={authConfig.login.url}>
+                                {authConfig.login.text}
+                              </SmartLink>
+                            </Button>
+                            <Button asChild>
+                              <SmartLink href={authConfig.signup.url}>
+                                {authConfig.signup.text}
+                              </SmartLink>
+                            </Button>
+                          </>
+                        )}
+                      </>
+                    )}
                   </div>
                 </div>
               </SheetContent>

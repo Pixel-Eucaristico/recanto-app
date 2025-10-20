@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { User } from '@/entities/User';
 import { Material } from '@/entities/Material';
+import { Role } from '@/features/auth/types/user';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -14,7 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { UploadFile } from '@/integrations/Core';
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2, Trash2, Edit, Plus, Mail, Check, Eye, Archive, MessageSquare } from 'lucide-react';
+import { Loader2, Trash2, Edit, Plus, Mail, Check, Eye, Archive, MessageSquare, Calendar } from 'lucide-react';
 import { MainPageContent, CommunityFeedback, Project, Evangelization } from '@/types/main-content';
 import { FormSubmission, ContactFormData, StoryFormData, AdminEmailConfig } from '@/types/form-submissions';
 import { Badge } from '@/components/ui/badge';
@@ -875,27 +876,360 @@ const EmailConfigTab = () => {
     );
 };
 
+const UsersManagementTab = () => {
+    const { toast } = useToast();
+    const [users, setUsers] = useState<User[]>([]);
+    const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [editingUser, setEditingUser] = useState<User | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [roleFilter, setRoleFilter] = useState<string>('all');
+
+    // Form state
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        phone: '',
+        role: 'recantiano' as Role,
+    });
+
+    useEffect(() => {
+        loadUsers();
+    }, []);
+
+    useEffect(() => {
+        filterUsers();
+    }, [users, searchQuery, roleFilter]);
+
+    const loadUsers = async () => {
+        setIsLoading(true);
+        try {
+            const userList = await User.list('name');
+            setUsers(userList);
+        } catch (error) {
+            toast({ title: "Erro", description: "Falha ao carregar usuários.", variant: "destructive" });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const filterUsers = () => {
+        let filtered = users;
+
+        // Filter by search query
+        if (searchQuery) {
+            filtered = filtered.filter(u =>
+                u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                u.email.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+        }
+
+        // Filter by role
+        if (roleFilter !== 'all') {
+            filtered = filtered.filter(u => u.role === roleFilter);
+        }
+
+        setFilteredUsers(filtered);
+    };
+
+    const openNewUserDialog = () => {
+        setEditingUser(null);
+        setFormData({ name: '', email: '', phone: '', role: 'recantiano' });
+        setIsDialogOpen(true);
+    };
+
+    const openEditUserDialog = (user: User) => {
+        setEditingUser(user);
+        setFormData({
+            name: user.name,
+            email: user.email,
+            phone: user.phone || '',
+            role: user.role,
+        });
+        setIsDialogOpen(true);
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            if (editingUser) {
+                // Update
+                await User.update(editingUser.id, formData);
+                toast({ title: "Sucesso!", description: `Usuário "${formData.name}" atualizado.` });
+            } else {
+                // Create
+                await User.create({
+                    ...formData,
+                    created_at: new Date().toISOString(),
+                });
+                toast({ title: "Sucesso!", description: `Usuário "${formData.name}" criado.` });
+            }
+            setIsDialogOpen(false);
+            loadUsers();
+        } catch (error) {
+            toast({ title: "Erro", description: "Falha ao salvar usuário.", variant: "destructive" });
+        }
+    };
+
+    const handleDelete = async (userId: string, userName: string) => {
+        try {
+            await User.delete(userId);
+            toast({ title: "Sucesso!", description: `Usuário "${userName}" excluído.` });
+            loadUsers();
+        } catch (error) {
+            toast({ title: "Erro", description: "Falha ao excluir usuário.", variant: "destructive" });
+        }
+    };
+
+    const getRoleBadgeColor = (role: Role) => {
+        const colors = {
+            admin: 'bg-red-100 text-red-800',
+            missionario: 'bg-blue-100 text-blue-800',
+            recantiano: 'bg-green-100 text-green-800',
+            pai: 'bg-purple-100 text-purple-800',
+            colaborador: 'bg-yellow-100 text-yellow-800',
+            benfeitor: 'bg-pink-100 text-pink-800',
+        };
+        return colors[role] || 'bg-gray-100 text-gray-800';
+    };
+
+    const roleLabels = {
+        admin: 'Admin',
+        missionario: 'Missionário',
+        recantiano: 'Recantiano',
+        pai: 'Pai/Mãe',
+        colaborador: 'Colaborador',
+        benfeitor: 'Benfeitor',
+    };
+
+    if (isLoading) {
+        return <div className="flex justify-center p-12"><Loader2 className="animate-spin w-8 h-8" /></div>;
+    }
+
+    return (
+        <Card>
+            <CardHeader className="flex flex-row justify-between items-center">
+                <CardTitle>Gerenciamento de Usuários</CardTitle>
+                <Button onClick={openNewUserDialog} className="gap-2">
+                    <Plus className="w-4 h-4" /> Novo Usuário
+                </Button>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                {/* Filters */}
+                <div className="flex gap-4">
+                    <Input
+                        placeholder="Buscar por nome ou email..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="flex-1"
+                    />
+                    <Select value={roleFilter} onValueChange={setRoleFilter}>
+                        <SelectTrigger className="w-48">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Todas as Funções</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                            <SelectItem value="missionario">Missionário</SelectItem>
+                            <SelectItem value="recantiano">Recantiano</SelectItem>
+                            <SelectItem value="pai">Pai/Mãe</SelectItem>
+                            <SelectItem value="colaborador">Colaborador</SelectItem>
+                            <SelectItem value="benfeitor">Benfeitor</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                {/* Users Table */}
+                {filteredUsers.length === 0 ? (
+                    <div className="text-center py-12 text-slate-500">
+                        Nenhum usuário encontrado
+                    </div>
+                ) : (
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Nome</TableHead>
+                                <TableHead>Email</TableHead>
+                                <TableHead>Função</TableHead>
+                                <TableHead>Telefone</TableHead>
+                                <TableHead>Ações</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {filteredUsers.map((user) => (
+                                <TableRow key={user.id}>
+                                    <TableCell className="font-medium">{user.name}</TableCell>
+                                    <TableCell>{user.email}</TableCell>
+                                    <TableCell>
+                                        <Badge className={getRoleBadgeColor(user.role)}>
+                                            {roleLabels[user.role]}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell>{user.phone || '-'}</TableCell>
+                                    <TableCell className="space-x-2">
+                                        <Button
+                                            variant="outline"
+                                            size="icon"
+                                            onClick={() => openEditUserDialog(user)}
+                                        >
+                                            <Edit className="w-4 h-4" />
+                                        </Button>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="destructive" size="icon">
+                                                    <Trash2 className="w-4 h-4" />
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+                                                </AlertDialogHeader>
+                                                <AlertDialogDescription>
+                                                    Tem certeza que deseja excluir o usuário "{user.name}"? Esta ação não pode ser desfeita.
+                                                </AlertDialogDescription>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleDelete(user.id, user.name)}>
+                                                        Excluir
+                                                    </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                )}
+            </CardContent>
+
+            {/* Create/Edit Dialog */}
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{editingUser ? 'Editar Usuário' : 'Novo Usuário'}</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div>
+                            <label className="text-sm font-medium">Nome</label>
+                            <Input
+                                value={formData.name}
+                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="text-sm font-medium">Email</label>
+                            <Input
+                                type="email"
+                                value={formData.email}
+                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                required
+                                disabled={!!editingUser}
+                            />
+                        </div>
+                        <div>
+                            <label className="text-sm font-medium">Telefone</label>
+                            <Input
+                                value={formData.phone}
+                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                            />
+                        </div>
+                        <div>
+                            <label className="text-sm font-medium">Função</label>
+                            <Select
+                                value={formData.role}
+                                onValueChange={(v) => setFormData({ ...formData, role: v as Role })}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="admin">Admin</SelectItem>
+                                    <SelectItem value="missionario">Missionário</SelectItem>
+                                    <SelectItem value="recantiano">Recantiano</SelectItem>
+                                    <SelectItem value="pai">Pai/Mãe</SelectItem>
+                                    <SelectItem value="colaborador">Colaborador</SelectItem>
+                                    <SelectItem value="benfeitor">Benfeitor</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <Button type="submit">
+                            {editingUser ? 'Atualizar Usuário' : 'Criar Usuário'}
+                        </Button>
+                    </form>
+                </DialogContent>
+            </Dialog>
+        </Card>
+    );
+};
+
+const EventsManagementTab = () => {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Gerenciamento de Eventos</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                    <div className="flex items-start gap-4">
+                        <div className="flex-shrink-0">
+                            <Calendar className="w-8 h-8 text-blue-600" />
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="text-lg font-semibold text-blue-900 mb-2">
+                                Gerencie eventos na página Agenda
+                            </h3>
+                            <p className="text-blue-700 mb-4">
+                                O CRUD completo de eventos está disponível na página <strong>Agenda</strong>,
+                                onde você pode criar, editar, excluir e sincronizar eventos com o Google Calendar.
+                            </p>
+                            <Button
+                                onClick={() => window.location.href = '/app/dashboard/schedule'}
+                                className="gap-2"
+                            >
+                                <Calendar className="w-4 h-4" />
+                                Ir para Agenda
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+                <div className="text-sm text-slate-500">
+                    <p><strong>Funcionalidades disponíveis na Agenda:</strong></p>
+                    <ul className="list-disc list-inside mt-2 space-y-1">
+                        <li>Criar novos eventos</li>
+                        <li>Editar eventos existentes</li>
+                        <li>Excluir eventos</li>
+                        <li>Tornar eventos públicos/privados</li>
+                        <li>Sincronização com Google Calendar (opcional)</li>
+                    </ul>
+                </div>
+            </CardContent>
+        </Card>
+    );
+};
+
 export default function AdminPage() {
     return (
         <div>
             <header className="mb-8">
                 <h1 className="text-3xl font-bold text-slate-800">Painel Administrativo</h1>
-                <p className="text-slate-500 mt-1">Gestão central da comunidade.</p>
+                <p className="text-slate-500 mt-1">Configurações técnicas e gestão central da comunidade.</p>
             </header>
             <Tabs defaultValue="content" className="w-full">
                 <TabsList>
-                    <TabsTrigger value="content">Conteúdo</TabsTrigger>
-                    <TabsTrigger value="main-page">Página Principal</TabsTrigger>
+                    <TabsTrigger value="content">Conteúdo Formativo</TabsTrigger>
                     <TabsTrigger value="submissions">Formulários</TabsTrigger>
                     <TabsTrigger value="email">Email & Notificações</TabsTrigger>
-                    {/* Placeholder for other tabs */}
-                    <TabsTrigger value="users" disabled>Usuários</TabsTrigger>
-                    <TabsTrigger value="events" disabled>Eventos</TabsTrigger>
+                    <TabsTrigger value="users">Usuários</TabsTrigger>
+                    <TabsTrigger value="events">Eventos</TabsTrigger>
                 </TabsList>
                 <TabsContent value="content"><ContentManagerTab /></TabsContent>
-                <TabsContent value="main-page"><MainPageContentTab /></TabsContent>
                 <TabsContent value="submissions"><FormSubmissionsTab /></TabsContent>
                 <TabsContent value="email"><EmailConfigTab /></TabsContent>
+                <TabsContent value="users"><UsersManagementTab /></TabsContent>
+                <TabsContent value="events"><EventsManagementTab /></TabsContent>
             </Tabs>
         </div>
     );

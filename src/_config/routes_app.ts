@@ -10,7 +10,8 @@ import {
   BookText,
   ListTodo,
   Settings,
-  Database
+  Database,
+  FileEdit
 } from 'lucide-react';
 import { Role } from "@/features/auth/types/user";
 
@@ -64,6 +65,12 @@ export const appRoutes: AppRoute[] = [
     href: '/app/dashboard/tarefas',
     icon: ListTodo,
     roles: ['colaborador']
+  },
+  {
+    name: 'Gerenciar Site',
+    href: '/app/dashboard/cms',
+    icon: FileEdit,
+    roles: ['admin', 'missionario']
   },
   {
     name: 'Admin',

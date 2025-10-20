@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Desafio } from '@/entities/Desafio';
 import { DesafioRegistro } from '@/entities/DesafioRegistro';
-import { User } from '@/entities/User';
+import { useAuth } from '@/features/dashboard/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -14,7 +14,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export default function ChallengesPage() {
-    const [user, setUser] = useState(null);
+    const { user } = useAuth();
     const [desafios, setDesafios] = useState([]);
     const [meusPontos, setMeusPontos] = useState(0);
     const [meusRegistros, setMeusRegistros] = useState([]);
@@ -24,15 +24,14 @@ export default function ChallengesPage() {
 
     useEffect(() => {
         const loadData = async () => {
+            if (!user) return;
+
             setIsLoading(true);
             try {
-                const currentUser = await User.me();
-                setUser(currentUser);
-                
                 const allDesafios = await Desafio.list();
                 setDesafios(allDesafios);
-                
-                const meusRegistrosData = await DesafioRegistro.filter({ recantiano_id: currentUser.id });
+
+                const meusRegistrosData = await DesafioRegistro.filter({ recantiano_id: user.id });
                 setMeusRegistros(meusRegistrosData);
                 
                 // Calcular pontos totais
@@ -49,7 +48,7 @@ export default function ChallengesPage() {
             }
         };
         loadData();
-    }, []);
+    }, [user]);
 
     const handleRegistrarDesafio = async () => {
         if (!diario.trim() || !selectedDesafio) return;

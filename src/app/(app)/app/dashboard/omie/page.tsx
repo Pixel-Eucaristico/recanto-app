@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { User } from '@/entities/User';
+import { useAuth } from '@/features/dashboard/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -29,17 +29,16 @@ const mockOmieData = {
 };
 
 export default function OmieIntegrationPage() {
-    const [user, setUser] = useState(null);
+    const { user } = useAuth();
     const [isLoading, setIsLoading] = useState(true);
     const [connectionStatus, setConnectionStatus] = useState('disconnected'); // disconnected, connecting, connected, error
     const [omieData, setOmieData] = useState(null);
 
     useEffect(() => {
+        if (!user) return;
+
         const loadData = async () => {
             try {
-                const currentUser = await User.me();
-                setUser(currentUser);
-                
                 // Simular carregamento dos dados do Omie
                 setTimeout(() => {
                     setOmieData(mockOmieData);
@@ -52,7 +51,7 @@ export default function OmieIntegrationPage() {
             }
         };
         loadData();
-    }, []);
+    }, [user]);
 
     const handleConnect = () => {
         setConnectionStatus('connecting');

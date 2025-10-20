@@ -34,21 +34,30 @@ export class BaseFirebaseService<T extends { id: string }> {
    */
   async create(data: Omit<T, 'id'>): Promise<T & { id: string }> {
     try {
+      console.log(`🔥 [${this.collectionName}] Iniciando criação...`);
+      console.log(`📦 Dados a serem salvos:`, data);
+
       const collectionRef = collection(firestore, this.collectionName);
       const dataWithTimestamp = {
         ...data,
         created_at: new Date().toISOString()
       };
 
+      console.log(`🔥 [${this.collectionName}] Chamando addDoc...`);
       const docRef = await addDoc(collectionRef, dataWithTimestamp);
+      console.log(`✅ [${this.collectionName}] addDoc OK, ID:`, docRef.id);
 
       // Atualiza o documento com o ID
       const dataWithId = { ...dataWithTimestamp, id: docRef.id };
+      console.log(`🔥 [${this.collectionName}] Chamando setDoc...`);
       await setDoc(docRef, dataWithId);
+      console.log(`✅ [${this.collectionName}] setDoc OK`);
 
+      console.log(`🎉 [${this.collectionName}] Criação completa!`, dataWithId);
       return dataWithId as T & { id: string };
     } catch (error) {
-      console.error(`Error creating ${this.collectionName}:`, error);
+      console.error(`❌ Error creating ${this.collectionName}:`, error);
+      console.error(`❌ Error details:`, JSON.stringify(error, null, 2));
       throw error;
     }
   }

@@ -12,17 +12,13 @@ import { verifySession } from '@/domains/auth/services/sessionService';
 
 export async function GET(req: NextRequest) {
   try {
-    // Verify user is authenticated and is admin
+    // Verify user is authenticated (ANY authenticated user can check)
     const session = await verifySession();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (session.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
-    // Check if calendar is configured
+    // Check if calendar is configured for this user
     const config = await googleCalendarService.getConfig(session.uid);
 
     return NextResponse.json({

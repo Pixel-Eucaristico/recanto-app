@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react';
-import { User } from '@/entities/User';
+import { useAuth } from '@/features/dashboard/contexts/AuthContext';
 import { SendEmail } from '@/integrations/Core';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,16 +14,12 @@ import { MessageCircle, Heart, Bug, Lightbulb, Star } from 'lucide-react';
 
 export default function FeedbackPage() {
     const { toast } = useToast();
-    const [user, setUser] = useState(null);
+    const { user } = useAuth();
     const [category, setCategory] = useState('');
     const [subject, setSubject] = useState('');
     const [message, setMessage] = useState('');
     const [priority, setPriority] = useState('normal');
     const [isSubmitting, setIsSubmitting] = useState(false);
-
-    React.useEffect(() => {
-        User.me().then(setUser).catch(() => {});
-    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();

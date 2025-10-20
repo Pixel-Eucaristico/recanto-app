@@ -12,22 +12,28 @@ import { verifySession } from '@/domains/auth/services/sessionService';
 
 export async function POST(req: NextRequest) {
   try {
-    // Verify user is authenticated and is admin
+    // Verify user is authenticated
     const session = await verifySession();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (session.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    console.log('✅ [Calendar Sync] Iniciando sync para role:', session.role);
 
     // Perform sync
     const result = await googleCalendarService.syncFromGoogleCalendar(
       session.uid
     );
 
+    console.log('📊 [Calendar Sync] Resultado:', {
+      success: result.success,
+      added: result.eventsAdded,
+      updated: result.eventsUpdated,
+      errors: result.errors?.length || 0
+    });
+
     if (!result.success) {
+      console.error('❌ [Calendar Sync] Falhou:', result.errors);
       return NextResponse.json(
         { error: 'Sync failed', details: result.errors },
         { status: 500 }
@@ -44,9 +50,10 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Error syncing calendar:', error);
+    console.error('❌ [Calendar Sync] Erro exception:', error instanceof Error ? error.message : error);
+    console.error('❌ [Calendar Sync] Stack:', error instanceof Error ? error.stack : '');
     return NextResponse.json(
-      { error: 'Failed to sync calendar' },
+      { error: 'Failed to sync calendar', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

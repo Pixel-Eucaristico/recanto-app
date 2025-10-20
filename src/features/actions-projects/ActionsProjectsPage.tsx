@@ -1,10 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Lottie from "lottie-react";
 import Image from "next/image";
-import project from "@/assets/animations/mudar.json";
-import evangelize from "@/assets/animations/mudar.json";
+import HeroProjects from "@/features/main/components/HeroProjects";
+import HeroEvangelization from "@/features/main/components/HeroEvangelization";
 
 export default function ActionsProjectsPage() {
   return (
@@ -96,79 +95,11 @@ export default function ActionsProjectsPage() {
         </div>
       </section>
 
-      {/* Seção Projetos */}
-      <section className="py-16 px-6 w-full max-w-5xl">
-        <motion.h3 className="text-3xl font-semibold text-secondary mb-8 text-center">
-          Nossos Projetos
-        </motion.h3>
-        <motion.div
-          className="grid md:grid-cols-3 gap-8"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          {[
-            {
-              title: "Educação Integral",
-              desc: "Formação cristã para crianças e jovens.",
-              anim: project,
-            },
-            {
-              title: "Formação Missionária",
-              desc: "Capacitação contínua para servir com sabedoria.",
-              anim: project,
-            },
-            {
-              title: "Expansão do Acolhimento",
-              desc: "Ampliação dos espaços para acolher mais vidas.",
-              anim: project,
-            },
-          ].map(({ title, desc, anim }) => (
-            <div key={title} className="space-y-4 text-center">
-              <Lottie animationData={anim} className="h-32 mx-auto" loop />
-              <h4 className="text-xl font-semibold">{title}</h4>
-              <p>{desc}</p>
-            </div>
-          ))}
-        </motion.div>
-      </section>
+      {/* Seção Projetos - Conectado ao CMS */}
+      <HeroProjects />
 
-      {/* Seção Evangelização */}
-      <section className="card py-16 px-6 bg-base-100 w-full max-w-5xl">
-        <motion.h3 className="text-3xl font-semibold text-primary mb-8 text-center">
-          Nossa Evangelização
-        </motion.h3>
-        <div className="grid md:grid-cols-2 gap-8">
-          {[
-            {
-              title: "Escola da Confiança",
-              desc: "Aprender a entregar-se a Deus.",
-              anim: evangelize,
-            },
-            {
-              title: "Testemunho Comunitário",
-              desc: "Nossa vida é anúncio do Amor Misericordioso.",
-              anim: evangelize,
-            },
-            {
-              title: "Eventos e Retiros",
-              desc: "Missas, adorações e formação aberta.",
-              anim: evangelize,
-            },
-            {
-              title: "Presença Digital",
-              desc: "Compartilhamos fé e oração online.",
-              anim: evangelize,
-            },
-          ].map(({ title, desc, anim }) => (
-            <div key={title} className="space-y-4 text-center">
-              <Lottie animationData={anim} className="h-32 mx-auto" loop />
-              <h4 className="text-xl font-semibold">{title}</h4>
-              <p>{desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* Seção Evangelização - Conectado ao CMS */}
+      <HeroEvangelization />
 
       {/* Footer com galeria simples */}
       <footer className="py-12 w-full bg-base-100 text-center">

@@ -12,66 +12,59 @@ import { verifySession } from '@/domains/auth/services/sessionService';
 
 export async function GET(req: NextRequest) {
   try {
-    // Verify user is authenticated and is admin
-    const session = await verifySession();
-    if (!session) {
-      return NextResponse.redirect('/app/login?error=unauthorized');
-    }
-
-    if (session.role !== 'admin') {
-      return NextResponse.redirect('/app/dashboard?error=forbidden');
-    }
-
-    // Get authorization code from query params
+    // Get userId from state parameter (passed in OAuth flow)
     const searchParams = req.nextUrl.searchParams;
+    const userId = searchParams.get('state');
     const code = searchParams.get('code');
 
-    if (!code) {
-      return NextResponse.redirect('/app/dashboard/schedule?error=no_code');
+    if (!userId) {
+      console.error('❌ [Calendar Callback] userId não encontrado no state');
+      return NextResponse.redirect(new URL('/app/login?error=invalid_state', req.url));
     }
+
+    if (!code) {
+      console.error('❌ [Calendar Callback] Código OAuth não fornecido');
+      return NextResponse.redirect(new URL('/app/dashboard/schedule?error=no_code', req.url));
+    }
+
+    // Get user data from Firestore to get email
+    const { firestore } = await import('@/domains/auth/services/firebaseAdmin');
+    const userDoc = await firestore.collection('users').doc(userId).get();
+
+    if (!userDoc.exists) {
+      console.error('❌ [Calendar Callback] Usuário não encontrado');
+      return NextResponse.redirect(new URL('/app/login?error=user_not_found', req.url));
+    }
+
+    const userData = userDoc.data();
+    const userEmail = userData?.email;
+
+    if (!userEmail) {
+      console.error('❌ [Calendar Callback] Email do usuário não encontrado');
+      return NextResponse.redirect(new URL('/app/dashboard/schedule?error=no_email', req.url));
+    }
+
+    console.log('✅ [Calendar Callback] Conectando calendário para role:', userData?.role);
 
     // Exchange code for tokens
     const tokens = await googleCalendarService.getTokensFromCode(code);
 
-    // Get user's primary calendar (email)
-    const calendarId = session.email;
-
-    // Save configuration to Firestore
-    await googleCalendarService.saveConfig(session.uid, {
-      userId: session.uid,
-      calendarId,
+    // Save tokens temporarily (without calendar configuration)
+    await googleCalendarService.saveConfig(userId, {
+      userId,
       tokens,
-      syncEnabled: true,
-      lastSync: new Date().toISOString(),
+      syncEnabled: false, // Will be enabled after calendar selection
+      lastSync: null,
     });
 
-    // Setup webhook for push notifications
-    try {
-      const webhook = await googleCalendarService.setupWebhook(
-        session.uid,
-        calendarId,
-        tokens
-      );
+    console.log('✅ [Calendar Callback] Tokens salvos. Redirecionando para seleção de calendário...');
 
-      await googleCalendarService.saveConfig(session.uid, {
-        webhookChannelId: webhook.channelId,
-        webhookResourceId: webhook.resourceId,
-        webhookExpiration: webhook.expiration,
-      });
-    } catch (webhookError) {
-      console.error('Failed to setup webhook:', webhookError);
-      // Continue anyway, sync will still work manually
-    }
-
-    // Perform initial sync
-    await googleCalendarService.syncFromGoogleCalendar(session.uid);
-
-    // Redirect to schedule page with success message
+    // Redirect to calendar selection page
     return NextResponse.redirect(
-      '/app/dashboard/schedule?success=calendar_connected'
+      new URL('/app/dashboard/schedule?step=select_calendar', req.url)
     );
   } catch (error) {
-    console.error('Error in OAuth callback:', error);
-    return NextResponse.redirect('/app/dashboard/schedule?error=auth_failed');
+    console.error('❌ [Calendar Callback] Erro:', error instanceof Error ? error.message : 'Unknown');
+    return NextResponse.redirect(new URL('/app/dashboard/schedule?error=auth_failed', req.url));
   }
 }

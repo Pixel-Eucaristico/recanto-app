@@ -1,4 +1,11 @@
 {
+  "heroMission": {
+    "title": "Recanto do Amor Misericordioso",
+    "description": "Somos uma comunidade católica em Sumaré dedicada a \"vivenciar o Amor Misericordioso de Jesus Cristo\", realizando retiros e encontros que avivam os corações e transformam histórias de vida. Nosso apostolado é voltado para crianças, jovens e famílias, promovendo educação integral e aperfeiçoamento das virtudes.",
+    "buttonText": "Participe de um Retiro",
+    "buttonLink": "/sobre",
+    "backgroundImage": "/assets/img/hero-recanto.jpg"
+  },
   "communityFeedbacks": [
     {
       "id": 1,
@@ -28,7 +35,7 @@
   "projects": [
     {
       "id": 1,
-      "title": "Retiros Espirituais",
+      "title": "Retiros Espirituais Teste",
       "description": "Retiros de fim de semana para crianças, jovens e famílias, promovendo encontro com Cristo e renovação espiritual.",
       "image": "https://images.unsplash.com/photo-1507692049790-de58290a4334?w=400",
       "category": "retiro",
@@ -48,6 +55,14 @@
       "description": "Ações missionárias nas ruas de Sumaré, levando a Palavra de Deus e o amor misericordioso às pessoas.",
       "image": "https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?w=400",
       "category": "evangelizacao"
+    },
+    {
+      "id": 4,
+      "title": "Vamos de teste",
+      "description": "Evamgelçza",
+      "image": "https://images.unsplash.com/photo-1507692049790-de58290a4334?w=400",
+      "category": "retiro",
+      "link": ""
     }
   ],
   "evangelization": [

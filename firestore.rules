@@ -67,13 +67,20 @@ service cloud.firestore {
       // Leitura: usuários autenticados
       allow read: if isAuthenticated();
 
-      // Escrita: apenas admins
-      allow write: if isAdmin();
+      // Criação: apenas admins
+      allow create: if isAdmin() &&
+                      request.resource.data.keys().hasAll([
+                        'title', 'type', 'category', 'target_audience', 'created_by', 'created_at'
+                      ]);
 
-      // Validação de campos obrigatórios
-      allow create, update: if request.resource.data.keys().hasAll([
-        'id', 'title', 'type', 'category', 'target_audience', 'created_by', 'created_at'
-      ]);
+      // Atualização: apenas admins
+      allow update: if isAdmin() &&
+                      request.resource.data.keys().hasAll([
+                        'id', 'title', 'type', 'category', 'target_audience', 'created_by', 'created_at'
+                      ]);
+
+      // Deleção: apenas admins
+      allow delete: if isAdmin();
     }
 
     // ===========================
@@ -84,16 +91,20 @@ service cloud.firestore {
       allow read: if isAdmin() ||
                     (isAuthenticated() && resource.data.donor_id == request.auth.uid);
 
-      // Escrita: usuários autenticados podem criar doações
-      allow create: if isAuthenticated();
+      // Criação: usuários autenticados
+      allow create: if isAuthenticated() &&
+                      request.resource.data.keys().hasAll([
+                        'value', 'method', 'date', 'status', 'created_at'
+                      ]);
 
-      // Atualização/Deleção: apenas admins
-      allow update, delete: if isAdmin();
+      // Atualização: apenas admins
+      allow update: if isAdmin() &&
+                      request.resource.data.keys().hasAll([
+                        'id', 'value', 'method', 'date', 'status', 'created_at'
+                      ]);
 
-      // Validação de campos obrigatórios
-      allow create, update: if request.resource.data.keys().hasAll([
-        'id', 'value', 'method', 'date', 'status', 'created_at'
-      ]);
+      // Deleção: apenas admins
+      allow delete: if isAdmin();
     }
 
     // ===========================
@@ -104,16 +115,20 @@ service cloud.firestore {
       allow read: if isAuthenticated();
 
       // Criação: admin, missionário ou recantiano
-      allow create: if isAdmin() || isMissionario() || isRecantiano();
+      allow create: if (isAdmin() || isMissionario() || isRecantiano()) &&
+                      request.resource.data.keys().hasAll([
+                        'title', 'created_by', 'created_at'
+                      ]);
 
-      // Atualização/Deleção: admin ou criador do tópico
-      allow update, delete: if isAdmin() ||
-                              (isAuthenticated() && resource.data.created_by == request.auth.uid);
+      // Atualização: admin ou criador do tópico
+      allow update: if (isAdmin() || (isAuthenticated() && resource.data.created_by == request.auth.uid)) &&
+                      request.resource.data.keys().hasAll([
+                        'id', 'title', 'created_by', 'created_at'
+                      ]);
 
-      // Validação de campos obrigatórios
-      allow create, update: if request.resource.data.keys().hasAll([
-        'id', 'title', 'created_by', 'created_at'
-      ]);
+      // Deleção: admin ou criador do tópico
+      allow delete: if isAdmin() ||
+                      (isAuthenticated() && resource.data.created_by == request.auth.uid);
     }
 
     // ===========================
@@ -124,20 +139,20 @@ service cloud.firestore {
       allow read: if isAuthenticated();
 
       // Criação: usuários autenticados
-      allow create: if isAuthenticated();
+      allow create: if isAuthenticated() &&
+                      request.resource.data.keys().hasAll([
+                        'topic_id', 'content', 'created_by', 'is_approved', 'created_at'
+                      ]);
 
       // Atualização: admin (para aprovar) ou criador do post
-      allow update: if isAdmin() ||
-                      (isAuthenticated() && resource.data.created_by == request.auth.uid);
+      allow update: if (isAdmin() || (isAuthenticated() && resource.data.created_by == request.auth.uid)) &&
+                      request.resource.data.keys().hasAll([
+                        'id', 'topic_id', 'content', 'created_by', 'is_approved', 'created_at'
+                      ]);
 
       // Deleção: admin ou criador
       allow delete: if isAdmin() ||
                       (isAuthenticated() && resource.data.created_by == request.auth.uid);
-
-      // Validação de campos obrigatórios
-      allow create, update: if request.resource.data.keys().hasAll([
-        'id', 'topic_id', 'content', 'created_by', 'is_approved', 'created_at'
-      ]);
     }
 
     // ===========================
@@ -149,7 +164,7 @@ service cloud.firestore {
       allow read: if isAuthenticated() ||
                     (resource.data.is_public == true);
 
-      // Criação: admin ou missionário
+      // Criação: admin ou missionário (sem validação restritiva)
       allow create: if isAdmin() || isMissionario();
 
       // Atualização: admin ou missionário
@@ -159,11 +174,6 @@ service cloud.firestore {
 
       // Deleção: apenas admin
       allow delete: if isAdmin();
-
-      // Validação de campos obrigatórios
-      allow create, update: if request.resource.data.keys().hasAll([
-        'id', 'title', 'type', 'start', 'end', 'is_public', 'target_audience', 'created_by', 'created_at'
-      ]);
     }
 
     // ===========================
@@ -176,13 +186,20 @@ service cloud.firestore {
                     isPai() ||
                     (isAuthenticated() && resource.data.recantiano_id == request.auth.uid);
 
-      // Escrita: admin ou missionário
-      allow write: if isAdmin() || isMissionario();
+      // Criação: admin ou missionário
+      allow create: if (isAdmin() || isMissionario()) &&
+                      request.resource.data.keys().hasAll([
+                        'recantiano_id', 'missionario_id', 'date', 'tipo', 'created_at'
+                      ]);
 
-      // Validação de campos obrigatórios
-      allow create, update: if request.resource.data.keys().hasAll([
-        'id', 'recantiano_id', 'missionario_id', 'date', 'tipo', 'created_at'
-      ]);
+      // Atualização: admin ou missionário
+      allow update: if (isAdmin() || isMissionario()) &&
+                      request.resource.data.keys().hasAll([
+                        'id', 'recantiano_id', 'missionario_id', 'date', 'tipo', 'created_at'
+                      ]);
+
+      // Deleção: admin ou missionário
+      allow delete: if isAdmin() || isMissionario();
     }
 
     // ===========================
@@ -192,13 +209,20 @@ service cloud.firestore {
       // Leitura: usuários autenticados
       allow read: if isAuthenticated();
 
-      // Escrita: apenas admins
-      allow write: if isAdmin();
+      // Criação: apenas admins
+      allow create: if isAdmin() &&
+                      request.resource.data.keys().hasAll([
+                        'title', 'description', 'category', 'difficulty', 'created_at'
+                      ]);
 
-      // Validação de campos obrigatórios
-      allow create, update: if request.resource.data.keys().hasAll([
-        'id', 'title', 'description', 'category', 'difficulty', 'created_at'
-      ]);
+      // Atualização: apenas admins
+      allow update: if isAdmin() &&
+                      request.resource.data.keys().hasAll([
+                        'id', 'title', 'description', 'category', 'difficulty', 'created_at'
+                      ]);
+
+      // Deleção: apenas admins
+      allow delete: if isAdmin();
     }
 
     // ===========================
@@ -210,21 +234,22 @@ service cloud.firestore {
                     isMissionario() ||
                     (isAuthenticated() && resource.data.recantiano_id == request.auth.uid);
 
-      // Escrita: usuários autenticados (para registrar seus próprios desafios)
-      allow create: if isAuthenticated();
+      // Criação: usuários autenticados
+      allow create: if isAuthenticated() &&
+                      request.resource.data.keys().hasAll([
+                        'desafio_id', 'recantiano_id', 'completed', 'created_at'
+                      ]);
 
       // Atualização: admin, missionário ou o próprio recantiano
-      allow update: if isAdmin() ||
+      allow update: if (isAdmin() ||
                       isMissionario() ||
-                      (isAuthenticated() && resource.data.recantiano_id == request.auth.uid);
+                      (isAuthenticated() && resource.data.recantiano_id == request.auth.uid)) &&
+                      request.resource.data.keys().hasAll([
+                        'id', 'desafio_id', 'recantiano_id', 'completed', 'created_at'
+                      ]);
 
       // Deleção: apenas admins
       allow delete: if isAdmin();
-
-      // Validação de campos obrigatórios
-      allow create, update: if request.resource.data.keys().hasAll([
-        'id', 'desafio_id', 'recantiano_id', 'completed', 'created_at'
-      ]);
     }
 
     // ===========================

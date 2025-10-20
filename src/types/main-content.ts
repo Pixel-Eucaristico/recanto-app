@@ -3,6 +3,14 @@
  * Content stored in repositor/main-content.json
  */
 
+export interface HeroMission {
+  title: string;
+  description: string;
+  buttonText: string;
+  buttonLink: string;
+  backgroundImage: string;
+}
+
 export interface CommunityFeedback {
   id: number;
   name: string;
@@ -30,6 +38,7 @@ export interface Evangelization {
 }
 
 export interface MainPageContent {
+  heroMission: HeroMission;
   communityFeedbacks: CommunityFeedback[];
   projects: Project[];
   evangelization: Evangelization[];

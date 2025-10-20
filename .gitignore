@@ -879,3 +879,4 @@ src/config/admin-whitelist.ts
 # Firebase Service Account (NUNCA commitar - acesso admin ao Firebase!)
 firebase-service-account.json
 *-service-account.json
+*.txt

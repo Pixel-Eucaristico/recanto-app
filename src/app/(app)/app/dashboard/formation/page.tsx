@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Material } from '@/entities/Material';
-import { User } from '@/entities/User';
+import { useAuth } from '@/features/dashboard/contexts/AuthContext';
 import { Loader2, Book, Video, FileText, Search, Plus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -25,22 +25,22 @@ const categoryColors = {
 };
 
 export default function FormationPage() {
+    const { user } = useAuth();
     const [materials, setMaterials] = useState([]);
-    const [user, setUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('all');
 
     useEffect(() => {
         const fetchData = async () => {
+            if (!user) return;
+
             try {
-                const currentUser = await User.me();
-                setUser(currentUser);
                 const allMaterials = await Material.list();
-                const authorizedMaterials = allMaterials.filter(m => 
-                    m.authorized_roles?.includes(currentUser.role) || 
+                const authorizedMaterials = allMaterials.filter(m =>
+                    m.authorized_roles?.includes(user.role) ||
                     m.authorized_roles?.includes('all') ||
-                    currentUser.role === 'admin'
+                    user.role === 'admin'
                 );
                 setMaterials(authorizedMaterials);
             } catch (error) {
@@ -50,7 +50,7 @@ export default function FormationPage() {
             }
         };
         fetchData();
-    }, []);
+    }, [user]);
 
     const filteredMaterials = materials.filter(m => {
         const matchesSearch = m.title.toLowerCase().includes(searchTerm.toLowerCase()) ||

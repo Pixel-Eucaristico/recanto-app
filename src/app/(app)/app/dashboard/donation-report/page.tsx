@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Donation } from '@/entities/Donation';
-import { User } from '@/entities/User';
+import { useAuth } from '@/features/dashboard/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -13,17 +13,16 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export default function DonationReportPage() {
+    const { user } = useAuth();
     const [donations, setDonations] = useState([]);
-    const [user, setUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         const fetchData = async () => {
+            if (!user) return;
+
             try {
-                const currentUser = await User.me();
-                setUser(currentUser);
-                
-                if (currentUser.role === 'admin') {
+                if (user.role === 'admin') {
                     const allDonations = await Donation.list('-date');
                     setDonations(allDonations);
                 }
@@ -34,7 +33,7 @@ export default function DonationReportPage() {
             }
         };
         fetchData();
-    }, []);
+    }, [user]);
 
     const confirmDonation = async (donationId) => {
         try {

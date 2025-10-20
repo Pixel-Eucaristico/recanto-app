@@ -54,6 +54,15 @@ export interface GoogleCalendarEvent {
     email?: string;
     displayName?: string;
   };
+  colorId?: string; // Color ID for the event (1-11)
+  extendedProperties?: {
+    private?: {
+      [key: string]: string;
+    };
+    shared?: {
+      [key: string]: string;
+    };
+  };
 }
 
 /**

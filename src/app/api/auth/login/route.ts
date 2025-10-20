@@ -9,10 +9,11 @@ export async function POST(req: Request) {
   const { token } = await req.json();
 
   try {
-    const decoded = await adminAuth.verifyIdToken(token, true); // checkRevoked=false/true
-    sessionService.set(token);
+    const decoded = await adminAuth.verifyIdToken(token, true);
+    await sessionService.set(token);
     return NextResponse.json({ user: decoded });
   } catch (e) {
+    console.error('❌ [Login] Erro:', e instanceof Error ? e.message : 'Token inválido');
     return NextResponse.json({ error: "Token inválido" }, { status: 401 });
   }
 }

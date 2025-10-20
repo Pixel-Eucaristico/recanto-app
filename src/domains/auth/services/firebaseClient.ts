@@ -12,24 +12,25 @@ import { getFirestore } from "firebase/firestore";
 import { getAnalytics } from "firebase/analytics";
 
 // ----------------------------------------------------
-// Verificação de variáveis de ambiente
+// Verificação de variáveis de ambiente (apenas em desenvolvimento)
 // ----------------------------------------------------
-const requiredEnv = [
-  "NEXT_PUBLIC_FIREBASE_API_KEY",
-  "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN",
-  "NEXT_PUBLIC_FIREBASE_PROJECT_ID",
-  "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET",
-  "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID",
-  "NEXT_PUBLIC_FIREBASE_APP_ID",
-  "NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID",
-  "NEXT_PUBLIC_FIREBASE_DATABASE_URL",
-];
+if (process.env.NODE_ENV === 'development') {
+  const requiredEnv = [
+    "NEXT_PUBLIC_FIREBASE_API_KEY",
+    "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN",
+    "NEXT_PUBLIC_FIREBASE_PROJECT_ID",
+    "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET",
+    "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID",
+    "NEXT_PUBLIC_FIREBASE_APP_ID",
+    "NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID",
+    "NEXT_PUBLIC_FIREBASE_DATABASE_URL",
+  ];
 
-requiredEnv.forEach((key) => {
-  if (!process.env[key]) {
-    console.warn(`[Firebase] Variável de ambiente ${key} não definida!`);
+  const missing = requiredEnv.filter((key) => !process.env[key]);
+  if (missing.length > 0 && typeof window !== 'undefined') {
+    console.warn(`[Firebase] ${missing.length} variáveis de ambiente não definidas no client`);
   }
-});
+}
 
 // ----------------------------------------------------
 // Configuração Firebase
