@@ -27,17 +27,19 @@ export const HeroMissionConfig: ModConfig = {
       name: 'buttonText',
       label: 'Texto do Botão',
       type: 'string',
-      required: true,
+      required: false,
       default: 'Participe de um Retiro',
-      placeholder: 'Texto do botão...'
+      placeholder: 'Texto do botão...',
+      description: 'Deixe em branco se não quiser mostrar botão'
     },
     {
       name: 'buttonLink',
       label: 'Link do Botão',
       type: 'string',
-      required: true,
+      required: false,
       default: '/sobre',
-      placeholder: '/sobre, /contatos, etc...'
+      placeholder: '/sobre, /contatos, etc...',
+      description: 'URL para onde o botão vai levar'
     },
     {
       name: 'backgroundImage',
@@ -46,6 +48,24 @@ export const HeroMissionConfig: ModConfig = {
       required: false,
       default: 'https://images.unsplash.com/photo-1438032005730-c779502df39b?w=1200',
       placeholder: 'https://...'
+    },
+    {
+      name: 'overlayOpacity',
+      label: 'Escurecimento da Imagem',
+      type: 'select',
+      options: [
+        { value: '90', label: 'Muito Escuro (90%)' },
+        { value: '80', label: 'Bem Escuro (80%)' },
+        { value: '70', label: 'Escuro (70%)' },
+        { value: '60', label: 'Médio Escuro (60%)' },
+        { value: '50', label: 'Meio Escuro (50% - padrão)' },
+        { value: '40', label: 'Pouco Escuro (40%)' },
+        { value: '30', label: 'Levemente Escuro (30%)' },
+        { value: '20', label: 'Muito Leve (20%)' },
+        { value: '10', label: 'Quase Transparente (10%)' },
+      ],
+      default: '50',
+      description: 'Quanto a imagem fica escurecida para destacar o texto (maior = mais escuro)'
     }
   ]
 };

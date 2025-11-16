@@ -5,6 +5,7 @@ interface HeroProps {
   subtitle: string;
   theme?: 'primary' | 'secondary' | 'accent';
   imageUrl?: string;
+  imageOpacity?: '100' | '80' | '60' | '40' | '20' | '10';
   ctaText?: string;
   ctaLink?: string;
 }
@@ -18,9 +19,19 @@ export default function Hero({
   subtitle,
   theme = 'primary',
   imageUrl,
+  imageOpacity = '40',
   ctaText,
   ctaLink
 }: HeroProps) {
+  const opacityClasses = {
+    '100': 'opacity-100',
+    '80': 'opacity-80',
+    '60': 'opacity-60',
+    '40': 'opacity-40',
+    '20': 'opacity-20',
+    '10': 'opacity-10',
+  };
+
   return (
     <div className={`hero min-h-screen bg-${theme}`}>
       <div className="hero-content flex-col lg:flex-row-reverse">
@@ -30,7 +41,7 @@ export default function Hero({
               src={imageUrl}
               alt={title}
               fill
-              className="rounded-lg shadow-2xl object-cover"
+              className={`rounded-lg shadow-2xl object-cover ${opacityClasses[imageOpacity]}`}
             />
           </div>
         )}

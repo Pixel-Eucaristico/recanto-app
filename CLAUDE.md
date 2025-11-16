@@ -101,15 +101,99 @@ Always use the Next.js 13+ Image API:
   - ✅ Use componentes de ícone: `<ArrowDown />`, `<Check />`, `<X />`
   - Exemplo: `import { ArrowDown, Check, X } from 'lucide-react'`
 
-### User Feedback
+### User Feedback & UX Intuitiva
 - ❌ **NUNCA** use `alert()`, `confirm()` ou `prompt()` do JavaScript
 - ✅ **SEMPRE** use modais do DaisyUI para confirmações e mensagens
 - ✅ Use `toast` notifications para feedback rápido
 - Componentes de modal devem estar em `src/components/ui/modals/`
 
+### ⚠️ REGRA DE OURO: Editores CMS SEMPRE Visuais e Intuitivos
+
+**Usuários do CMS são LEIGOS - não desenvolvedores!**
+
+❌ **NUNCA faça:**
+```tsx
+// Pedir JSON para usuário leigo
+<textarea placeholder='[{"text": "..."}]' />  {/* ❌ HORRÍVEL! */}
+
+// Input de texto para coisas que têm opções limitadas
+<input type="text" placeholder="primary, secondary, accent..." />  {/* ❌ CONFUSO! */}
+
+// Pedir URL de animação manualmente
+<input type="url" placeholder="URL da animação..." />  {/* ❌ NÃO INTUITIVO! */}
+```
+
+✅ **SEMPRE faça:**
+```tsx
+// Arrays: Botões +/- para adicionar/remover itens
+<ParagraphsEditor value={paragraphs} onChange={...} />  {/* ✅ VISUAL! */}
+
+// Opções limitadas: SELECT com labels claras
+<select>
+  <option value="primary">Azul Principal</option>
+  <option value="secondary">Laranja Secundário</option>
+</select>  {/* ✅ CLARO! */}
+
+// Recursos (animações, imagens): MODAL com PREVIEWS visuais
+<AnimationPicker onSelect={...} />  {/* ✅ VÊ O QUE ESTÁ ESCOLHENDO! */}
+```
+
+**Checklist para TODO campo do CMS:**
+- [ ] Usuário leigo consegue entender o que fazer?
+- [ ] Tem preview visual do que está escolhendo?
+- [ ] Tem validação clara com mensagens amigáveis?
+- [ ] Usa drag-and-drop quando apropriado?
+- [ ] Mostra exemplos ou placeholders úteis?
+
+**Se a resposta for NÃO para qualquer item acima, REFAÇA o editor!**
+
+### ⚠️ CRÍTICO: Classes Tailwind Dinâmicas
+
+**Tailwind CSS só inclui classes que estão DIRETAMENTE no código durante o build!**
+
+❌ **NUNCA faça:**
+```tsx
+// Classes dinâmicas NÃO funcionam no build!
+const color = "primary"; // vem do banco de dados
+<button className={`btn-${color}`}>  {/* ❌ NÃO FUNCIONA! */}
+<button className={color === "primary" ? "btn-primary" : "btn-secondary"}>  {/* ❌ NÃO FUNCIONA! */}
+```
+
+✅ **SEMPRE faça:**
+```tsx
+// Crie um mapeamento com TODAS as classes hardcoded
+const buttonVariants = {
+  color: {
+    primary: "btn-primary",
+    secondary: "btn-secondary",
+    accent: "btn-accent",
+  }
+};
+
+// Armazene apenas a CHAVE no banco de dados
+const colorKey = "primary"; // vem do banco de dados
+<button className={buttonVariants.color[colorKey]}>  {/* ✅ FUNCIONA! */}
+```
+
+**Por quê?**
+O Tailwind faz **tree-shaking** - analisa o código e só inclui classes que encontra literalmente escritas. Classes construídas dinamicamente são invisíveis para o compilador.
+
+**Aplica-se a:**
+- Props do CMS que controlam estilos
+- Variantes de componentes
+- Temas e cores dinâmicos
+- Qualquer classe que vem de variável/banco de dados
+
 ### ⚠️ IMPORTANTE: Cores e Temas
 
 **SEMPRE use as cores semânticas do DaisyUI** para garantir compatibilidade com todos os temas:
+
+**CRÍTICO: Cores nos Labels do CMS**
+- Quando criar options de cores para o CMS, SEMPRE deixe claro que mudam com o tema
+- ✅ CORRETO: `{ value: 'primary', label: 'Principal (muda com o tema)' }`
+- ❌ ERRADO: `{ value: 'primary', label: 'Azul Principal' }`
+- Por quê? A cor "primary" pode ser azul no tema "light" mas laranja no tema "cyberpunk"
+- Cores fixas: info (azul), success (verde), warning (amarelo), error (vermelho)
 
 ✅ **Classes permitidas:**
 - `bg-base-100`, `bg-base-200`, `bg-base-300` (backgrounds)

@@ -5,6 +5,10 @@ import type { ModPropConfig } from '@/types/cms-types';
 import TestimonialsEditor from './TestimonialsEditor';
 import EvangelizationActionsEditor from './EvangelizationActionsEditor';
 import ProjectsEditor from './ProjectsEditor';
+import { ParagraphsEditor } from './ParagraphsEditor';
+import { AnimationPicker } from './AnimationPicker';
+import { PillarsEditor } from './PillarsEditor';
+import { ButtonsEditor } from './ButtonsEditor';
 
 interface DynamicModFormProps {
   modId: string;
@@ -32,23 +36,50 @@ export default function DynamicModForm({
   };
 
   const renderInput = (config: ModPropConfig) => {
-    const value = formValues[config.name] ?? config.default ?? '';
+    // Suporta tanto 'name' quanto 'key' (legacy) para compatibilidade
+    const propName = config.name || (config as any).key || '';
+    const value = formValues[propName] ?? config.default ?? (config as any).defaultValue ?? '';
 
     switch (config.type) {
+      case 'select':
+        // Select dropdown com suporte para string[] ou {value, label}[]
+        return (
+          <select
+            className="select select-bordered w-full"
+            value={value}
+            onChange={(e) => handleChange(propName, e.target.value)}
+          >
+            {config.options?.map((option) => {
+              // Suporta tanto strings quanto objetos {value, label}
+              const optionValue = typeof option === 'string' ? option : option.value;
+              const optionLabel = typeof option === 'string' ? option : option.label;
+              return (
+                <option key={optionValue} value={optionValue}>
+                  {optionLabel}
+                </option>
+              );
+            })}
+          </select>
+        );
+
       case 'string':
         if (config.options && config.options.length > 0) {
-          // Select dropdown for predefined options
+          // Select dropdown for predefined options (legacy support)
           return (
             <select
               className="select select-bordered w-full"
               value={value}
-              onChange={(e) => handleChange(config.name, e.target.value)}
+              onChange={(e) => handleChange(propName, e.target.value)}
             >
-              {config.options.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
+              {config.options.map((option) => {
+                const optionValue = typeof option === 'string' ? option : option.value;
+                const optionLabel = typeof option === 'string' ? option : option.label;
+                return (
+                  <option key={optionValue} value={optionValue}>
+                    {optionLabel}
+                  </option>
+                );
+              })}
             </select>
           );
         } else if (config.multiline) {
@@ -58,7 +89,7 @@ export default function DynamicModForm({
               className="textarea textarea-bordered w-full h-24"
               placeholder={config.placeholder || ''}
               value={value}
-              onChange={(e) => handleChange(config.name, e.target.value)}
+              onChange={(e) => handleChange(propName, e.target.value)}
             />
           );
         } else {
@@ -69,7 +100,7 @@ export default function DynamicModForm({
               className="input input-bordered w-full"
               placeholder={config.placeholder || ''}
               value={value}
-              onChange={(e) => handleChange(config.name, e.target.value)}
+              onChange={(e) => handleChange(propName, e.target.value)}
             />
           );
         }
@@ -81,7 +112,7 @@ export default function DynamicModForm({
             className="input input-bordered w-full"
             placeholder={config.placeholder || ''}
             value={value}
-            onChange={(e) => handleChange(config.name, parseFloat(e.target.value) || 0)}
+            onChange={(e) => handleChange(propName, parseFloat(e.target.value) || 0)}
           />
         );
 
@@ -91,7 +122,7 @@ export default function DynamicModForm({
             type="checkbox"
             className="checkbox checkbox-primary"
             checked={value}
-            onChange={(e) => handleChange(config.name, e.target.checked)}
+            onChange={(e) => handleChange(propName, e.target.checked)}
           />
         );
 
@@ -102,7 +133,7 @@ export default function DynamicModForm({
             className="input input-bordered w-full"
             placeholder={config.placeholder || 'https://...'}
             value={value}
-            onChange={(e) => handleChange(config.name, e.target.value)}
+            onChange={(e) => handleChange(propName, e.target.value)}
           />
         );
 
@@ -110,7 +141,7 @@ export default function DynamicModForm({
         return (
           <TestimonialsEditor
             value={value}
-            onChange={(newValue) => handleChange(config.name, newValue)}
+            onChange={(newValue) => handleChange(propName, newValue)}
           />
         );
 
@@ -118,7 +149,7 @@ export default function DynamicModForm({
         return (
           <EvangelizationActionsEditor
             value={value}
-            onChange={(newValue) => handleChange(config.name, newValue)}
+            onChange={(newValue) => handleChange(propName, newValue)}
           />
         );
 
@@ -126,7 +157,39 @@ export default function DynamicModForm({
         return (
           <ProjectsEditor
             value={value}
-            onChange={(newValue) => handleChange(config.name, newValue)}
+            onChange={(newValue) => handleChange(propName, newValue)}
+          />
+        );
+
+      case 'paragraphs-editor':
+        return (
+          <ParagraphsEditor
+            value={value}
+            onChange={(newValue) => handleChange(propName, newValue)}
+          />
+        );
+
+      case 'animation-picker':
+        return (
+          <AnimationPicker
+            value={value}
+            onChange={(newValue) => handleChange(propName, newValue)}
+          />
+        );
+
+      case 'pillars-editor':
+        return (
+          <PillarsEditor
+            value={value}
+            onChange={(newValue) => handleChange(propName, newValue)}
+          />
+        );
+
+      case 'buttons-editor':
+        return (
+          <ButtonsEditor
+            value={value}
+            onChange={(newValue) => handleChange(propName, newValue)}
           />
         );
 
@@ -137,7 +200,7 @@ export default function DynamicModForm({
             className="input input-bordered w-full"
             placeholder={config.placeholder || ''}
             value={value}
-            onChange={(e) => handleChange(config.name, e.target.value)}
+            onChange={(e) => handleChange(propName, e.target.value)}
           />
         );
     }
@@ -145,24 +208,29 @@ export default function DynamicModForm({
 
   return (
     <div className="space-y-4">
-      {propConfigs.map((config) => (
-        <div key={config.name} className="form-control">
-          <label className="label">
-            <span className="label-text font-semibold">
-              {config.label}
-              {config.required && <span className="text-error ml-1">*</span>}
-            </span>
-          </label>
-          {renderInput(config)}
-          {config.description && (
+      {propConfigs.map((config) => {
+        const propName = config.name || (config as any).key || '';
+        const helpText = config.description || (config as any).helpText || '';
+
+        return (
+          <div key={propName} className="form-control">
             <label className="label">
-              <span className="label-text-alt text-base-content/60">
-                {config.description}
+              <span className="label-text font-semibold">
+                {config.label}
+                {config.required && <span className="text-error ml-1">*</span>}
               </span>
             </label>
-          )}
-        </div>
-      ))}
+            {renderInput(config)}
+            {helpText && (
+              <label className="label">
+                <span className="label-text-alt text-base-content/60">
+                  {helpText}
+                </span>
+              </label>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

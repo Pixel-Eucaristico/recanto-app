@@ -17,6 +17,14 @@ import EvangelizationActions from './EvangelizationActions/EvangelizationActions
 import { EvangelizationActionsConfig } from './EvangelizationActions/config';
 import ProjectsShowcase from './ProjectsShowcase/ProjectsShowcase';
 import { ProjectsShowcaseConfig } from './ProjectsShowcase/config';
+import { TextIntro } from './TextIntro/TextIntro';
+import { textIntroConfig } from './TextIntro/config';
+import { TextWithAnimation } from './TextWithAnimation/TextWithAnimation';
+import { textWithAnimationConfig } from './TextWithAnimation/config';
+import { PillarsGrid } from './PillarsGrid/PillarsGrid';
+import { pillarsGridConfig } from './PillarsGrid/config';
+import { CallToAction } from './CallToAction/CallToAction';
+import { callToActionConfig } from './CallToAction/config';
 import { ModConfig } from '@/types/cms-types';
 
 // ============================================
@@ -34,11 +42,11 @@ export const ModComponents = {
   Testimonials,
   EvangelizationActions,
   ProjectsShowcase,
+  TextIntro,
+  TextWithAnimation,
+  PillarsGrid,
+  CallToAction,
   // Futuros Mods:
-  // AboutSection,
-  // CTASection,
-  // InternalHero,
-  // ValuesGrid,
   // TeamGrid,
   // Gallery,
   // ChartBlock,
@@ -60,6 +68,10 @@ export const ModConfigs: Record<string, ModConfig> = {
   Testimonials: TestimonialsConfig,
   EvangelizationActions: EvangelizationActionsConfig,
   ProjectsShowcase: ProjectsShowcaseConfig,
+  TextIntro: textIntroConfig,
+  TextWithAnimation: textWithAnimationConfig,
+  PillarsGrid: pillarsGridConfig,
+  CallToAction: callToActionConfig,
   // Futuros Configs...
 };
 

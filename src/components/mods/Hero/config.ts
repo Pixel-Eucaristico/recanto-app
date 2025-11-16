@@ -12,43 +12,67 @@ export const HeroConfig: ModConfig = {
   category: 'hero',
   props: [
     {
-      key: 'title',
+      name: 'title',
       label: 'Título Principal',
       type: 'text',
       required: true,
       placeholder: 'Ex: Bem-vindo ao Recanto'
     },
     {
-      key: 'subtitle',
+      name: 'subtitle',
       label: 'Subtítulo',
       type: 'textarea',
       required: true,
-      helpText: 'Texto descritivo abaixo do título'
+      description: 'Texto descritivo abaixo do título'
     },
     {
-      key: 'theme',
-      label: 'Tema de Cor',
+      name: 'theme',
+      label: 'Cor do Tema',
       type: 'select',
-      options: ['primary', 'secondary', 'accent'],
-      defaultValue: 'primary'
+      options: [
+        { value: 'primary', label: 'Principal (muda com o tema)' },
+        { value: 'secondary', label: 'Secundário (muda com o tema)' },
+        { value: 'accent', label: 'Destaque (muda com o tema)' },
+      ],
+      default: 'primary',
+      description: 'Cor semântica que se adapta ao tema escolhido'
     },
     {
-      key: 'imageUrl',
+      name: 'imageUrl',
       label: 'Imagem',
-      type: 'image',
-      helpText: 'URL da imagem ou upload'
+      type: 'url',
+      description: 'URL da imagem'
     },
     {
-      key: 'ctaText',
+      name: 'imageOpacity',
+      label: 'Opacidade da Imagem',
+      type: 'select',
+      options: [
+        { value: '100', label: 'Totalmente Visível (100%)' },
+        { value: '80', label: 'Muito Visível (80%)' },
+        { value: '60', label: 'Visível (60%)' },
+        { value: '40', label: 'Meio Transparente (40%)' },
+        { value: '20', label: 'Transparente (20%)' },
+        { value: '10', label: 'Muito Transparente (10%)' },
+      ],
+      default: '40',
+      description: 'Quanto a imagem fica destacada (menor = mais suave)'
+    },
+    {
+      name: 'ctaText',
       label: 'Texto do Botão (CTA)',
       type: 'text',
-      placeholder: 'Ex: Saiba Mais'
+      required: false,
+      placeholder: 'Ex: Saiba Mais',
+      description: 'Deixe em branco se não quiser mostrar botão'
     },
     {
-      key: 'ctaLink',
+      name: 'ctaLink',
       label: 'Link do Botão',
       type: 'text',
-      placeholder: 'Ex: /sobre'
+      required: false,
+      placeholder: 'Ex: /sobre',
+      description: 'URL para onde o botão vai levar'
     }
   ]
 };

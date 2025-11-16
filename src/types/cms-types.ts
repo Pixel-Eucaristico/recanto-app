@@ -63,6 +63,14 @@ export interface ModConfig {
 }
 
 /**
+ * Opção de select com value e label
+ */
+export interface SelectOption {
+  value: string;
+  label: string;
+}
+
+/**
  * Configuração de uma prop de Mod
  * Define como cada prop será editada no admin
  */
@@ -70,8 +78,8 @@ export interface ModPropConfig {
   key?: string;                    // Nome da prop (legacy)
   name?: string;                   // Nome da prop (novo padrão)
   label: string;                   // Label no editor
-  type: 'text' | 'textarea' | 'select' | 'number' | 'boolean' | 'json-editor' | 'image' | 'color' | 'date' | 'string' | 'url' | 'testimonials-editor';
-  options?: string[];              // Para type="select"
+  type: 'text' | 'textarea' | 'select' | 'number' | 'boolean' | 'json-editor' | 'image' | 'color' | 'date' | 'string' | 'url' | 'testimonials-editor' | 'paragraphs-editor' | 'animation-picker' | 'pillars-editor' | 'buttons-editor' | 'evangelization-actions-editor' | 'projects-editor';
+  options?: (string | SelectOption)[];  // Para type="select" - suporta strings simples ou {value, label}
   required?: boolean;
   default?: any;                   // Valor padrão (novo)
   defaultValue?: any;              // Valor padrão (legacy)

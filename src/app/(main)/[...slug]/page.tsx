@@ -35,8 +35,45 @@ export default async function DynamicPage({ params }: PageProps) {
     notFound();
   }
 
+  // Debug: Verificar se page.blocks existe
+  console.log('🔍 [DEBUG] Página completa:', {
+    slug: page.slug,
+    title: page.title,
+    hasBlocksField: 'blocks' in page,
+    blocksType: typeof page.blocks,
+    blocksIsArray: Array.isArray(page.blocks),
+    blocksValue: page.blocks,
+  });
+
+  // Garantir que blocks existe e é array
+  const blocks = Array.isArray(page.blocks) ? page.blocks : [];
+
   // Ordenar blocos por order
-  const sortedBlocks = [...page.blocks].sort((a, b) => a.order - b.order);
+  const sortedBlocks = [...blocks].sort((a, b) => a.order - b.order);
+
+  // Debug: Log da página
+  console.log(`📄 [CMS] Renderizando página: ${page.slug}`, {
+    title: page.title,
+    totalBlocks: sortedBlocks.length,
+    blocks: sortedBlocks.map(b => ({ modId: b.modId, order: b.order })),
+  });
+
+  // Se não há blocos, mostrar mensagem
+  if (sortedBlocks.length === 0) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center">
+        <div className="card bg-base-200 shadow-xl max-w-md">
+          <div className="card-body text-center">
+            <h2 className="card-title">Página sem conteúdo</h2>
+            <p className="text-base-content/60">
+              Esta página está publicada mas não possui blocos de conteúdo.
+              Adicione blocos no editor CMS.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -44,9 +81,15 @@ export default async function DynamicPage({ params }: PageProps) {
         const Component = ModComponents[block.modId as keyof typeof ModComponents];
 
         if (!Component) {
-          console.warn(`Mod "${block.modId}" não encontrado`);
-          return null;
+          console.warn(`❌ [CMS] Mod "${block.modId}" não encontrado em ModComponents`);
+          return (
+            <div key={block.id} className="alert alert-error">
+              <span>Erro: Mod "{block.modId}" não encontrado</span>
+            </div>
+          );
         }
+
+        console.log(`✅ [CMS] Renderizando Mod: ${block.modId}`);
 
         // Renderiza o Mod com suas props
         return (
