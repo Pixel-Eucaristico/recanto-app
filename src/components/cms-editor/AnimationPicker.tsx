@@ -11,21 +11,15 @@ interface AnimationPickerProps {
   onChange: (value: string) => void;
 }
 
-const AVAILABLE_ANIMATIONS = [
-  { id: 'none', name: 'Sem Animação', file: null },
-  { id: 'career-animation.json', name: 'Carreira', file: 'career-animation.json' },
-  { id: 'church.json', name: 'Igreja', file: 'church.json' },
-  { id: 'contact-us.json', name: 'Contato', file: 'contact-us.json' },
-  { id: 'donate.json', name: 'Doação', file: 'donate.json' },
-  { id: 'heart.json', name: 'Coração', file: 'heart.json' },
-  { id: 'helping-the-needy.json', name: 'Ajuda ao Próximo', file: 'helping-the-needy.json' },
-  { id: 'mary.json', name: 'Nossa Senhora', file: 'mary.json' },
-  { id: 'mudar.json', name: 'Mudança/Fé', file: 'mudar.json' },
-  { id: 'network.json', name: 'Rede/Comunidade', file: 'network.json' },
-];
+interface Animation {
+  id: string;
+  name: string;
+  file: string | null;
+}
 
 /**
  * Seletor visual de animações Lottie
+ * Lista automaticamente os arquivos de public/animations/
  * Modal com previews - usuário VÊ o que está escolhendo!
  */
 export function AnimationPicker({ value = 'none', onChange }: AnimationPickerProps) {
@@ -34,6 +28,24 @@ export function AnimationPicker({ value = 'none', onChange }: AnimationPickerPro
   const [previewData, setPreviewData] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [availableAnimations, setAvailableAnimations] = useState<Animation[]>([
+    { id: 'none', name: 'Sem Animação', file: null },
+  ]);
+  const [loading, setLoading] = useState(true);
+
+  // Carregar lista de animações disponíveis
+  useEffect(() => {
+    fetch('/api/animations')
+      .then((res) => res.json())
+      .then((data) => {
+        setAvailableAnimations(data);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error('Erro ao carregar animações:', error);
+        setLoading(false);
+      });
+  }, []);
 
   // Carregar preview da animação selecionada
   useEffect(() => {
@@ -106,6 +118,13 @@ export function AnimationPicker({ value = 'none', onChange }: AnimationPickerPro
       // Selecionar a animação recém-enviada
       setSelected(filename);
       onChange(filename);
+
+      // Recarregar lista de animações
+      fetch('/api/animations')
+        .then((res) => res.json())
+        .then((data) => setAvailableAnimations(data))
+        .catch(console.error);
+
       setIsOpen(false);
       setUploadError(null);
     } catch (error) {
@@ -116,7 +135,7 @@ export function AnimationPicker({ value = 'none', onChange }: AnimationPickerPro
     }
   };
 
-  const selectedAnimation = AVAILABLE_ANIMATIONS.find((a) => a.id === selected);
+  const selectedAnimation = availableAnimations.find((a) => a.id === selected);
   const isCustomUrl = selected && selected !== 'none' && !selectedAnimation;
 
   return (
@@ -167,7 +186,13 @@ export function AnimationPicker({ value = 'none', onChange }: AnimationPickerPro
 
             {/* Grid de animações */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-h-[60vh] overflow-y-auto mb-4">
-              {AVAILABLE_ANIMATIONS.map((animation) => (
+              {loading ? (
+                <div className="col-span-2 md:col-span-3 flex items-center justify-center py-8">
+                  <span className="loading loading-spinner loading-lg"></span>
+                  <span className="ml-3">Carregando animações...</span>
+                </div>
+              ) : (
+                availableAnimations.map((animation) => (
                 <button
                   key={animation.id}
                   type="button"
@@ -195,7 +220,8 @@ export function AnimationPicker({ value = 'none', onChange }: AnimationPickerPro
                     </div>
                   </div>
                 </button>
-              ))}
+              ))
+              )}
             </div>
 
             {/* Opção de Upload de Arquivo */}

@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { contentPageService } from '@/services/firebase/ContentPageService';
+import { contentPageService } from '@/services/firebase';
 import { ModComponents } from '@/components/mods';
 import { CMSPage, CMSBlock } from '@/types/cms-types';
 
@@ -108,13 +108,26 @@ export default async function DynamicPage({ params }: PageProps) {
             );
           }
 
-          console.log(`✅ [CMS] Renderizando Mod: ${block.modId}`);
+          console.log(`✅ [CMS] Renderizando Mod: ${block.modId}`, {
+            blockId: block.id,
+            hasProps: !!block.props,
+            propsKeys: block.props ? Object.keys(block.props) : [],
+          });
+          console.log('📦 Props completas:', JSON.stringify(block.props, null, 2));
 
-          // Renderiza o Mod com suas props
+          // Corrigir aninhamento incorreto de props (props.props -> props)
+          // Se props.props existe e tem dados, usar ele ao invés de props
+          const actualProps = (block.props?.props && Object.keys(block.props.props).length > 0)
+            ? block.props.props
+            : block.props;
+
+          console.log('✅ Props finais usadas:', JSON.stringify(actualProps, null, 2));
+
+          // Renderiza o Mod com suas props corretas
           return (
             <Component
               key={block.id}
-              {...block.props}
+              {...actualProps}
             />
           );
         })}

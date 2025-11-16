@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Plus, Save, Eye, EyeOff, ArrowLeft, Loader2 } from 'lucide-react';
 import { menuConfigService, MenuConfig, MenuItem } from '@/services/firebase';
 import { menuNavbar } from '@/_config/routes_main';
@@ -214,6 +213,7 @@ export default function MenuEditorPage() {
     setMenuConfig({ ...menuConfig, items: newItems });
     setHasChanges(true);
   };
+
 
   if (loading) {
     return (

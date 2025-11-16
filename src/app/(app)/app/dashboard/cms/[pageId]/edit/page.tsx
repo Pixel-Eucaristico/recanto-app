@@ -159,8 +159,14 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
 
     // Create default props based on mod config
     const defaultProps: Record<string, any> = {};
-    modConfig.props.forEach((propConfig) => {
-      defaultProps[propConfig.name] = propConfig.default ?? '';
+    // Usar 'props' ou 'fields' (compatibilidade com diferentes formatos)
+    const propConfigs = modConfig.props || modConfig.fields || [];
+    propConfigs.forEach((propConfig) => {
+      const propName = propConfig.name || propConfig.key || '';
+      const propDefault = propConfig.default ?? propConfig.defaultValue ?? '';
+      if (propName) {
+        defaultProps[propName] = propDefault;
+      }
     });
 
     const newBlock: CMSBlock = {

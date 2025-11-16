@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Bold, Italic, List, Link2, Type } from 'lucide-react';
+import { Bold, Italic, List, Link2, Type, Code, Eye } from 'lucide-react';
 
 interface HtmlEditorProps {
   value: string;
@@ -15,6 +15,7 @@ interface HtmlEditorProps {
  * Muito mais intuitivo que escrever HTML manualmente!
  */
 export function HtmlEditor({ value, onChange, placeholder, rows = 6 }: HtmlEditorProps) {
+  const [showHtml, setShowHtml] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const insertTag = (openTag: string, closeTag: string, placeholder = 'texto') => {
@@ -105,7 +106,7 @@ export function HtmlEditor({ value, onChange, placeholder, rows = 6 }: HtmlEdito
 
   return (
     <div className="space-y-2">
-      {/* Barra de Ferramentas */}
+      {/* Barra de Ferramentas - Sempre visível */}
       <div className="flex flex-wrap gap-1 p-2 bg-base-200 rounded-lg border border-base-300">
         <button
           type="button"
@@ -167,18 +168,18 @@ export function HtmlEditor({ value, onChange, placeholder, rows = 6 }: HtmlEdito
         </button>
       </div>
 
-      {/* Textarea */}
+      {/* Textarea - Editor visual simples */}
       <textarea
         ref={textareaRef}
-        className="textarea textarea-bordered w-full font-mono text-sm"
-        placeholder={placeholder}
+        className="textarea textarea-bordered w-full text-sm"
+        placeholder={placeholder || 'Digite seu texto aqui e use as ferramentas acima para formatar...'}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         rows={rows}
         style={{ minHeight: `${rows * 1.5}rem` }}
       />
 
-      {/* Preview */}
+      {/* Preview Visual - Sempre visível */}
       {value && (
         <div className="p-3 bg-base-200 rounded-lg border border-base-300">
           <div className="text-xs font-semibold text-base-content/60 mb-2">Preview:</div>
@@ -189,12 +190,30 @@ export function HtmlEditor({ value, onChange, placeholder, rows = 6 }: HtmlEdito
         </div>
       )}
 
-      {/* Ajuda */}
-      <div className="text-xs text-base-content/60">
-        💡 <strong>Dica:</strong> Selecione um texto e clique nos botões acima para adicionar tags.
-        Tags suportadas: <code>&lt;p&gt;</code>, <code>&lt;br/&gt;</code>, <code>&lt;strong&gt;</code>,{' '}
-        <code>&lt;em&gt;</code>, <code>&lt;a&gt;</code>
+      {/* Botão para mostrar/esconder HTML */}
+      <div className="flex items-center justify-between">
+        <div className="text-xs text-base-content/60">
+          💡 <strong>Dica:</strong> Selecione um texto no editor e clique nas ferramentas acima para formatar.
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowHtml(!showHtml)}
+          className="btn btn-xs btn-ghost gap-1"
+        >
+          <Code className="w-3 h-3" />
+          <span>{showHtml ? 'Esconder' : 'Ver'} HTML</span>
+        </button>
       </div>
+
+      {/* Código HTML - Opcional */}
+      {showHtml && (
+        <div className="p-3 bg-neutral text-neutral-content rounded-lg border border-base-300">
+          <div className="text-xs font-semibold mb-2">Código HTML:</div>
+          <pre className="text-xs overflow-x-auto">
+            <code>{value || '<vazio>'}</code>
+          </pre>
+        </div>
+      )}
     </div>
   );
 }

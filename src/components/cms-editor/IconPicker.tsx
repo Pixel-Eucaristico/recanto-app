@@ -42,12 +42,12 @@ export function IconPicker({ value, onChange }: IconPickerProps) {
     setIsOpen(false);
   };
 
-  const renderIcon = (iconName: string) => {
+  const renderIcon = (iconName: string, size: number = 24) => {
     const IconComponent = LucideIcons[iconName as keyof typeof LucideIcons] as React.ComponentType<{
       size?: number;
       className?: string;
     }>;
-    return IconComponent ? <IconComponent size={24} className="text-accent" /> : null;
+    return IconComponent ? <IconComponent size={size} className="text-accent" /> : null;
   };
 
   return (
@@ -128,33 +128,26 @@ export function IconPicker({ value, onChange }: IconPickerProps) {
               </button>
 
               {/* Ícones disponíveis */}
-              {AVAILABLE_ICONS.map((icon) => {
-                const IconComponent = LucideIcons[icon.name as keyof typeof LucideIcons] as React.ComponentType<{
-                  size?: number;
-                  className?: string;
-                }>;
-
-                return (
-                  <button
-                    key={icon.name}
-                    type="button"
-                    onClick={() => handleSelect(icon.name)}
-                    className={`card bg-base-100 border-2 hover:border-primary transition-all p-4 ${
-                      value === icon.name ? 'border-primary ring-2 ring-primary' : 'border-base-300'
-                    }`}
-                  >
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="h-12 flex items-center justify-center">
-                        {IconComponent && <IconComponent size={32} className="text-accent" />}
-                      </div>
-                      <span className="text-xs font-semibold text-center">{icon.label}</span>
-                      {value === icon.name && (
-                        <div className="badge badge-primary badge-sm">Selecionado</div>
-                      )}
+              {AVAILABLE_ICONS.map((icon) => (
+                <button
+                  key={icon.name}
+                  type="button"
+                  onClick={() => handleSelect(icon.name)}
+                  className={`card bg-base-100 border-2 hover:border-primary transition-all p-4 ${
+                    value === icon.name ? 'border-primary ring-2 ring-primary' : 'border-base-300'
+                  }`}
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="h-12 flex items-center justify-center">
+                      {renderIcon(icon.name, 32)}
                     </div>
-                  </button>
-                );
-              })}
+                    <span className="text-xs font-semibold text-center">{icon.label}</span>
+                    {value === icon.name && (
+                      <div className="badge badge-primary badge-sm">Selecionado</div>
+                    )}
+                  </div>
+                </button>
+              ))}
             </div>
 
             {/* Footer */}

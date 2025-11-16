@@ -1,4 +1,5 @@
 import { Role } from '@/features/auth/types/user';
+import { LucideIcon } from 'lucide-react';
 
 // ============================================
 // CMS Types - Sistema Modular Headless
@@ -59,9 +60,11 @@ export interface ModConfig {
   id: string;                      // ID único do Mod
   name: string;                    // Nome amigável
   description?: string;
-  icon?: string;                   // Ícone Lucide
+  icon?: string | LucideIcon;      // Ícone Lucide (string ou componente)
   category: 'hero' | 'content' | 'chart' | 'gallery' | 'form' | 'testimonial' | 'cta' | 'other';
-  props: ModPropConfig[];          // Definição das props editáveis
+  props?: ModPropConfig[];         // Definição das props editáveis (opcional)
+  fields?: ModPropConfig[];        // Alias para props (compatibilidade)
+  defaultProps?: Record<string, any>; // Props padrão do Mod
   preview?: string;                // URL de preview
 }
 
@@ -81,7 +84,7 @@ export interface ModPropConfig {
   key?: string;                    // Nome da prop (legacy)
   name?: string;                   // Nome da prop (novo padrão)
   label: string;                   // Label no editor
-  type: 'text' | 'textarea' | 'select' | 'number' | 'boolean' | 'json-editor' | 'image' | 'color' | 'date' | 'string' | 'url' | 'testimonials-editor' | 'paragraphs-editor' | 'animation-picker' | 'pillars-editor' | 'buttons-editor' | 'evangelization-actions-editor' | 'projects-editor' | 'our-lady-header-editor' | 'infographic-cards-editor' | 'html-editor' | 'wysiwyg-editor' | 'font-family' | 'bg-color';
+  type: 'text' | 'textarea' | 'select' | 'number' | 'boolean' | 'json-editor' | 'image' | 'color' | 'date' | 'string' | 'url' | 'testimonials-editor' | 'paragraphs-editor' | 'animation-picker' | 'pillars-editor' | 'buttons-editor' | 'evangelization-actions-editor' | 'projects-editor' | 'our-lady-header-editor' | 'infographic-cards-editor' | 'html-editor' | 'wysiwyg-editor' | 'font-family' | 'bg-color' | 'hero-with-animation-editor' | 'text-image-animation-editor' | 'animation' | 'icon' | 'array';
   options?: (string | SelectOption)[];  // Para type="select" - suporta strings simples ou {value, label}
   required?: boolean;
   default?: any;                   // Valor padrão (novo)
@@ -90,6 +93,7 @@ export interface ModPropConfig {
   description?: string;            // Descrição da prop (novo)
   helpText?: string;               // Texto de ajuda (legacy)
   multiline?: boolean;             // Para textarea (string multiline)
+  itemType?: string;               // Para arrays: tipo dos itens ('html', 'text', etc)
 }
 
 // ============================================

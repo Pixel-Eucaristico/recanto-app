@@ -29,6 +29,10 @@ import { OurLadyHeader } from './OurLadyHeader/OurLadyHeader';
 import { ourLadyHeaderConfig } from './OurLadyHeader/config';
 import { InfographicGrid } from './InfographicGrid/InfographicGrid';
 import { infographicGridConfig } from './InfographicGrid/config';
+import HeroWithAnimation from './HeroWithAnimation/HeroWithAnimation';
+import { heroWithAnimationConfig } from './HeroWithAnimation/config';
+import TextImageAnimation from './TextImageAnimation/TextImageAnimation';
+import { textImageAnimationConfig } from './TextImageAnimation/config';
 import { ModConfig } from '@/types/cms-types';
 
 // ============================================
@@ -42,12 +46,14 @@ import { ModConfig } from '@/types/cms-types';
 export const ModComponents = {
   Hero,
   HeroMission,
+  HeroWithAnimation,
   EventsSection,
   Testimonials,
   EvangelizationActions,
   ProjectsShowcase,
   TextIntro,
   TextWithAnimation,
+  TextImageAnimation,
   PillarsGrid,
   CallToAction,
   OurLadyHeader,
@@ -70,12 +76,14 @@ export const ModComponents = {
 export const ModConfigs: Record<string, ModConfig> = {
   Hero: HeroConfig,
   HeroMission: HeroMissionConfig,
+  HeroWithAnimation: heroWithAnimationConfig,
   EventsSection: EventsSectionConfig,
   Testimonials: TestimonialsConfig,
   EvangelizationActions: EvangelizationActionsConfig,
   ProjectsShowcase: ProjectsShowcaseConfig,
   TextIntro: textIntroConfig,
   TextWithAnimation: textWithAnimationConfig,
+  TextImageAnimation: textImageAnimationConfig,
   PillarsGrid: pillarsGridConfig,
   CallToAction: callToActionConfig,
   OurLadyHeader: ourLadyHeaderConfig,

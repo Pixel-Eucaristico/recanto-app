@@ -133,6 +133,7 @@ export function MenuItemEditor({
                 variant="outline"
                 size="sm"
                 onClick={() => onAddSubItem(item.id)}
+                title="Adicionar Subitem ao Menu"
               >
                 <Plus className="w-4 h-4" />
               </Button>
@@ -143,6 +144,7 @@ export function MenuItemEditor({
                 variant="outline"
                 size="sm"
                 onClick={() => setIsExpanded(!isExpanded)}
+                title={isExpanded ? "Recolher" : "Expandir"}
               >
                 {isExpanded ? (
                   <ChevronUp className="w-4 h-4" />

@@ -15,6 +15,8 @@ import { HtmlEditor } from './HtmlEditor';
 import { WysiwygEditor } from './WysiwygEditor';
 import { FontFamilyPicker } from './FontFamilyPicker';
 import { BgColorPicker } from './BgColorPicker';
+import { HeroWithAnimationEditor } from './HeroWithAnimationEditor';
+import { TextImageAnimationEditor } from './TextImageAnimationEditor';
 
 interface DynamicModFormProps {
   modId: string;
@@ -244,6 +246,22 @@ export default function DynamicModForm({
       case 'bg-color':
         return (
           <BgColorPicker
+            value={value}
+            onChange={(newValue) => handleChange(propName, newValue)}
+          />
+        );
+
+      case 'hero-with-animation-editor':
+        return (
+          <HeroWithAnimationEditor
+            value={value}
+            onChange={(newValue) => handleChange(propName, newValue)}
+          />
+        );
+
+      case 'text-image-animation-editor':
+        return (
+          <TextImageAnimationEditor
             value={value}
             onChange={(newValue) => handleChange(propName, newValue)}
           />

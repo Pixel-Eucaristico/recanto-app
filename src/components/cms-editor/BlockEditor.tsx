@@ -140,7 +140,7 @@ export default function BlockEditor({
             <h4 className="font-semibold mb-4">Configurações do Bloco</h4>
             <DynamicModForm
               modId={block.modId}
-              propConfigs={modConfig.props}
+              propConfigs={modConfig.props || modConfig.fields || []}
               values={block.props}
               onChange={handlePropsChange}
             />

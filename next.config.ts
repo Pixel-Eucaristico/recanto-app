@@ -15,15 +15,11 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'randomuser.me',
+        hostname: '**', // Aceita qualquer domínio HTTPS
       },
       {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'cdn2.picryl.com',
+        protocol: 'http',
+        hostname: '**', // Aceita qualquer domínio HTTP
       },
     ],
   },

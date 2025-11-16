@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { CMSPage } from '@/types/cms-types';
-import { Settings, X } from 'lucide-react';
+import { Settings, X, Sun, Moon, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import * as LucideIcons from 'lucide-react';
 
@@ -26,8 +26,11 @@ export function PageMenuConfig({ page, onSave }: PageMenuConfigProps) {
   const availableIcons = [
     { name: 'Sunset', label: 'Pôr do Sol' },
     { name: 'Crown', label: 'Coroa' },
+    { name: 'TreePine', label: 'Árvore' },
     { name: 'Trees', label: 'Árvores' },
+    { name: 'Palmtree', label: 'Palmeira' },
     { name: 'Book', label: 'Livro' },
+    { name: 'BookOpen', label: 'Livro Aberto' },
     { name: 'Zap', label: 'Raio' },
     { name: 'Heart', label: 'Coração' },
     { name: 'Home', label: 'Casa' },
@@ -290,7 +293,10 @@ export function PageMenuConfig({ page, onSave }: PageMenuConfigProps) {
                 {/* Tema Light */}
                 <div className="form-control">
                   <label className="label">
-                    <span className="label-text font-semibold">☀️ Modo Claro</span>
+                    <span className="label-text font-semibold flex items-center gap-2">
+                      <Sun className="w-4 h-4" />
+                      Modo Claro
+                    </span>
                   </label>
 
                   {config.theme_light && (
@@ -319,7 +325,10 @@ export function PageMenuConfig({ page, onSave }: PageMenuConfigProps) {
                 {/* Tema Dark */}
                 <div className="form-control">
                   <label className="label">
-                    <span className="label-text font-semibold">🌙 Modo Escuro</span>
+                    <span className="label-text font-semibold flex items-center gap-2">
+                      <Moon className="w-4 h-4" />
+                      Modo Escuro
+                    </span>
                   </label>
 
                   {config.theme_dark && (
@@ -347,8 +356,9 @@ export function PageMenuConfig({ page, onSave }: PageMenuConfigProps) {
               </div>
 
               <div className="alert alert-info mt-3">
+                <Info className="w-5 h-5" />
                 <div className="text-xs">
-                  <strong>💡 Dica:</strong> Escolha temas diferentes para Light e Dark ou deixe vazio para usar o padrão do sistema.
+                  <strong>Dica:</strong> Escolha temas diferentes para Light e Dark ou deixe vazio para usar o padrão do sistema.
                 </div>
               </div>
             </div>

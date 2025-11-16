@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { contentPageService } from '@/services/firebase';
 import type { CMSPage } from '@/types/cms-types';
 import {
@@ -43,6 +44,7 @@ import { PageMenuConfig } from '@/components/cms-editor/PageMenuConfig';
 import { ConfirmModal, PromptModal, AlertModal } from '@/components/ui/modals';
 
 export default function CMSPagesListPage() {
+  const router = useRouter();
   const [pages, setPages] = useState<CMSPage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -75,6 +77,13 @@ export default function CMSPagesListPage() {
       setError(null);
       const allPages = await contentPageService.getAll();
 
+      // Garantir que a home page sempre tenha menu_order = 0
+      const homePage = allPages.find(p => p.slug === '/');
+      if (homePage && homePage.menu_order !== 0) {
+        await contentPageService.update(homePage.id!, { menu_order: 0 });
+        homePage.menu_order = 0;
+      }
+
       // Ordenar por menu_order
       const sorted = allPages.sort((a, b) => {
         const orderA = a.menu_order ?? 999;
@@ -103,6 +112,9 @@ export default function CMSPagesListPage() {
         show_in_menu: true,
         menu_order: maxOrder + 1,
         is_menu_container: true,
+        theme_light: 'recanto-light',
+        theme_dark: 'recanto-dark',
+        bg_color: 'base-100',
         created_at: new Date().toISOString(),
       });
       await loadPages();
@@ -122,6 +134,47 @@ export default function CMSPagesListPage() {
       setShowAlert(true);
     }
   };
+
+  const createChildPage = async (parentId: string) => {
+    try {
+      // Criar nova página filha
+      const timestamp = Date.now();
+      const newSlug = `pagina-${timestamp}`;
+
+      // Contar páginas filhas existentes para definir a ordem
+      const siblings = pages.filter(p => p.menu_parent_id === parentId);
+      const maxOrder = siblings.length > 0 ? Math.max(...siblings.map(p => p.menu_order ?? 0)) : -1;
+
+      const newPage = await contentPageService.create({
+        title: 'Nova Página',
+        slug: newSlug,
+        description: 'Descrição da nova página',
+        blocks: [],
+        is_published: false,
+        show_in_menu: true,
+        menu_parent_id: parentId,
+        menu_order: maxOrder + 1,
+        theme_light: 'recanto-light',
+        theme_dark: 'recanto-dark',
+        bg_color: 'base-100',
+        created_at: new Date().toISOString(),
+      });
+
+      await loadPages();
+
+      // Redirecionar para editar a nova página
+      router.push(`/app/dashboard/cms/${newPage.id}/edit`);
+    } catch (err) {
+      console.error('Error creating child page:', err);
+      setAlertConfig({
+        title: 'Erro ao criar página',
+        message: 'Não foi possível criar a página filha. Tente novamente.',
+        type: 'error'
+      });
+      setShowAlert(true);
+    }
+  };
+
 
   const handleDeleteClick = (pageId: string, pageTitle: string) => {
     setDeleteTarget({ id: pageId, title: pageTitle });
@@ -205,6 +258,7 @@ export default function CMSPagesListPage() {
     setOverId(over?.id as string | null);
   };
 
+
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveId(null);
@@ -231,12 +285,26 @@ export default function CMSPagesListPage() {
       return;
     }
 
-    // Se arrastar sobre um container, tornar filho
-    if (overPage.is_menu_container) {
+    // Detectar se a página ativa é filha de um container
+    const isActiveChildOfContainer = !!activePage.menu_parent_id;
+    const isOverChildOfContainer = !!overPage.menu_parent_id;
+
+    // CASO 1: Arrastar sobre uma página FILHA de um container
+    // Isso significa que quer entrar no mesmo container ou reordenar dentro dele
+    if (isOverChildOfContainer) {
+      const targetParentId = overPage.menu_parent_id;
+
+      // Se já é filho desse mesmo container, apenas reordenar (não implementado)
+      if (activePage.menu_parent_id === targetParentId) {
+        return; // Reordenação dentro do mesmo container (não implementado)
+      }
+
+      // Tornar filho desse container
       try {
+        const siblings = pages.filter(p => p.menu_parent_id === targetParentId);
         await contentPageService.update(activeId, {
-          menu_parent_id: overId,
-          menu_order: 0 // Resetar ordem dentro do container
+          menu_parent_id: targetParentId,
+          menu_order: siblings.length // Colocar no final
         });
         loadPages();
       } catch (err) {
@@ -251,37 +319,61 @@ export default function CMSPagesListPage() {
       return;
     }
 
-    // Reordenar no mesmo nível
-    const oldIndex = pages.findIndex(p => p.id === activeId);
-    const newIndex = pages.findIndex(p => p.id === overId);
+    // CASO 2: Arrastar página filha para FORA do container (sobre uma página raiz)
+    if (isActiveChildOfContainer && !overPage.menu_parent_id) {
+      try {
+        // Remover do container, tornando página raiz
+        const topLevelCount = pages.filter(p => !p.menu_parent_id).length;
+        await contentPageService.update(activeId, {
+          menu_parent_id: null,
+          menu_order: topLevelCount // Colocar no final das páginas raiz
+        });
+        loadPages();
+      } catch (err) {
+        console.error('Error removing from container:', err);
+        setAlertConfig({
+          title: 'Erro ao remover',
+          message: 'Não foi possível remover a página do container.',
+          type: 'error'
+        });
+        setShowAlert(true);
+      }
+      return;
+    }
 
-    if (oldIndex === -1 || newIndex === -1) return;
+    // CASO 3: Reordenar no mesmo nível (páginas raiz)
+    if (!isActiveChildOfContainer && !overPage.menu_parent_id) {
+      const oldIndex = pages.findIndex(p => p.id === activeId);
+      const newIndex = pages.findIndex(p => p.id === overId);
 
-    const newPages = arrayMove(pages, oldIndex, newIndex);
+      if (oldIndex === -1 || newIndex === -1) return;
 
-    // Atualizar menu_order
-    const updates = newPages.map((page, index) => ({
-      id: page.id!,
-      menu_order: index
-    }));
+      const newPages = arrayMove(pages, oldIndex, newIndex);
 
-    setPages(newPages);
+      // Atualizar menu_order
+      const updates = newPages.map((page, index) => ({
+        id: page.id!,
+        menu_order: index
+      }));
 
-    try {
-      await Promise.all(
-        updates.map(update =>
-          contentPageService.update(update.id, { menu_order: update.menu_order })
-        )
-      );
-    } catch (err) {
-      console.error('Error updating order:', err);
-      setAlertConfig({
-        title: 'Erro ao reordenar',
-        message: 'Não foi possível salvar a nova ordem das páginas.',
-        type: 'error'
-      });
-      setShowAlert(true);
-      loadPages();
+      setPages(newPages);
+
+      try {
+        await Promise.all(
+          updates.map(update =>
+            contentPageService.update(update.id, { menu_order: update.menu_order })
+          )
+        );
+      } catch (err) {
+        console.error('Error updating order:', err);
+        setAlertConfig({
+          title: 'Erro ao reordenar',
+          message: 'Não foi possível salvar a nova ordem das páginas.',
+          type: 'error'
+        });
+        setShowAlert(true);
+        loadPages();
+      }
     }
   };
 
@@ -375,7 +467,7 @@ export default function CMSPagesListPage() {
           onDragEnd={handleDragEnd}
         >
           <SortableContext
-            items={topLevelPages.map(p => p.id!)}
+            items={pages.map(p => p.id!)}
             strategy={verticalListSortingStrategy}
           >
             <div className="space-y-2">
@@ -395,6 +487,7 @@ export default function CMSPagesListPage() {
                         await contentPageService.update(page.id!, updates);
                         setPages(pages.map(p => p.id === page.id ? { ...p, ...updates } : p));
                       }}
+                      onCreateChildPage={createChildPage}
                       isContainer={isContainer}
                       hasChildren={children.length > 0}
                       isExpanded={isExpanded}
@@ -416,6 +509,7 @@ export default function CMSPagesListPage() {
                               await contentPageService.update(page.id!, updates);
                               setPages(pages.map(p => p.id === page.id ? { ...p, ...updates } : p));
                             }}
+                            onCreateChildPage={createChildPage}
                             isChild
                           />
                         ))}
@@ -515,6 +609,7 @@ interface SortablePageRowProps {
   onTogglePublish: (page: CMSPage) => void;
   onToggleMenu: (page: CMSPage) => void;
   onUpdateMenuConfig: (page: CMSPage, updates: Partial<CMSPage>) => Promise<void>;
+  onCreateChildPage?: (parentId: string) => void;
   isContainer?: boolean;
   hasChildren?: boolean;
   isExpanded?: boolean;
@@ -529,6 +624,7 @@ function SortablePageRow({
   onTogglePublish,
   onToggleMenu,
   onUpdateMenuConfig,
+  onCreateChildPage,
   isContainer,
   hasChildren,
   isExpanded,
@@ -560,6 +656,7 @@ function SortablePageRow({
     <div
       ref={setNodeRef}
       style={style}
+      data-sortable-id={page.id}
       className={`card bg-base-100 border border-base-300 hover:shadow-lg transition-all ${
         page.show_in_menu ? 'border-primary border-2' : ''
       } ${isOver && isContainer ? 'ring-4 ring-primary ring-opacity-50' : ''}`}
@@ -670,6 +767,18 @@ function SortablePageRow({
                     Rascunho
                   </>
                 )}
+              </button>
+            )}
+
+            {/* Adicionar Página Filha (apenas para containers raiz, não para containers filhos) */}
+            {isContainer && !isChild && onCreateChildPage && (
+              <button
+                onClick={() => onCreateChildPage(page.id!)}
+                className="btn btn-sm btn-success gap-1"
+                title="Adicionar página filha neste container"
+              >
+                <Plus className="w-4 h-4" />
+                Nova Página
               </button>
             )}
 
