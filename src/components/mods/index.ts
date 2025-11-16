@@ -33,6 +33,10 @@ import HeroWithAnimation from './HeroWithAnimation/HeroWithAnimation';
 import { heroWithAnimationConfig } from './HeroWithAnimation/config';
 import TextImageAnimation from './TextImageAnimation/TextImageAnimation';
 import { textImageAnimationConfig } from './TextImageAnimation/config';
+import { HeroStructure } from './HeroStructure/HeroStructure';
+import { heroStructureConfig } from './HeroStructure/config';
+import { SectionsGrid } from './SectionsGrid/SectionsGrid';
+import { sectionsGridConfig } from './SectionsGrid/config';
 import { ModConfig } from '@/types/cms-types';
 
 // ============================================
@@ -47,6 +51,7 @@ export const ModComponents = {
   Hero,
   HeroMission,
   HeroWithAnimation,
+  HeroStructure,
   EventsSection,
   Testimonials,
   EvangelizationActions,
@@ -55,6 +60,7 @@ export const ModComponents = {
   TextWithAnimation,
   TextImageAnimation,
   PillarsGrid,
+  SectionsGrid,
   CallToAction,
   OurLadyHeader,
   InfographicGrid,
@@ -77,6 +83,7 @@ export const ModConfigs: Record<string, ModConfig> = {
   Hero: HeroConfig,
   HeroMission: HeroMissionConfig,
   HeroWithAnimation: heroWithAnimationConfig,
+  HeroStructure: heroStructureConfig,
   EventsSection: EventsSectionConfig,
   Testimonials: TestimonialsConfig,
   EvangelizationActions: EvangelizationActionsConfig,
@@ -85,6 +92,7 @@ export const ModConfigs: Record<string, ModConfig> = {
   TextWithAnimation: textWithAnimationConfig,
   TextImageAnimation: textImageAnimationConfig,
   PillarsGrid: pillarsGridConfig,
+  SectionsGrid: sectionsGridConfig,
   CallToAction: callToActionConfig,
   OurLadyHeader: ourLadyHeaderConfig,
   InfographicGrid: infographicGridConfig,

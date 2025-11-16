@@ -8,6 +8,7 @@ import ProjectsEditor from './ProjectsEditor';
 import { ParagraphsEditor } from './ParagraphsEditor';
 import { AnimationPicker } from './AnimationPicker';
 import { PillarsEditor } from './PillarsEditor';
+import { SectionsEditor } from './SectionsEditor';
 import { ButtonsEditor } from './ButtonsEditor';
 import { OurLadyHeaderEditor } from './OurLadyHeaderEditor';
 import { InfographicCardsEditor } from './InfographicCardsEditor';
@@ -188,6 +189,14 @@ export default function DynamicModForm({
       case 'pillars-editor':
         return (
           <PillarsEditor
+            value={value}
+            onChange={(newValue) => handleChange(propName, newValue)}
+          />
+        );
+
+      case 'sections-editor':
+        return (
+          <SectionsEditor
             value={value}
             onChange={(newValue) => handleChange(propName, newValue)}
           />

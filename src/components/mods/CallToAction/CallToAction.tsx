@@ -14,6 +14,8 @@ export interface CallToActionProps {
   description: string;
   buttons: CTAButton[];
   titleColor?: 'primary' | 'secondary' | 'accent';
+  titleSize?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+  buttonSize?: 'xs' | 'sm' | 'md' | 'lg';
   bgColor?: 'base-100' | 'base-200' | 'base-300';
   textAlign?: 'left' | 'center' | 'right';
   maxWidth?: '4xl' | '5xl' | '6xl' | '7xl' | 'full';
@@ -29,6 +31,8 @@ export function CallToAction({
   description,
   buttons,
   titleColor = 'primary',
+  titleSize = 'xl',
+  buttonSize = 'md',
   bgColor = 'base-100',
   textAlign = 'center',
   maxWidth = '6xl',
@@ -46,6 +50,14 @@ export function CallToAction({
     primary: 'text-primary',
     secondary: 'text-secondary',
     accent: 'text-accent',
+  };
+
+  const titleSizeClasses = {
+    sm: 'text-xl md:text-2xl',
+    md: 'text-2xl md:text-3xl',
+    lg: 'text-3xl md:text-4xl',
+    xl: 'text-4xl md:text-5xl',
+    '2xl': 'text-5xl md:text-6xl',
   };
 
   const bgColorClasses = {
@@ -74,6 +86,13 @@ export function CallToAction({
     outline: 'btn-outline',
   };
 
+  const buttonSizeClasses = {
+    xs: 'btn-xs',
+    sm: 'btn-sm',
+    md: 'btn-md',
+    lg: 'btn-lg',
+  };
+
   const justifyClasses = {
     left: 'justify-start',
     center: 'justify-center',
@@ -88,20 +107,22 @@ export function CallToAction({
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           viewport={{ once: true }}
-          className={`text-3xl md:text-4xl font-semibold ${titleColorClasses[titleColor]} mb-4`}
+          className={`${titleSizeClasses[titleSize]} font-semibold ${titleColorClasses[titleColor]} mb-4`}
         >
           {title}
         </motion.h2>
 
-        <motion.p
-          initial={{ opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          viewport={{ once: true }}
-          className="text-lg md:text-xl text-base-content/80 mb-8"
-        >
-          {description}
-        </motion.p>
+        {description && (
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            viewport={{ once: true }}
+            className="text-lg md:text-xl text-base-content/80 mb-8"
+          >
+            {description}
+          </motion.p>
+        )}
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -114,7 +135,7 @@ export function CallToAction({
             <Link
               key={index}
               href={button.url}
-              className={`btn ${buttonStyleClasses[button.style || 'primary']} btn-lg`}
+              className={`btn ${buttonStyleClasses[button.style || 'primary']} ${buttonSizeClasses[buttonSize]}`}
             >
               {button.text}
             </Link>
