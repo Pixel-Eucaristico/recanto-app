@@ -35,6 +35,13 @@ export default async function DynamicPage({ params }: PageProps) {
     notFound();
   }
 
+  // Carregar fonte do Google Fonts se especificada
+  const fontFamily = page.font_family || 'Inter';
+  const bgColor = page.bg_color || 'base-100';
+  const fontLink = fontFamily !== 'system-ui'
+    ? `https://fonts.googleapis.com/css2?family=${fontFamily.replace(' ', '+')}:wght@300;400;500;600;700&display=swap`
+    : null;
+
   // Debug: Verificar se page.blocks existe
   console.log('🔍 [DEBUG] Página completa:', {
     slug: page.slug,
@@ -77,28 +84,41 @@ export default async function DynamicPage({ params }: PageProps) {
 
   return (
     <>
-      {sortedBlocks.map((block: CMSBlock) => {
-        const Component = ModComponents[block.modId as keyof typeof ModComponents];
+      {/* Carregar Google Font */}
+      {fontLink && (
+        <link rel="stylesheet" href={fontLink} />
+      )}
 
-        if (!Component) {
-          console.warn(`❌ [CMS] Mod "${block.modId}" não encontrado em ModComponents`);
+      {/* Aplicar fonte e cor de fundo */}
+      <div
+        className={`bg-${bgColor} min-h-screen`}
+        style={{
+          fontFamily: fontFamily === 'system-ui' ? 'system-ui' : `'${fontFamily}', sans-serif`,
+        }}
+      >
+        {sortedBlocks.map((block: CMSBlock) => {
+          const Component = ModComponents[block.modId as keyof typeof ModComponents];
+
+          if (!Component) {
+            console.warn(`❌ [CMS] Mod "${block.modId}" não encontrado em ModComponents`);
+            return (
+              <div key={block.id} className="alert alert-error">
+                <span>Erro: Mod "{block.modId}" não encontrado</span>
+              </div>
+            );
+          }
+
+          console.log(`✅ [CMS] Renderizando Mod: ${block.modId}`);
+
+          // Renderiza o Mod com suas props
           return (
-            <div key={block.id} className="alert alert-error">
-              <span>Erro: Mod "{block.modId}" não encontrado</span>
-            </div>
+            <Component
+              key={block.id}
+              {...block.props}
+            />
           );
-        }
-
-        console.log(`✅ [CMS] Renderizando Mod: ${block.modId}`);
-
-        // Renderiza o Mod com suas props
-        return (
-          <Component
-            key={block.id}
-            {...block.props}
-          />
-        );
-      })}
+        })}
+      </div>
     </>
   );
 }

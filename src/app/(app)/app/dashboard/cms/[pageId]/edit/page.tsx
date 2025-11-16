@@ -7,6 +7,8 @@ import { contentPageService } from '@/services/firebase';
 import { availableMods } from '@/components/mods';
 import ModsLibrary from '@/components/cms-editor/ModsLibrary';
 import BlockEditor from '@/components/cms-editor/BlockEditor';
+import { FontFamilyPicker } from '@/components/cms-editor/FontFamilyPicker';
+import { BgColorPicker } from '@/components/cms-editor/BgColorPicker';
 import type { CMSPage, CMSBlock } from '@/types/cms-types';
 import { ArrowLeft, Save, Eye, EyeOff, Edit, X, ArrowDown, Plus } from 'lucide-react';
 import {
@@ -103,13 +105,43 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
 
     try {
       setSaving(true);
-      await contentPageService.update(page.id!, {
+      // Função para limpar undefined recursivamente
+      const cleanUndefined = (obj: any): any => {
+        if (Array.isArray(obj)) {
+          return obj.map(cleanUndefined);
+        }
+        if (obj !== null && typeof obj === 'object') {
+          const cleaned: any = {};
+          Object.keys(obj).forEach(key => {
+            if (obj[key] !== undefined) {
+              cleaned[key] = cleanUndefined(obj[key]);
+            }
+          });
+          return cleaned;
+        }
+        return obj;
+      };
+
+      // Preparar dados removendo campos undefined
+      const updateData: any = {
         title: page.title,
         slug: page.slug,
-        description: page.description,
-        blocks: page.blocks,
-        is_published: page.is_published
-      });
+        blocks: cleanUndefined(page.blocks), // Limpar undefined dos blocos
+        is_published: page.is_published,
+      };
+
+      // Adicionar campos opcionais apenas se tiverem valor definido
+      if (page.description !== undefined && page.description !== null) {
+        updateData.description = page.description;
+      }
+      if (page.font_family !== undefined && page.font_family !== null) {
+        updateData.font_family = page.font_family;
+      }
+      if (page.bg_color !== undefined && page.bg_color !== null) {
+        updateData.bg_color = page.bg_color;
+      }
+
+      await contentPageService.update(page.id!, updateData);
       alert('Página salva com sucesso!');
     } catch (err) {
       console.error('Error saving page:', err);
@@ -438,6 +470,24 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
                             className="input input-bordered input-sm w-full"
                           />
                         )}
+                      </div>
+
+                      {/* Fonte da Página */}
+                      <div>
+                        <label className="text-xs font-medium">Fonte da Página (Google Fonts)</label>
+                        <FontFamilyPicker
+                          value={page.font_family || 'Inter'}
+                          onChange={(value) => setPage({ ...page, font_family: value })}
+                        />
+                      </div>
+
+                      {/* Cor de Fundo */}
+                      <div>
+                        <label className="text-xs font-medium">Cor de Fundo (DaisyUI)</label>
+                        <BgColorPicker
+                          value={page.bg_color || 'base-100'}
+                          onChange={(value) => setPage({ ...page, bg_color: value })}
+                        />
                       </div>
                     </div>
                   )}

@@ -9,6 +9,12 @@ import { ParagraphsEditor } from './ParagraphsEditor';
 import { AnimationPicker } from './AnimationPicker';
 import { PillarsEditor } from './PillarsEditor';
 import { ButtonsEditor } from './ButtonsEditor';
+import { OurLadyHeaderEditor } from './OurLadyHeaderEditor';
+import { InfographicCardsEditor } from './InfographicCardsEditor';
+import { HtmlEditor } from './HtmlEditor';
+import { WysiwygEditor } from './WysiwygEditor';
+import { FontFamilyPicker } from './FontFamilyPicker';
+import { BgColorPicker } from './BgColorPicker';
 
 interface DynamicModFormProps {
   modId: string;
@@ -188,6 +194,56 @@ export default function DynamicModForm({
       case 'buttons-editor':
         return (
           <ButtonsEditor
+            value={value}
+            onChange={(newValue) => handleChange(propName, newValue)}
+          />
+        );
+
+      case 'our-lady-header-editor':
+        return (
+          <OurLadyHeaderEditor
+            value={value}
+            onChange={(newValue) => handleChange(propName, newValue)}
+          />
+        );
+
+      case 'infographic-cards-editor':
+        return (
+          <InfographicCardsEditor
+            value={value}
+            onChange={(newValue) => handleChange(propName, newValue)}
+          />
+        );
+
+      case 'html-editor':
+        return (
+          <HtmlEditor
+            value={value}
+            onChange={(newValue) => handleChange(propName, newValue)}
+            placeholder={config.placeholder}
+          />
+        );
+
+      case 'wysiwyg-editor':
+        return (
+          <WysiwygEditor
+            value={value}
+            onChange={(newValue) => handleChange(propName, newValue)}
+            placeholder={config.placeholder}
+          />
+        );
+
+      case 'font-family':
+        return (
+          <FontFamilyPicker
+            value={value}
+            onChange={(newValue) => handleChange(propName, newValue)}
+          />
+        );
+
+      case 'bg-color':
+        return (
+          <BgColorPicker
             value={value}
             onChange={(newValue) => handleChange(propName, newValue)}
           />

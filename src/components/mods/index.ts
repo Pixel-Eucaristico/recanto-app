@@ -25,6 +25,10 @@ import { PillarsGrid } from './PillarsGrid/PillarsGrid';
 import { pillarsGridConfig } from './PillarsGrid/config';
 import { CallToAction } from './CallToAction/CallToAction';
 import { callToActionConfig } from './CallToAction/config';
+import { OurLadyHeader } from './OurLadyHeader/OurLadyHeader';
+import { ourLadyHeaderConfig } from './OurLadyHeader/config';
+import { InfographicGrid } from './InfographicGrid/InfographicGrid';
+import { infographicGridConfig } from './InfographicGrid/config';
 import { ModConfig } from '@/types/cms-types';
 
 // ============================================
@@ -46,6 +50,8 @@ export const ModComponents = {
   TextWithAnimation,
   PillarsGrid,
   CallToAction,
+  OurLadyHeader,
+  InfographicGrid,
   // Futuros Mods:
   // TeamGrid,
   // Gallery,
@@ -72,6 +78,8 @@ export const ModConfigs: Record<string, ModConfig> = {
   TextWithAnimation: textWithAnimationConfig,
   PillarsGrid: pillarsGridConfig,
   CallToAction: callToActionConfig,
+  OurLadyHeader: ourLadyHeaderConfig,
+  InfographicGrid: infographicGridConfig,
   // Futuros Configs...
 };
 

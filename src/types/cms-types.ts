@@ -44,6 +44,9 @@ export interface CMSPage {
   // Temas da página
   theme_light?: string;                  // Tema para modo claro (ex: 'recanto-light', 'cupcake')
   theme_dark?: string;                   // Tema para modo escuro (ex: 'recanto-dark', 'dracula')
+  // Estilos da página
+  font_family?: string;                  // Fonte Google Fonts (ex: 'Inter', 'Roboto', 'Lora')
+  bg_color?: string;                     // Cor de fundo DaisyUI (ex: 'base-100', 'primary')
   created_at: string;
   updated_at?: string;
 }
@@ -78,7 +81,7 @@ export interface ModPropConfig {
   key?: string;                    // Nome da prop (legacy)
   name?: string;                   // Nome da prop (novo padrão)
   label: string;                   // Label no editor
-  type: 'text' | 'textarea' | 'select' | 'number' | 'boolean' | 'json-editor' | 'image' | 'color' | 'date' | 'string' | 'url' | 'testimonials-editor' | 'paragraphs-editor' | 'animation-picker' | 'pillars-editor' | 'buttons-editor' | 'evangelization-actions-editor' | 'projects-editor';
+  type: 'text' | 'textarea' | 'select' | 'number' | 'boolean' | 'json-editor' | 'image' | 'color' | 'date' | 'string' | 'url' | 'testimonials-editor' | 'paragraphs-editor' | 'animation-picker' | 'pillars-editor' | 'buttons-editor' | 'evangelization-actions-editor' | 'projects-editor' | 'our-lady-header-editor' | 'infographic-cards-editor' | 'html-editor' | 'wysiwyg-editor' | 'font-family' | 'bg-color';
   options?: (string | SelectOption)[];  // Para type="select" - suporta strings simples ou {value, label}
   required?: boolean;
   default?: any;                   // Valor padrão (novo)
@@ -87,6 +90,31 @@ export interface ModPropConfig {
   description?: string;            // Descrição da prop (novo)
   helpText?: string;               // Texto de ajuda (legacy)
   multiline?: boolean;             // Para textarea (string multiline)
+}
+
+// ============================================
+// Our Lady Page Types
+// ============================================
+
+/**
+ * Header da página Nossa Senhora
+ */
+export interface OurLadyHeader {
+  imageUrl: string;              // URL da imagem (Nossa Senhora)
+  title: string;                 // Título principal
+  subtitle: string;              // Subtítulo
+}
+
+/**
+ * Card do infográfico Nossa Senhora
+ */
+export interface InfographicCard {
+  id: string;                    // ID único do card
+  title: string;                 // Título do card
+  body: string;                  // Corpo do card (HTML permitido)
+  iconName?: string;             // Nome do ícone Lucide (ex: 'Heart', 'Cross')
+  lottieFile?: string;           // Arquivo Lottie (ex: 'church.json')
+  imagePosition: 'float-start' | 'float-end' | 'float-left' | 'float-right';
 }
 
 // ============================================
