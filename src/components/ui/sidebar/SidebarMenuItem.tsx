@@ -1,0 +1,46 @@
+import Link from 'next/link';
+import { LucideIcon } from 'lucide-react';
+
+interface SidebarMenuItemProps {
+  icon: LucideIcon;
+  label: string;
+  href?: string;
+  onClick?: () => void;
+  tooltip?: string;
+}
+
+export function SidebarMenuItem({
+  icon: Icon,
+  label,
+  href,
+  onClick,
+  tooltip
+}: SidebarMenuItemProps) {
+  const content = (
+    <>
+      <Icon className="w-5 h-5 shrink-0" />
+      <span className="is-drawer-close:hidden">{label}</span>
+    </>
+  );
+
+  const className = "is-drawer-close:tooltip is-drawer-close:tooltip-right";
+  const dataTip = tooltip || label;
+
+  if (href) {
+    return (
+      <li>
+        <Link href={href} className={className} data-tip={dataTip}>
+          {content}
+        </Link>
+      </li>
+    );
+  }
+
+  return (
+    <li>
+      <button onClick={onClick} className={className} data-tip={dataTip}>
+        {content}
+      </button>
+    </li>
+  );
+}

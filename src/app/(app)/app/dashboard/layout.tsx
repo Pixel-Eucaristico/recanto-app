@@ -1,6 +1,6 @@
 import { AuthProvider } from "@/features/dashboard/contexts/AuthContext";
 import "@/styles/globals.css";
-import Sidebar from "@/features/dashboard/components/Sidebar";
+import DashboardLayout from "@/features/dashboard/components/DashboardLayout";
 import ProtectedRoute from "@/components/common/ProtectedRoute";
 
 export default function RootLayout({
@@ -11,12 +11,9 @@ export default function RootLayout({
   return (
     <AuthProvider>
       <ProtectedRoute>
-        <div className="flex h-screen overflow-hidden">
-          <Sidebar />
-          <main className="flex-1 overflow-y-auto p-6 bg-slate-50">
-            {children}
-          </main>
-        </div>
+        <DashboardLayout>
+          {children}
+        </DashboardLayout>
       </ProtectedRoute>
     </AuthProvider>
   );

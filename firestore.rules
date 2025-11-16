@@ -262,5 +262,41 @@ service cloud.firestore {
       // Escrita: apenas o próprio admin
       allow write: if isAuthenticated() && request.auth.uid == userId && isAdmin();
     }
+
+    // ===========================
+    // Content Pages Collection (CMS)
+    // ===========================
+    match /content_pages/{pageId} {
+      // Leitura: SEMPRE permitir queries, mas filtrar por is_published
+      // Permite que visitantes não autenticados busquem páginas publicadas
+      allow read: if true;
+
+      // Criação: apenas admins
+      allow create: if isAdmin();
+
+      // Atualização: apenas admins
+      allow update: if isAdmin();
+
+      // Deleção: apenas admins
+      allow delete: if isAdmin();
+    }
+
+    // ===========================
+    // Menu Config Collection (CMS)
+    // ===========================
+    match /menu_config/{menuId} {
+      // Leitura: público (para que o Navbar possa buscar)
+      // O filtro por is_published é feito no código
+      allow read: if true;
+
+      // Criação: apenas admins e missionários
+      allow create: if isAdmin() || isMissionario();
+
+      // Atualização: apenas admins e missionários
+      allow update: if isAdmin() || isMissionario();
+
+      // Deleção: apenas admins
+      allow delete: if isAdmin();
+    }
   }
 }

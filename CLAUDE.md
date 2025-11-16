@@ -95,13 +95,46 @@ Always use the Next.js 13+ Image API:
 - **shadcn/ui** for custom components (store in `src/components/ui/`)
 - **Framer Motion** for animations
 - **Lottie** for JSON animations
-- **Lucide** icons (centralize in `icons/index.ts` for consistency)
+- **Lucide React** icons (import from `lucide-react`)
+  - ⚠️ **IMPORTANTE**: SEMPRE use ícones do Lucide React
+  - ❌ **NUNCA** use emojis (🎯, ✅, ❌, etc.) ou caracteres Unicode (→, ↓, ✓) na UI
+  - ✅ Use componentes de ícone: `<ArrowDown />`, `<Check />`, `<X />`
+  - Exemplo: `import { ArrowDown, Check, X } from 'lucide-react'`
+
+### User Feedback
+- ❌ **NUNCA** use `alert()`, `confirm()` ou `prompt()` do JavaScript
+- ✅ **SEMPRE** use modais do DaisyUI para confirmações e mensagens
+- ✅ Use `toast` notifications para feedback rápido
+- Componentes de modal devem estar em `src/components/ui/modals/`
+
+### ⚠️ IMPORTANTE: Cores e Temas
+
+**SEMPRE use as cores semânticas do DaisyUI** para garantir compatibilidade com todos os temas:
+
+✅ **Classes permitidas:**
+- `bg-base-100`, `bg-base-200`, `bg-base-300` (backgrounds)
+- `text-base-content` (texto padrão)
+- `text-base-content/60`, `text-base-content/40` (opacidade)
+- `border-base-300` (bordas)
+- `btn-primary`, `btn-secondary`, `btn-accent` (botões)
+- `badge-info`, `badge-success`, `badge-warning`, `badge-error`
+- `alert-info`, `alert-success`, `alert-warning`, `alert-error`
+
+❌ **NUNCA use:**
+- `bg-gray-100`, `text-gray-600` (Tailwind direto)
+- `bg-blue-500`, `text-red-600` (cores fixas)
+- CSS customizado com cores hardcoded
+- Hex colors inline (#fff, #000)
+
+**Por quê?**
+As classes semânticas do DaisyUI se adaptam automaticamente a TODOS os temas (light, dark, cupcake, cyberpunk, etc.) via variáveis CSS.
 
 ### Principles from ARCHITECTURE.md
 - Separate UI from logic - extract complex logic into hooks
 - Use Tailwind Variants for component variants
 - Create wrappers in `components/ui/` for adapted components
 - Maintain semantic naming (e.g., `UserDropdown`, `ProductCard`)
+- **SEMPRE usar cores semânticas do DaisyUI** (base-100, base-content, etc.)
 
 ## State Management
 

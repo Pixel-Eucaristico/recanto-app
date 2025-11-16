@@ -13,6 +13,11 @@ export { eventService } from './EventService';
 export { acompanhamentoService } from './AcompanhamentoService';
 export { desafioService, desafioRegistroService } from './DesafioService';
 
+// CMS Services (Fase 4)
+export { contentPageService } from './ContentPageService';
+export { modConfigService } from './ModConfigService';
+export { menuConfigService } from './MenuConfigService';
+
 // Re-export types
 export type {
   FirebaseUser,
@@ -25,3 +30,13 @@ export type {
   Desafio,
   DesafioRegistro,
 } from '@/types/firebase-entities';
+
+// CMS Types
+export type {
+  CMSPage,
+  CMSBlock,
+  ModConfig,
+  ModPropConfig,
+  MenuConfig,
+  MenuItem,
+} from '@/types/cms-types';

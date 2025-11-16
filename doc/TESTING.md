@@ -1,138 +1,78 @@
+# Testing Setup
 
-### ✅ Código testável (Testable code structure)
+This project now includes a comprehensive testing setup using Jest and React Testing Library.
 
-> Estruture seu projeto para tornar o código **fácil de testar**, com testes automatizados colocados **próximos dos componentes e funções que validam** — promovendo organização, confiança e escalabilidade.
+## Testing Framework
 
----
+- **Jest**: Test runner and assertion library
+- **React Testing Library**: For testing React components
+- **@testing-library/jest-dom**: Additional Jest matchers for DOM elements
+- **@testing-library/user-event**: For simulating user interactions
 
-## 🧠 Por que se preocupar com testes?
-
-Testes automatizados:
-
-* **Garantem que seu código funciona como esperado**
-* **Evitam regressões** após alterações
-* **Documentam o comportamento do sistema**
-* **Facilitam refatorações seguras**
-
----
-
-## 🧪 Onde ficam os testes?
-
-Você pode organizar os testes de duas formas recomendadas:
-
-### 🔹 1. **Dentro da pasta do recurso ou componente**
+## Running Tests
 
 ```bash
-features/products/
-├── ProductCard.tsx
-├── ProductCard.test.tsx  ← Teste localizado junto do componente
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage report
+npm run test:coverage
 ```
 
-### 🔹 2. **Em uma subpasta chamada `__tests__/`**
+## Test Structure
 
-```bash
-features/products/
+Tests are located in the `src/__tests__/` directory, mirroring the source code structure:
+
+```
+src/__tests__/
+├── _config/
+│   └── routes.test.ts
 ├── components/
-│   ├── ProductCard.tsx
-│   └── __tests__/
-│       └── ProductCard.test.tsx
+│   └── ui/
+│       ├── button.test.tsx
+│       └── card.test.tsx
+└── lib/
+    └── utils.test.ts
 ```
 
-Ambas as abordagens são válidas. O importante é manter **proximidade entre teste e implementações**, facilitando:
+## Current Test Coverage
 
-* Localização dos testes
-* Atualizações sincronizadas
-* Reaproveitamento de mocks ou fixtures
+The project currently has **100% test coverage** for the tested files:
 
----
+- `src/lib/utils.ts` - Utility functions (cn function)
+- `src/_config/routes.ts` - Navigation configuration
+- `src/components/ui/button.tsx` - Button component with all variants
+- `src/components/ui/card.tsx` - Card component and all sub-components
 
-## ⚙️ Ferramentas comuns para testes
+## Test Examples
 
-| Tipo           | Biblioteca                                                                             | Descrição                                 |
-| -------------- | -------------------------------------------------------------------------------------- | ----------------------------------------- |
-| 🧪 Unitários   | [Vitest](https://vitest.dev/), [Jest](https://jestjs.io/)                              | Testes de funções, hooks, slices, lógica  |
-| 🧩 Componentes | [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) | Testes de comportamento do usuário e UI   |
-| 🔗 Integração  | Jest + Testing Library                                                                 | Valida fluxos entre múltiplos componentes |
-| 🌐 End-to-end  | [Cypress](https://www.cypress.io/), [Playwright](https://playwright.dev/)              | Testes automatizados no navegador real    |
+### Utility Function Tests
+- Tests for the `cn` utility function covering class merging, conditional classes, and Tailwind CSS class merging
 
----
+### Component Tests
+- Button component tests covering all variants (default, destructive, outline, secondary, ghost, link)
+- Button size tests (default, sm, lg, icon)
+- Event handling tests
+- Card component tests for all sub-components (Card, CardHeader, CardTitle, CardDescription, CardAction, CardContent, CardFooter)
 
-## 📦 Exemplo de teste com Testing Library
+### Configuration Tests
+- Navigation menu structure validation
+- Route configuration validation
+- Authentication configuration tests
 
-```tsx
-// ProductCard.test.tsx
-import { render, screen } from "@testing-library/react";
-import { ProductCard } from "./ProductCard";
+## Adding New Tests
 
-test("renderiza o nome do produto", () => {
-  render(<ProductCard name="Camisa" price={99.9} />);
-  expect(screen.getByText("Camisa")).toBeInTheDocument();
-});
-```
+When adding new tests:
 
----
+1. Create test files in the `src/__tests__/` directory
+2. Mirror the source code directory structure
+3. Use descriptive test names and group related tests with `describe` blocks
+4. Test both happy paths and edge cases
+5. Aim for high test coverage while focusing on meaningful tests
 
-## 📄 Testando hooks personalizados
+## Configuration
 
-```ts
-// useCounter.test.ts
-import { renderHook, act } from "@testing-library/react-hooks";
-import { useCounter } from "../useCounter";
-
-test("incrementa corretamente", () => {
-  const { result } = renderHook(() => useCounter());
-  act(() => result.current.increment());
-  expect(result.current.count).toBe(1);
-});
-```
-
----
-
-## 📁 Exemplo de estrutura com testes
-
-```
-features/
-├── products/
-│   ├── components/
-│   │   ├── ProductCard.tsx
-│   │   ├── ProductCard.test.tsx
-│   │   └── __tests__/
-│   │       └── ProductCard.integration.test.tsx
-│   ├── productSlice.ts
-│   └── productSlice.test.ts
-hooks/
-├── useAuth.ts
-└── useAuth.test.ts
-```
-
----
-
-## 🚀 Vantagens dessa abordagem
-
-| Vantagem            | Benefício                                                |
-| ------------------- | -------------------------------------------------------- |
-| 📍 Proximidade      | Facilita encontrar e manter os testes                    |
-| 🔍 Clareza          | Cada arquivo de código tem seu "espelho" de teste        |
-| ✅ Confiabilidade    | Testes quebram onde a lógica muda — intencionalmente     |
-| 🧪 Testes modulares | Componentes e funções isoladas são mais fáceis de testar |
-| 🧼 Manutenção       | Refatorações são mais seguras com testes por perto       |
-
----
-
-## 📌 Dicas para testabilidade
-
-* Escreva código que **evite efeitos colaterais** (ex: lógica fora de componentes)
-* Use **injeção de dependência** onde possível
-* Exporte funções puras separadas para facilitar testes
-* **Evite testar implementações internas**, foque no **comportamento observado**
-
----
-
-## ✅ Em resumo
-
-Ter uma estrutura de **código testável** com testes próximos:
-
-* Garante confiança ao desenvolver e refatorar
-* Reduz tempo de debugging
-* Incentiva o uso de boas práticas como separação de lógica e componentes puros
-* Escala com o crescimento do time e do projeto
+The Jest configuration is set up in `jest.config.js` and uses Next.js's built-in Jest configuration for optimal compatibility with the Next.js framework.

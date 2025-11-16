@@ -1,7 +1,9 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@plugin "daisyui";
+@plugin "daisyui" {
+  themes: all;
+}
 
 @import "./themes/recanto/recanto-light.theme.css";
 @import "./themes/recanto/recanto-dark.theme.css";

@@ -2,6 +2,7 @@
 
 import { Menu, LayoutDashboard, User as UserIcon, LogOut } from "lucide-react";
 import { useEffect, useState } from "react";
+import * as LucideIcons from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -35,6 +36,7 @@ import Image from "next/image";
 import ThemeController from "../ui/daisyui/theme-controller";
 import { auth } from "@/domains/auth/services/firebaseClient";
 import { onAuthStateChanged, User } from "firebase/auth";
+import { contentPageService, CMSPage } from "@/services/firebase";
 
 interface MenuItem {
   title: string;
@@ -76,7 +78,38 @@ const Navbar = ({
 }: NavbarProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeMenu, setActiveMenu] = useState<MenuItem[]>(menu);
 
+  // Buscar menu do CMS (páginas com show_in_menu = true)
+  useEffect(() => {
+    const loadMenuFromCMS = async () => {
+      try {
+        const allPages = await contentPageService.getAll();
+
+        // Filtrar páginas que aparecem no menu e estão publicadas
+        const menuPages = allPages
+          .filter(page => page.show_in_menu && page.is_published)
+          .sort((a, b) => (a.menu_order ?? 999) - (b.menu_order ?? 999));
+
+        if (menuPages.length > 0) {
+          // Converter páginas CMS para estrutura do Navbar
+          const convertedMenu = convertPagesToNavbar(menuPages);
+          setActiveMenu(convertedMenu);
+        } else {
+          // Usar menu padrão se não houver páginas no menu
+          setActiveMenu(menu);
+        }
+      } catch (error) {
+        console.error('Error loading menu from CMS:', error);
+        // Em caso de erro, usar menu padrão
+        setActiveMenu(menu);
+      }
+    };
+
+    loadMenuFromCMS();
+  }, [menu]);
+
+  // Autenticação
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
@@ -84,6 +117,47 @@ const Navbar = ({
     });
     return () => unsubscribe();
   }, []);
+
+  /**
+   * Converte páginas CMS para estrutura do Navbar
+   * Constrói hierarquia de menu (itens principais e subitens)
+   */
+  const convertPagesToNavbar = (pages: CMSPage[]): MenuItem[] => {
+    // Separar itens principais (sem pai) e subitens
+    const topLevelPages = pages.filter(p => !p.menu_parent_id);
+    const subPages = pages.filter(p => p.menu_parent_id);
+
+    // Mapear itens principais
+    return topLevelPages.map((page) => {
+      // Container usa # como URL
+      const pageUrl = page.is_menu_container
+        ? '#'
+        : (page.menu_url_type === 'external' && page.menu_external_url
+          ? page.menu_external_url
+          : page.slug);
+
+      const navItem: MenuItem = {
+        title: page.title,
+        url: pageUrl,
+      };
+
+      // Buscar subitens desta página
+      const children = subPages.filter(sub => sub.menu_parent_id === page.id);
+
+      if (children.length > 0) {
+        navItem.items = children.map(child => ({
+          title: child.title,
+          url: child.menu_url_type === 'external' && child.menu_external_url
+            ? child.menu_external_url
+            : child.slug,
+          description: child.menu_description || child.description,
+          icon: child.menu_icon ? (LucideIcons as any)[child.menu_icon] : undefined,
+        }));
+      }
+
+      return navItem;
+    });
+  };
 
   return (
     <section className="py-4">
@@ -103,7 +177,7 @@ const Navbar = ({
             <div className="flex items-center">
               <NavigationMenu>
                 <NavigationMenuList>
-                  {menu.map((item) => renderMenuItem(item))}
+                  {activeMenu.map((item) => renderMenuItem(item))}
                 </NavigationMenuList>
               </NavigationMenu>
             </div>
@@ -203,7 +277,7 @@ const Navbar = ({
                     collapsible
                     className="flex w-full flex-col gap-4"
                   >
-                    {menu.map((item) => renderMobileMenuItem(item))}
+                    {activeMenu.map((item) => renderMobileMenuItem(item))}
                   </Accordion>
                   <div className="border-t py-4">
                     <div className="grid grid-cols-2 justify-start">

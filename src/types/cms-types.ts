@@ -1,0 +1,110 @@
+import { Role } from '@/features/auth/types/user';
+
+// ============================================
+// CMS Types - Sistema Modular Headless
+// ============================================
+
+/**
+ * Bloco de conteúdo em uma página CMS
+ * Cada bloco representa um Mod (componente) com suas props
+ */
+export interface CMSBlock {
+  id: string;                      // ID único do bloco
+  modId: string;                   // ID do Mod (ex: "Hero", "Gallery")
+  props: Record<string, any>;      // Props dinâmicas do Mod
+  order: number;                   // Ordem de renderização
+}
+
+/**
+ * Página gerenciada pelo CMS
+ * Contém metadados e array de blocos
+ */
+export interface CMSPage {
+  id: string;
+  slug: string;                    // URL da página (ex: "/sobre", "/")
+  title: string;
+  description?: string;
+  blocks: CMSBlock[];              // Array de blocos
+  is_published: boolean;
+  target_audience?: Role[];        // Controle de acesso (opcional)
+  seo?: {
+    meta_title?: string;
+    meta_description?: string;
+    og_image?: string;
+  };
+  // Campos de menu navbar
+  show_in_menu?: boolean;                // Se aparece no menu de navegação
+  menu_order?: number;                   // Ordem no menu (0 = primeiro)
+  menu_parent_id?: string | null;        // ID da página pai (para submenu)
+  menu_icon?: string;                    // Ícone Lucide (para submenus)
+  menu_description?: string;             // Descrição no submenu
+  menu_url_type?: 'page' | 'external';   // Tipo de URL: página CMS ou externa
+  menu_external_url?: string;            // URL externa (se menu_url_type = 'external')
+  is_menu_container?: boolean;           // Se é apenas container de submenu (não tem página)
+  // Temas da página
+  theme_light?: string;                  // Tema para modo claro (ex: 'recanto-light', 'cupcake')
+  theme_dark?: string;                   // Tema para modo escuro (ex: 'recanto-dark', 'dracula')
+  created_at: string;
+  updated_at?: string;
+}
+
+/**
+ * Configuração de um Mod
+ * Define como o Mod será renderizado no editor admin
+ */
+export interface ModConfig {
+  id: string;                      // ID único do Mod
+  name: string;                    // Nome amigável
+  description?: string;
+  icon?: string;                   // Ícone Lucide
+  category: 'hero' | 'content' | 'chart' | 'gallery' | 'form' | 'testimonial' | 'cta' | 'other';
+  props: ModPropConfig[];          // Definição das props editáveis
+  preview?: string;                // URL de preview
+}
+
+/**
+ * Configuração de uma prop de Mod
+ * Define como cada prop será editada no admin
+ */
+export interface ModPropConfig {
+  key?: string;                    // Nome da prop (legacy)
+  name?: string;                   // Nome da prop (novo padrão)
+  label: string;                   // Label no editor
+  type: 'text' | 'textarea' | 'select' | 'number' | 'boolean' | 'json-editor' | 'image' | 'color' | 'date' | 'string' | 'url' | 'testimonials-editor';
+  options?: string[];              // Para type="select"
+  required?: boolean;
+  default?: any;                   // Valor padrão (novo)
+  defaultValue?: any;              // Valor padrão (legacy)
+  placeholder?: string;
+  description?: string;            // Descrição da prop (novo)
+  helpText?: string;               // Texto de ajuda (legacy)
+  multiline?: boolean;             // Para textarea (string multiline)
+}
+
+// ============================================
+// Menu Configuration Types
+// ============================================
+
+/**
+ * Item de menu (pode conter subitems)
+ */
+export interface MenuItem {
+  id: string;                      // ID único do item
+  title: string;                   // Título exibido no menu
+  url: string;                     // URL de destino
+  description?: string;            // Descrição (para submenus)
+  icon?: string;                   // Nome do ícone Lucide (ex: "Sunset", "Crown")
+  order: number;                   // Ordem de exibição
+  items?: MenuItem[];              // Subitens (submenu)
+}
+
+/**
+ * Configuração completa do menu navbar
+ */
+export interface MenuConfig {
+  id: string;                      // Sempre "main_menu" (singleton)
+  items: MenuItem[];               // Array de itens principais
+  is_published: boolean;           // Se o menu CMS está ativo
+  created_at: string;
+  updated_at?: string;
+}

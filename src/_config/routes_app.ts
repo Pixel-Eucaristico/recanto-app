@@ -11,7 +11,8 @@ import {
   ListTodo,
   Settings,
   Database,
-  FileEdit
+  FileEdit,
+  Boxes
 } from 'lucide-react';
 import { Role } from "@/features/auth/types/user";
 
@@ -107,5 +108,11 @@ export const appRoutes: AppRoute[] = [
     href: '/app/dashboard/documentation',
     icon: BookText,
     roles: ['admin', 'missionario', 'recantiano', 'pai', 'benfeitor', 'colaborador', null]
+  },
+  {
+    name: 'Exemplos UI',
+    href: '/app/dashboard/examples',
+    icon: Boxes,
+    roles: ['admin']
   }
 ];
