@@ -37,6 +37,16 @@ import { HeroStructure } from './HeroStructure/HeroStructure';
 import { heroStructureConfig } from './HeroStructure/config';
 import { SectionsGrid } from './SectionsGrid/SectionsGrid';
 import { sectionsGridConfig } from './SectionsGrid/config';
+import VocationalBanner from './VocationalBanner/VocationalBanner';
+import { vocationalBannerConfig } from './VocationalBanner/config';
+import TextWithQuote from './TextWithQuote/TextWithQuote';
+import { textWithQuoteConfig } from './TextWithQuote/config';
+import FormationStages from './FormationStages/FormationStages';
+import { formationStagesConfig } from './FormationStages/config';
+import QualitiesList from './QualitiesList/QualitiesList';
+import { qualitiesListConfig } from './QualitiesList/config';
+import VocationalContactForm from './VocationalContactForm/VocationalContactForm';
+import { vocationalContactFormConfig } from './VocationalContactForm/config';
 import { ModConfig } from '@/types/cms-types';
 
 // ============================================
@@ -64,11 +74,15 @@ export const ModComponents = {
   CallToAction,
   OurLadyHeader,
   InfographicGrid,
+  VocationalBanner,
+  TextWithQuote,
+  FormationStages,
+  QualitiesList,
+  VocationalContactForm,
   // Futuros Mods:
   // TeamGrid,
   // Gallery,
   // ChartBlock,
-  // ContactForm,
 } as const;
 
 // ============================================
@@ -96,6 +110,11 @@ export const ModConfigs: Record<string, ModConfig> = {
   CallToAction: callToActionConfig,
   OurLadyHeader: ourLadyHeaderConfig,
   InfographicGrid: infographicGridConfig,
+  VocationalBanner: vocationalBannerConfig,
+  TextWithQuote: textWithQuoteConfig,
+  FormationStages: formationStagesConfig,
+  QualitiesList: qualitiesListConfig,
+  VocationalContactForm: vocationalContactFormConfig,
   // Futuros Configs...
 };
 

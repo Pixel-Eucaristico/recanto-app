@@ -1,0 +1,103 @@
+import { ModConfig } from '@/types/cms-types';
+import { Church } from 'lucide-react';
+
+export const vocationalBannerConfig: ModConfig = {
+  id: 'VocationalBanner',
+  name: 'Banner Vocacional',
+  description: 'Banner hero de página inteira com imagem de fundo, título, subtítulo e animação Lottie',
+  category: 'hero',
+  icon: Church,
+  defaultProps: {
+    title: 'Vocacional: Acolha o Chamado',
+    subtitle: 'Sente no coração o desejo de uma vida plena no Amor Misericordioso?',
+    backgroundImage: 'https://images.unsplash.com/photo-1683009427513-28e163402d16?q=80&w=870&auto=format&fit=crop',
+    lottieUrl: '/animations/career-animation.json',
+    backgroundOpacity: 'medium',
+    titleColor: 'primary',
+    subtitleColor: 'secondary',
+    animationSize: 'md',
+  },
+  fields: [
+    {
+      name: 'title',
+      label: 'Título Principal',
+      type: 'text',
+      required: true,
+      placeholder: 'Vocacional: Acolha o Chamado',
+      description: 'Título grande do banner',
+    },
+    {
+      name: 'subtitle',
+      label: 'Subtítulo',
+      type: 'textarea',
+      required: false,
+      placeholder: 'Sente no coração o desejo de uma vida plena?',
+      description: 'Texto descritivo abaixo do título',
+    },
+    {
+      name: 'backgroundImage',
+      label: 'Imagem de Fundo',
+      type: 'text',
+      required: true,
+      placeholder: 'https://images.unsplash.com/photo-...',
+      description: 'URL da imagem de fundo',
+    },
+    {
+      name: 'backgroundOpacity',
+      label: 'Opacidade da Imagem',
+      type: 'select',
+      options: [
+        { value: 'light', label: 'Clara (10%)' },
+        { value: 'medium', label: 'Média (20%)' },
+        { value: 'dark', label: 'Escura (30%)' },
+      ],
+      default: 'medium',
+      description: 'Opacidade da imagem de fundo',
+    },
+    {
+      name: 'lottieUrl',
+      label: 'URL da Animação Lottie',
+      type: 'text',
+      required: false,
+      placeholder: '/animations/career-animation.json',
+      description: 'URL do arquivo JSON da animação Lottie',
+    },
+    {
+      name: 'titleColor',
+      label: 'Cor do Título',
+      type: 'select',
+      options: [
+        { value: 'primary', label: 'Principal (muda com o tema)' },
+        { value: 'secondary', label: 'Secundário (muda com o tema)' },
+        { value: 'accent', label: 'Destaque (muda com o tema)' },
+      ],
+      default: 'primary',
+      description: 'Cor semântica do título',
+    },
+    {
+      name: 'subtitleColor',
+      label: 'Cor do Subtítulo',
+      type: 'select',
+      options: [
+        { value: 'primary', label: 'Principal (muda com o tema)' },
+        { value: 'secondary', label: 'Secundário (muda com o tema)' },
+        { value: 'accent', label: 'Destaque (muda com o tema)' },
+      ],
+      default: 'secondary',
+      description: 'Cor semântica do subtítulo',
+    },
+    {
+      name: 'animationSize',
+      label: 'Tamanho da Animação',
+      type: 'select',
+      options: [
+        { value: 'sm', label: 'Pequena (12rem)' },
+        { value: 'md', label: 'Média (16rem)' },
+        { value: 'lg', label: 'Grande (20rem)' },
+        { value: 'xl', label: 'Extra Grande (24rem)' },
+      ],
+      default: 'md',
+      description: 'Tamanho da animação Lottie',
+    },
+  ],
+};

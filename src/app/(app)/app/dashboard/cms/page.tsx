@@ -18,7 +18,8 @@ import {
   Folder,
   FolderOpen,
   ChevronRight,
-  ChevronDown
+  ChevronDown,
+  MoreVertical
 } from 'lucide-react';
 import {
   DndContext,
@@ -289,17 +290,43 @@ export default function CMSPagesListPage() {
     const isActiveChildOfContainer = !!activePage.menu_parent_id;
     const isOverChildOfContainer = !!overPage.menu_parent_id;
 
-    // CASO 1: Arrastar sobre uma página FILHA de um container
-    // Isso significa que quer entrar no mesmo container ou reordenar dentro dele
-    if (isOverChildOfContainer) {
+    // CASO 1: Reordenar DENTRO do mesmo container
+    if (isActiveChildOfContainer && isOverChildOfContainer &&
+        activePage.menu_parent_id === overPage.menu_parent_id) {
+      try {
+        // Pegar apenas os filhos desse container
+        const siblings = pages.filter(p => p.menu_parent_id === activePage.menu_parent_id);
+        const oldIndex = siblings.findIndex(p => p.id === activeId);
+        const newIndex = siblings.findIndex(p => p.id === overId);
+
+        if (oldIndex === -1 || newIndex === -1) return;
+
+        const newSiblings = arrayMove(siblings, oldIndex, newIndex);
+
+        // Atualizar menu_order de todos os irmãos
+        await Promise.all(
+          newSiblings.map((page, index) =>
+            contentPageService.update(page.id!, { menu_order: index })
+          )
+        );
+
+        loadPages();
+      } catch (err) {
+        console.error('Error reordering siblings:', err);
+        setAlertConfig({
+          title: 'Erro ao reordenar',
+          message: 'Não foi possível reordenar as páginas filhas.',
+          type: 'error'
+        });
+        setShowAlert(true);
+      }
+      return;
+    }
+
+    // CASO 2: Arrastar para OUTRO container
+    if (isOverChildOfContainer && activePage.menu_parent_id !== overPage.menu_parent_id) {
       const targetParentId = overPage.menu_parent_id;
 
-      // Se já é filho desse mesmo container, apenas reordenar (não implementado)
-      if (activePage.menu_parent_id === targetParentId) {
-        return; // Reordenação dentro do mesmo container (não implementado)
-      }
-
-      // Tornar filho desse container
       try {
         const siblings = pages.filter(p => p.menu_parent_id === targetParentId);
         await contentPageService.update(activeId, {
@@ -319,14 +346,13 @@ export default function CMSPagesListPage() {
       return;
     }
 
-    // CASO 2: Arrastar página filha para FORA do container (sobre uma página raiz)
+    // CASO 3: Arrastar página filha para FORA do container (sobre uma página raiz)
     if (isActiveChildOfContainer && !overPage.menu_parent_id) {
       try {
-        // Remover do container, tornando página raiz
         const topLevelCount = pages.filter(p => !p.menu_parent_id).length;
         await contentPageService.update(activeId, {
           menu_parent_id: null,
-          menu_order: topLevelCount // Colocar no final das páginas raiz
+          menu_order: topLevelCount
         });
         loadPages();
       } catch (err) {
@@ -341,29 +367,23 @@ export default function CMSPagesListPage() {
       return;
     }
 
-    // CASO 3: Reordenar no mesmo nível (páginas raiz)
+    // CASO 4: Reordenar no mesmo nível (páginas raiz)
     if (!isActiveChildOfContainer && !overPage.menu_parent_id) {
-      const oldIndex = pages.findIndex(p => p.id === activeId);
-      const newIndex = pages.findIndex(p => p.id === overId);
+      const topLevelPages = pages.filter(p => !p.menu_parent_id);
+      const oldIndex = topLevelPages.findIndex(p => p.id === activeId);
+      const newIndex = topLevelPages.findIndex(p => p.id === overId);
 
       if (oldIndex === -1 || newIndex === -1) return;
 
-      const newPages = arrayMove(pages, oldIndex, newIndex);
-
-      // Atualizar menu_order
-      const updates = newPages.map((page, index) => ({
-        id: page.id!,
-        menu_order: index
-      }));
-
-      setPages(newPages);
+      const newTopLevel = arrayMove(topLevelPages, oldIndex, newIndex);
 
       try {
         await Promise.all(
-          updates.map(update =>
-            contentPageService.update(update.id, { menu_order: update.menu_order })
+          newTopLevel.map((page, index) =>
+            contentPageService.update(page.id!, { menu_order: index })
           )
         );
+        loadPages();
       } catch (err) {
         console.error('Error updating order:', err);
         setAlertConfig({
@@ -396,28 +416,36 @@ export default function CMSPagesListPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <span className="loading loading-spinner loading-lg"></span>
+      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+        <span className="loading loading-spinner loading-lg text-primary"></span>
+        <p className="text-base-content/60 text-sm">Carregando páginas...</p>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-6xl">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Gerenciar Site</h1>
-          <p className="text-base-content/60 mt-1">
-            Arraste páginas para containers para criar submenus
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={() => setShowPrompt(true)} className="btn btn-outline btn-primary gap-2">
+    <div className="container mx-auto p-4 md:p-6 max-w-6xl pb-24 md:pb-6">
+      {/* Header - Mobile First */}
+      <div className="mb-6">
+        <h1 className="text-2xl md:text-3xl font-bold">Gerenciar Site</h1>
+        <p className="text-base-content/60 mt-2 text-sm md:text-base">
+          Arraste páginas para containers para criar submenus
+        </p>
+
+        {/* Desktop: Botões inline / Mobile: Stack */}
+        <div className="flex flex-col sm:flex-row gap-3 mt-4">
+          <button
+            onClick={() => setShowPrompt(true)}
+            className="btn btn-outline btn-primary gap-2 min-h-[44px]"
+          >
             <Folder className="w-5 h-5" />
-            Novo Container
+            <span className="hidden sm:inline">Novo Container</span>
+            <span className="sm:hidden">Container</span>
           </button>
-          <Link href="/app/dashboard/cms/new" className="btn btn-primary gap-2">
+          <Link
+            href="/app/dashboard/cms/new"
+            className="btn btn-primary gap-2 min-h-[44px]"
+          >
             <Plus className="w-5 h-5" />
             Nova Página
           </Link>
@@ -431,15 +459,15 @@ export default function CMSPagesListPage() {
         </div>
       )}
 
-      {/* Info sobre menu */}
-      <div className="alert alert-info mb-6">
-        <MenuIcon className="w-5 h-5" />
-        <div>
-          <h3 className="font-semibold">Como criar submenus:</h3>
-          <ol className="text-sm list-decimal list-inside">
-            <li>Clique em "Novo Container" para criar agrupador (ex: "Institucional")</li>
-            <li>Arraste páginas sobre o container para criar subitens</li>
-            <li>Configure ícones e descrições em cada subitem</li>
+      {/* Info sobre menu - Mobile Optimized */}
+      <div className="alert alert-info mb-6 p-4">
+        <MenuIcon className="w-5 h-5 flex-shrink-0" />
+        <div className="text-sm md:text-base">
+          <h3 className="font-semibold mb-2">Como criar submenus:</h3>
+          <ol className="list-decimal list-inside space-y-1">
+            <li>Clique em "Novo Container" para criar agrupador</li>
+            <li>Arraste páginas sobre o container</li>
+            <li>Configure ícones e descrições</li>
           </ol>
         </div>
       </div>
@@ -447,12 +475,18 @@ export default function CMSPagesListPage() {
       {/* Pages List */}
       {pages.length === 0 ? (
         <div className="card bg-base-200">
-          <div className="card-body items-center text-center">
-            <h2 className="card-title">Nenhuma página criada ainda</h2>
-            <p className="text-base-content/60">
+          <div className="card-body items-center text-center p-6 md:p-8">
+            <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+              <Plus className="w-8 h-8 md:w-10 md:h-10 text-primary" />
+            </div>
+            <h2 className="card-title text-lg md:text-xl">Nenhuma página criada ainda</h2>
+            <p className="text-base-content/60 text-sm md:text-base mt-2">
               Comece criando sua primeira página CMS
             </p>
-            <Link href="/app/dashboard/cms/new" className="btn btn-primary mt-4 gap-2">
+            <Link
+              href="/app/dashboard/cms/new"
+              className="btn btn-primary mt-6 gap-2 min-h-[44px] px-6"
+            >
               <Plus className="w-5 h-5" />
               Criar Primeira Página
             </Link>
@@ -470,7 +504,7 @@ export default function CMSPagesListPage() {
             items={pages.map(p => p.id!)}
             strategy={verticalListSortingStrategy}
           >
-            <div className="space-y-2">
+            <div className="space-y-3 md:space-y-2">
               {topLevelPages.map((page) => {
                 const children = getChildren(page.id!);
                 const isExpanded = expandedContainers.has(page.id!);
@@ -497,7 +531,7 @@ export default function CMSPagesListPage() {
 
                     {/* Children */}
                     {isExpanded && children.length > 0 && (
-                      <div className="ml-12 mt-2 space-y-2 border-l-2 border-primary/30 pl-4">
+                      <div className="ml-6 md:ml-12 mt-3 md:mt-2 space-y-3 md:space-y-2 border-l-2 border-primary/30 pl-3 md:pl-4">
                         {children.map(child => (
                           <SortablePageRow
                             key={child.id}
@@ -523,9 +557,10 @@ export default function CMSPagesListPage() {
 
           <DragOverlay>
             {activeId && activePage ? (
-              <div className="card bg-base-100 shadow-xl opacity-90">
+              <div className="card bg-base-100 shadow-2xl opacity-90 scale-105 rotate-2">
                 <div className="card-body p-4">
-                  <div className="font-semibold">{activePage.title}</div>
+                  <div className="font-semibold text-lg">{activePage.title}</div>
+                  <div className="text-xs text-base-content/60">Solte para posicionar</div>
                 </div>
               </div>
             ) : null}
@@ -533,28 +568,28 @@ export default function CMSPagesListPage() {
         </DndContext>
       )}
 
-      {/* Preview do Menu */}
+      {/* Preview do Menu - Mobile Optimized */}
       {menuPages.length > 0 && (
         <div className="mt-8">
-          <div className="divider">Preview do Menu</div>
+          <div className="divider text-sm md:text-base">Preview do Menu</div>
           <div className="card bg-base-200">
-            <div className="card-body">
-              <h3 className="card-title text-sm">Estrutura do menu:</h3>
-              <div className="space-y-1">
+            <div className="card-body p-4">
+              <h3 className="card-title text-sm md:text-base mb-3">Estrutura do menu:</h3>
+              <div className="space-y-2">
                 {topLevelPages.filter(p => p.show_in_menu).map((page) => {
                   const children = getChildren(page.id!).filter(c => c.show_in_menu);
                   return (
-                    <div key={page.id}>
-                      <div className="badge badge-lg badge-primary gap-2">
-                        {page.is_menu_container && <Folder className="w-4 h-4" />}
-                        {page.title}
+                    <div key={page.id} className="space-y-2">
+                      <div className="badge badge-lg badge-primary gap-2 h-auto py-2 px-3">
+                        {page.is_menu_container && <Folder className="w-4 h-4 flex-shrink-0" />}
+                        <span className="text-sm">{page.title}</span>
                       </div>
                       {children.length > 0 && (
-                        <div className="ml-8 mt-1 space-y-1">
+                        <div className="ml-4 md:ml-8 space-y-1">
                           {children.map(child => (
-                            <div key={child.id} className="badge badge-sm badge-ghost gap-1">
-                              <ChevronRight className="w-3 h-3" />
-                              {child.title}
+                            <div key={child.id} className="badge badge-ghost gap-2 h-auto py-1.5 px-2">
+                              <ChevronRight className="w-3 h-3 flex-shrink-0" />
+                              <span className="text-xs">{child.title}</span>
                             </div>
                           ))}
                         </div>
@@ -661,147 +696,170 @@ function SortablePageRow({
         page.show_in_menu ? 'border-primary border-2' : ''
       } ${isOver && isContainer ? 'ring-4 ring-primary ring-opacity-50' : ''}`}
     >
-      <div className="card-body p-4">
+      <div className="card-body p-3 md:p-4">
         <div className="flex items-center gap-3">
-          {/* Drag Handle */}
+          {/* Drag Handle - Mobile Optimized */}
           {!isHome && (
             <div
               {...attributes}
               {...listeners}
-              className="cursor-grab active:cursor-grabbing"
+              className="cursor-grab active:cursor-grabbing touch-none flex-shrink-0"
             >
-              <GripVertical className="w-5 h-5 text-base-content/40" />
+              <div className="flex flex-col gap-0.5 p-2 hover:bg-base-200 rounded transition-colors">
+                <div className="w-1 h-1 rounded-full bg-base-content/40"></div>
+                <div className="w-1 h-1 rounded-full bg-base-content/40"></div>
+                <div className="w-1 h-1 rounded-full bg-base-content/40"></div>
+              </div>
             </div>
           )}
 
-          {/* Expand/Collapse (para containers com filhos) */}
+          {/* Expand/Collapse */}
           {hasChildren && onToggleExpand && (
-            <button onClick={onToggleExpand} className="btn btn-xs btn-ghost">
-              {isExpanded ? (
-                <ChevronDown className="w-4 h-4" />
-              ) : (
-                <ChevronRight className="w-4 h-4" />
-              )}
+            <button
+              onClick={onToggleExpand}
+              className="btn btn-ghost btn-sm min-h-[44px] min-w-[44px] p-0 flex-shrink-0"
+            >
+              {isExpanded ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
             </button>
           )}
 
-          {/* Ícones de status */}
-          <div className="flex items-center gap-2">
-            {isHome && <Home className="w-5 h-5 text-primary" />}
-            {isContainer && (
-              isExpanded ? <FolderOpen className="w-5 h-5 text-warning" /> : <Folder className="w-5 h-5 text-warning" />
-            )}
-            {page.show_in_menu && !isContainer && <Star className="w-5 h-5 text-warning fill-warning" />}
-          </div>
-
-          {/* Informações da página */}
+          {/* Info da página */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <div className="font-semibold truncate">{page.title}</div>
+              {isHome && <Home className="w-4 h-4 text-primary" />}
               {isContainer && (
-                <span className="badge badge-warning badge-sm">Container</span>
+                isExpanded ? <FolderOpen className="w-4 h-4 text-warning" /> : <Folder className="w-4 h-4 text-warning" />
               )}
-              <code className="text-xs bg-base-200 px-2 py-1 rounded">
-                {page.slug}
-              </code>
+              {page.show_in_menu && !isContainer && <Star className="w-3 h-3 text-warning fill-warning" />}
+              <div className="font-semibold text-sm md:text-base truncate">{page.title}</div>
             </div>
-            {page.description && (
-              <div className="text-sm text-base-content/60 truncate">
-                {page.description}
-              </div>
-            )}
+
+            <div className="flex items-center gap-2 mt-1 text-xs text-base-content/60">
+              {isContainer && <span className="badge badge-warning badge-xs">Container</span>}
+              {!isContainer && page.is_published ? (
+                <span className="text-success flex items-center gap-1">
+                  <Eye className="w-3 h-3" /> Publicada
+                </span>
+              ) : !isContainer ? (
+                <span className="flex items-center gap-1">
+                  <EyeOff className="w-3 h-3" /> Rascunho
+                </span>
+              ) : null}
+              <span>•</span>
+              <code className="text-[10px] truncate max-w-[150px] block">{page.slug}</code>
+            </div>
           </div>
 
-          {/* Badges */}
-          <div className="flex items-center gap-2">
-            {!isContainer && (
-              <span className="badge badge-ghost badge-sm">
-                {page.blocks.length} {page.blocks.length === 1 ? 'bloco' : 'blocos'}
-              </span>
-            )}
-
-            {page.menu_order !== undefined && (
-              <span className="badge badge-info badge-sm">
-                Ordem: {page.menu_order + 1}
-              </span>
-            )}
-          </div>
-
-          {/* Ações */}
-          <div className="flex items-center gap-2">
-            {/* Configurações de Menu */}
+          {/* Desktop: Ações Inline */}
+          <div className="hidden md:flex items-center gap-2">
             {page.show_in_menu && (
-              <PageMenuConfig
-                page={page}
-                onSave={(updates) => onUpdateMenuConfig(page, updates)}
-              />
+              <PageMenuConfig page={page} onSave={(updates) => onUpdateMenuConfig(page, updates)} />
             )}
 
-            {/* Toggle Menu */}
             <button
               onClick={() => onToggleMenu(page)}
-              className={`btn btn-sm btn-ghost gap-1 ${
-                page.show_in_menu ? 'text-warning' : ''
-              }`}
+              className={`btn btn-sm btn-ghost ${page.show_in_menu ? 'text-warning' : ''}`}
               title={page.show_in_menu ? 'Remover do menu' : 'Adicionar ao menu'}
             >
               <Star className={`w-4 h-4 ${page.show_in_menu ? 'fill-warning' : ''}`} />
             </button>
 
-            {/* Toggle Publish */}
             {!isContainer && (
               <button
                 onClick={() => onTogglePublish(page)}
-                className={`btn btn-sm btn-ghost gap-1 ${
-                  page.is_published ? 'text-success' : ''
-                }`}
+                className={`btn btn-sm btn-ghost ${page.is_published ? 'text-success' : ''}`}
               >
-                {page.is_published ? (
-                  <>
-                    <Eye className="w-4 h-4" />
-                    Publicada
-                  </>
-                ) : (
-                  <>
-                    <EyeOff className="w-4 h-4" />
-                    Rascunho
-                  </>
-                )}
+                {page.is_published ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
               </button>
             )}
 
-            {/* Adicionar Página Filha (apenas para containers raiz, não para containers filhos) */}
             {isContainer && !isChild && onCreateChildPage && (
-              <button
-                onClick={() => onCreateChildPage(page.id!)}
-                className="btn btn-sm btn-success gap-1"
-                title="Adicionar página filha neste container"
-              >
+              <button onClick={() => onCreateChildPage(page.id!)} className="btn btn-sm btn-success gap-1">
                 <Plus className="w-4 h-4" />
-                Nova Página
+                Nova
               </button>
             )}
 
-            {/* Editar */}
             {!isContainer && (
-              <Link
-                href={`/app/dashboard/cms/${page.id}/edit`}
-                className="btn btn-sm btn-ghost gap-1"
-              >
+              <Link href={`/app/dashboard/cms/${page.id}/edit`} className="btn btn-sm btn-ghost">
                 <Edit className="w-4 h-4" />
-                Editar
               </Link>
             )}
 
-            {/* Excluir */}
             {!isHome && (
-              <button
-                onClick={() => onDelete(page.id!, page.title)}
-                className="btn btn-sm btn-ghost text-error gap-1"
-              >
+              <button onClick={() => onDelete(page.id!, page.title)} className="btn btn-sm btn-ghost text-error">
                 <Trash2 className="w-4 h-4" />
               </button>
             )}
+
+            {!isContainer && <span className="badge badge-ghost badge-sm">{page.blocks.length} blocos</span>}
+            {page.menu_order !== undefined && <span className="badge badge-info badge-sm">#{page.menu_order + 1}</span>}
+          </div>
+
+          {/* Mobile: Dropdown Menu (DaisyUI) */}
+          <div className="dropdown dropdown-end md:hidden">
+            <label tabIndex={0} className="btn btn-ghost btn-sm btn-circle">
+              <MoreVertical className="w-5 h-5" />
+            </label>
+            <ul tabIndex={0} className="dropdown-content z-50 menu p-2 shadow-lg bg-base-100 rounded-box w-52 border border-base-300">
+              {page.show_in_menu && (
+                <li>
+                  <div>
+                    <PageMenuConfig page={page} onSave={(updates) => onUpdateMenuConfig(page, updates)} />
+                  </div>
+                </li>
+              )}
+
+              <li>
+                <button onClick={() => onToggleMenu(page)} className="gap-2">
+                  <Star className={`w-4 h-4 ${page.show_in_menu ? 'fill-warning text-warning' : ''}`} />
+                  {page.show_in_menu ? 'Remover do Menu' : 'Adicionar ao Menu'}
+                </button>
+              </li>
+
+              {!isContainer && (
+                <li>
+                  <button onClick={() => onTogglePublish(page)} className="gap-2">
+                    {page.is_published ? (
+                      <>
+                        <EyeOff className="w-4 h-4" /> Despublicar
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="w-4 h-4" /> Publicar
+                      </>
+                    )}
+                  </button>
+                </li>
+              )}
+
+              {isContainer && !isChild && onCreateChildPage && (
+                <li>
+                  <button onClick={() => onCreateChildPage(page.id!)} className="gap-2">
+                    <Plus className="w-4 h-4" /> Nova Página Filha
+                  </button>
+                </li>
+              )}
+
+              {!isContainer && (
+                <li>
+                  <Link href={`/app/dashboard/cms/${page.id}/edit`} className="gap-2">
+                    <Edit className="w-4 h-4" /> Editar
+                  </Link>
+                </li>
+              )}
+
+              {!isHome && (
+                <>
+                  <li className="divider my-0"></li>
+                  <li>
+                    <button onClick={() => onDelete(page.id!, page.title)} className="gap-2 text-error">
+                      <Trash2 className="w-4 h-4" /> Excluir
+                    </button>
+                  </li>
+                </>
+              )}
+            </ul>
           </div>
         </div>
       </div>

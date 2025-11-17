@@ -78,15 +78,15 @@ export default function NewCMSPagePage() {
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-3xl">
+    <div className="container mx-auto p-3 md:p-6 max-w-3xl">
       {/* Header */}
-      <div className="mb-6">
-        <Link href="/app/dashboard/cms" className="btn btn-ghost btn-sm gap-2 mb-4">
+      <div className="mb-4 md:mb-6">
+        <Link href="/app/dashboard/cms" className="btn btn-ghost btn-sm gap-2 mb-3 md:mb-4">
           <ArrowLeft className="w-4 h-4" />
           Voltar
         </Link>
-        <h1 className="text-3xl font-bold">Criar Nova Página</h1>
-        <p className="text-base-content/60 mt-1">
+        <h1 className="text-2xl md:text-3xl font-bold">Criar Nova Página</h1>
+        <p className="text-base-content/60 mt-1 text-sm md:text-base">
           Defina as informações básicas da página. Você poderá adicionar blocos na próxima etapa.
         </p>
       </div>
@@ -100,7 +100,7 @@ export default function NewCMSPagePage() {
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="card bg-base-100 shadow-xl">
-        <div className="card-body space-y-4">
+        <div className="card-body space-y-4 p-4 md:p-6">
           {/* Title */}
           <div className="form-control">
             <label className="label">
@@ -126,19 +126,26 @@ export default function NewCMSPagePage() {
             <label className="label">
               <span className="label-text font-semibold">Slug (URL) *</span>
             </label>
-            <div className="join w-full">
-              <span className="join-item btn btn-disabled">{window.location.origin}/</span>
+            <div className="flex w-full gap-1">
+              {/* Mobile: apenas "/" */}
+              <span className="md:hidden flex-shrink-0 flex items-center px-3 py-2 bg-base-200 rounded-l-lg text-base-content/60 text-sm">
+                /
+              </span>
+              {/* Desktop: origin completo */}
+              <span className="hidden md:flex flex-shrink-0 items-center px-4 py-2 bg-base-200 rounded-l-lg text-base-content/60">
+                {typeof window !== 'undefined' ? window.location.origin : ''}/
+              </span>
               <input
                 type="text"
                 placeholder="sobre-nos"
-                className="input input-bordered join-item flex-1"
+                className="input input-bordered flex-1 min-w-0"
                 value={formData.slug}
                 onChange={(e) => handleSlugChange(e.target.value)}
                 required
               />
             </div>
             <label className="label">
-              <span className="label-text-alt text-base-content/60">
+              <span className="label-text-alt text-base-content/60 text-xs md:text-sm">
                 Apenas letras minúsculas, números e hífens. Ex: "sobre-nos", "galeria/fotos"
               </span>
             </label>

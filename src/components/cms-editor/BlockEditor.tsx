@@ -6,7 +6,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { availableMods } from '@/components/mods';
 import DynamicModForm from './DynamicModForm';
 import type { CMSBlock } from '@/types/cms-types';
-import { ChevronUp, ChevronDown, Trash2, Edit, Check, GripVertical } from 'lucide-react';
+import { ChevronUp, ChevronDown, Trash2, Edit, Check, GripVertical, MoreVertical } from 'lucide-react';
 
 interface BlockEditorProps {
   block: CMSBlock;
@@ -64,8 +64,9 @@ export default function BlockEditor({
       className="card bg-base-100 shadow-md border border-base-300"
     >
       {/* Block Header */}
-      <div className="card-body p-4">
-        <div className="flex items-center justify-between">
+      <div className="card-body p-1.5 md:p-4">
+        {/* Desktop Layout */}
+        <div className="hidden md:flex items-center justify-between">
           <div className="flex items-center gap-3">
             {/* Drag Handle */}
             <button
@@ -134,10 +135,80 @@ export default function BlockEditor({
           </div>
         </div>
 
+        {/* Mobile Layout - Compact */}
+        <div className="md:hidden flex items-center gap-1.5">
+          {/* Drag Handle - Visual */}
+          <button
+            {...attributes}
+            {...listeners}
+            className="cursor-grab active:cursor-grabbing touch-none flex-shrink-0"
+          >
+            <div className="flex flex-col gap-0.5 p-1.5">
+              <div className="w-1 h-1 rounded-full bg-base-content/40"></div>
+              <div className="w-1 h-1 rounded-full bg-base-content/40"></div>
+              <div className="w-1 h-1 rounded-full bg-base-content/40"></div>
+            </div>
+          </button>
+
+          {/* Number Badge - Smaller */}
+          <span className="badge badge-neutral badge-xs flex-shrink-0">{index + 1}</span>
+
+          {/* Block Name - Truncated */}
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-sm truncate">{modConfig.name}</h3>
+          </div>
+
+          {/* Arrow Buttons */}
+          <div className="flex flex-col gap-0.5">
+            <button
+              className="btn btn-xs btn-ghost p-1 min-h-0 h-6"
+              onClick={onMoveUp}
+              disabled={index === 0}
+            >
+              <ChevronUp className="w-3 h-3" />
+            </button>
+            <button
+              className="btn btn-xs btn-ghost p-1 min-h-0 h-6"
+              onClick={onMoveDown}
+              disabled={index === totalBlocks - 1}
+            >
+              <ChevronDown className="w-3 h-3" />
+            </button>
+          </div>
+
+          {/* Actions Dropdown */}
+          <div className="dropdown dropdown-end">
+            <label tabIndex={0} className="btn btn-ghost btn-sm btn-circle">
+              <MoreVertical className="w-4 h-4" />
+            </label>
+            <ul tabIndex={0} className="dropdown-content z-50 menu p-2 shadow-lg bg-base-100 rounded-box w-52 border border-base-300">
+              <li>
+                <button
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  className="gap-2"
+                >
+                  <Edit className="w-4 h-4" />
+                  {isExpanded ? 'Fechar Editor' : 'Editar Bloco'}
+                </button>
+              </li>
+              <li className="divider my-0"></li>
+              <li>
+                <button
+                  onClick={onDelete}
+                  className="gap-2 text-error"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Excluir
+                </button>
+              </li>
+            </ul>
+          </div>
+        </div>
+
         {/* Expanded Form */}
         {isExpanded && (
-          <div className="mt-6 pt-6 border-t border-base-300">
-            <h4 className="font-semibold mb-4">Configurações do Bloco</h4>
+          <div className="mt-2 md:mt-6 pt-2 md:pt-6 border-t border-base-300">
+            <h4 className="font-semibold text-sm md:text-base mb-3 md:mb-4">Configurações do Bloco</h4>
             <DynamicModForm
               modId={block.modId}
               propConfigs={modConfig.props || modConfig.fields || []}

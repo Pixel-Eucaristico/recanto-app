@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { CMSPage } from '@/types/cms-types';
 import { Settings, X, Sun, Moon, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,79 @@ export function PageMenuConfig({ page, onSave }: PageMenuConfigProps) {
     theme_light: page.theme_light || '',
     theme_dark: page.theme_dark || '',
   });
+
+  // Detectar tema atual do DaisyUI - sempre observando
+  const [currentTheme, setCurrentTheme] = useState<string>('');
+
+  useEffect(() => {
+    // Buscar o tema em vários lugares possíveis
+    const detectTheme = () => {
+      // Procurar no html, body, ou em qualquer elemento pai com data-theme
+      let theme = document.documentElement.getAttribute('data-theme');
+
+      if (!theme) {
+        theme = document.body.getAttribute('data-theme');
+      }
+
+      if (!theme) {
+        // Buscar em elementos pais
+        const elementsWithTheme = document.querySelectorAll('[data-theme]');
+        if (elementsWithTheme.length > 0) {
+          theme = elementsWithTheme[elementsWithTheme.length - 1].getAttribute('data-theme');
+        }
+      }
+
+      // Fallback para tema padrão
+      if (!theme) {
+        theme = 'recanto-light';
+      }
+
+      console.log('🎨 Tema detectado:', theme);
+      setCurrentTheme(theme);
+    };
+
+    // Detectar tema inicial
+    detectTheme();
+
+    // Observer para detectar mudanças de tema em tempo real
+    const observer = new MutationObserver(() => {
+      console.log('🔄 Mudança de tema detectada');
+      detectTheme();
+    });
+
+    // Observar todos os elementos que podem ter data-theme
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme']
+    });
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['data-theme']
+    });
+
+    // Observar também mudanças no DOM que podem adicionar elementos com data-theme
+    const allElementsWithTheme = document.querySelectorAll('[data-theme]');
+    allElementsWithTheme.forEach(el => {
+      observer.observe(el, {
+        attributes: true,
+        attributeFilter: ['data-theme']
+      });
+    });
+
+    return () => observer.disconnect();
+  }, []); // Observar sempre, não apenas quando modal abre
+
+  // Bloquear scroll do body quando modal está aberto
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
 
   const availableIcons = [
     { name: 'Sunset', label: 'Pôr do Sol' },
@@ -128,41 +202,46 @@ export function PageMenuConfig({ page, onSave }: PageMenuConfigProps) {
 
   return (
     <>
-      {/* Botão para abrir modal */}
+      {/* Botão para abrir modal - Responsivo */}
       <button
         onClick={() => setIsOpen(true)}
-        className="btn btn-sm btn-ghost gap-1"
+        className="btn btn-sm btn-ghost gap-2 w-full justify-start md:justify-center md:w-auto"
         title="Configurações de menu"
       >
         <Settings className="w-4 h-4" />
+        <span className="md:hidden">Configurar Menu</span>
       </button>
 
-      {/* Modal */}
-      {isOpen && (
-        <div className="modal modal-open">
-          <div className="modal-box max-w-2xl">
+      {/* Full Screen Overlay - Renderizado no body via Portal */}
+      {isOpen && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[9999] w-screen h-screen max-w-none max-h-none m-0 p-0 bg-base-100 md:bg-black/50 md:flex md:items-center md:justify-center" data-theme={currentTheme}>
+          {/* Content Container */}
+          <div className="w-screen h-screen max-w-none max-h-none m-0 p-0 flex flex-col bg-base-100 md:w-11/12 md:max-w-2xl md:h-auto md:max-h-[90vh] md:rounded-2xl md:shadow-2xl md:m-4 border border-base-300">
             {/* Header */}
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-lg">
-                Configurações de Menu: {page.title}
-              </h3>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="btn btn-sm btn-circle btn-ghost"
-              >
-                <X className="w-4 h-4" />
-              </button>
+            <div className="flex-shrink-0 bg-base-100 border-b border-base-300 p-4 md:p-6">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-lg md:text-xl pr-4">
+                  Configurações de Menu
+                </h3>
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="btn btn-sm btn-circle btn-ghost flex-shrink-0"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <p className="text-sm text-base-content/60 mt-1">{page.title}</p>
             </div>
 
-            {/* Form */}
-            <div className="space-y-4">
+            {/* Form Content - Scrollable */}
+            <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
               {/* Tipo de URL */}
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text font-semibold">Tipo de Link</span>
+                  <span className="label-text font-semibold text-base">Tipo de Link</span>
                 </label>
-                <div className="flex gap-4">
-                  <label className="label cursor-pointer gap-2">
+                <div className="flex flex-col md:flex-row gap-3 md:gap-4">
+                  <label className="label cursor-pointer gap-3 min-h-[48px] p-3 border border-base-300 rounded-lg hover:border-primary transition-colors">
                     <input
                       type="radio"
                       name="menu_url_type"
@@ -170,9 +249,9 @@ export function PageMenuConfig({ page, onSave }: PageMenuConfigProps) {
                       checked={config.menu_url_type === 'page'}
                       onChange={() => setConfig({ ...config, menu_url_type: 'page' })}
                     />
-                    <span className="label-text">Página do CMS</span>
+                    <span className="label-text text-base">Página do CMS</span>
                   </label>
-                  <label className="label cursor-pointer gap-2">
+                  <label className="label cursor-pointer gap-3 min-h-[48px] p-3 border border-base-300 rounded-lg hover:border-primary transition-colors">
                     <input
                       type="radio"
                       name="menu_url_type"
@@ -180,7 +259,7 @@ export function PageMenuConfig({ page, onSave }: PageMenuConfigProps) {
                       checked={config.menu_url_type === 'external'}
                       onChange={() => setConfig({ ...config, menu_url_type: 'external' })}
                     />
-                    <span className="label-text">URL Externa</span>
+                    <span className="label-text text-base">URL Externa</span>
                   </label>
                 </div>
               </div>
@@ -189,17 +268,17 @@ export function PageMenuConfig({ page, onSave }: PageMenuConfigProps) {
               {config.menu_url_type === 'external' && (
                 <div className="form-control">
                   <label className="label">
-                    <span className="label-text">URL Externa</span>
+                    <span className="label-text font-semibold text-base">URL Externa</span>
                   </label>
                   <input
                     type="url"
-                    className="input input-bordered w-full"
+                    className="input input-bordered w-full min-h-[48px] text-base"
                     placeholder="https://exemplo.com"
                     value={config.menu_external_url}
                     onChange={(e) => setConfig({ ...config, menu_external_url: e.target.value })}
                   />
                   <label className="label">
-                    <span className="label-text-alt">
+                    <span className="label-text-alt text-sm">
                       {config.menu_url_type === 'page'
                         ? `URL atual: ${page.slug}`
                         : 'Digite a URL completa incluindo http:// ou https://'}
@@ -220,15 +299,15 @@ export function PageMenuConfig({ page, onSave }: PageMenuConfigProps) {
               {/* Descrição */}
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text">Descrição no Menu</span>
-                  <span className="label-text-alt text-base-content/60">
+                  <span className="label-text font-semibold text-base">Descrição no Menu</span>
+                  <span className="label-text-alt text-sm text-base-content/60">
                     (Aparece em submenus)
                   </span>
                 </label>
                 <textarea
-                  className="textarea textarea-bordered"
+                  className="textarea textarea-bordered min-h-[80px] text-base"
                   placeholder="Breve descrição desta página..."
-                  rows={2}
+                  rows={3}
                   value={config.menu_description}
                   onChange={(e) => setConfig({ ...config, menu_description: e.target.value })}
                 />
@@ -237,8 +316,8 @@ export function PageMenuConfig({ page, onSave }: PageMenuConfigProps) {
               {/* Ícone */}
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text">Ícone</span>
-                  <span className="label-text-alt text-base-content/60">
+                  <span className="label-text font-semibold text-base">Ícone</span>
+                  <span className="label-text-alt text-sm text-base-content/60">
                     (Para submenus)
                   </span>
                 </label>
@@ -260,22 +339,22 @@ export function PageMenuConfig({ page, onSave }: PageMenuConfigProps) {
                   </div>
                 )}
 
-                {/* Grid de ícones */}
-                <div className="grid grid-cols-5 gap-2 p-3 border border-base-300 rounded-lg max-h-64 overflow-y-auto">
+                {/* Grid de ícones - Responsive */}
+                <div className="grid grid-cols-5 md:grid-cols-6 gap-3 p-4 border border-base-300 rounded-lg max-h-80 overflow-y-auto">
                   <button
                     type="button"
                     onClick={() => setConfig({ ...config, menu_icon: '' })}
-                    className={`btn btn-sm btn-square ${!config.menu_icon ? 'btn-primary' : 'btn-ghost'}`}
+                    className={`btn btn-square min-h-[48px] min-w-[48px] ${!config.menu_icon ? 'btn-primary' : 'btn-ghost'}`}
                     title="Sem ícone"
                   >
-                    <X className="w-4 h-4" />
+                    <X className="w-5 h-5" />
                   </button>
                   {availableIcons.map((icon) => (
                     <button
                       key={icon.name}
                       type="button"
                       onClick={() => setConfig({ ...config, menu_icon: icon.name })}
-                      className={`btn btn-sm btn-square ${
+                      className={`btn btn-square min-h-[48px] min-w-[48px] ${
                         config.menu_icon === icon.name ? 'btn-primary' : 'btn-ghost'
                       }`}
                       title={icon.label}
@@ -309,7 +388,7 @@ export function PageMenuConfig({ page, onSave }: PageMenuConfigProps) {
                   )}
 
                   <select
-                    className="select select-bordered w-full"
+                    className="select select-bordered w-full min-h-[48px] text-base"
                     value={config.theme_light}
                     onChange={(e) => setConfig({ ...config, theme_light: e.target.value })}
                   >
@@ -341,7 +420,7 @@ export function PageMenuConfig({ page, onSave }: PageMenuConfigProps) {
                   )}
 
                   <select
-                    className="select select-bordered w-full"
+                    className="select select-bordered w-full min-h-[48px] text-base"
                     value={config.theme_dark}
                     onChange={(e) => setConfig({ ...config, theme_dark: e.target.value })}
                   >
@@ -364,24 +443,34 @@ export function PageMenuConfig({ page, onSave }: PageMenuConfigProps) {
             </div>
 
             {/* Footer */}
-            <div className="modal-action">
-              <button
-                onClick={() => setIsOpen(false)}
-                className="btn btn-ghost"
-                disabled={saving}
-              >
-                Cancelar
-              </button>
-              <Button
-                onClick={handleSave}
-                disabled={saving}
-              >
-                {saving ? 'Salvando...' : 'Salvar Configurações'}
-              </Button>
+            <div className="flex-shrink-0 bg-base-100 border-t border-base-300 p-4 md:p-6">
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="btn btn-ghost flex-1 md:flex-initial min-h-[52px]"
+                  disabled={saving}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="btn btn-primary flex-1 md:flex-initial min-h-[52px]"
+                >
+                  {saving ? (
+                    <>
+                      <span className="loading loading-spinner loading-sm"></span>
+                      <span>Salvando...</span>
+                    </>
+                  ) : (
+                    'Salvar Configurações'
+                  )}
+                </button>
+              </div>
             </div>
           </div>
-          <div className="modal-backdrop" onClick={() => setIsOpen(false)} />
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

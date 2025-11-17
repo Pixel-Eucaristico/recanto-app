@@ -52,7 +52,7 @@ function DroppableBlocksArea({ blocks, children }: DroppableBlocksAreaProps) {
   return (
     <div
       ref={setNodeRef}
-      className={`space-y-4 min-h-[200px] p-4 rounded-lg border-2 transition-colors ${
+      className={`space-y-2 md:space-y-4 min-h-[200px] p-1.5 md:p-4 rounded-lg border-2 transition-colors ${
         isOver
           ? 'bg-primary/10 border-primary border-dashed'
           : 'border-base-300 border-dashed'
@@ -73,6 +73,7 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
   const [isEditingInfo, setIsEditingInfo] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -358,37 +359,39 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
       onDragCancel={handleDragCancel}
     >
       <div className="flex h-screen overflow-hidden">
-        {/* Mods Library Sidebar */}
-        <ModsLibrary onAddMod={handleAddMod} />
+        {/* Mods Library Sidebar - HIDDEN on Mobile */}
+        <div className="hidden lg:block">
+          <ModsLibrary onAddMod={handleAddMod} />
+        </div>
 
         {/* Main Editor Area */}
-        <div className="flex-1 overflow-y-auto">
-        <div className="container mx-auto p-6 max-w-5xl">
+        <div className="flex-1 overflow-y-auto relative">
+          <div className="container mx-auto p-1.5 md:p-6 max-w-5xl pb-20 md:pb-6">
           {/* Header */}
-          <div className="sticky top-0 bg-base-100 z-10 pb-4 mb-6 border-b border-base-300">
-            <div className="flex items-center justify-between mb-4">
-              <Link href="/app/dashboard/cms" className="btn btn-ghost btn-sm gap-2">
+          <div className="sticky top-0 bg-base-100 z-10 pb-1.5 md:pb-4 mb-2 md:mb-6 border-b border-base-300">
+            <div className="flex items-center justify-between mb-1.5 md:mb-4">
+              <Link href="/app/dashboard/cms" className="btn btn-ghost btn-sm gap-1 md:gap-2 min-h-[44px]">
                 <ArrowLeft className="w-4 h-4" />
-                Voltar
+                <span className="hidden sm:inline">Voltar</span>
               </Link>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 md:gap-2">
                 {/* Publish Toggle */}
                 <button
                   onClick={handleTogglePublish}
-                  className={`btn btn-sm gap-2 ${
+                  className={`btn btn-sm gap-1 md:gap-2 min-h-[44px] ${
                     page.is_published ? 'btn-success' : 'btn-ghost'
                   }`}
                 >
                   {page.is_published ? (
                     <>
                       <Eye className="w-4 h-4" />
-                      Publicada
+                      <span className="hidden sm:inline">Publicada</span>
                     </>
                   ) : (
                     <>
                       <EyeOff className="w-4 h-4" />
-                      Rascunho
+                      <span className="hidden sm:inline">Rascunho</span>
                     </>
                   )}
                 </button>
@@ -396,18 +399,19 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
                 {/* Save Button */}
                 <button
                   onClick={handleSave}
-                  className="btn btn-primary gap-2"
+                  className="btn btn-primary btn-sm md:btn-md gap-1 md:gap-2 min-h-[44px]"
                   disabled={saving}
                 >
                   {saving ? (
                     <>
                       <span className="loading loading-spinner loading-sm"></span>
-                      Salvando...
+                      <span className="hidden sm:inline">Salvando...</span>
                     </>
                   ) : (
                     <>
                       <Save className="w-4 h-4" />
-                      Salvar Alterações
+                      <span className="hidden sm:inline">Salvar Alterações</span>
+                      <span className="sm:hidden">Salvar</span>
                     </>
                   )}
                 </button>
@@ -416,8 +420,8 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
 
             {/* Page Info - Compact */}
             <div className="card bg-base-100 border border-base-300">
-              <div className="card-body p-3">
-                <div className="flex items-start justify-between gap-3">
+              <div className="card-body p-1.5 md:p-3">
+                <div className="flex items-start justify-between gap-2 md:gap-3">
                   {/* Info Display - Compact */}
                   {!isEditingInfo ? (
                     <div className="flex-1 min-w-0">
@@ -584,9 +588,49 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
                 </SortableContext>
               )}
           </DroppableBlocksArea>
+
+          {/* Mobile FAB Button - Fixed at bottom */}
+          <button
+            onClick={() => setMobileDrawerOpen(true)}
+            className="lg:hidden fixed bottom-4 right-4 btn btn-primary btn-circle btn-lg shadow-2xl z-50"
+            aria-label="Adicionar bloco"
+          >
+            <Plus className="w-6 h-6" />
+          </button>
+          </div>
         </div>
       </div>
-      </div>
+
+      {/* Mobile Bottom Sheet Modal */}
+      {mobileDrawerOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 flex items-end justify-center bg-black/50" onClick={() => setMobileDrawerOpen(false)}>
+          <div
+            className="w-full max-w-lg bg-base-100 rounded-t-2xl shadow-xl max-h-[80vh] overflow-hidden flex flex-col animate-slide-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-base-300">
+              <h2 className="text-lg font-bold">Biblioteca de Blocos</h2>
+              <button
+                onClick={() => setMobileDrawerOpen(false)}
+                className="btn btn-ghost btn-sm btn-circle"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-4">
+              <ModsLibrary
+                onAddMod={(modId) => {
+                  handleAddMod(modId);
+                  setMobileDrawerOpen(false);
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Drag Overlay - Visual feedback */}
       <DragOverlay>

@@ -13,7 +13,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       <input id="dashboard-drawer" type="checkbox" className="drawer-toggle" />
 
       {/* Main content */}
-      <div className="drawer-content flex flex-col">
+      <div className="drawer-content flex flex-col overflow-x-hidden">
         {/* Navbar com botão de toggle - apenas mobile */}
         <nav className="navbar bg-base-300 lg:hidden">
           <label
@@ -29,7 +29,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </nav>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto p-6 bg-base-100">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-3 md:p-6 bg-base-100">
           {children}
         </main>
       </div>
