@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { contentPageService } from '@/services/firebase';
+import { contentPageServerService } from '@/services/firebase/ContentPageService.server';
 import { ModComponents } from '@/components/mods';
 import { CMSPage, CMSBlock } from '@/types/cms-types';
 
@@ -12,7 +12,7 @@ interface PageProps {
  */
 async function getPageData(slug: string): Promise<CMSPage | null> {
   try {
-    return await contentPageService.getBySlug(slug);
+    return await contentPageServerService.getBySlug(slug);
   } catch (error) {
     console.error('Error fetching page:', error);
     return null;
@@ -123,11 +123,22 @@ export default async function DynamicPage({ params }: PageProps) {
 
           console.log('✅ Props finais usadas:', JSON.stringify(actualProps, null, 2));
 
+          // Limpar props vazias/undefined (deixar o componente usar defaults)
+          const cleanProps = Object.entries(actualProps || {}).reduce((acc, [key, value]) => {
+            // Só adiciona se o valor não for vazio, undefined ou null
+            if (value !== '' && value !== undefined && value !== null) {
+              acc[key] = value;
+            }
+            return acc;
+          }, {} as Record<string, any>);
+
+          console.log('🧹 Props limpas:', JSON.stringify(cleanProps, null, 2));
+
           // Renderiza o Mod com suas props corretas
           return (
             <Component
               key={block.id}
-              {...actualProps}
+              {...cleanProps}
             />
           );
         })}

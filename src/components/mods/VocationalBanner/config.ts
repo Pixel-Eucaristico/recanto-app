@@ -56,11 +56,11 @@ export const vocationalBannerConfig: ModConfig = {
     },
     {
       name: 'lottieUrl',
-      label: 'URL da Animação Lottie',
-      type: 'text',
+      label: 'Animação Lottie',
+      type: 'animation-picker',
       required: false,
       placeholder: '/animations/career-animation.json',
-      description: 'URL do arquivo JSON da animação Lottie',
+      description: 'Selecione uma animação Lottie da biblioteca ou envie uma nova',
     },
     {
       name: 'titleColor',

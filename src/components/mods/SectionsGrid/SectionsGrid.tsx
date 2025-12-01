@@ -24,12 +24,16 @@ export interface SectionsGridProps {
  * Perfeito para apresentar informações institucionais, história, valores
  */
 export function SectionsGrid({
-  sections,
+  sections = [],
   columns = '1',
   bgColor = 'base-100',
   maxWidth = '6xl',
   spacing = 'lg',
 }: SectionsGridProps) {
+  // Não renderizar se não tiver seções
+  if (sections.length === 0) {
+    return null;
+  }
   const maxWidthClasses = {
     '4xl': 'max-w-4xl',
     '5xl': 'max-w-5xl',

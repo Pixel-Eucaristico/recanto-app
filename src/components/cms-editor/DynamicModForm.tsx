@@ -18,6 +18,11 @@ import { FontFamilyPicker } from './FontFamilyPicker';
 import { BgColorPicker } from './BgColorPicker';
 import { HeroWithAnimationEditor } from './HeroWithAnimationEditor';
 import { TextImageAnimationEditor } from './TextImageAnimationEditor';
+import { FormationStagesEditor } from './FormationStagesEditor';
+import { TextListEditor } from './TextListEditor';
+import { ActionsGridEditor } from './ActionsGridEditor';
+import { ProjectsShowcaseEditor } from './ProjectsShowcaseEditor';
+import { EvangelizationActionsVisualEditor } from './EvangelizationActionsVisualEditor';
 
 interface DynamicModFormProps {
   modId: string;
@@ -154,14 +159,6 @@ export default function DynamicModForm({
           />
         );
 
-      case 'evangelization-actions-editor':
-        return (
-          <EvangelizationActionsEditor
-            value={value}
-            onChange={(newValue) => handleChange(propName, newValue)}
-          />
-        );
-
       case 'projects-editor':
         return (
           <ProjectsEditor
@@ -273,6 +270,55 @@ export default function DynamicModForm({
           <TextImageAnimationEditor
             value={value}
             onChange={(newValue) => handleChange(propName, newValue)}
+          />
+        );
+
+      case 'formation-stages-editor':
+        return (
+          <FormationStagesEditor
+            value={value}
+            onChange={(newValue) => handleChange(propName, newValue)}
+          />
+        );
+
+      case 'text-list-editor':
+        return (
+          <TextListEditor
+            value={value}
+            onChange={(newValue) => handleChange(propName, newValue)}
+          />
+        );
+
+      case 'actions-grid-editor':
+        return (
+          <ActionsGridEditor
+            value={formValues}
+            onChange={(newValue) => {
+              setFormValues(newValue);
+              onChange(newValue);
+            }}
+          />
+        );
+
+      case 'projects-showcase-editor':
+        return (
+          <ProjectsShowcaseEditor
+            value={formValues}
+            onChange={(newValue) => {
+              setFormValues(newValue);
+              onChange(newValue);
+            }}
+          />
+        );
+
+      case 'evangelization-actions-editor':
+        return (
+          <EvangelizationActionsVisualEditor
+            value={formValues}
+            onChange={(newValue) => {
+              setFormValues(newValue);
+              onChange(newValue);
+            }}
           />
         );
 

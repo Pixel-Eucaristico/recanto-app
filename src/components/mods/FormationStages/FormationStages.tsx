@@ -60,11 +60,32 @@ function StageCard({ stage }: { stage: FormationStage }) {
   const [animationData, setAnimationData] = useState(null);
 
   useEffect(() => {
-    if (stage.lottieUrl) {
-      fetch(stage.lottieUrl)
-        .then((res) => res.json())
-        .then((data) => setAnimationData(data))
-        .catch((error) => console.error("Erro ao carregar animação:", error));
+    if (stage.lottieUrl && stage.lottieUrl.trim() !== '') {
+      // Normalizar URL: se não começar com / ou http, adicionar /animations/
+      let animationPath = stage.lottieUrl;
+      if (!stage.lottieUrl.startsWith('/') && !stage.lottieUrl.startsWith('http')) {
+        animationPath = `/animations/${stage.lottieUrl}`;
+      }
+
+      fetch(animationPath)
+        .then((res) => {
+          // Verificar se a resposta é JSON válido
+          const contentType = res.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            return res.json();
+          }
+          // Silenciosamente ignorar se não for JSON
+          return null;
+        })
+        .then((data) => {
+          if (data) {
+            setAnimationData(data);
+          }
+        })
+        .catch(() => {
+          // Silenciosamente ignorar erros de carregamento
+          setAnimationData(null);
+        });
     }
   }, [stage.lottieUrl]);
 
@@ -84,39 +105,32 @@ function StageCard({ stage }: { stage: FormationStage }) {
 }
 
 export default function FormationStages({
-  title = "Um Caminho de Crescimento e Entrega",
-  subtitle = "Experiência Carismática de dois anos - porta de entrada à Comunidade de Vida, com acompanhamento vocacional dedicado.",
-  stages = [
-    {
-      title: "Encarnação",
-      description: "Chamado à humildade e serviço. Um tempo de autoconhecimento e primeiros atos de misericórdia.",
-    },
-    {
-      title: "Crucificação",
-      description: "Aprofundamos a entrega. Compreendemos o valor do sacrifício por amor ao próximo.",
-    },
-    {
-      title: "Eucaristia",
-      description: "Mergulho na fonte do Amor Misericordioso, que nos capacita a transbordar esse amor no mundo.",
-    },
-  ],
+  title = "",
+  subtitle = "",
+  stages = [],
   columns = "3",
   titleColor = "secondary",
   bgColor = "base-100",
   maxWidth = "5xl",
   paddingY = "lg",
 }: FormationStagesProps) {
+  // Não renderizar se não tiver conteúdo essencial
+  if (!title && stages.length === 0) {
+    return null;
+  }
   return (
     <section className={`${bgColorVariants[bgColor]} ${paddingYVariants[paddingY]} px-6`}>
       <div className={`${maxWidthVariants[maxWidth]} mx-auto`}>
-        <motion.h2
-          initial={{ opacity: 0, x: 30 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6 }}
-          className={`text-3xl font-semibold ${colorVariants.text[titleColor]} mb-6 text-center`}
-        >
-          {title}
-        </motion.h2>
+        {title && (
+          <motion.h2
+            initial={{ opacity: 0, x: 30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
+            className={`text-3xl font-semibold ${colorVariants.text[titleColor]} mb-6 text-center`}
+          >
+            {title}
+          </motion.h2>
+        )}
         <motion.div
           className={`grid ${columnsVariants[columns]} gap-8`}
           initial={{ opacity: 0 }}

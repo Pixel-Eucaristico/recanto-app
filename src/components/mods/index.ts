@@ -47,6 +47,8 @@ import QualitiesList from './QualitiesList/QualitiesList';
 import { qualitiesListConfig } from './QualitiesList/config';
 import VocationalContactForm from './VocationalContactForm/VocationalContactForm';
 import { vocationalContactFormConfig } from './VocationalContactForm/config';
+import { ActionsGrid } from './ActionsGrid/ActionsGrid';
+import { actionsGridConfig } from './ActionsGrid/config';
 import { ModConfig } from '@/types/cms-types';
 
 // ============================================
@@ -79,6 +81,7 @@ export const ModComponents = {
   FormationStages,
   QualitiesList,
   VocationalContactForm,
+  ActionsGrid,
   // Futuros Mods:
   // TeamGrid,
   // Gallery,
@@ -115,6 +118,7 @@ export const ModConfigs: Record<string, ModConfig> = {
   FormationStages: formationStagesConfig,
   QualitiesList: qualitiesListConfig,
   VocationalContactForm: vocationalContactFormConfig,
+  ActionsGrid: actionsGridConfig,
   // Futuros Configs...
 };
 

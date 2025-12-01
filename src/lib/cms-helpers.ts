@@ -1,4 +1,4 @@
-import { contentPageService } from '@/services/firebase';
+import { contentPageServerService } from '@/services/firebase/ContentPageService.server';
 import type { CMSPage } from '@/types/cms-types';
 
 /**
@@ -83,7 +83,7 @@ export function getDefaultHomePage(): CMSPage {
  */
 export async function getHomePage(): Promise<CMSPage> {
   try {
-    const homePage = await contentPageService.getBySlug('/');
+    const homePage = await contentPageServerService.getBySlug('/');
 
     if (homePage) {
       console.log('✅ Home page carregada do banco de dados');

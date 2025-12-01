@@ -33,11 +33,11 @@ interface EventsSectionProps {
 }
 
 export default function EventsSection({
-  title = 'Próximos Eventos',
-  subtitle = 'Venha participar dos nossos encontros comunitários de oração, formação e celebração',
+  title = "",
+  subtitle = "",
   maxEvents = 6,
-  ctaText = 'Entre em contato para participar',
-  ctaLink = '/contatos'
+  ctaText = "",
+  ctaLink = ""
 }: EventsSectionProps) {
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -75,12 +75,16 @@ export default function EventsSection({
     <section className="py-16 bg-slate-50">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-slate-800 mb-4">
-            {title}
-          </h2>
-          <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-            {subtitle}
-          </p>
+          {title && (
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-800 mb-4">
+              {title}
+            </h2>
+          )}
+          {subtitle && (
+            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+              {subtitle}
+            </p>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
@@ -138,14 +142,16 @@ export default function EventsSection({
           ))}
         </div>
 
-        <div className="text-center mt-8">
-          <a
-            href={ctaLink}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors font-semibold"
-          >
-            {ctaText}
-          </a>
-        </div>
+        {ctaText && ctaLink && (
+          <div className="text-center mt-8">
+            <a
+              href={ctaLink}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors font-semibold"
+            >
+              {ctaText}
+            </a>
+          </div>
+        )}
       </div>
     </section>
   );

@@ -5,11 +5,11 @@ import Lottie from 'lottie-react';
 import { useEffect, useState } from 'react';
 
 export interface HeroStructureProps {
-  title: string;
-  description: string;
-  animationUrl: string;
-  quote: string;
-  quoteReference: string;
+  title?: string;
+  description?: string;
+  animationUrl?: string;
+  quote?: string;
+  quoteReference?: string;
   titleColor?: 'primary' | 'secondary' | 'accent';
   quoteColor?: 'primary' | 'secondary' | 'accent' | 'info' | 'success' | 'warning';
   maxWidth?: '4xl' | '5xl' | '6xl' | '7xl' | 'full';
@@ -21,16 +21,20 @@ export interface HeroStructureProps {
  * Perfeito para páginas institucionais com mensagens inspiradoras
  */
 export function HeroStructure({
-  title,
-  description,
-  animationUrl,
-  quote,
-  quoteReference,
+  title = "",
+  description = "",
+  animationUrl = "",
+  quote = "",
+  quoteReference = "",
   titleColor = 'primary',
   quoteColor = 'secondary',
   maxWidth = '5xl',
   bgColor = 'base-100',
 }: HeroStructureProps) {
+  // Não renderizar se não tiver conteúdo essencial
+  if (!title && !description && !quote) {
+    return null;
+  }
   const titleColorClasses = {
     primary: 'text-primary',
     secondary: 'text-secondary',
@@ -120,24 +124,28 @@ export function HeroStructure({
     >
       <div className={`${maxWidthClasses[maxWidth]} mx-auto space-y-6 md:space-y-8 text-center`}>
         {/* Título */}
-        <motion.h1
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className={`text-3xl md:text-4xl lg:text-5xl font-bold ${titleColorClasses[titleColor]}`}
-        >
-          {title}
-        </motion.h1>
+        {title && (
+          <motion.h1
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className={`text-3xl md:text-4xl lg:text-5xl font-bold ${titleColorClasses[titleColor]}`}
+          >
+            {title}
+          </motion.h1>
+        )}
 
         {/* Descrição */}
-        <motion.p
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="text-base md:text-lg lg:text-xl text-base-content"
-        >
-          {description}
-        </motion.p>
+        {description && (
+          <motion.p
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="text-base md:text-lg lg:text-xl text-base-content"
+          >
+            {description}
+          </motion.p>
+        )}
 
         {/* Animação Lottie */}
         <div className="max-w-xs md:max-w-md mx-auto">
@@ -182,17 +190,21 @@ export function HeroStructure({
         </div>
 
         {/* Citação Bíblica */}
-        <motion.blockquote
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.5 }}
-          className={`${quoteColorClasses[quoteColor]} italic text-base md:text-lg space-y-2`}
-        >
-          <p>&ldquo;{quote}&rdquo;</p>
-          <cite className="text-sm not-italic font-medium">
-            {quoteReference}
-          </cite>
-        </motion.blockquote>
+        {quote && (
+          <motion.blockquote
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+            className={`${quoteColorClasses[quoteColor]} italic text-base md:text-lg space-y-2`}
+          >
+            <p>&ldquo;{quote}&rdquo;</p>
+            {quoteReference && (
+              <cite className="text-sm not-italic font-medium">
+                {quoteReference}
+              </cite>
+            )}
+          </motion.blockquote>
+        )}
       </div>
     </motion.section>
   );

@@ -52,14 +52,14 @@ const defaultActions: EvangelizationItem[] = [
 ];
 
 export default function EvangelizationActions({
-  title = 'Nossa Evangelização',
-  subtitle = 'Conheça as formas como levamos a Palavra de Deus a diferentes públicos',
+  title = "",
+  subtitle = "",
   actions,
-  ctaText = 'Conheça Todas as Ações',
-  ctaLink = '/acoes-projetos-evangelizacao'
+  ctaText = "",
+  ctaLink = ""
 }: EvangelizationActionsProps) {
   // Parse actions from JSON string or use default
-  let parsedActions: EvangelizationItem[] = defaultActions;
+  let parsedActions: EvangelizationItem[] = [];
 
   if (actions) {
     try {
@@ -69,15 +69,24 @@ export default function EvangelizationActions({
     }
   }
 
+  // Não renderizar se não tiver conteúdo essencial
+  if (!title && !subtitle && parsedActions.length === 0) {
+    return null;
+  }
+
   return (
     <section className="max-w-6xl mx-auto px-6 py-16 bg-base-200">
       <div className="text-center mb-12">
-        <h2 className="text-4xl font-bold text-base-content mb-4">
-          {title}
-        </h2>
-        <p className="text-lg text-base-content/70 max-w-2xl mx-auto">
-          {subtitle}
-        </p>
+        {title && (
+          <h2 className="text-4xl font-bold text-base-content mb-4">
+            {title}
+          </h2>
+        )}
+        {subtitle && (
+          <p className="text-lg text-base-content/70 max-w-2xl mx-auto">
+            {subtitle}
+          </p>
+        )}
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

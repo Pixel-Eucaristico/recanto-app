@@ -27,7 +27,7 @@ interface TestimonialsProps {
 }
 
 export default function Testimonials({
-  title = 'O que nossa comunidade fala',
+  title = "",
   testimonials
 }: TestimonialsProps) {
   const [feedbacks, setFeedbacks] = useState<CommunityFeedback[]>([]);
@@ -73,9 +73,11 @@ export default function Testimonials({
 
   return (
     <section className="max-w-6xl mx-auto px-6 py-12">
-      <h2 className="text-3xl font-bold text-center mb-10 text-base-content">
-        {title}
-      </h2>
+      {title && (
+        <h2 className="text-3xl font-bold text-center mb-10 text-base-content">
+          {title}
+        </h2>
+      )}
 
       <div className="grid gap-8 md:grid-cols-3">
         {feedbacks.map((feedback, index) => (

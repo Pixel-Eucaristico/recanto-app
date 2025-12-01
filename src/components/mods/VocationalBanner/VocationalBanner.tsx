@@ -38,34 +38,62 @@ const animationSizeVariants = {
 };
 
 export default function VocationalBanner({
-  title = "Vocacional: Acolha o Chamado",
-  subtitle = "Sente no coração o desejo de uma vida plena no Amor Misericordioso?",
-  backgroundImage = "https://images.unsplash.com/photo-1683009427513-28e163402d16?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0",
-  lottieUrl = "/animations/career-animation.json",
+  title = "",
+  subtitle = "",
+  backgroundImage = "",
+  lottieUrl = "",
   backgroundOpacity = "medium",
   titleColor = "primary",
   subtitleColor = "secondary",
   animationSize = "md",
 }: VocationalBannerProps) {
+  // Não renderizar se não tiver conteúdo essencial
+  if (!title && !subtitle) {
+    return null;
+  }
   const [animationData, setAnimationData] = useState(null);
 
   useEffect(() => {
-    if (lottieUrl) {
-      fetch(lottieUrl)
-        .then((res) => res.json())
-        .then((data) => setAnimationData(data))
-        .catch((error) => console.error("Erro ao carregar animação:", error));
+    // Só carregar se lottieUrl existir e não for vazio
+    if (lottieUrl && lottieUrl.trim() !== '') {
+      // Normalizar URL: se não começar com / ou http, adicionar /animations/
+      let animationPath = lottieUrl;
+      if (!lottieUrl.startsWith('/') && !lottieUrl.startsWith('http')) {
+        animationPath = `/animations/${lottieUrl}`;
+      }
+
+      fetch(animationPath)
+        .then((res) => {
+          // Verificar se a resposta é JSON válido
+          const contentType = res.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            return res.json();
+          }
+          // Silenciosamente ignorar se não for JSON
+          return null;
+        })
+        .then((data) => {
+          if (data) {
+            setAnimationData(data);
+          }
+        })
+        .catch(() => {
+          // Silenciosamente ignorar erros de carregamento
+          setAnimationData(null);
+        });
     }
   }, [lottieUrl]);
 
   return (
     <section className="relative w-full h-screen">
-      <Image
-        src={backgroundImage}
-        alt="Imagem de fundo"
-        fill
-        className={`object-cover ${opacityVariants[backgroundOpacity]}`}
-      />
+      {backgroundImage && backgroundImage.trim() !== '' && (
+        <Image
+          src={backgroundImage}
+          alt="Imagem de fundo"
+          fill
+          className={`object-cover ${opacityVariants[backgroundOpacity]}`}
+        />
+      )}
       <div className="relative z-10 flex flex-col items-center justify-center h-full px-6 text-center">
         <motion.h1
           initial={{ opacity: 0, y: -40 }}

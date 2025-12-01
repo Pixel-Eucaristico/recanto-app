@@ -15,6 +15,8 @@ export { desafioService, desafioRegistroService } from './DesafioService';
 
 // CMS Services (Fase 4)
 export { contentPageService } from './ContentPageService';
+// Note: contentPageServerService is NOT exported here to avoid bundling Admin SDK in client
+// Import directly: import { contentPageServerService } from '@/services/firebase/ContentPageService.server'
 export { modConfigService } from './ModConfigService';
 export { menuConfigService } from './MenuConfigService';
 

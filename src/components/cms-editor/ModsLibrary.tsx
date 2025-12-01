@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { availableMods } from '@/components/mods';
-import { Plus, Filter, GripVertical } from 'lucide-react';
+import { Plus, Filter, GripVertical, Search } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
 
 interface ModsLibraryProps {
@@ -71,6 +71,7 @@ function DraggableModItem({ modId, modConfig, onAddMod }: DraggableModItemProps)
 
 export default function ModsLibrary({ onAddMod }: ModsLibraryProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Get unique categories
   const categories = useMemo(() => {
@@ -81,15 +82,35 @@ export default function ModsLibrary({ onAddMod }: ModsLibraryProps) {
     return ['all', ...Array.from(cats).sort()];
   }, []);
 
-  // Filter mods by category
+  // Filter mods by category and search query
   const filteredMods = useMemo(() => {
-    if (selectedCategory === 'all') {
-      return Object.entries(availableMods);
+    let filtered = Object.entries(availableMods);
+
+    // Filter by category
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(
+        ([, modConfig]) => modConfig.category === selectedCategory
+      );
     }
-    return Object.entries(availableMods).filter(
-      ([, modConfig]) => modConfig.category === selectedCategory
-    );
-  }, [selectedCategory]);
+
+    // Filter by search query
+    if (searchQuery.trim() !== '') {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(([modId, modConfig]) => {
+        const name = modConfig.name?.toLowerCase() || '';
+        const description = modConfig.description?.toLowerCase() || '';
+        const category = modConfig.category?.toLowerCase() || '';
+        return (
+          name.includes(query) ||
+          description.includes(query) ||
+          category.includes(query) ||
+          modId.toLowerCase().includes(query)
+        );
+      });
+    }
+
+    return filtered;
+  }, [selectedCategory, searchQuery]);
 
   // Category labels (Portuguese)
   const categoryLabels: Record<string, string> = {
@@ -112,6 +133,29 @@ export default function ModsLibrary({ onAddMod }: ModsLibraryProps) {
         <p className="text-sm text-base-content/60">
           Clique ou arraste blocos para adicionar
         </p>
+      </div>
+
+      {/* Search Bar */}
+      <div className="mb-4">
+        <label className="block text-sm font-medium mb-2 flex items-center gap-2">
+          <Search className="w-4 h-4" />
+          Pesquisar Blocos
+        </label>
+        <input
+          type="text"
+          placeholder="Digite para buscar..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="input input-bordered input-sm w-full"
+        />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery('')}
+            className="text-xs text-base-content/60 hover:text-base-content mt-1 underline"
+          >
+            Limpar busca
+          </button>
+        )}
       </div>
 
       {/* Category Filter */}
@@ -144,8 +188,18 @@ export default function ModsLibrary({ onAddMod }: ModsLibraryProps) {
           <div className="card bg-base-100">
             <div className="card-body p-8 text-center">
               <p className="text-sm text-base-content/60">
-                Nenhum bloco nesta categoria
+                {searchQuery
+                  ? `Nenhum bloco encontrado para "${searchQuery}"`
+                  : 'Nenhum bloco nesta categoria'}
               </p>
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="btn btn-sm btn-ghost mt-2"
+                >
+                  Limpar busca
+                </button>
+              )}
             </div>
           </div>
         ) : (

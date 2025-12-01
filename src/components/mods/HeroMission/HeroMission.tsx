@@ -14,13 +14,17 @@ interface HeroMissionProps {
 }
 
 export default function HeroMission({
-  title = 'Recanto do Amor Misericordioso',
-  description = 'Somos uma comunidade católica em Sumaré dedicada a "vivenciar o Amor Misericordioso de Jesus Cristo", realizando retiros e encontros que avivam os corações e transformam histórias de vida.',
-  buttonText = 'Participe de um Retiro',
-  buttonLink = '/sobre',
-  backgroundImage = 'https://images.unsplash.com/photo-1438032005730-c779502df39b?w=1200',
+  title = "",
+  description = "",
+  buttonText = "",
+  buttonLink = "",
+  backgroundImage = "",
   overlayOpacity = '50'
 }: HeroMissionProps) {
+  // Não renderizar se não tiver conteúdo essencial
+  if (!title && !description) {
+    return null;
+  }
   const overlayOpacityClasses = {
     '90': 'bg-black/90',
     '80': 'bg-black/80',
@@ -37,7 +41,7 @@ export default function HeroMission({
     <div
       className="hero min-h-screen relative"
       style={{
-        backgroundImage: `url(${backgroundImage})`,
+        backgroundImage: backgroundImage ? `url(${backgroundImage})` : undefined,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }}
@@ -54,12 +58,16 @@ export default function HeroMission({
             ease: 'easeOut',
           }}
         >
-          <h1 className="mb-5 text-5xl font-bold text-white drop-shadow-lg">
-            {title}
-          </h1>
-          <p className="mb-8 text-lg text-white/90 drop-shadow-md">
-            {description}
-          </p>
+          {title && (
+            <h1 className="mb-5 text-5xl font-bold text-white drop-shadow-lg">
+              {title}
+            </h1>
+          )}
+          {description && (
+            <p className="mb-8 text-lg text-white/90 drop-shadow-md">
+              {description}
+            </p>
+          )}
           {buttonText && buttonLink && (
             <Link href={buttonLink}>
               <motion.button

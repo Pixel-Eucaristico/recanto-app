@@ -11,8 +11,8 @@ export interface Pillar {
 }
 
 export interface PillarsGridProps {
-  title: string;
-  pillars: Pillar[];
+  title?: string;
+  pillars?: Pillar[];
   columns?: '2' | '3' | '4';
   titleColor?: 'primary' | 'secondary' | 'accent';
   bgColor?: 'base-100' | 'base-200' | 'base-300';
@@ -24,13 +24,17 @@ export interface PillarsGridProps {
  * Perfeito para mostrar valores, pilares, características
  */
 export function PillarsGrid({
-  title,
-  pillars,
+  title = "",
+  pillars = [],
   columns = '4',
   titleColor = 'primary',
   bgColor = 'base-100',
   maxWidth = '6xl',
 }: PillarsGridProps) {
+  // Não renderizar se não tiver conteúdo essencial
+  if (!title && pillars.length === 0) {
+    return null;
+  }
   const maxWidthClasses = {
     '4xl': 'max-w-4xl',
     '5xl': 'max-w-5xl',
@@ -69,15 +73,17 @@ export function PillarsGrid({
 
   return (
     <section className={`w-full py-20 px-6 ${bgColorClasses[bgColor]} ${maxWidthClasses[maxWidth]} mx-auto`}>
-      <motion.h2
-        initial={{ opacity: 0, y: -20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        viewport={{ once: true }}
-        className={`text-3xl md:text-4xl font-semibold ${titleColorClasses[titleColor]} mb-10 text-center`}
-      >
-        {title}
-      </motion.h2>
+      {title && (
+        <motion.h2
+          initial={{ opacity: 0, y: -20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true }}
+          className={`text-3xl md:text-4xl font-semibold ${titleColorClasses[titleColor]} mb-10 text-center`}
+        >
+          {title}
+        </motion.h2>
+      )}
 
       <div className={`grid grid-cols-1 ${columnClasses[columns]} gap-8`}>
         {pillars.map((pillar, index) => {

@@ -13,6 +13,7 @@ export default function NewCMSPagePage() {
     slug: '',
     description: ''
   });
+  const [slugType, setSlugType] = useState<'home' | 'custom'>('home');
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,15 +28,34 @@ export default function NewCMSPagePage() {
     }
 
     if (!formData.slug.trim()) {
-      setError('O slug é obrigatório');
+      setError('A URL é obrigatória');
       return;
     }
 
-    // Validate slug format (only lowercase letters, numbers, hyphens, and slashes)
-    const slugRegex = /^[a-z0-9\-\/]+$/;
-    if (!slugRegex.test(formData.slug)) {
-      setError('O slug deve conter apenas letras minúsculas, números, hífens e barras');
+    // Preparar slug final baseado no tipo selecionado
+    let finalSlug = formData.slug;
+    if (slugType === 'home') {
+      // Página interna: adicionar "/" se não tiver
+      if (!finalSlug.startsWith('/')) {
+        finalSlug = `/${finalSlug}`;
+      }
+    }
+
+    // BLOQUEAR criação de páginas em rotas protegidas
+    if (finalSlug.startsWith('/app')) {
+      setError('Não é permitido criar páginas CMS em /app/* - essa área é reservada para o dashboard');
       return;
+    }
+
+    // Validate slug format
+    // Se for URL externa (começa com http), permite qualquer formato
+    // Se for interna, valida formato de slug
+    if (!finalSlug.startsWith('http')) {
+      const slugRegex = /^[a-z0-9\-\/]+$/;
+      if (!slugRegex.test(finalSlug)) {
+        setError('URLs internas devem conter apenas letras minúsculas, números, hífens e barras');
+        return;
+      }
     }
 
     try {
@@ -44,7 +64,7 @@ export default function NewCMSPagePage() {
       // Create new page with empty blocks array
       const newPage = await contentPageService.create({
         title: formData.title,
-        slug: formData.slug.startsWith('/') ? formData.slug : `/${formData.slug}`,
+        slug: finalSlug,
         description: formData.description || undefined,
         blocks: [],
         is_published: false
@@ -61,18 +81,19 @@ export default function NewCMSPagePage() {
   };
 
   const handleSlugChange = (value: string) => {
-    // Special case for home page
-    if (value.trim() === '/' || value.trim() === '') {
-      setFormData({ ...formData, slug: value.trim() || '/' });
+    // Se for URL externa (começa com http), não formatar
+    if (value.startsWith('http')) {
+      setFormData({ ...formData, slug: value });
       return;
     }
 
-    // Auto-format slug: remove spaces, convert to lowercase, replace special chars
-    const formattedSlug = value
+    // Auto-format slug interno: remove spaces, convert to lowercase, replace special chars
+    let formattedSlug = value
       .toLowerCase()
       .trim()
       .replace(/\s+/g, '-')
-      .replace(/[^a-z0-9\-\/]/g, '');
+      .replace(/[^a-z0-9\-\/]/g, '')
+      .replace(/^\/+/, ''); // Remove barras do início (usuário não precisa digitá-las)
 
     setFormData({ ...formData, slug: formattedSlug });
   };
@@ -121,24 +142,28 @@ export default function NewCMSPagePage() {
             </label>
           </div>
 
-          {/* Slug */}
+          {/* Slug - Join do DaisyUI */}
           <div className="form-control">
             <label className="label">
-              <span className="label-text font-semibold">Slug (URL) *</span>
+              <span className="label-text font-semibold">URL *</span>
             </label>
-            <div className="flex w-full gap-1">
-              {/* Mobile: apenas "/" */}
-              <span className="md:hidden flex-shrink-0 flex items-center px-3 py-2 bg-base-200 rounded-l-lg text-base-content/60 text-sm">
-                /
-              </span>
-              {/* Desktop: origin completo */}
-              <span className="hidden md:flex flex-shrink-0 items-center px-4 py-2 bg-base-200 rounded-l-lg text-base-content/60">
-                {typeof window !== 'undefined' ? window.location.origin : ''}/
-              </span>
+            <div className="join w-full">
+              <select
+                className="select select-bordered join-item w-24"
+                value={slugType}
+                onChange={(e) => {
+                  const newType = e.target.value as 'home' | 'custom';
+                  setSlugType(newType);
+                  // Não alterar o campo slug ao mudar o tipo
+                }}
+              >
+                <option value="home">/</option>
+                <option value="custom">URL</option>
+              </select>
               <input
                 type="text"
-                placeholder="sobre-nos"
-                className="input input-bordered flex-1 min-w-0"
+                placeholder={slugType === 'home' ? 'sobre-nos' : 'https://exemplo.com'}
+                className="input input-bordered join-item flex-1"
                 value={formData.slug}
                 onChange={(e) => handleSlugChange(e.target.value)}
                 required
@@ -146,7 +171,10 @@ export default function NewCMSPagePage() {
             </div>
             <label className="label">
               <span className="label-text-alt text-base-content/60 text-xs md:text-sm">
-                Apenas letras minúsculas, números e hífens. Ex: "sobre-nos", "galeria/fotos"
+                {slugType === 'home'
+                  ? '✓ A barra "/" será adicionada automaticamente. Digite apenas: sobre, contatos, etc.'
+                  : 'URL externa completa: "https://exemplo.com"'
+                }
               </span>
             </label>
           </div>

@@ -28,7 +28,7 @@ export const qualitiesListConfig: ModConfig = {
     {
       name: 'title',
       label: 'Título',
-      type: 'text',
+      type: 'string',
       required: true,
       placeholder: 'Quem Quer Caminhar Conosco?',
       description: 'Título da seção',
@@ -43,7 +43,7 @@ export const qualitiesListConfig: ModConfig = {
     {
       name: 'showIcons',
       label: 'Exibir Ícones',
-      type: 'checkbox',
+      type: 'boolean',
       default: true,
       description: 'Mostrar ícones de check ao lado de cada item',
     },

@@ -74,6 +74,7 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [urlType, setUrlType] = useState<'home' | 'custom'>('home');
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -92,6 +93,16 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
       setLoading(true);
       setError(null);
       const loadedPage = await contentPageService.get(pageId);
+
+      // Inicializar urlType baseado no slug
+      const isExternal = loadedPage.slug.startsWith('http');
+      setUrlType(isExternal ? 'custom' : 'home');
+
+      // Remover "/" do início para exibição no input (será adicionado ao salvar)
+      if (!isExternal && loadedPage.slug.startsWith('/')) {
+        loadedPage.slug = loadedPage.slug.substring(1);
+      }
+
       setPage(loadedPage);
     } catch (err) {
       console.error('Error loading page:', err);
@@ -101,8 +112,43 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
     }
   };
 
+  const handleSlugChange = (value: string) => {
+    if (!page) return;
+
+    // Se for URL externa (começa com http), não formatar
+    if (value.startsWith('http')) {
+      setPage({ ...page, slug: value });
+      return;
+    }
+
+    // Auto-format slug interno: remove spaces, convert to lowercase, replace special chars
+    let formattedSlug = value
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9\-\/]/g, '')
+      .replace(/^\/+/, ''); // Remove barras do início (usuário não precisa digitá-las)
+
+    setPage({ ...page, slug: formattedSlug });
+  };
+
   const handleSave = async () => {
     if (!page) return;
+
+    // Preparar slug final baseado no tipo selecionado
+    let finalSlug = page.slug;
+    if (urlType === 'home') {
+      // Página interna: adicionar "/" se não tiver
+      if (!finalSlug.startsWith('/')) {
+        finalSlug = `/${finalSlug}`;
+      }
+    }
+
+    // BLOQUEAR salvamento de páginas em rotas protegidas
+    if (finalSlug.startsWith('/app')) {
+      alert('Não é permitido criar páginas CMS em /app/* - essa área é reservada para o dashboard');
+      return;
+    }
 
     try {
       setSaving(true);
@@ -126,7 +172,7 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
       // Preparar dados removendo campos undefined
       const updateData: any = {
         title: page.title,
-        slug: page.slug,
+        slug: finalSlug, // Usar slug final com "/" se for página interna
         blocks: cleanUndefined(page.blocks), // Limpar undefined dos blocos
         is_published: page.is_published,
       };
@@ -461,25 +507,34 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
                         />
                       </div>
                       <div>
-                        <label className="text-xs font-medium">URL (slug)</label>
-                        {page.slug === '/' ? (
-                          <div className="flex gap-2">
-                            <input
-                              type="text"
-                              value={page.slug}
-                              disabled
-                              className="input input-bordered input-sm flex-1"
-                            />
-                            <span className="badge badge-info badge-sm">Home</span>
-                          </div>
-                        ) : (
+                        <label className="text-xs font-medium">URL</label>
+                        <div className="join w-full">
+                          <select
+                            className="select select-bordered select-sm join-item w-20"
+                            value={urlType}
+                            onChange={(e) => {
+                              setUrlType(e.target.value as 'home' | 'custom');
+                            }}
+                          >
+                            <option value="home">/</option>
+                            <option value="custom">URL</option>
+                          </select>
                           <input
                             type="text"
+                            placeholder={urlType === 'home' ? 'sobre-nos' : 'https://exemplo.com'}
                             value={page.slug}
-                            onChange={(e) => setPage({ ...page, slug: e.target.value })}
-                            className="input input-bordered input-sm w-full"
+                            onChange={(e) => handleSlugChange(e.target.value)}
+                            className="input input-bordered input-sm join-item flex-1"
                           />
-                        )}
+                        </div>
+                        <label className="label">
+                          <span className="label-text-alt text-base-content/60">
+                            {urlType === 'home'
+                              ? '✓ A barra "/" será adicionada automaticamente. Digite apenas: sobre, contatos, etc.'
+                              : 'URL externa completa: "https://exemplo.com"'
+                            }
+                          </span>
+                        </label>
                       </div>
 
                       {/* Fonte da Página */}

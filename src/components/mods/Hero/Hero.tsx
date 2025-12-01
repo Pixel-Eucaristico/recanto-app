@@ -1,8 +1,8 @@
 import Image from 'next/image';
 
 interface HeroProps {
-  title: string;
-  subtitle: string;
+  title?: string;
+  subtitle?: string;
   theme?: 'primary' | 'secondary' | 'accent';
   imageUrl?: string;
   imageOpacity?: '100' | '80' | '60' | '40' | '20' | '10';
@@ -15,14 +15,18 @@ interface HeroProps {
  * Usado em páginas principais para destacar conteúdo importante
  */
 export default function Hero({
-  title,
-  subtitle,
+  title = "",
+  subtitle = "",
   theme = 'primary',
   imageUrl,
   imageOpacity = '40',
   ctaText,
   ctaLink
 }: HeroProps) {
+  // Não renderizar se não tiver conteúdo essencial
+  if (!title && !subtitle) {
+    return null;
+  }
   const opacityClasses = {
     '100': 'opacity-100',
     '80': 'opacity-80',
@@ -46,8 +50,8 @@ export default function Hero({
           </div>
         )}
         <div>
-          <h1 className="text-5xl font-bold">{title}</h1>
-          <p className="py-6">{subtitle}</p>
+          {title && <h1 className="text-5xl font-bold">{title}</h1>}
+          {subtitle && <p className="py-6">{subtitle}</p>}
           {ctaText && ctaLink && (
             <a href={ctaLink} className="btn btn-primary">
               {ctaText}

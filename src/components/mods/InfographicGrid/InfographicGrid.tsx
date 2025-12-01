@@ -9,7 +9,7 @@ import type { InfographicCard } from '@/types/cms-types';
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
 
 interface InfographicGridProps {
-  cards: InfographicCard[];
+  cards?: InfographicCard[];
   titleFont?: string;
   bodyFont?: string;
 }
@@ -18,7 +18,11 @@ interface InfographicGridProps {
  * Mod: Grid de cards do infográfico Nossa Senhora
  * Exibe cards em layout de colunas com animações
  */
-export function InfographicGrid({ cards, titleFont = 'Montserrat', bodyFont = 'Lora' }: InfographicGridProps) {
+export function InfographicGrid({ cards = [], titleFont = 'Montserrat', bodyFont = 'Lora' }: InfographicGridProps) {
+  // Não renderizar se não tiver cards
+  if (!cards || cards.length === 0) {
+    return null;
+  }
   return (
     <div className="px-6 pb-12 max-w-4xl mx-auto font-nossa-senhora-body">
       <main className="columns-1 md:columns-2 gap-6">

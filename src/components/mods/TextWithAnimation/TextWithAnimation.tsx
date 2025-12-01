@@ -21,14 +21,19 @@ export interface TextWithAnimationProps {
  * Ideal para História, Carisma, Padroeira, etc.
  */
 export function TextWithAnimation({
-  title,
-  paragraphs,
-  animation,
+  title = "",
+  paragraphs = [],
+  animation = "",
   layout = 'text-left',
   titleColor = 'primary',
   bgColor = 'base-100',
   maxWidth = '6xl',
 }: TextWithAnimationProps) {
+  // Não renderizar se não tiver conteúdo essencial
+  if (!title && paragraphs.length === 0) {
+    return null;
+  }
+
   const [animationData, setAnimationData] = useState<any>(null);
 
   // Carregar animação dinamicamente
@@ -62,33 +67,37 @@ export function TextWithAnimation({
 
   return (
     <section className={`w-full py-20 px-6 ${bgColorClasses[bgColor]} ${maxWidthClasses[maxWidth]} mx-auto`}>
-      <motion.h2
-        initial={{ opacity: 0, x: layout === 'text-left' ? -40 : 40 }}
-        whileInView={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.6 }}
-        viewport={{ once: true }}
-        className={`text-3xl md:text-4xl font-semibold ${titleColorClasses[titleColor]} mb-6`}
-      >
-        {title}
-      </motion.h2>
+      {title && (
+        <motion.h2
+          initial={{ opacity: 0, x: layout === 'text-left' ? -40 : 40 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true }}
+          className={`text-3xl md:text-4xl font-semibold ${titleColorClasses[titleColor]} mb-6`}
+        >
+          {title}
+        </motion.h2>
+      )}
 
       <div className={`grid md:grid-cols-2 gap-10 items-center`}>
         {/* Texto */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          viewport={{ once: true }}
-          className={`space-y-4 text-justify ${
-            layout === 'text-right' ? 'order-2' : 'order-1'
-          }`}
-        >
-          {paragraphs.map((paragraph, index) => (
-            <p key={index} className="text-base md:text-lg text-base-content">
-              {paragraph}
-            </p>
-          ))}
-        </motion.div>
+        {paragraphs.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            viewport={{ once: true }}
+            className={`space-y-4 text-justify ${
+              layout === 'text-right' ? 'order-2' : 'order-1'
+            }`}
+          >
+            {paragraphs.map((paragraph, index) => (
+              <p key={index} className="text-base md:text-lg text-base-content">
+                {paragraph}
+              </p>
+            ))}
+          </motion.div>
+        )}
 
         {/* Animação Lottie */}
         {animationData && (

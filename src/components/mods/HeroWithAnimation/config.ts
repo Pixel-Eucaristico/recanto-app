@@ -8,14 +8,17 @@ export const heroWithAnimationConfig: ModConfig = {
   category: 'hero',
   icon: BookOpen,
   defaultProps: {
-    title: 'Título do Hero',
-    subtitle: 'Subtítulo inspirador aqui...',
-    backgroundImage: 'https://cdn2.picryl.com/photo/1672/12/31/santa-teresa-doutora-mistica-inspirada-pelo-espirito-santo-c-1672-josefa-de-73ffbc-640.png',
-    lottieUrl: '/animations/reward-light-effect.json',
-    icon: 'BookOpen',
+    title: '',
+    subtitle: '',
+    backgroundImage: '',
+    lottieUrl: '',
+    icon: '',
     iconColor: 'primary',
     gradientFrom: 'accent',
     gradientTo: 'base-100',
+    variant: 'fullscreen',
+    titleColor: 'primary',
+    paddingY: 'lg',
   },
   fields: [
     {

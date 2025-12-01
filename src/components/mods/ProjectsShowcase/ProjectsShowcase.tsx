@@ -27,6 +27,14 @@ const categoryColors: Record<string, string> = {
   outro: 'badge-neutral',
 };
 
+const categoryLabels: Record<string, string> = {
+  formacao: 'formacao',
+  evangelizacao: 'evangelizacao',
+  social: 'social',
+  retiro: 'retiro',
+  outro: 'outro',
+};
+
 const defaultProjects: Project[] = [
   {
     title: 'Retiros Espirituais',
@@ -51,12 +59,12 @@ const defaultProjects: Project[] = [
 ];
 
 export default function ProjectsShowcase({
-  title = 'Nossos Projetos',
-  subtitle = 'Conheça as iniciativas que transformam vidas e fortalecem nossa comunidade',
+  title = "",
+  subtitle = "",
   projects
 }: ProjectsShowcaseProps) {
   // Parse projects from JSON string or use default
-  let parsedProjects: Project[] = defaultProjects;
+  let parsedProjects: Project[] = [];
 
   if (projects) {
     try {
@@ -66,15 +74,24 @@ export default function ProjectsShowcase({
     }
   }
 
+  // Não renderizar se não tiver conteúdo essencial
+  if (!title && !subtitle && parsedProjects.length === 0) {
+    return null;
+  }
+
   return (
     <section className="max-w-6xl mx-auto px-6 py-16 bg-base-100">
       <div className="text-center mb-12">
-        <h2 className="text-4xl font-bold text-base-content mb-4">
-          {title}
-        </h2>
-        <p className="text-lg text-base-content/70 max-w-2xl mx-auto">
-          {subtitle}
-        </p>
+        {title && (
+          <h2 className="text-4xl font-bold text-base-content mb-4">
+            {title}
+          </h2>
+        )}
+        {subtitle && (
+          <p className="text-lg text-base-content/70 max-w-2xl mx-auto">
+            {subtitle}
+          </p>
+        )}
       </div>
 
       <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
@@ -100,7 +117,7 @@ export default function ProjectsShowcase({
               <div className="flex items-center justify-between mb-2">
                 <h3 className="card-title text-base-content">{project.title}</h3>
                 <span className={`badge ${categoryColors[project.category] || 'badge-neutral'}`}>
-                  {project.category}
+                  {categoryLabels[project.category] || project.category}
                 </span>
               </div>
               <p className="text-base-content/80 leading-relaxed">

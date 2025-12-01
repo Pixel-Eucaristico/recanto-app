@@ -15,12 +15,16 @@ export interface TextIntroProps {
  * Perfeito para mensagens de boas-vindas e introduções
  */
 export function TextIntro({
-  content,
+  content = "",
   maxWidth = '5xl',
   textSize = 'xl',
   bgColor = 'base-100',
   paddingY = 'lg',
 }: TextIntroProps) {
+  // Não renderizar se não tiver conteúdo
+  if (!content) {
+    return null;
+  }
   const maxWidthClasses = {
     sm: 'max-w-sm',
     md: 'max-w-md',

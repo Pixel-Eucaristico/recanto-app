@@ -5,12 +5,12 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 
 export interface TextImageAnimationProps {
-  title: string;
+  title?: string;
   titleColor?: "primary" | "secondary" | "accent" | "info" | "success" | "warning" | "error";
-  paragraphs: string[];
-  image: string;
-  imageAlt: string;
-  lottieUrl: string;
+  paragraphs?: string[];
+  image?: string;
+  imageAlt?: string;
+  lottieUrl?: string;
   layout?: "text-left" | "text-right";
   animationDirection?: "left" | "right";
 }
@@ -26,15 +26,19 @@ const titleColorClasses = {
 };
 
 export default function TextImageAnimation({
-  title,
+  title = "",
   titleColor = "primary",
-  paragraphs,
-  image,
-  imageAlt,
-  lottieUrl,
+  paragraphs = [],
+  image = "",
+  imageAlt = "",
+  lottieUrl = "",
   layout = "text-left",
   animationDirection = "left",
 }: TextImageAnimationProps) {
+  // Não renderizar se não tiver conteúdo essencial
+  if (!title && paragraphs.length === 0) {
+    return null;
+  }
   const [animationData, setAnimationData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -62,14 +66,16 @@ export default function TextImageAnimation({
 
   return (
     <section className="w-full py-20 flex flex-col items-center text-center px-6">
-      <motion.h2
-        initial={{ opacity: 0, x: animationXValue }}
-        whileInView={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.6 }}
-        className={`text-3xl font-bold ${titleColorClass}`}
-      >
-        {title}
-      </motion.h2>
+      {title && (
+        <motion.h2
+          initial={{ opacity: 0, x: animationXValue }}
+          whileInView={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6 }}
+          className={`text-3xl font-bold ${titleColorClass}`}
+        >
+          {title}
+        </motion.h2>
+      )}
       <div className="mt-8 grid md:grid-cols-2 gap-10 items-center max-w-6xl">
         {/* Text Content */}
         <div

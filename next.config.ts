@@ -23,6 +23,20 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  webpack: (config, { isServer }) => {
+    // Exclude Firebase Admin SDK from client bundle
+    if (!isServer) {
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        // Mark Firebase Admin and its deps as external for client
+        'firebase-admin': false,
+        'firebase-admin/app': false,
+        'firebase-admin/auth': false,
+        'firebase-admin/firestore': false,
+      };
+    }
+    return config;
+  },
 };
 
 export default nextConfig;

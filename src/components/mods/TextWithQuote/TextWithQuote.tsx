@@ -7,6 +7,7 @@ export interface TextWithQuoteProps {
   content?: string;
   quoteText?: string;
   quoteReference?: string;
+  afterQuote?: string;
   titleColor?: 'primary' | 'secondary' | 'accent';
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | '6xl';
   bgColor?: 'base-100' | 'base-200' | 'base-300';
@@ -54,36 +55,46 @@ const textAlignVariants = {
 };
 
 export default function TextWithQuote({
-  title = "Para quem o seu coração anseia?",
-  content = "Aqui no Recanto do Amor Misericordioso, acreditamos que a vida ganha seu mais profundo sentido quando nos abrimos à compaixão e à misericórdia. Se seu coração arde por algo maior, Deus pode estar te chamando.",
-  quoteText = "Não devias tu, igualmente, ter compaixão do teu conservo, como eu também tive misericórdia de ti?",
-  quoteReference = "Mateus 18:33",
+  title = "",
+  content = "",
+  quoteText = "",
+  quoteReference = "",
+  afterQuote = "",
   titleColor = "primary",
   maxWidth = "4xl",
   bgColor = "base-200",
   paddingY = "lg",
   textAlign = "center",
 }: TextWithQuoteProps) {
+  // Não renderizar se não tiver conteúdo
+  if (!title && !content && !quoteText && !afterQuote) {
+    return null;
+  }
+
   return (
     <section className={`${bgColorVariants[bgColor]} ${paddingYVariants[paddingY]} px-6`}>
       <div className={`${maxWidthVariants[maxWidth]} mx-auto ${textAlignVariants[textAlign]}`}>
-        <motion.h2
-          initial={{ opacity: 0, x: -30 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6 }}
-          className={`text-3xl font-semibold ${colorVariants.text[titleColor]} mb-6`}
-        >
-          {title}
-        </motion.h2>
+        {title && (
+          <motion.h2
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
+            className={`text-3xl font-semibold ${colorVariants.text[titleColor]} mb-6`}
+          >
+            {title}
+          </motion.h2>
+        )}
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           transition={{ delay: 0.3, duration: 0.6 }}
           className="space-y-6"
         >
-          <p className="text-lg text-base-content">
-            {content}
-          </p>
+          {content && (
+            <p className="text-lg text-base-content">
+              {content}
+            </p>
+          )}
           {quoteText && (
             <div className="italic border-l-4 border-primary pl-4 py-2">
               <p className="text-base-content/80">
@@ -95,6 +106,11 @@ export default function TextWithQuote({
                 </p>
               )}
             </div>
+          )}
+          {afterQuote && (
+            <p className="text-lg text-base-content mt-4">
+              {afterQuote}
+            </p>
           )}
         </motion.div>
       </div>

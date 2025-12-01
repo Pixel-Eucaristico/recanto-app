@@ -23,6 +23,26 @@ export function HeroWithAnimationEditor({ value, onChange }: HeroWithAnimationEd
 
   return (
     <div className="space-y-6">
+      {/* Variante do Hero */}
+      <div className="form-control">
+        <label className="label">
+          <span className="label-text font-semibold">Estilo do Hero</span>
+        </label>
+        <select
+          className="select select-bordered w-full"
+          value={value.variant || 'fullscreen'}
+          onChange={(e) => updateField('variant', e.target.value as any)}
+        >
+          <option value="fullscreen">Tela Cheia (com background e gradiente)</option>
+          <option value="compact">Compacto (simples, sem background)</option>
+        </select>
+        <label className="label">
+          <span className="label-text-alt">
+            Fullscreen = hero grande com imagem de fundo | Compact = hero limpo e simples
+          </span>
+        </label>
+      </div>
+
       {/* Título */}
       <div className="form-control">
         <label className="label">
@@ -51,28 +71,66 @@ export function HeroWithAnimationEditor({ value, onChange }: HeroWithAnimationEd
         />
       </div>
 
-      {/* Imagem de Fundo */}
+      {/* Cor do Título */}
       <div className="form-control">
         <label className="label">
-          <span className="label-text font-semibold">URL da Imagem de Fundo</span>
+          <span className="label-text font-semibold">Cor do Título</span>
         </label>
-        <input
-          type="url"
-          className="input input-bordered w-full"
-          placeholder="https://cdn2.picryl.com/..."
-          value={value.backgroundImage}
-          onChange={(e) => updateField('backgroundImage', e.target.value)}
-        />
-        {value.backgroundImage && (
-          <div className="mt-2">
-            <img
-              src={value.backgroundImage}
-              alt="Preview"
-              className="w-full h-32 object-cover rounded-lg"
-            />
-          </div>
-        )}
+        <select
+          className="select select-bordered w-full"
+          value={value.titleColor || 'primary'}
+          onChange={(e) => updateField('titleColor', e.target.value as any)}
+        >
+          <option value="primary">Principal (muda com o tema)</option>
+          <option value="secondary">Secundário (muda com o tema)</option>
+          <option value="accent">Destaque (muda com o tema)</option>
+          <option value="base-content">Texto Padrão</option>
+        </select>
       </div>
+
+      {/* Espaçamento Vertical (Compact variant) */}
+      {value.variant === 'compact' && (
+        <div className="form-control">
+          <label className="label">
+            <span className="label-text font-semibold">Espaçamento Vertical</span>
+          </label>
+          <select
+            className="select select-bordered w-full"
+            value={value.paddingY || 'lg'}
+            onChange={(e) => updateField('paddingY', e.target.value as any)}
+          >
+            <option value="sm">Pequeno (py-8)</option>
+            <option value="md">Médio (py-12)</option>
+            <option value="lg">Grande (py-16)</option>
+            <option value="xl">Extra Grande (py-24)</option>
+          </select>
+        </div>
+      )}
+
+      {/* Imagem de Fundo (Fullscreen variant) */}
+      {value.variant === 'fullscreen' && (
+        <div className="form-control">
+          <label className="label">
+            <span className="label-text font-semibold">URL da Imagem de Fundo</span>
+          </label>
+          <input
+            type="url"
+            className="input input-bordered w-full"
+            placeholder="https://cdn2.picryl.com/..."
+            value={value.backgroundImage || ''}
+            onChange={(e) => updateField('backgroundImage', e.target.value)}
+          />
+          {value.backgroundImage && (
+            <div className="mt-2">
+              <img
+                src={value.backgroundImage}
+                alt="Preview"
+                className="w-full h-32 object-cover rounded-lg"
+              />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Animação Lottie */}
       <div className="form-control">
@@ -153,44 +211,50 @@ export function HeroWithAnimationEditor({ value, onChange }: HeroWithAnimationEd
         </select>
       </div>
 
-      {/* Gradiente - Cor Inicial */}
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text font-semibold">Gradiente - Cor Inicial</span>
-        </label>
-        <select
-          className="select select-bordered w-full"
-          value={value.gradientFrom || 'accent'}
-          onChange={(e) => updateField('gradientFrom', e.target.value as any)}
-        >
-          <option value="primary">Principal (muda com o tema)</option>
-          <option value="secondary">Secundário (muda com o tema)</option>
-          <option value="accent">Destaque (muda com o tema)</option>
-          <option value="neutral">Neutro (muda com o tema)</option>
-        </select>
-      </div>
+      {/* Gradiente - Cor Inicial (Fullscreen variant) */}
+      {value.variant === 'fullscreen' && (
+        <div className="form-control">
+          <label className="label">
+            <span className="label-text font-semibold">Gradiente - Cor Inicial</span>
+          </label>
+          <select
+            className="select select-bordered w-full"
+            value={value.gradientFrom || 'accent'}
+            onChange={(e) => updateField('gradientFrom', e.target.value as any)}
+          >
+            <option value="primary">Principal (muda com o tema)</option>
+            <option value="secondary">Secundário (muda com o tema)</option>
+            <option value="accent">Destaque (muda com o tema)</option>
+            <option value="neutral">Neutro (muda com o tema)</option>
+          </select>
+        </div>
+      )}
 
-      {/* Gradiente - Cor Final */}
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text font-semibold">Gradiente - Cor Final</span>
-        </label>
-        <select
-          className="select select-bordered w-full"
-          value={value.gradientTo || 'base-100'}
-          onChange={(e) => updateField('gradientTo', e.target.value as any)}
-        >
-          <option value="base-100">Fundo Principal</option>
-          <option value="base-200">Fundo Médio</option>
-          <option value="base-300">Fundo Escuro</option>
-        </select>
-      </div>
+      {/* Gradiente - Cor Final (Fullscreen variant) */}
+      {value.variant === 'fullscreen' && (
+        <div className="form-control">
+          <label className="label">
+            <span className="label-text font-semibold">Gradiente - Cor Final</span>
+          </label>
+          <select
+            className="select select-bordered w-full"
+            value={value.gradientTo || 'base-100'}
+            onChange={(e) => updateField('gradientTo', e.target.value as any)}
+          >
+            <option value="base-100">Fundo Principal</option>
+            <option value="base-200">Fundo Médio</option>
+            <option value="base-300">Fundo Escuro</option>
+          </select>
+        </div>
+      )}
 
       {/* Preview */}
       <div className="alert alert-info">
         <span className="text-sm">
-          💡 <strong>Dica:</strong> O hero ocupa a tela inteira (100vh) e tem um gradiente de fundo.
-          A imagem aparece com 20% de opacidade.
+          💡 <strong>Dica:</strong>{' '}
+          {value.variant === 'fullscreen'
+            ? 'Fullscreen: Hero ocupa a tela inteira (100vh) com gradiente de fundo e imagem com 20% de opacidade.'
+            : 'Compact: Hero simples e limpo, sem background, ideal para páginas institucionais.'}
         </span>
       </div>
     </div>

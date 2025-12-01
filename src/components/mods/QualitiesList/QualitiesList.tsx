@@ -57,14 +57,8 @@ const textSizeVariants = {
 };
 
 export default function QualitiesList({
-  title = "Quem Quer Caminhar Conosco?",
-  items = [
-    "Buscamos corações abertos à escuta e ao aprendizado contínuo.",
-    "Almas que anseiam viver o Amor Misericordioso e o perdão.",
-    "Pessoas dispostas à cura interior e ao autoconhecimento.",
-    "Espíritos que desejam servir com amor aos mais necessitados.",
-    "Quem busca a santidade na simplicidade do cotidiano.",
-  ],
+  title = "",
+  items = [],
   titleColor = "primary",
   iconColor = "primary",
   maxWidth = "4xl",
@@ -73,17 +67,23 @@ export default function QualitiesList({
   textSize = "lg",
   showIcons = true,
 }: QualitiesListProps) {
+  // Não renderizar se não tiver conteúdo essencial
+  if (!title && items.length === 0) {
+    return null;
+  }
   return (
     <section className={`${bgColorVariants[bgColor]} ${paddingYVariants[paddingY]} px-6`}>
       <div className={`${maxWidthVariants[maxWidth]} mx-auto text-center`}>
-        <motion.h2
-          initial={{ opacity: 0, y: -30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className={`text-3xl font-semibold ${colorVariants.text[titleColor]} mb-8`}
-        >
-          {title}
-        </motion.h2>
+        {title && (
+          <motion.h2
+            initial={{ opacity: 0, y: -30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className={`text-3xl font-semibold ${colorVariants.text[titleColor]} mb-8`}
+          >
+            {title}
+          </motion.h2>
+        )}
         <div className="space-y-4">
           {items.map((item, index) => (
             <motion.div
@@ -91,7 +91,7 @@ export default function QualitiesList({
               initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.1, duration: 0.5 }}
-              className={`flex items-start gap-3 ${textSizeVariants[textSize]} text-left`}
+              className={`flex items-start gap-4 ${textSizeVariants[textSize]} text-left`}
             >
               {showIcons && (
                 <Check className={`flex-shrink-0 w-5 h-5 mt-1 ${colorVariants.text[iconColor]}`} />

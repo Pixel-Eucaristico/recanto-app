@@ -27,9 +27,9 @@ export interface CallToActionProps {
  * Perfeito para CTAs, convites, inscrições
  */
 export function CallToAction({
-  title,
-  description,
-  buttons,
+  title = "",
+  description = "",
+  buttons = [],
   titleColor = 'primary',
   titleSize = 'xl',
   buttonSize = 'md',
@@ -38,6 +38,10 @@ export function CallToAction({
   maxWidth = '6xl',
   paddingY = 'lg',
 }: CallToActionProps) {
+  // Não renderizar se não tiver título nem botões
+  if (!title && buttons.length === 0) {
+    return null;
+  }
   const maxWidthClasses = {
     '4xl': 'max-w-4xl',
     '5xl': 'max-w-5xl',

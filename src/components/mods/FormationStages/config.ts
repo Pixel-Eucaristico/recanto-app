@@ -37,7 +37,7 @@ export const formationStagesConfig: ModConfig = {
     {
       name: 'title',
       label: 'Título',
-      type: 'text',
+      type: 'string',
       required: true,
       placeholder: 'Um Caminho de Crescimento e Entrega',
       description: 'Título principal da seção',
@@ -45,7 +45,8 @@ export const formationStagesConfig: ModConfig = {
     {
       name: 'subtitle',
       label: 'Subtítulo/Nota de Rodapé',
-      type: 'textarea',
+      type: 'string',
+      multiline: true,
       required: false,
       placeholder: 'Experiência Carismática de dois anos...',
       description: 'Texto explicativo abaixo das etapas (deixe vazio para não exibir)',
