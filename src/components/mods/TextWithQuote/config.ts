@@ -29,6 +29,12 @@ export const textWithQuoteConfig: ModConfig = {
       description: 'Título da seção',
     },
     {
+      name: 'animationFile',
+      label: 'Animação (opcional)',
+      type: 'animation-picker',
+      description: 'Animação Lottie para exibir acima do texto',
+    },
+    {
       name: 'content',
       label: 'Conteúdo',
       type: 'string',

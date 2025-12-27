@@ -10,12 +10,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/daisyui/tabs";
+import { Suspense } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { UploadFile } from '@/integrations/Core';
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2, Trash2, Edit, Plus, Mail, Check, Eye, Archive, MessageSquare, Calendar } from 'lucide-react';
+import { Loader2, Trash2, Edit, Plus, Mail, Check, Eye, Archive, MessageSquare, Users } from 'lucide-react';
 import { MainPageContent, CommunityFeedback, Project, Evangelization } from '@/types/main-content';
 import { FormSubmission, ContactFormData, StoryFormData, AdminEmailConfig } from '@/types/form-submissions';
 import { Badge } from '@/components/ui/badge';
@@ -716,8 +717,11 @@ const FormSubmissionsTab = () => {
     );
 };
 
+import { useSearchParams } from 'next/navigation';
+
 const EmailConfigTab = () => {
     const { toast } = useToast();
+    // Search params logic moved to parent AdminPage
     const [config, setConfig] = useState<Partial<AdminEmailConfig>>({
         email: '',
         name: '',
@@ -769,6 +773,7 @@ const EmailConfigTab = () => {
             });
             if (!response.ok) throw new Error('Failed to save');
             toast({ title: "Sucesso!", description: "Configurações salvas." });
+            loadConfig(); // Refresh data from server to confirm save
         } catch (error) {
             toast({ title: "Erro", description: "Falha ao salvar.", variant: "destructive" });
         } finally {
@@ -812,6 +817,64 @@ const EmailConfigTab = () => {
                     </div>
 
                     <div className="space-y-3">
+                        <label className="block text-sm font-medium">Método de Envio</label>
+                        <Select
+                            value={config.provider || 'gmail'}
+                            onValueChange={(v: 'gmail' | 'smtp') => setConfig({ ...config, provider: v })}
+                        >
+                            <SelectTrigger>
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="gmail">Gmail API (Recomendado)</SelectItem>
+                                <SelectItem value="smtp">Servidor SMTP (Outro)</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    {config.provider === 'smtp' && (
+                        <div className="border p-4 rounded-lg bg-gray-50 space-y-4">
+                            <h4 className="font-semibold text-sm text-gray-700">Configuração SMTP</h4>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-medium mb-1">Host (Servidor)</label>
+                                    <Input
+                                        value={config.smtp?.host || ''}
+                                        onChange={(e) => setConfig({ ...config, smtp: { ...config.smtp!, host: e.target.value } })}
+                                        placeholder="smtp.exemplo.com"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium mb-1">Porta</label>
+                                    <Input
+                                        type="number"
+                                        value={config.smtp?.port || ''}
+                                        onChange={(e) => setConfig({ ...config, smtp: { ...config.smtp!, port: parseInt(e.target.value) } })}
+                                        placeholder="587"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium mb-1">Usuário</label>
+                                    <Input
+                                        value={config.smtp?.user || ''}
+                                        onChange={(e) => setConfig({ ...config, smtp: { ...config.smtp!, user: e.target.value } })}
+                                        placeholder="seu@email.com"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium mb-1">Senha</label>
+                                    <Input
+                                        type="password"
+                                        value={config.smtp?.pass || ''}
+                                        onChange={(e) => setConfig({ ...config, smtp: { ...config.smtp!, pass: e.target.value } })}
+                                        placeholder="Senha do email"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="space-y-3">
                         <label className="block text-sm font-medium">Notificações</label>
                         <div className="flex items-center space-x-2">
                             <input
@@ -835,43 +898,84 @@ const EmailConfigTab = () => {
                         </div>
                     </div>
 
-                    <Button onClick={saveConfig} disabled={isSaving}>
+                    <button 
+                        type="button"
+                        onClick={saveConfig} 
+                        disabled={isSaving} 
+                        className="btn btn-primary w-full sm:w-auto text-white"
+                    >
                         {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                         Salvar Configurações
-                    </Button>
+                    </button>
                 </CardContent>
             </Card>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Conexão Gmail</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    {gmailStatus?.connected ? (
-                        <div className="flex items-center gap-3 p-4 bg-green-50 rounded-lg">
-                            <Check className="w-5 h-5 text-green-600" />
-                            <div>
-                                <p className="font-medium text-green-900">Gmail conectado</p>
-                                {gmailStatus.expires_at && (
-                                    <p className="text-sm text-green-700">
-                                        Expira em: {new Date(gmailStatus.expires_at).toLocaleDateString('pt-BR')}
-                                    </p>
-                                )}
+            {(!config.provider || config.provider === 'gmail') && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Conexão Gmail</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        {gmailStatus?.connected ? (
+                            <div className="alert alert-success flex items-center justify-between shadow-sm">
+                                <div className="flex items-center gap-3">
+                                    <Check className="w-5 h-5" />
+                                    <div>
+                                        <h3 className="font-bold">Gmail conectado</h3>
+                                        {gmailStatus.expires_at && (
+                                            <div className="text-xs opacity-90">
+                                                Expira em: {new Date(gmailStatus.expires_at).toLocaleDateString('pt-BR')}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                <button 
+                                    type="button"
+                                    onClick={async () => {
+                                        try {
+                                            const response = await fetch('/api/gmail/status', { method: 'DELETE' });
+                                            if (response.ok) {
+                                                setGmailStatus({ connected: false });
+                                                toast({
+                                                    title: "Desconectado",
+                                                    description: "Conta do Gmail desconectada com sucesso.",
+                                                    variant: "default",
+                                                });
+                                            } else {
+                                                throw new Error('Falha ao desconectar');
+                                            }
+                                        } catch (error) {
+                                            toast({
+                                                title: "Erro",
+                                                description: "Não foi possível desconectar o Gmail.",
+                                                variant: "destructive",
+                                            });
+                                        }
+                                    }}
+                                    className="btn btn-error btn-sm text-white"
+                                >
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    Desconectar
+                                </button>
                             </div>
-                        </div>
-                    ) : (
-                        <div className="space-y-3">
-                            <p className="text-sm text-gray-600">
-                                Conecte sua conta Gmail para enviar notificações automáticas quando alguém enviar um formulário.
-                            </p>
-                            <Button onClick={connectGmail} variant="outline">
-                                <Mail className="w-4 h-4 mr-2" />
-                                Conectar Gmail
-                            </Button>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
+                        ) : (
+                            <div className="space-y-3">
+                                <p className="text-sm text-gray-600">
+                                    Conecte sua conta Gmail para enviar notificações automáticas quando alguém enviar um formulário.
+                                </p>
+                                <button 
+                                    type="button"
+                                    onClick={connectGmail} 
+                                    className="btn btn-outline btn-sm"
+                                >
+                                    <Mail className="w-4 h-4 mr-2" />
+                                    Conectar Gmail
+                                </button>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            )}
         </div>
     );
 };
@@ -1165,72 +1269,68 @@ const UsersManagementTab = () => {
     );
 };
 
-const EventsManagementTab = () => {
+
+
+const AdminPage = () => {
+        const { toast } = useToast();
+        const searchParams = useSearchParams();
+
+        useEffect(() => {
+            // Check for errors in URL (moved from EmailConfigTab to be visible globally)
+            const error = searchParams.get('error');
+            const details = searchParams.get('details');
+            
+            if (error) {
+                toast({
+                    title: "Falha na conexão",
+                    description: details || "Não foi possível conectar ao Gmail. Tente novamente.",
+                    variant: "destructive",
+                    duration: 10000,
+                });
+                // Optional: Clean URL
+                window.history.replaceState(null, '', '/app/dashboard/admin');
+            } else if (searchParams.get('gmail_connected')) {
+                toast({
+                    title: "Conectado!",
+                    description: "Sua conta do Gmail foi vinculada com sucesso.",
+                    variant: 'default',
+                    className: "bg-green-600 text-white border-none", 
+                });
+                window.history.replaceState(null, '', '/app/dashboard/admin?tab=email');
+            }
+        }, [searchParams]);
+
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Gerenciamento de Eventos</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                    <div className="flex items-start gap-4">
-                        <div className="flex-shrink-0">
-                            <Calendar className="w-8 h-8 text-blue-600" />
-                        </div>
-                        <div className="flex-1">
-                            <h3 className="text-lg font-semibold text-blue-900 mb-2">
-                                Gerencie eventos na página Agenda
-                            </h3>
-                            <p className="text-blue-700 mb-4">
-                                O CRUD completo de eventos está disponível na página <strong>Agenda</strong>,
-                                onde você pode criar, editar, excluir e sincronizar eventos com o Google Calendar.
-                            </p>
-                            <Button
-                                onClick={() => window.location.href = '/app/dashboard/schedule'}
-                                className="gap-2"
-                            >
-                                <Calendar className="w-4 h-4" />
-                                Ir para Agenda
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-                <div className="text-sm text-slate-500">
-                    <p><strong>Funcionalidades disponíveis na Agenda:</strong></p>
-                    <ul className="list-disc list-inside mt-2 space-y-1">
-                        <li>Criar novos eventos</li>
-                        <li>Editar eventos existentes</li>
-                        <li>Excluir eventos</li>
-                        <li>Tornar eventos públicos/privados</li>
-                        <li>Sincronização com Google Calendar (opcional)</li>
-                    </ul>
-                </div>
-            </CardContent>
-        </Card>
+        <div className="container mx-auto py-8">
+            <div className="flex justify-between items-center mb-8">
+                <h1 className="text-3xl font-bold">Painel do Administrador</h1>
+            </div>
+
+            <Tabs defaultValue="content" className="space-y-6">
+                <TabsList className="mb-8">
+                    <TabsTrigger value="content" className="gap-2"><Archive className="w-4 h-4"/> Conteúdo</TabsTrigger>
+                    <TabsTrigger value="submissions" className="gap-2"><MessageSquare className="w-4 h-4"/> Mensagens</TabsTrigger>
+                    <TabsTrigger value="email" className="gap-2"><Mail className="w-4 h-4"/> Email</TabsTrigger>
+                    <TabsTrigger value="users" className="gap-2"><Users className="w-4 h-4"/> Usuários</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="content"><ContentManagerTab /></TabsContent>
+                <TabsContent value="submissions"><FormSubmissionsTab /></TabsContent>
+                <TabsContent value="email">
+                    <Suspense fallback={<div className="p-12 text-center">Carregando configurações...</div>}>
+                        <EmailConfigTab />
+                    </Suspense>
+                </TabsContent>
+                <TabsContent value="users"><UsersManagementTab /></TabsContent>
+            </Tabs>
+        </div>
     );
 };
 
-export default function AdminPage() {
+export default function AdminPageWrapper() {
     return (
-        <div>
-            <header className="mb-8">
-                <h1 className="text-3xl font-bold text-slate-800">Painel Administrativo</h1>
-                <p className="text-slate-500 mt-1">Configurações técnicas e gestão central da comunidade.</p>
-            </header>
-            <Tabs defaultValue="content" className="w-full">
-                <TabsList>
-                    <TabsTrigger value="content">Conteúdo Formativo</TabsTrigger>
-                    <TabsTrigger value="submissions">Formulários</TabsTrigger>
-                    <TabsTrigger value="email">Email & Notificações</TabsTrigger>
-                    <TabsTrigger value="users">Usuários</TabsTrigger>
-                    <TabsTrigger value="events">Eventos</TabsTrigger>
-                </TabsList>
-                <TabsContent value="content"><ContentManagerTab /></TabsContent>
-                <TabsContent value="submissions"><FormSubmissionsTab /></TabsContent>
-                <TabsContent value="email"><EmailConfigTab /></TabsContent>
-                <TabsContent value="users"><UsersManagementTab /></TabsContent>
-                <TabsContent value="events"><EventsManagementTab /></TabsContent>
-            </Tabs>
-        </div>
+        <Suspense fallback={<div className="p-12 text-center"><Loader2 className="animate-spin w-8 h-8 mx-auto" /></div>}>
+            <AdminPage />
+        </Suspense>
     );
 }

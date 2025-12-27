@@ -76,14 +76,47 @@ export default function VocationalContactForm({
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simula envio (implementar integração real posteriormente)
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    const formData = new FormData(e.currentTarget);
+    const data = {
+      name: formData.get('name') as string,
+      email: formData.get('email') as string,
+      phone: formData.get('phone') as string,
+      message: formData.get('message') as string,
+      type: 'vocational', // Identificador para o assunto do email
+      subject: 'Interesse Vocacional',
+    };
 
-    // Aqui você pode adicionar lógica de envio real
-    alert("Formulário enviado com sucesso! Entraremos em contato em breve.");
+    try {
+      const response = await fetch('/api/contact/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
 
-    setIsSubmitting(false);
-    (e.target as HTMLFormElement).reset();
+      if (!response.ok) {
+        throw new Error('Falha no envio');
+      }
+
+      alert("Formulário enviado com sucesso! Entraremos em contato em breve.");
+      (e.target as HTMLFormElement).reset();
+    } catch (error) {
+      console.error('Erro ao enviar via API:', error);
+      
+      // Fallback: Mailto
+      const mailtoSubject = encodeURIComponent(`[Vocacional] Novo contato de ${data.name}`);
+      const mailtoBody = encodeURIComponent(
+        `Nome: ${data.name}\nEmail: ${data.email}\nTelefone: ${data.phone}\n\nMensagem Vocacional:\n${data.message}`
+      );
+      
+      // Tenta abrir o cliente de email padrão
+      window.location.href = `mailto:?subject=${mailtoSubject}&body=${mailtoBody}`;
+      
+      alert("Não foi possível enviar automaticamente. Abrindo seu gerenciador de e-mails...");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

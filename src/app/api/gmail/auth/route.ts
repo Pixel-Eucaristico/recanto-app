@@ -5,12 +5,12 @@ import { NextResponse } from 'next/server';
  * Initiates Gmail OAuth2 flow
  */
 export async function GET() {
-  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID;
   const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/gmail/callback`;
 
   if (!clientId) {
     return NextResponse.json(
-      { error: 'Google Client ID not configured' },
+      { error: 'Google Client ID not configured (NEXT_PUBLIC_GOOGLE_CLIENT_ID or GOOGLE_CLIENT_ID)' },
       { status: 500 }
     );
   }

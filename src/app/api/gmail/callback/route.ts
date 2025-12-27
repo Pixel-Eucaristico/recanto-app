@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID;
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
     const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/gmail/callback`;
 
@@ -53,11 +53,10 @@ export async function GET(request: NextRequest) {
     const tokens = await tokenResponse.json();
 
     // Store tokens in Firestore (admin-only access)
-    const { doc, setDoc } = await import('firebase/firestore');
-    const { firestore } = await import('@/domains/auth/services/firebaseClient');
+    const { firestore } = await import('@/domains/auth/services/firebaseAdmin');
 
-    const configRef = doc(firestore, 'config/gmail_oauth');
-    await setDoc(configRef, {
+    const configRef = firestore.collection('config').doc('gmail_oauth');
+    await configRef.set({
       access_token: tokens.access_token,
       refresh_token: tokens.refresh_token,
       expires_at: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
@@ -70,8 +69,9 @@ export async function GET(request: NextRequest) {
     );
   } catch (error) {
     console.error('Error during Gmail OAuth callback:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL}/app/dashboard/admin?error=gmail_auth_failed`
+      `${process.env.NEXT_PUBLIC_APP_URL}/app/dashboard/admin?error=gmail_auth_failed&details=${encodeURIComponent(errorMessage)}`
     );
   }
 }

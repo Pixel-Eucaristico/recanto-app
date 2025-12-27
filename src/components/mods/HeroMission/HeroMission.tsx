@@ -7,15 +7,48 @@ import Image from 'next/image';
 interface HeroMissionProps {
   title?: string;
   description?: string;
+  titleSize?: 'sm' | 'md' | 'lg' | 'xl';
+  titleColor?: 'white' | 'primary' | 'secondary' | 'accent';
+  descSize?: 'sm' | 'md' | 'lg';
+  descColor?: 'white' | 'white-calm';
   buttonText?: string;
   buttonLink?: string;
   backgroundImage?: string;
   overlayOpacity?: '90' | '80' | '70' | '60' | '50' | '40' | '30' | '20' | '10';
 }
 
+const titleSizeClasses = {
+  sm: 'text-3xl md:text-4xl',
+  md: 'text-4xl md:text-5xl', // padrão
+  lg: 'text-5xl md:text-6xl',
+  xl: 'text-6xl md:text-7xl',
+};
+
+const titleColorClasses = {
+  white: 'text-white',
+  primary: 'text-primary',
+  secondary: 'text-secondary',
+  accent: 'text-accent',
+};
+
+const descSizeClasses = {
+  sm: 'text-base',
+  md: 'text-lg', // padrão
+  lg: 'text-xl md:text-2xl',
+};
+
+const descColorClasses = {
+  white: 'text-white',
+  'white-calm': 'text-white/90',
+};
+
 export default function HeroMission({
   title = "",
   description = "",
+  titleSize = "md",
+  titleColor = "white",
+  descSize = "md",
+  descColor = "white-calm",
   buttonText = "",
   buttonLink = "",
   backgroundImage = "",
@@ -59,12 +92,12 @@ export default function HeroMission({
           }}
         >
           {title && (
-            <h1 className="mb-5 text-5xl font-bold text-white drop-shadow-lg">
+            <h1 className={`mb-5 font-bold drop-shadow-lg ${titleSizeClasses[titleSize]} ${titleColorClasses[titleColor]}`}>
               {title}
             </h1>
           )}
           {description && (
-            <p className="mb-8 text-lg text-white/90 drop-shadow-md">
+            <p className={`mb-8 drop-shadow-md ${descSizeClasses[descSize]} ${descColorClasses[descColor]}`}>
               {description}
             </p>
           )}

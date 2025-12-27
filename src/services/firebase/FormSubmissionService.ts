@@ -1,27 +1,54 @@
-import { BaseFirebaseService } from './BaseFirebaseService';
 import { FormSubmission, AdminEmailConfig } from '@/types/form-submissions';
+import { firestore } from '@/domains/auth/services/firebaseAdmin';
 
-class FormSubmissionService extends BaseFirebaseService<FormSubmission> {
-  constructor() {
-    super('form_submissions');
+/**
+ * Service to handle form submissions using Firebase Admin SDK (Server-Side)
+ */
+class FormSubmissionService {
+  private collectionName = 'form_submissions';
+
+  /**
+   * Create a new submission
+   */
+  async create(data: Omit<FormSubmission, 'id'>): Promise<FormSubmission> {
+    const collectionRef = firestore.collection(this.collectionName);
+    const docRef = collectionRef.doc();
+    
+    // Remove undefined values
+    const cleanData = JSON.parse(JSON.stringify(data));
+    
+    const dataWithId = {
+      ...cleanData,
+      id: docRef.id,
+      created_at: new Date().toISOString()
+    };
+
+    await docRef.set(dataWithId);
+    return dataWithId;
   }
 
   /**
    * Get submissions by type
    */
   async getByType(type: 'contact' | 'story'): Promise<FormSubmission[]> {
-    return this.queryWithFilters([
-      { field: 'type', operator: '==', value: type }
-    ]);
+    const snapshot = await firestore
+      .collection(this.collectionName)
+      .where('type', '==', type)
+      .get();
+      
+    return snapshot.docs.map(doc => doc.data() as FormSubmission);
   }
 
   /**
    * Get submissions by status
    */
   async getByStatus(status: FormSubmission['status']): Promise<FormSubmission[]> {
-    return this.queryWithFilters([
-      { field: 'status', operator: '==', value: status }
-    ]);
+    const snapshot = await firestore
+      .collection(this.collectionName)
+      .where('status', '==', status)
+      .get();
+      
+    return snapshot.docs.map(doc => doc.data() as FormSubmission);
   }
 
   /**
@@ -64,24 +91,29 @@ class FormSubmissionService extends BaseFirebaseService<FormSubmission> {
   }
 
   /**
+   * Helper to update document
+   */
+  private async update(id: string, data: Partial<FormSubmission>): Promise<void> {
+    await firestore.collection(this.collectionName).doc(id).update({
+      ...data,
+      updated_at: new Date().toISOString()
+    });
+  }
+
+  /**
    * Get recent submissions (last 30 days)
    */
   async getRecentSubmissions(limit: number = 50): Promise<FormSubmission[]> {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const { collection, query, where, orderBy: firestoreOrderBy, limit: firestoreLimit, getDocs } = await import('firebase/firestore');
-    const { firestore } = await import('@/domains/auth/services/firebaseClient');
+    const snapshot = await firestore
+      .collection(this.collectionName)
+      .where('submitted_at', '>=', thirtyDaysAgo.toISOString())
+      .orderBy('submitted_at', 'desc')
+      .limit(limit)
+      .get();
 
-    const collectionRef = collection(firestore, 'form_submissions');
-    const q = query(
-      collectionRef,
-      where('submitted_at', '>=', thirtyDaysAgo.toISOString()),
-      firestoreOrderBy('submitted_at', 'desc'),
-      firestoreLimit(limit)
-    );
-
-    const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => doc.data() as FormSubmission);
   }
 }
@@ -93,13 +125,11 @@ class AdminEmailConfigService {
    * Get admin email configuration
    */
   async getConfig(): Promise<AdminEmailConfig | null> {
-    const { doc, getDoc } = await import('firebase/firestore');
-    const { firestore } = await import('@/domains/auth/services/firebaseClient');
+    // Split path into collection/doc
+    const docRef = firestore.doc(this.configPath);
+    const snapshot = await docRef.get();
 
-    const docRef = doc(firestore, this.configPath);
-    const snapshot = await getDoc(docRef);
-
-    if (!snapshot.exists()) {
+    if (!snapshot.exists) {
       return null;
     }
 
@@ -110,11 +140,9 @@ class AdminEmailConfigService {
    * Update admin email configuration
    */
   async updateConfig(config: Partial<AdminEmailConfig>, updatedBy: string): Promise<void> {
-    const { doc, setDoc } = await import('firebase/firestore');
-    const { firestore } = await import('@/domains/auth/services/firebaseClient');
-
-    const docRef = doc(firestore, this.configPath);
-    await setDoc(docRef, {
+    const docRef = firestore.doc(this.configPath);
+    
+    await docRef.set({
       ...config,
       updated_at: new Date().toISOString(),
       updated_by: updatedBy,

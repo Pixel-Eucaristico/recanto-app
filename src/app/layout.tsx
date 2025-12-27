@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "../styles/globals.css";
 import { ThemeProvider } from "@/components/ui/daisyui/theme-controller";
 import { PropsNextThemes } from "@/components/ui/daisyui/theme-controller/theme.provider";
+import { Toaster } from "@/components/ui/toaster";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -44,6 +45,7 @@ export default function RootLayout({
           propsNextThemes={nextThemesProps}
         >
           {children}
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

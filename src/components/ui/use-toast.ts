@@ -8,6 +8,8 @@ type ToasterToast = {
   description?: React.ReactNode
   action?: React.ReactNode
   variant?: "default" | "destructive"
+  className?: string
+  duration?: number
 }
 
 const TOAST_LIMIT = 1

@@ -24,6 +24,51 @@ export const HeroMissionConfig: ModConfig = {
       placeholder: 'Descreva a missão da comunidade...'
     },
     {
+      name: 'titleSize',
+      label: 'Tamanho do Título',
+      type: 'select',
+      options: [
+        { value: 'sm', label: 'Pequeno' },
+        { value: 'md', label: 'Médio (Padrão)' },
+        { value: 'lg', label: 'Grande' },
+        { value: 'xl', label: 'Extra Grande' },
+      ],
+      default: 'md',
+    },
+    {
+      name: 'titleColor',
+      label: 'Cor do Título',
+      type: 'select',
+      options: [
+        { value: 'white', label: 'Branco (Padrão)' },
+        { value: 'primary', label: 'Cor Principal' },
+        { value: 'secondary', label: 'Cor Secundária' },
+        { value: 'accent', label: 'Cor de Destaque' },
+      ],
+      default: 'white',
+    },
+    {
+      name: 'descSize',
+      label: 'Tamanho da Descrição',
+      type: 'select',
+      options: [
+        { value: 'sm', label: 'Pequeno' },
+        { value: 'md', label: 'Médio (Padrão)' },
+        { value: 'lg', label: 'Grande' },
+      ],
+      default: 'md',
+    },
+    {
+      name: 'descColor',
+      label: 'Cor da Descrição',
+      type: 'select',
+      options: [
+        { value: 'white', label: 'Branco Puro' },
+        { value: 'white-calm', label: 'Branco Suave (Padrão)' },
+      ],
+      default: 'white-calm',
+    },
+    {
       name: 'buttonText',
       label: 'Texto do Botão',
       type: 'string',

@@ -41,4 +41,12 @@ export interface AdminEmailConfig {
   notify_on_story: boolean;
   updated_at: string;
   updated_by: string;
+  provider?: 'gmail' | 'smtp';
+  smtp?: {
+    host: string;
+    port: number;
+    user: string;
+    pass: string;
+    secure?: boolean;
+  };
 }

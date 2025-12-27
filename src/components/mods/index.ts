@@ -49,6 +49,12 @@ import VocationalContactForm from './VocationalContactForm/VocationalContactForm
 import { vocationalContactFormConfig } from './VocationalContactForm/config';
 import { ActionsGrid } from './ActionsGrid/ActionsGrid';
 import { actionsGridConfig } from './ActionsGrid/config';
+import ContactSection from './ContactSection/ContactSection';
+import { contactSectionConfig } from './ContactSection/config';
+import LocationSection from './LocationSection/LocationSection';
+import { locationSectionConfig } from './LocationSection/config';
+import SocialLinksSection from './SocialLinksSection/SocialLinksSection';
+import { socialLinksSectionConfig } from './SocialLinksSection/config';
 import { ModConfig } from '@/types/cms-types';
 
 // ============================================
@@ -82,6 +88,9 @@ export const ModComponents = {
   QualitiesList,
   VocationalContactForm,
   ActionsGrid,
+  ContactSection,
+  LocationSection,
+  SocialLinksSection,
   // Futuros Mods:
   // TeamGrid,
   // Gallery,
@@ -119,6 +128,9 @@ export const ModConfigs: Record<string, ModConfig> = {
   QualitiesList: qualitiesListConfig,
   VocationalContactForm: vocationalContactFormConfig,
   ActionsGrid: actionsGridConfig,
+  ContactSection: contactSectionConfig,
+  LocationSection: locationSectionConfig,
+  SocialLinksSection: socialLinksSectionConfig,
   // Futuros Configs...
 };
 

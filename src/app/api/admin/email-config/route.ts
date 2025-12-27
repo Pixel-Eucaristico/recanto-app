@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminEmailConfigService } from '@/services/firebase/FormSubmissionService';
 
+export const dynamic = 'force-dynamic';
+
+
 /**
  * GET /api/admin/email-config
  * Get admin email configuration

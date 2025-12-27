@@ -13,6 +13,7 @@ export interface TextWithQuoteProps {
   bgColor?: 'base-100' | 'base-200' | 'base-300';
   paddingY?: 'sm' | 'md' | 'lg' | 'xl';
   textAlign?: 'left' | 'center' | 'justify';
+  animationFile?: string;
 }
 
 const colorVariants = {
@@ -54,6 +55,10 @@ const textAlignVariants = {
   justify: 'text-justify',
 };
 
+import dynamic from 'next/dynamic';
+const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
+import { useState, useEffect } from 'react';
+
 export default function TextWithQuote({
   title = "",
   content = "",
@@ -65,6 +70,7 @@ export default function TextWithQuote({
   bgColor = "base-200",
   paddingY = "lg",
   textAlign = "center",
+  animationFile = "",
 }: TextWithQuoteProps) {
   // Não renderizar se não tiver conteúdo
   if (!title && !content && !quoteText && !afterQuote) {
@@ -74,6 +80,13 @@ export default function TextWithQuote({
   return (
     <section className={`${bgColorVariants[bgColor]} ${paddingYVariants[paddingY]} px-6`}>
       <div className={`${maxWidthVariants[maxWidth]} mx-auto ${textAlignVariants[textAlign]}`}>
+        {/* Animação (se houver) */}
+        {animationFile && animationFile !== 'none' && (
+          <div className="w-32 h-32 mx-auto mb-6">
+            <AnimationRenderer file={animationFile} />
+          </div>
+        )}
+
         {title && (
           <motion.h2
             initial={{ opacity: 0, x: -30 }}
@@ -117,3 +130,28 @@ export default function TextWithQuote({
     </section>
   );
 }
+
+function AnimationRenderer({ file }: { file: string }) {
+  const [animationData, setAnimationData] = useState<any>(null);
+
+  useEffect(() => {
+    if (!file || file === 'none') return;
+
+    if (file.startsWith('http')) {
+      fetch(file)
+        .then(res => res.json())
+        .then(data => setAnimationData(data))
+        .catch(err => console.error('Erro ao carregar animação externa:', err));
+    } else {
+      fetch(`/animations/${file}`)
+        .then(res => res.json())
+        .then(data => setAnimationData(data))
+        .catch(err => console.error('Erro ao carregar animação local:', err));
+    }
+  }, [file]);
+
+  if (!animationData) return null;
+
+  return <Lottie animationData={animationData} loop />;
+}
+
