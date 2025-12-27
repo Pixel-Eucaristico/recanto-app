@@ -1,0 +1,19 @@
+{
+    "name": "Desafio",
+    "type": "object",
+    "properties": {
+      "title": {
+        "type": "string"
+      },
+      "description": {
+        "type": "string"
+      },
+      "pontos": {
+        "type": "number",
+        "default": 10
+      }
+    },
+    "required": [
+      "title"
+    ]
+  }

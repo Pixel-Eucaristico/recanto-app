@@ -1,0 +1,70 @@
+{
+  "rules": {
+    "users": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && (auth.uid == $uid || root.child('users').child(auth.uid).child('role').val() == 'admin')",
+        "role": {
+          // Apenas admins podem alterar roles
+          ".write": "root.child('users').child(auth.uid).child('role').val() == 'admin'"
+        }
+      }
+    },
+    "materials": {
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() == 'admin'",
+      "$materialId": {
+        ".validate": "newData.hasChildren(['id', 'title', 'type', 'category', 'target_audience', 'created_by', 'created_at'])"
+      }
+    },
+    "donations": {
+      ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || data.child('donor_id').val() == auth.uid)",
+      ".write": "auth != null",
+      "$donationId": {
+        ".validate": "newData.hasChildren(['id', 'value', 'method', 'date', 'status', 'created_at'])"
+      }
+    },
+    "forum_topics": {
+      ".read": "auth != null",
+      ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'missionario' || root.child('users').child(auth.uid).child('role').val() == 'recantiano')",
+      "$topicId": {
+        ".validate": "newData.hasChildren(['id', 'title', 'created_by', 'created_at'])"
+      }
+    },
+    "forum_posts": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$postId": {
+        ".validate": "newData.hasChildren(['id', 'topic_id', 'content', 'created_by', 'is_approved', 'created_at'])"
+      }
+    },
+    "events": {
+      ".read": "auth != null",
+      ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'missionario')",
+      "$eventId": {
+        ".validate": "newData.hasChildren(['id', 'title', 'type', 'date', 'target_audience', 'created_by', 'created_at'])"
+      }
+    },
+    "acompanhamentos": {
+      ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'missionario' || root.child('users').child(auth.uid).child('role').val() == 'pai' || data.child('recantiano_id').val() == auth.uid)",
+      ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'missionario')",
+      "$acompanhamentoId": {
+        ".validate": "newData.hasChildren(['id', 'recantiano_id', 'missionario_id', 'date', 'tipo', 'created_at'])"
+      }
+    },
+    "desafios": {
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() == 'admin'",
+      "$desafioId": {
+        ".validate": "newData.hasChildren(['id', 'title', 'description', 'category', 'difficulty', 'created_at'])"
+      }
+    },
+    "desafio_registros": {
+      ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'missionario' || data.child('recantiano_id').val() == auth.uid)",
+      ".write": "auth != null",
+      "$registroId": {
+        ".validate": "newData.hasChildren(['id', 'desafio_id', 'recantiano_id', 'completed', 'created_at'])"
+      }
+    }
+  }
+}

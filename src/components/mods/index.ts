@@ -1,0 +1,167 @@
+/**
+ * Index Central dos Mods do CMS
+ *
+ * Importa e exporta todos os Mods disponíveis e suas configurações.
+ * Quando criar um novo Mod, adicione-o aqui para disponibilizá-lo no editor.
+ */
+
+import Hero from './Hero/Hero';
+import { HeroConfig } from './Hero/config';
+import HeroMission from './HeroMission/HeroMission';
+import { HeroMissionConfig } from './HeroMission/config';
+import EventsSection from './EventsSection/EventsSection';
+import { EventsSectionConfig } from './EventsSection/config';
+import Testimonials from './Testimonials/Testimonials';
+import { TestimonialsConfig } from './Testimonials/config';
+import EvangelizationActions from './EvangelizationActions/EvangelizationActions';
+import { EvangelizationActionsConfig } from './EvangelizationActions/config';
+import ProjectsShowcase from './ProjectsShowcase/ProjectsShowcase';
+import { ProjectsShowcaseConfig } from './ProjectsShowcase/config';
+import { TextIntro } from './TextIntro/TextIntro';
+import { textIntroConfig } from './TextIntro/config';
+import { TextWithAnimation } from './TextWithAnimation/TextWithAnimation';
+import { textWithAnimationConfig } from './TextWithAnimation/config';
+import { PillarsGrid } from './PillarsGrid/PillarsGrid';
+import { pillarsGridConfig } from './PillarsGrid/config';
+import { CallToAction } from './CallToAction/CallToAction';
+import { callToActionConfig } from './CallToAction/config';
+import { OurLadyHeader } from './OurLadyHeader/OurLadyHeader';
+import { ourLadyHeaderConfig } from './OurLadyHeader/config';
+import { InfographicGrid } from './InfographicGrid/InfographicGrid';
+import { infographicGridConfig } from './InfographicGrid/config';
+import HeroWithAnimation from './HeroWithAnimation/HeroWithAnimation';
+import { heroWithAnimationConfig } from './HeroWithAnimation/config';
+import TextImageAnimation from './TextImageAnimation/TextImageAnimation';
+import { textImageAnimationConfig } from './TextImageAnimation/config';
+import { HeroStructure } from './HeroStructure/HeroStructure';
+import { heroStructureConfig } from './HeroStructure/config';
+import { SectionsGrid } from './SectionsGrid/SectionsGrid';
+import { sectionsGridConfig } from './SectionsGrid/config';
+import VocationalBanner from './VocationalBanner/VocationalBanner';
+import { vocationalBannerConfig } from './VocationalBanner/config';
+import TextWithQuote from './TextWithQuote/TextWithQuote';
+import { textWithQuoteConfig } from './TextWithQuote/config';
+import FormationStages from './FormationStages/FormationStages';
+import { formationStagesConfig } from './FormationStages/config';
+import QualitiesList from './QualitiesList/QualitiesList';
+import { qualitiesListConfig } from './QualitiesList/config';
+import VocationalContactForm from './VocationalContactForm/VocationalContactForm';
+import { vocationalContactFormConfig } from './VocationalContactForm/config';
+import { ActionsGrid } from './ActionsGrid/ActionsGrid';
+import { actionsGridConfig } from './ActionsGrid/config';
+import ContactSection from './ContactSection/ContactSection';
+import { contactSectionConfig } from './ContactSection/config';
+import LocationSection from './LocationSection/LocationSection';
+import { locationSectionConfig } from './LocationSection/config';
+import SocialLinksSection from './SocialLinksSection/SocialLinksSection';
+import { socialLinksSectionConfig } from './SocialLinksSection/config';
+import { ModConfig } from '@/types/cms-types';
+import PixMod from './PixMod/PixMod';
+import { pixModConfig } from './PixMod/config';
+
+// ============================================
+// Mapeamento de Componentes
+// ============================================
+
+/**
+ * ModComponents - Mapeamento de ID para componente React
+ * Usado pelo renderizador dinâmico para instanciar Mods
+ */
+export const ModComponents = {
+  Hero,
+  HeroMission,
+  HeroWithAnimation,
+  HeroStructure,
+  EventsSection,
+  Testimonials,
+  EvangelizationActions,
+  ProjectsShowcase,
+  TextIntro,
+  TextWithAnimation,
+  TextImageAnimation,
+  PillarsGrid,
+  SectionsGrid,
+  CallToAction,
+  OurLadyHeader,
+  InfographicGrid,
+  VocationalBanner,
+  TextWithQuote,
+  FormationStages,
+  QualitiesList,
+  VocationalContactForm,
+  ActionsGrid,
+  ContactSection,
+  LocationSection,
+  SocialLinksSection,
+  PixMod,
+  // Futuros Mods:
+  // TeamGrid,
+  // Gallery,
+  // ChartBlock,
+} as const;
+
+// ============================================
+// Mapeamento de Configurações
+// ============================================
+
+/**
+ * ModConfigs - Mapeamento de ID para configuração do Mod
+ * Usado pelo editor admin para renderizar formulários
+ */
+export const ModConfigs: Record<string, ModConfig> = {
+  Hero: HeroConfig,
+  HeroMission: HeroMissionConfig,
+  HeroWithAnimation: heroWithAnimationConfig,
+  HeroStructure: heroStructureConfig,
+  EventsSection: EventsSectionConfig,
+  Testimonials: TestimonialsConfig,
+  EvangelizationActions: EvangelizationActionsConfig,
+  ProjectsShowcase: ProjectsShowcaseConfig,
+  TextIntro: textIntroConfig,
+  TextWithAnimation: textWithAnimationConfig,
+  TextImageAnimation: textImageAnimationConfig,
+  PillarsGrid: pillarsGridConfig,
+  SectionsGrid: sectionsGridConfig,
+  CallToAction: callToActionConfig,
+  OurLadyHeader: ourLadyHeaderConfig,
+  InfographicGrid: infographicGridConfig,
+  VocationalBanner: vocationalBannerConfig,
+  TextWithQuote: textWithQuoteConfig,
+  FormationStages: formationStagesConfig,
+  QualitiesList: qualitiesListConfig,
+  VocationalContactForm: vocationalContactFormConfig,
+  ActionsGrid: actionsGridConfig,
+  ContactSection: contactSectionConfig,
+  LocationSection: locationSectionConfig,
+  SocialLinksSection: socialLinksSectionConfig,
+  PixMod: pixModConfig,
+  // Futuros Configs...
+};
+
+/**
+ * availableMods - Alias para ModConfigs (compatibilidade)
+ */
+export const availableMods = ModConfigs;
+
+// ============================================
+// Types
+// ============================================
+
+/**
+ * ModId - Union type de todos os IDs de Mods disponíveis
+ */
+export type ModId = keyof typeof ModComponents;
+
+/**
+ * Lista de categorias de Mods
+ */
+export const ModCategories = {
+  hero: 'Hero',
+  content: 'Conteúdo',
+  chart: 'Gráficos',
+  gallery: 'Galeria',
+  form: 'Formulários',
+  testimonial: 'Depoimentos',
+  cta: 'Call-to-Action',
+  other: 'Outros'
+} as const;

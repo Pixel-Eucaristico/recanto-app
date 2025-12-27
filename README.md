@@ -1,140 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Recanto do Amor Misericordioso - Aplicativo e Site
 
-## Getting Started
+## Paz e Unção!
 
-First, run the development server:
+Bem-vindo ao repositório do "recanto digital" da Comunidade Católica Recanto do Amor Misericordioso. Este projeto tem como missão ser uma ferramenta digital que fomente a conexão, o crescimento pessoal e comunitário, e inspire a vivência do Amor Misericordioso em cada interação.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Nosso propósito central é refletido na passagem bíblica que nos guia: **"Não devias tu, igualmente, ter compaixão do teu conservo, como eu também tive misericórdia de ti?" (Mateus 18:33)**. Através desta plataforma, buscamos materializar o nosso carisma de compaixão e serviço ao próximo.
 
 ---
 
-# TODO:
+## 🚀 Visão Geral do Projeto
 
--  **Home**
-  
-  - [ ]  Visão geral da missão e valores
-  - [ ]  Destaques de eventos recentes
-  - [ ]  Depoimentos de participantes
--  **Sobre Nós**
-  
-  - [ ]  História do Recanto
-  - [ ]  Missão e valores
-  - [ ]  Equipe e voluntários
--  **Atividades**
-  
-  - [ ]  Encontros espirituais
-  - [ ]  Ações sociais
-  - [ ]  Grupos de oração
--  **Projetos**
-  
-  - [ ]  Iniciativas beneficentes
-  - [ ]  Projetos em andamento
--  **Eventos**
-  
-  - [ ]  Calendário de eventos
-  - [ ]  Inscrição online
--  **Coletânea de Orações**
-  
--  **Doações**
-  
-  - [ ]  Como contribuir
-  - [ ]  Relatórios financeiros
-  - [ ]  loja exclusiva
--  **Área de Membros**
-  
-  - [ ]  Login/Registro
-  - [ ]  Perfil do Membro
-    - [ ]  Missionarios
-    - [ ]  Recantianos
-    - [ ]  Pais
-    - [ ]  Parceiros
-  - [ ]  Acesso a conteúdos exclusivos
-    - [ ]  Livros
-    - [ ]  Videos
-    - [ ]  Cursos
-    - [ ]  Atividades
-    - [ ]  Shows de prêmios com conferência automática da cartela pelo app.
-  - [ ]  Inscrição em eventos privados
--  **Contato**
-  
-  - [ ]  Informações de localização
-  - [ ]  Formulário de contato online
+Este projeto consiste em uma plataforma web moderna e performática, desenvolvida com Next.js:
+
+-   **Site (Next.js):** Uma aplicação web moderna e performática, acessível a todos os membros e amigos da comunidade.
+-   **API (Node.js/Supabase):** Uma API robusta para gerenciar dados de usuários, conteúdos, doações e muito mais.
+
+## 🌟 Pilha de Tecnologia
+
+-   **Frontend:** [Next.js 15](https://nextjs.org/) & [React 19](https://react.dev/)
+-   **Backend as a Service (BaaS):** [Supabase](https://supabase.com/) (PostgreSQL, Auth, Storage)
+-   **Linguagem:** [TypeScript](https://www.typescriptlang.org/)
+-   **Infraestrutura Cloud:** [Vercel](https://vercel.com/) (para o deploy do site)
 
 ---
 
-# Bem-vindo ao Recanto do Amor Misericordioso
+## 🛠️ Como Contribuir
 
-## Missão e Valores
+Agradecemos a sua generosidade e interesse em contribuir para a nossa missão. Este projeto é open source e conta com a colaboração da comunidade.
 
-Acolhendo com amor: Nossa missão é oferecer apoio espiritual e social, promovendo a fé católica.
+1.  Leia o nosso [Guia de Contribuição](docs/CONTRIBUTING.md).
+2.  Leia o nosso [Código de Conduta](docs/CODE_OF_CONDUCT.md).
+3.  Clone o repositório: `git clone https://github.com/WillianQuintino/recanto-app.git`
+4.  Instale as dependências: `npm install`
+5.  Siga as instruções de desenvolvimento em nosso guia.
 
-## Eventos Recentes
+## ✨ Roadmap de Produto
 
-- [Retiro Espiritual 2024](https://github.com/WillianQuintino/recanto-app/blob/main)
-- [Ação Social para Famílias Carentes](https://github.com/WillianQuintino/recanto-app/blob/main)
+Nosso roadmap está focado em um **MVP (Produto Mínimo Viável)** que aborda as necessidades mais urgentes da comunidade, com ênfase na sustentabilidade, formação e vivência do carisma.
 
-## Testemunhos
+Para detalhes sobre as fases e funcionalidades, confira nosso **[Roadmap de Produto](docs/ROADMAP.md)**.
 
-> "Participar dos encontros foi uma bênção para minha vida!" – Maria S.
+---
 
-## Como Contribuir
+## 📝 Licença
 
-Participe e apoie nossa missão com sua doação.
+Este projeto está licenciado sob a Licença MIT. Veja o arquivo **[LICENSE](LICENSE)** para mais detalhes.
 
-## Acesso Rápido
-
-- [Nossos Projetos](https://github.com/WillianQuintino/recanto-app/blob/main)
-- [Inscrição em Eventos](https://github.com/WillianQuintino/recanto-app/blob/main)
-- [Área de Membros](https://github.com/WillianQuintino/recanto-app/blob/main)
-
-## 📚 Agradecimentos
-
-Este projeto utiliza e agradece às seguintes bibliotecas e ferramentas:
-
-- [daisyUI](https://daisyui.com) – Componentes UI para Tailwind CSS
-- [shadcn/ui](https://ui.shadcn.com) – Componentes acessíveis e estilizados para React
-- [Lucide](https://lucide.dev) – Ícones abertos em SVG
-- [Tauri](https://v2.tauri.app) – Framework para aplicações desktop com Rust e web
-- [Jotai](https://jotai.org) – Gerenciador de estado atômico para React
-- [Axios](https://axios-http.com) – Cliente HTTP baseado em Promises
-- [Zod](https://zod.dev) – Validação de esquemas TypeScript-friendly
-- [React Hook Form](https://www.react-hook-form.com) – Gerenciamento de formulários reativo
-- [SWR](https://swr.vercel.app/pt-BR) – Fetching de dados com cache e revalidação automática
-- [react-dropzone](https://react-dropzone.js.org) – Drag & drop de arquivos no React
-- [Tailwind Variants](https://www.tailwind-variants.org) – Variantes dinâmicas para Tailwind CSS
-- [Hero UI](https://www.heroui.com) – Componentes Tailwind gratuitos e premium
-- [bcrypt.js](https://github.com/dcodeIO/bcrypt.js) – Hash de senhas em JavaScript
-- [sqlite3 (Node)](https://www.npmjs.com/package/sqlite3) – Driver SQLite para Node.js
-- [localForage](https://localforage.github.io/localForage/) – Armazenamento offline assíncrono para web apps
-- [storybook](https://storybook.js.org) – Ferramenta para desenvolvimento, documentação e testes de componentes de interface de forma isolada
-
-> Todos os direitos pertencem aos respectivos autores e mantenedores. Este projeto apenas integra essas ferramentas conforme suas licenças.
+Paz e Unção! 🙏

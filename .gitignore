@@ -1,5 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# Claude Code LLM docs
+.claude/docs/
+
 # dependencies
 /node_modules
 /.pnp
@@ -870,6 +873,14 @@ FodyWeavers.xsd
 # Additional files built by Visual Studio
 
 # End of https://www.toptal.com/developers/gitignore/api/nextjs,node,rust,macos,windows,linux,visualstudiocode,visualstudio,android,androidstudio
-
 pnpm-lock.yaml
-package-lock.json
+pnpm-workspace.yaml
+
+# SEGURANÇA: Não commitar whitelist de admins (contém emails e UIDs autorizados)
+src/config/admin-whitelist.ts
+
+# Firebase Service Account (NUNCA commitar - acesso admin ao Firebase!)
+firebase-service-account.json
+*-service-account.json
+*.txt
+docs/

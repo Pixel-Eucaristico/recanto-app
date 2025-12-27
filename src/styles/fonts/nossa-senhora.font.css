@@ -1,0 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Open+Sans:wght@400;600&family=EB+Garamond:wght@400;600&family=Lato:wght@400;700&family=Roboto:wght@400;700&display=swap');
+
+@theme {
+  --font-nossa-senhora-title: "Playfair Display", "EB Garamond", serif;
+  --font-nossa-senhora-body: "Open Sans", "Lato", "Roboto", sans-serif;
+}

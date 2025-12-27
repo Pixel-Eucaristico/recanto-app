@@ -1,0 +1,125 @@
+import { ModConfig } from '@/types/cms-types';
+import { GraduationCap } from 'lucide-react';
+
+export const formationStagesConfig: ModConfig = {
+  id: 'FormationStages',
+  name: 'Etapas de Formação',
+  description: 'Grade de etapas de formação com animações Lottie e descrições',
+  category: 'content',
+  icon: GraduationCap,
+  defaultProps: {
+    title: 'Um Caminho de Crescimento e Entrega',
+    subtitle: 'Experiência Carismática de dois anos - porta de entrada à Comunidade de Vida, com acompanhamento vocacional dedicado.',
+    stages: [
+      {
+        title: 'Encarnação',
+        description: 'Chamado à humildade e serviço. Um tempo de autoconhecimento e primeiros atos de misericórdia.',
+        lottieUrl: '/animations/glurtr-anmation.json',
+      },
+      {
+        title: 'Crucificação',
+        description: 'Aprofundamos a entrega. Compreendemos o valor do sacrifício por amor ao próximo.',
+        lottieUrl: '/animations/glurtr-anmation.json',
+      },
+      {
+        title: 'Eucaristia',
+        description: 'Mergulho na fonte do Amor Misericordioso, que nos capacita a transbordar esse amor no mundo.',
+        lottieUrl: '/animations/glurtr-anmation.json',
+      },
+    ],
+    columns: '3',
+    titleColor: 'secondary',
+    bgColor: 'base-100',
+    maxWidth: '5xl',
+    paddingY: 'lg',
+  },
+  fields: [
+    {
+      name: 'title',
+      label: 'Título',
+      type: 'string',
+      required: true,
+      placeholder: 'Um Caminho de Crescimento e Entrega',
+      description: 'Título principal da seção',
+    },
+    {
+      name: 'subtitle',
+      label: 'Subtítulo/Nota de Rodapé',
+      type: 'string',
+      multiline: true,
+      required: false,
+      placeholder: 'Experiência Carismática de dois anos...',
+      description: 'Texto explicativo abaixo das etapas (deixe vazio para não exibir)',
+    },
+    {
+      name: 'stages',
+      label: 'Etapas',
+      type: 'formation-stages-editor',
+      required: true,
+      description: 'Use os botões +/- para adicionar ou remover etapas. Configure título, descrição e animação para cada.',
+    },
+    {
+      name: 'columns',
+      label: 'Colunas na Grade',
+      type: 'select',
+      options: [
+        { value: '2', label: '2 Colunas' },
+        { value: '3', label: '3 Colunas (recomendado)' },
+        { value: '4', label: '4 Colunas' },
+      ],
+      default: '3',
+      description: 'Quantas colunas de etapas mostrar lado a lado',
+    },
+    {
+      name: 'titleColor',
+      label: 'Cor do Título',
+      type: 'select',
+      options: [
+        { value: 'primary', label: 'Principal (muda com o tema)' },
+        { value: 'secondary', label: 'Secundário (muda com o tema)' },
+        { value: 'accent', label: 'Destaque (muda com o tema)' },
+      ],
+      default: 'secondary',
+      description: 'Cor semântica do título',
+    },
+    {
+      name: 'bgColor',
+      label: 'Cor de Fundo',
+      type: 'select',
+      options: [
+        { value: 'base-100', label: 'Fundo Claro' },
+        { value: 'base-200', label: 'Fundo Médio' },
+        { value: 'base-300', label: 'Fundo Escuro' },
+      ],
+      default: 'base-100',
+      description: 'Cor de fundo da seção (muda com o tema)',
+    },
+    {
+      name: 'maxWidth',
+      label: 'Largura da Seção',
+      type: 'select',
+      options: [
+        { value: '4xl', label: 'Estreita' },
+        { value: '5xl', label: 'Média (recomendado)' },
+        { value: '6xl', label: 'Larga' },
+        { value: '7xl', label: 'Muito Larga' },
+        { value: 'full', label: 'Largura Total' },
+      ],
+      default: '5xl',
+      description: 'Largura máxima do conteúdo',
+    },
+    {
+      name: 'paddingY',
+      label: 'Espaçamento Vertical',
+      type: 'select',
+      options: [
+        { value: 'sm', label: 'Pequeno' },
+        { value: 'md', label: 'Médio' },
+        { value: 'lg', label: 'Grande (recomendado)' },
+        { value: 'xl', label: 'Extra Grande' },
+      ],
+      default: 'lg',
+      description: 'Espaço acima e abaixo da seção',
+    },
+  ],
+};

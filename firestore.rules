@@ -1,0 +1,302 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===========================
+    // Helper Functions
+    // ===========================
+
+    // Verifica se o usuário está autenticado
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Obtém o role do usuário atual
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    // Verifica se o usuário é admin
+    function isAdmin() {
+      return isAuthenticated() && getUserRole() == 'admin';
+    }
+
+    // Verifica se o usuário é missionário
+    function isMissionario() {
+      return isAuthenticated() && getUserRole() == 'missionario';
+    }
+
+    // Verifica se o usuário é recantiano
+    function isRecantiano() {
+      return isAuthenticated() && getUserRole() == 'recantiano';
+    }
+
+    // Verifica se o usuário é pai
+    function isPai() {
+      return isAuthenticated() && getUserRole() == 'pai';
+    }
+
+    // Verifica se o usuário é o próprio ou admin
+    function isOwnerOrAdmin(userId) {
+      return isAuthenticated() && (request.auth.uid == userId || isAdmin());
+    }
+
+    // ===========================
+    // Users Collection
+    // ===========================
+    match /users/{userId} {
+      // Leitura: usuários autenticados podem ler
+      allow read: if isAuthenticated();
+
+      // Escrita: próprio usuário ou admin
+      allow create: if isAuthenticated();
+      allow update: if isOwnerOrAdmin(userId);
+      allow delete: if isAdmin();
+
+      // Campo 'role' só pode ser alterado por admins
+      allow update: if isAdmin() ||
+                      (request.auth.uid == userId &&
+                       !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']));
+    }
+
+    // ===========================
+    // Materials Collection
+    // ===========================
+    match /materials/{materialId} {
+      // Leitura: usuários autenticados
+      allow read: if isAuthenticated();
+
+      // Criação: apenas admins
+      allow create: if isAdmin() &&
+                      request.resource.data.keys().hasAll([
+                        'title', 'type', 'category', 'target_audience', 'created_by', 'created_at'
+                      ]);
+
+      // Atualização: apenas admins
+      allow update: if isAdmin() &&
+                      request.resource.data.keys().hasAll([
+                        'id', 'title', 'type', 'category', 'target_audience', 'created_by', 'created_at'
+                      ]);
+
+      // Deleção: apenas admins
+      allow delete: if isAdmin();
+    }
+
+    // ===========================
+    // Donations Collection
+    // ===========================
+    match /donations/{donationId} {
+      // Leitura: admin ou próprio doador
+      allow read: if isAdmin() ||
+                    (isAuthenticated() && resource.data.donor_id == request.auth.uid);
+
+      // Criação: usuários autenticados
+      allow create: if isAuthenticated() &&
+                      request.resource.data.keys().hasAll([
+                        'value', 'method', 'date', 'status', 'created_at'
+                      ]);
+
+      // Atualização: apenas admins
+      allow update: if isAdmin() &&
+                      request.resource.data.keys().hasAll([
+                        'id', 'value', 'method', 'date', 'status', 'created_at'
+                      ]);
+
+      // Deleção: apenas admins
+      allow delete: if isAdmin();
+    }
+
+    // ===========================
+    // Forum Topics Collection
+    // ===========================
+    match /forum_topics/{topicId} {
+      // Leitura: usuários autenticados
+      allow read: if isAuthenticated();
+
+      // Criação: admin, missionário ou recantiano
+      allow create: if (isAdmin() || isMissionario() || isRecantiano()) &&
+                      request.resource.data.keys().hasAll([
+                        'title', 'created_by', 'created_at'
+                      ]);
+
+      // Atualização: admin ou criador do tópico
+      allow update: if (isAdmin() || (isAuthenticated() && resource.data.created_by == request.auth.uid)) &&
+                      request.resource.data.keys().hasAll([
+                        'id', 'title', 'created_by', 'created_at'
+                      ]);
+
+      // Deleção: admin ou criador do tópico
+      allow delete: if isAdmin() ||
+                      (isAuthenticated() && resource.data.created_by == request.auth.uid);
+    }
+
+    // ===========================
+    // Forum Posts Collection
+    // ===========================
+    match /forum_posts/{postId} {
+      // Leitura: usuários autenticados
+      allow read: if isAuthenticated();
+
+      // Criação: usuários autenticados
+      allow create: if isAuthenticated() &&
+                      request.resource.data.keys().hasAll([
+                        'topic_id', 'content', 'created_by', 'is_approved', 'created_at'
+                      ]);
+
+      // Atualização: admin (para aprovar) ou criador do post
+      allow update: if (isAdmin() || (isAuthenticated() && resource.data.created_by == request.auth.uid)) &&
+                      request.resource.data.keys().hasAll([
+                        'id', 'topic_id', 'content', 'created_by', 'is_approved', 'created_at'
+                      ]);
+
+      // Deleção: admin ou criador
+      allow delete: if isAdmin() ||
+                      (isAuthenticated() && resource.data.created_by == request.auth.uid);
+    }
+
+    // ===========================
+    // Events Collection
+    // ===========================
+    match /events/{eventId} {
+      // Leitura: usuários autenticados podem ver todos os eventos
+      // Visitantes não autenticados podem ver apenas eventos públicos
+      allow read: if isAuthenticated() ||
+                    (resource.data.is_public == true);
+
+      // Criação: admin ou missionário (sem validação restritiva)
+      allow create: if isAdmin() || isMissionario();
+
+      // Atualização: admin ou missionário
+      // Campo is_public só pode ser alterado por admins
+      allow update: if (isAdmin() || isMissionario()) &&
+                      (isAdmin() || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['is_public']));
+
+      // Deleção: apenas admin
+      allow delete: if isAdmin();
+    }
+
+    // ===========================
+    // Acompanhamentos Collection
+    // ===========================
+    match /acompanhamentos/{acompanhamentoId} {
+      // Leitura: admin, missionário, pai ou o próprio recantiano
+      allow read: if isAdmin() ||
+                    isMissionario() ||
+                    isPai() ||
+                    (isAuthenticated() && resource.data.recantiano_id == request.auth.uid);
+
+      // Criação: admin ou missionário
+      allow create: if (isAdmin() || isMissionario()) &&
+                      request.resource.data.keys().hasAll([
+                        'recantiano_id', 'missionario_id', 'date', 'tipo', 'created_at'
+                      ]);
+
+      // Atualização: admin ou missionário
+      allow update: if (isAdmin() || isMissionario()) &&
+                      request.resource.data.keys().hasAll([
+                        'id', 'recantiano_id', 'missionario_id', 'date', 'tipo', 'created_at'
+                      ]);
+
+      // Deleção: admin ou missionário
+      allow delete: if isAdmin() || isMissionario();
+    }
+
+    // ===========================
+    // Desafios Collection
+    // ===========================
+    match /desafios/{desafioId} {
+      // Leitura: usuários autenticados
+      allow read: if isAuthenticated();
+
+      // Criação: apenas admins
+      allow create: if isAdmin() &&
+                      request.resource.data.keys().hasAll([
+                        'title', 'description', 'category', 'difficulty', 'created_at'
+                      ]);
+
+      // Atualização: apenas admins
+      allow update: if isAdmin() &&
+                      request.resource.data.keys().hasAll([
+                        'id', 'title', 'description', 'category', 'difficulty', 'created_at'
+                      ]);
+
+      // Deleção: apenas admins
+      allow delete: if isAdmin();
+    }
+
+    // ===========================
+    // Desafio Registros Collection
+    // ===========================
+    match /desafio_registros/{registroId} {
+      // Leitura: admin, missionário ou o próprio recantiano
+      allow read: if isAdmin() ||
+                    isMissionario() ||
+                    (isAuthenticated() && resource.data.recantiano_id == request.auth.uid);
+
+      // Criação: usuários autenticados
+      allow create: if isAuthenticated() &&
+                      request.resource.data.keys().hasAll([
+                        'desafio_id', 'recantiano_id', 'completed', 'created_at'
+                      ]);
+
+      // Atualização: admin, missionário ou o próprio recantiano
+      allow update: if (isAdmin() ||
+                      isMissionario() ||
+                      (isAuthenticated() && resource.data.recantiano_id == request.auth.uid)) &&
+                      request.resource.data.keys().hasAll([
+                        'id', 'desafio_id', 'recantiano_id', 'completed', 'created_at'
+                      ]);
+
+      // Deleção: apenas admins
+      allow delete: if isAdmin();
+    }
+
+    // ===========================
+    // Google Calendar Configs Collection
+    // ===========================
+    match /google_calendar_configs/{userId} {
+      // Leitura: apenas o próprio admin
+      allow read: if isAuthenticated() && request.auth.uid == userId && isAdmin();
+
+      // Escrita: apenas o próprio admin
+      allow write: if isAuthenticated() && request.auth.uid == userId && isAdmin();
+    }
+
+    // ===========================
+    // Content Pages Collection (CMS)
+    // ===========================
+    match /content_pages/{pageId} {
+      // Leitura: SEMPRE permitir queries, mas filtrar por is_published
+      // Permite que visitantes não autenticados busquem páginas publicadas
+      allow read: if true;
+
+      // Criação: apenas admins
+      allow create: if isAdmin();
+
+      // Atualização: apenas admins
+      allow update: if isAdmin();
+
+      // Deleção: apenas admins
+      allow delete: if isAdmin();
+    }
+
+    // ===========================
+    // Menu Config Collection (CMS)
+    // ===========================
+    match /menu_config/{menuId} {
+      // Leitura: público (para que o Navbar possa buscar)
+      // O filtro por is_published é feito no código
+      allow read: if true;
+
+      // Criação: apenas admins e missionários
+      allow create: if isAdmin() || isMissionario();
+
+      // Atualização: apenas admins e missionários
+      allow update: if isAdmin() || isMissionario();
+
+      // Deleção: apenas admins
+      allow delete: if isAdmin();
+    }
+  }
+}

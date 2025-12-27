@@ -1,0 +1,78 @@
+import { ModConfig } from '@/types/cms-types';
+
+export const textIntroConfig: ModConfig = {
+  id: 'TextIntro',
+  name: 'Introdução de Texto',
+  description: 'Seção de texto centralizada simples, perfeita para introduções',
+  icon: 'FileText',
+  category: 'content',
+  props: [
+    {
+      name: 'content',
+      label: 'Conteúdo',
+      type: 'textarea',
+      required: true,
+      multiline: true,
+      placeholder: 'Seja bem-vindo ao <strong>Recanto do Amor Misericordioso</strong>!...',
+      description: 'Texto da introdução (aceita HTML básico como <strong>, <em>, etc.)',
+    },
+    {
+      name: 'maxWidth',
+      label: 'Largura do Texto',
+      type: 'select',
+      options: [
+        { value: 'sm', label: 'Extra Estreito' },
+        { value: 'md', label: 'Muito Estreito' },
+        { value: 'lg', label: 'Estreito' },
+        { value: 'xl', label: 'Médio-Estreito' },
+        { value: '2xl', label: 'Médio' },
+        { value: '3xl', label: 'Médio-Largo' },
+        { value: '4xl', label: 'Largo' },
+        { value: '5xl', label: 'Muito Largo (recomendado)' },
+        { value: '6xl', label: 'Extra Largo' },
+        { value: 'full', label: 'Largura Total' },
+      ],
+      default: '5xl',
+      description: 'Largura da coluna de texto',
+    },
+    {
+      name: 'textSize',
+      label: 'Tamanho da Letra',
+      type: 'select',
+      options: [
+        { value: 'sm', label: 'Pequena' },
+        { value: 'base', label: 'Normal' },
+        { value: 'lg', label: 'Grande' },
+        { value: 'xl', label: 'Muito Grande (recomendado)' },
+        { value: '2xl', label: 'Extra Grande' },
+      ],
+      default: 'xl',
+      description: 'Tamanho da fonte do texto',
+    },
+    {
+      name: 'bgColor',
+      label: 'Cor de Fundo',
+      type: 'select',
+      options: [
+        { value: 'base-100', label: 'Fundo Claro' },
+        { value: 'base-200', label: 'Fundo Médio' },
+        { value: 'base-300', label: 'Fundo Escuro' },
+      ],
+      default: 'base-100',
+      description: 'Cor de fundo da seção (muda com o tema)',
+    },
+    {
+      name: 'paddingY',
+      label: 'Espaçamento Vertical',
+      type: 'select',
+      options: [
+        { value: 'sm', label: 'Pequeno' },
+        { value: 'md', label: 'Médio' },
+        { value: 'lg', label: 'Grande (recomendado)' },
+        { value: 'xl', label: 'Extra Grande' },
+      ],
+      default: 'lg',
+      description: 'Espaço acima e abaixo da seção',
+    },
+  ],
+};

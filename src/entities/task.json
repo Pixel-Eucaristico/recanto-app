@@ -1,0 +1,27 @@
+{
+    "name": "Task",
+    "type": "object",
+    "properties": {
+      "title": {
+        "type": "string"
+      },
+      "description": {
+        "type": "string"
+      },
+      "status": {
+        "type": "string",
+        "enum": [
+          "pendente",
+          "concluida"
+        ],
+        "default": "pendente"
+      },
+      "assigned_to": {
+        "type": "string",
+        "description": "Email do colaborador atribuído"
+      }
+    },
+    "required": [
+      "title"
+    ]
+  }
