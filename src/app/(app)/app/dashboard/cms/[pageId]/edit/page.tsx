@@ -22,13 +22,33 @@ import {
   DragOverEvent,
   useDroppable,
   DragOverlay,
-  DragStartEvent
+  DragStartEvent,
+  pointerWithin,
+  CollisionDetection
 } from '@dnd-kit/core';
 import {
   SortableContext,
   verticalListSortingStrategy,
   arrayMove
 } from '@dnd-kit/sortable';
+
+// Custom collision detection strategy
+const customCollisionDetection: CollisionDetection = (args) => {
+  // First, look for pointerWithin (precise hit test)
+  const pointerCollisions = pointerWithin(args);
+  
+  if (pointerCollisions.length > 0) {
+    // If we have collisions, prefer distinct "drop:" zones (nested) over generic blocks
+    const nestedDrop = pointerCollisions.find(c => String(c.id).startsWith('drop:'));
+    if (nestedDrop) return [nestedDrop];
+    
+    // Otherwise return all pointer collisions (DndContext usually picks the first one)
+    return pointerCollisions;
+  }
+  
+  // Fallback to rectIntersection if no pointer collision (e.g. fast movement or gaps)
+  return rectIntersection(args);
+};
 
 interface PageEditorProps {
   params: Promise<{
@@ -325,6 +345,12 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
       overType: typeof over.id
     });
 
+    // Check for nested drops (handled by child components)
+    if (String(over.id).startsWith('drop:')) {
+       console.log('✅ Drop delegada para componente filho:', over.id);
+       return;
+    }
+
     // VALIDAÇÃO RIGOROSA: Apenas arrastar MOD da biblioteca
     if (active.data.current?.type === 'mod') {
       const modId = active.data.current.modId;
@@ -398,7 +424,7 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={rectIntersection}
+      collisionDetection={customCollisionDetection}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}

@@ -56,6 +56,8 @@ import { locationSectionConfig } from './LocationSection/config';
 import SocialLinksSection from './SocialLinksSection/SocialLinksSection';
 import { socialLinksSectionConfig } from './SocialLinksSection/config';
 import { ModConfig } from '@/types/cms-types';
+import PixMod from './PixMod/PixMod';
+import { pixModConfig } from './PixMod/config';
 
 // ============================================
 // Mapeamento de Componentes
@@ -91,6 +93,7 @@ export const ModComponents = {
   ContactSection,
   LocationSection,
   SocialLinksSection,
+  PixMod,
   // Futuros Mods:
   // TeamGrid,
   // Gallery,
@@ -131,6 +134,7 @@ export const ModConfigs: Record<string, ModConfig> = {
   ContactSection: contactSectionConfig,
   LocationSection: locationSectionConfig,
   SocialLinksSection: socialLinksSectionConfig,
+  PixMod: pixModConfig,
   // Futuros Configs...
 };
 

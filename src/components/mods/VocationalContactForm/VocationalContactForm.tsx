@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useState } from "react";
+import { useToast } from "@/components/ui/use-toast";
 
 export interface VocationalContactFormProps {
   title?: string;
@@ -71,6 +72,7 @@ export default function VocationalContactForm({
   }
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -96,14 +98,28 @@ export default function VocationalContactForm({
       });
 
       if (!response.ok) {
-        throw new Error('Falha no envio');
+        const errorData = await response.json();
+        const errorMessage = errorData.details 
+          ? `${errorData.error}: ${errorData.details}`
+          : (errorData.error || 'Falha desconhecida no envio');
+        throw new Error(errorMessage);
       }
 
-      alert("Formulário enviado com sucesso! Entraremos em contato em breve.");
+      toast({
+        title: "Sucesso!",
+        description: "Formulário enviado com sucesso! Entraremos em contato em breve.",
+        variant: "default",
+      });
       (e.target as HTMLFormElement).reset();
     } catch (error) {
       console.error('Erro ao enviar via API:', error);
       
+      toast({
+        title: "Atenção",
+        description: "Não foi possível enviar automaticamente. Abrindo seu gerenciador de e-mails...",
+        variant: "destructive",
+      });
+
       // Fallback: Mailto
       const mailtoSubject = encodeURIComponent(`[Vocacional] Novo contato de ${data.name}`);
       const mailtoBody = encodeURIComponent(
@@ -111,9 +127,10 @@ export default function VocationalContactForm({
       );
       
       // Tenta abrir o cliente de email padrão
-      window.location.href = `mailto:?subject=${mailtoSubject}&body=${mailtoBody}`;
+      window.setTimeout(() => {
+          window.location.href = `mailto:?subject=${mailtoSubject}&body=${mailtoBody}`;
+      }, 1500);
       
-      alert("Não foi possível enviar automaticamente. Abrindo seu gerenciador de e-mails...");
     } finally {
       setIsSubmitting(false);
     }

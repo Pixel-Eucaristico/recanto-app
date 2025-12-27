@@ -29,13 +29,15 @@ interface DynamicModFormProps {
   propConfigs: ModPropConfig[];
   values: Record<string, any>;
   onChange: (values: Record<string, any>) => void;
+  blockId?: string;
 }
 
 export default function DynamicModForm({
   modId,
   propConfigs,
   values,
-  onChange
+  onChange,
+  blockId
 }: DynamicModFormProps) {
   const [formValues, setFormValues] = useState<Record<string, any>>(values);
 
@@ -188,6 +190,7 @@ export default function DynamicModForm({
           <PillarsEditor
             value={value}
             onChange={(newValue) => handleChange(propName, newValue)}
+            blockId={blockId} // Pass blockId for DND
           />
         );
 

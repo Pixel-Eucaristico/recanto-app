@@ -1,9 +1,13 @@
 'use client';
 
-import { Plus, Trash2, GripVertical } from 'lucide-react';
+import { Plus, Trash2, GripVertical, Link as LinkIcon, Box, X, Upload } from 'lucide-react';
 import { useState } from 'react';
 import * as LucideIcons from 'lucide-react';
+import { useDroppable, useDndMonitor } from '@dnd-kit/core';
 import { AnimationPicker } from './AnimationPicker';
+import { availableMods } from '@/components/mods'; // Import registry
+import ModsLibrary from '@/components/cms-editor/ModsLibrary';
+import { ModPropConfig } from '@/types/cms-types';
 
 interface Pillar {
   icon: string;
@@ -12,12 +16,20 @@ interface Pillar {
   description: string;
   iconColor: string;
   buttonText?: string;
+  // Action System
+  actionType?: 'url' | 'modal_block'; 
   buttonLink?: string;
+  // Generic Block Config
+  modalBlock?: {
+    modId: string;
+    props: Record<string, any>;
+  };
 }
 
 interface PillarsEditorProps {
   value: Pillar[];
   onChange: (value: Pillar[]) => void;
+  blockId?: string;
 }
 
 // Lista dos ícones mais comuns para pilares/features
@@ -42,49 +54,428 @@ const COMMON_ICONS = [
   { name: 'Sun', label: 'Sol' },
   { name: 'Moon', label: 'Lua' },
   { name: 'Zap', label: 'Raio' },
+  { name: 'QrCode', label: 'QR Code' },
 ];
 
 const COLOR_OPTIONS = [
-  { value: 'primary', label: 'Principal (muda com o tema)', class: 'text-primary' },
-  { value: 'secondary', label: 'Secundário (muda com o tema)', class: 'text-secondary' },
-  { value: 'accent', label: 'Destaque (muda com o tema)', class: 'text-accent' },
-  { value: 'info', label: 'Informação (azul)', class: 'text-info' },
-  { value: 'success', label: 'Sucesso (verde)', class: 'text-success' },
-  { value: 'warning', label: 'Aviso (amarelo)', class: 'text-warning' },
-  { value: 'error', label: 'Erro (vermelho)', class: 'text-error' },
+  { value: 'primary', label: 'Principal', class: 'text-primary' },
+  { value: 'secondary', label: 'Secundário', class: 'text-secondary' },
+  { value: 'accent', label: 'Destaque', class: 'text-accent' },
+  { value: 'info', label: 'Informação', class: 'text-info' },
+  { value: 'success', label: 'Sucesso', class: 'text-success' },
+  { value: 'warning', label: 'Aviso', class: 'text-warning' },
+  { value: 'error', label: 'Erro', class: 'text-error' },
 ];
 
-/**
- * Editor visual de pilares com seleção de ícones, cores e textos
- * Substitui o editor JSON para melhor UX
- */
-export function PillarsEditor({ value = [], onChange }: PillarsEditorProps) {
-  // Garantir que value seja sempre um array
+// Helper to render Icons
+const renderIcon = (iconName: string, className: string = '') => {
+  const IconComponent = (LucideIcons as any)[iconName];
+  if (!IconComponent) return <LucideIcons.HelpCircle className={className} />;
+  return <IconComponent className={className} />;
+};
+
+interface PillarItemEditorProps {
+   pillar: Pillar;
+   index: number;
+   blockId?: string;
+   isOnlyItem: boolean;
+   onUpdate: (updatedPillar: Pillar) => void;
+   onRemove: () => void;
+   onOpenLibrary: () => void;
+}
+
+function PillarItemEditor({ 
+  pillar, 
+  index, 
+  blockId, 
+  isOnlyItem, 
+  onUpdate, 
+  onRemove,
+  onOpenLibrary
+}: PillarItemEditorProps) {
+  const [iconPickerOpen, setIconPickerOpen] = useState(false);
+
+  // Configure Droppable Zone
+  const droppableId = blockId ? `drop:pillar:${blockId}:${index}` : undefined;
+  const { setNodeRef, isOver } = useDroppable({
+    id: droppableId || `temp-drop-${index}`,
+    disabled: !blockId
+  });
+
+  const handleChange = (field: keyof Pillar, value: any) => {
+    onUpdate({ ...pillar, [field]: value });
+  };
+
+  const handleBlockChange = (modId: string) => {
+     onUpdate({
+        ...pillar,
+        modalBlock: { modId, props: {} } // Reset props on new block
+     });
+  };
+
+   const handleBlockPropChange = (propName: string, propValue: any) => {
+      const currentBlock = pillar.modalBlock || { modId: 'PixMod', props: {} };
+      onUpdate({
+         ...pillar,
+         modalBlock: {
+            ...currentBlock,
+            props: { ...currentBlock.props, [propName]: propValue }
+         }
+      });
+   };
+
+   // Nested Form Renderer
+   const renderNestedBlockForm = () => {
+      if (!pillar.modalBlock) return null;
+      const config = availableMods[pillar.modalBlock.modId];
+      if (!config) return <div className="text-error text-xs">Mod {pillar.modalBlock.modId} não encontrado.</div>;
+      const props = config.props || config.fields || [];
+
+      return (
+         <div className="space-y-2 mt-2">
+            {props.map((prop: ModPropConfig) => {
+               const propName = prop.name || (prop as any).key;
+               if (['pillars-editor', 'sections-editor', 'testimonials-editor'].includes(prop.type)) return null;
+               const value = pillar.modalBlock!.props[propName] ?? prop.default ?? '';
+
+               return (
+                  <div key={propName} className="form-control">
+                     <label className="label pt-0 pb-1">
+                        <span className="label-text text-xs font-semibold">{prop.label}</span>
+                     </label>
+                     {prop.type === 'select' && (
+                        <select 
+                           className="select select-bordered select-sm w-full"
+                           value={value}
+                           onChange={(e) => handleBlockPropChange(propName, e.target.value)}
+                        >
+                           {prop.options?.map((opt: any) => (
+                              <option key={typeof opt === 'string' ? opt : opt.value} value={typeof opt === 'string' ? opt : opt.value}>
+                                 {typeof opt === 'string' ? opt : opt.label}
+                              </option>
+                           ))}
+                        </select>
+                     )}
+                     {(prop.type === 'text' || prop.type === 'url' || prop.type === 'string') && (
+                        <input 
+                           type="text"
+                           className="input input-bordered input-sm w-full"
+                           placeholder={prop.placeholder}
+                           value={value}
+                           onChange={(e) => handleBlockPropChange(propName, e.target.value)}
+                        />
+                     )}
+                     {prop.type === 'number' && (
+                        <input 
+                           type="number"
+                           className="input input-bordered input-sm w-full"
+                           placeholder={prop.placeholder}
+                           value={value}
+                           onChange={(e) => handleBlockPropChange(propName, e.target.value)}
+                        />
+                     )}
+                  </div>
+               );
+            })}
+         </div>
+      );
+   };
+
+  return (
+    <div className="card bg-base-200 shadow-sm border border-base-300">
+      <div className="card-body p-4">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-2">
+           <div className="flex items-center gap-2">
+            <GripVertical className="w-4 h-4 text-base-content/40 cursor-move" />
+            <span className="text-xs font-bold uppercase tracking-wider text-base-content/60">
+              Item {index + 1}
+            </span>
+             {pillar.actionType === 'modal_block' && (
+               <span className="badge badge-info badge-xs gap-1">
+                  <Box className="w-3 h-3"/> Modal
+               </span>
+            )}
+           </div>
+          <button
+            type="button"
+            onClick={onRemove}
+            className="btn btn-ghost btn-sm btn-square text-error hover:bg-error/10"
+            title="Remover Item"
+            disabled={isOnlyItem}
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+          {/* Visuals Column */}
+          <div className="md:col-span-4 space-y-3">
+             <div className="p-3 bg-base-100/50 rounded-lg border border-base-300">
+                <span className="text-[10px] font-bold uppercase text-base-content/50 block mb-2">Ícone & Animação</span>
+                
+                {/* Icon Selection */}
+                <div className="form-control mb-3">
+                  <button
+                    type="button"
+                    onClick={() => setIconPickerOpen(!iconPickerOpen)}
+                    className="btn btn-outline btn-sm justify-start gap-2 w-full"
+                  >
+                    {renderIcon(pillar.icon, 'w-4 h-4')}
+                    <span className="truncate">{COMMON_ICONS.find(i => i.name === pillar.icon)?.label || pillar.icon}</span>
+                  </button>
+                   {iconPickerOpen && (
+                    <div className="mt-2 p-2 bg-base-100 rounded-lg border border-base-300 shadow-xl absolute z-50 w-64 max-h-60 overflow-y-auto grid grid-cols-5 gap-1">
+                      {COMMON_ICONS.map((iconOption) => (
+                        <button
+                          key={iconOption.name}
+                          type="button"
+                          onClick={() => {
+                             handleChange('icon', iconOption.name);
+                             setIconPickerOpen(false);
+                          }}
+                          className={`btn btn-sm btn-square ${pillar.icon === iconOption.name ? 'btn-primary' : 'btn-ghost'}`}
+                          title={iconOption.label}
+                        >
+                          {renderIcon(iconOption.name, 'w-4 h-4')}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                 <div className="form-control mb-3">
+                    <select
+                       className="select select-bordered select-xs w-full"
+                       value={pillar.iconColor}
+                       onChange={(e) => handleChange('iconColor', e.target.value)}
+                    >
+                       {COLOR_OPTIONS.map((color) => (
+                       <option key={color.value} value={color.value}>{color.label}</option>
+                       ))}
+                    </select>
+                 </div>
+                 <div className="divider my-1 text-[10px]">OU</div>
+                 <AnimationPicker
+                    value={pillar.lottie || 'none'}
+                    onChange={(val) => handleChange('lottie', val)}
+                 />
+             </div>
+          </div>
+
+           {/* Content Column */}
+          <div className="md:col-span-8 space-y-3">
+            <input
+                type="text"
+                className="input input-bordered input-sm font-bold w-full"
+                placeholder="Título Principal"
+                value={pillar.title}
+                onChange={(e) => handleChange('title', e.target.value)}
+              />
+              <textarea
+                className="textarea textarea-bordered textarea-sm leading-tight min-h-[5rem] w-full"
+                placeholder="Descrição do item..."
+                rows={2}
+                value={pillar.description}
+                onChange={(e) => handleChange('description', e.target.value)}
+              />
+
+              {/* ACTION CONFIGURATION */}
+              <div className="bg-base-100 rounded-lg border border-base-300 overflow-hidden">
+                  <div className="bg-base-200/50 px-3 py-2 border-b border-base-300 flex items-center justify-between">
+                     <span className="text-xs font-bold uppercase text-base-content/60">Botão de Ação</span>
+                     <div className="join">
+                        <button 
+                           type="button"
+                           className={`join-item btn btn-xs ${pillar.actionType !== 'modal_block' ? 'btn-active btn-neutral' : ''}`}
+                           onClick={() => handleChange('actionType', 'url')}
+                         >
+                           <LinkIcon className="w-3 h-3 mr-1"/> Link
+                         </button>
+                         <button 
+                           type="button"
+                           className={`join-item btn btn-xs ${pillar.actionType === 'modal_block' ? 'btn-active btn-primary text-white' : ''}`}
+                           onClick={() => handleChange('actionType', 'modal_block')}
+                         >
+                           <Box className="w-3 h-3 mr-1"/> Modal
+                         </button>
+                     </div>
+                  </div>
+                  
+                  <div className="p-3">
+                    <div className="form-control mb-3">
+                       <label className="label pt-0 pb-1"><span className="label-text text-xs">Texto do Botão</span></label>
+                       <input
+                         type="text"
+                         className="input input-bordered input-sm"
+                         placeholder="Ex: Saiba Mais"
+                         value={pillar.buttonText || ''}
+                         onChange={(e) => handleChange('buttonText', e.target.value)}
+                       />
+                     </div>
+
+                    {pillar.actionType === 'modal_block' ? (
+                       <div className="animate-in fade-in slide-in-from-top-2 duration-300 border border-base-200 bg-base-50 rounded-lg p-3">
+                             <span className="label-text text-xs font-bold flex items-center gap-2 mb-2">
+                                <Box className="w-3 h-3"/> Conteúdo do Modal (Bloco)
+                             </span>
+                             
+                             {/* DROP ZONE / SELECTION UI */}
+                             {!pillar.modalBlock?.modId ? (
+                                <div 
+                                   ref={setNodeRef}
+                                   className={`
+                                      border-2 border-dashed rounded-xl p-6 text-center transition-all cursor-pointer group
+                                      ${isOver 
+                                         ? 'border-primary bg-primary/10 scale-[1.02]' 
+                                         : 'border-base-300 hover:border-primary/50 hover:bg-base-100'
+                                      }
+                                      lg:cursor-default 
+                                   `}
+                                   onClick={() => {
+                                      // Only open library on click if small screen
+                                      if (window.innerWidth < 1024) {
+                                         onOpenLibrary();
+                                      }
+                                   }}
+                                >
+                                   <div className="flex flex-col items-center gap-2 pointer-events-none">
+                                      <div className={`p-3 rounded-full ${isOver ? 'bg-primary text-white' : 'bg-base-200 text-base-content/40 group-hover:bg-primary/10 group-hover:text-primary'}`}>
+                                         {isOver ? <Upload className="w-6 h-6 animate-bounce"/> : <Plus className="w-6 h-6"/>}
+                                      </div>
+                                      <div>
+                                         <p className="font-semibold text-sm">
+                                            {isOver ? 'Solte o bloco aqui!' : 'Arraste um bloco aqui'}
+                                         </p>
+                                         <p className="text-xs text-base-content/50">
+                                            ou clique para selecionar
+                                         </p>
+                                      </div>
+                                   </div>
+                                </div>
+                             ) : (
+                                <div className="space-y-3">
+                                   {/* Selected Block Info */}
+                                   <div className="flex items-center gap-3 p-3 bg-base-100 rounded-lg border border-base-200 shadow-sm relative group">
+                                      {/* Block Icon/Preview */}
+                                      <div className="w-10 h-10 rounded bg-primary/10 flex items-center justify-center text-primary font-bold">
+                                         {availableMods[pillar.modalBlock.modId]?.name?.[0] || 'B'}
+                                      </div>
+                                      
+                                      <div className="flex-1 min-w-0">
+                                         <h4 className="font-semibold text-sm truncate">
+                                            {availableMods[pillar.modalBlock.modId]?.name || pillar.modalBlock.modId}
+                                         </h4>
+                                         <p className="text-[10px] text-base-content/60 truncate">
+                                            Bloco configurado
+                                         </p>
+                                      </div>
+
+                                      {/* Remove Action */}
+                                      <button
+                                         onClick={() => {
+                                            // Clear the block (keep modalBlock object but empty modId undefined or handle it)
+                                            // Actually better to nullify modalBlock or set modId to empty string
+                                            onUpdate({ ...pillar, modalBlock: undefined });
+                                         }}
+                                         className="btn btn-sm btn-ghost btn-square text-error hover:bg-error/10"
+                                         title="Remover Bloco"
+                                      >
+                                         <Trash2 className="w-4 h-4"/>
+                                      </button>
+                                   </div>
+
+                                   {/* Config Form */}
+                                   <div className="pl-2 border-l-2 border-primary/20">
+                                      <h5 className="text-[10px] font-bold uppercase text-base-content/40 mb-1">
+                                         Configurar Bloco
+                                      </h5>
+                                      {renderNestedBlockForm()}
+                                   </div>
+                                </div>
+                             )}
+                          </div>
+                    ) : (
+                       <div className="form-control animate-in fade-in slide-in-from-top-2 duration-300">
+                         <label className="label pt-0 pb-1"><span className="label-text text-xs">URL de Destino</span></label>
+                         <input
+                           type="text"
+                           className="input input-bordered input-sm"
+                           placeholder="Ex: /contato ou https://..."
+                           value={pillar.buttonLink || ''}
+                           onChange={(e) => handleChange('buttonLink', e.target.value)}
+                         />
+                       </div>
+                    )}
+                  </div>
+              </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function PillarsEditor({ value = [], onChange, blockId }: PillarsEditorProps) {
+  
   const normalizeValue = (val: any): Pillar[] => {
-    if (Array.isArray(val)) {
-      return val.length > 0 ? val : [
-        {
-          icon: 'Book',
-          lottie: 'none',
-          title: '',
-          description: '',
-          iconColor: 'primary',
-        }
-      ];
+    const defaultPillar: Pillar = {
+      icon: 'Book',
+      lottie: 'none',
+      title: '',
+      description: '',
+      iconColor: 'primary',
+      actionType: 'url',
+      // modalBlock starts undefined to show empty state!
+    };
+
+    if (Array.isArray(val) && val.length > 0) {
+      return val.map(p => ({
+        ...defaultPillar,
+        ...p,
+        // Ensure modalBlock exists if converting from old format... 
+        // actually if we want empty state, we should let it be undefined if invalid
+      }));
     }
-    return [
-      {
-        icon: 'Book',
-        lottie: 'none',
-        title: '',
-        description: '',
-        iconColor: 'primary',
-      }
-    ];
+    
+    return [defaultPillar];
   };
 
   const [pillars, setPillars] = useState<Pillar[]>(normalizeValue(value));
-  const [iconPickerOpen, setIconPickerOpen] = useState<number | null>(null);
+  const [libraryModalOpen, setLibraryModalOpen] = useState<number | null>(null);
+
+  const handleUpdate = (newPillars: Pillar[]) => {
+    setPillars(newPillars);
+    onChange(newPillars);
+  };
+
+  // Monitor DND events
+  useDndMonitor({
+    onDragEnd(event) {
+       const { active, over } = event;
+       if (!over || !active.data.current || active.data.current.type !== 'mod') return;
+       
+       const overId = String(over.id);
+       // Pattern: drop:pillar:{blockId}:{index}
+       if (overId.startsWith(`drop:pillar:${blockId}:`)) {
+          const indexStr = overId.split(':').pop();
+          const index = parseInt(indexStr || '', 10);
+          
+          if (!isNaN(index) && pillars[index]) {
+             const modId = active.data.current.modId;
+             console.log(`Dropped ${modId} onto pillar ${index}`);
+             
+             // Update logic
+             const newPillars = [...pillars];
+             newPillars[index] = {
+                ...newPillars[index],
+                modalBlock: { modId, props: {} }
+             };
+             handleUpdate(newPillars);
+          }
+       }
+    }
+ });
 
   const handleAdd = () => {
     const newPillars = [
@@ -95,230 +486,80 @@ export function PillarsEditor({ value = [], onChange }: PillarsEditorProps) {
         title: '',
         description: '',
         iconColor: 'primary',
+        actionType: 'url' as const,
+        // Start empty
       }
     ];
-    setPillars(newPillars);
-    onChange(newPillars);
+    handleUpdate(newPillars);
   };
 
   const handleRemove = (index: number) => {
-    if (pillars.length === 1) return; // Manter pelo menos 1
+    if (pillars.length === 1) return;
     const newPillars = pillars.filter((_, i) => i !== index);
-    setPillars(newPillars);
-    onChange(newPillars);
+    handleUpdate(newPillars);
   };
 
-  const handleChange = (index: number, field: keyof Pillar, value: string) => {
-    const newPillars = [...pillars];
-    newPillars[index] = { ...newPillars[index], [field]: value };
-    setPillars(newPillars);
-    onChange(newPillars);
-  };
-
-  const handleIconSelect = (index: number, iconName: string) => {
-    handleChange(index, 'icon', iconName);
-    setIconPickerOpen(null);
-  };
-
-  // Renderizar ícone dinamicamente
-  const renderIcon = (iconName: string, className: string = '') => {
-    const IconComponent = (LucideIcons as any)[iconName];
-    if (!IconComponent) return <LucideIcons.HelpCircle className={className} />;
-    return <IconComponent className={className} />;
+  const handlePillarUpdate = (index: number, updatedPillar: Pillar) => {
+     const newPillars = [...pillars];
+     newPillars[index] = updatedPillar;
+     handleUpdate(newPillars);
   };
 
   return (
     <div className="space-y-4">
       {pillars.map((pillar, index) => (
-        <div key={index} className="card bg-base-200 shadow-sm">
-          <div className="card-body p-4">
-            {/* Cabeçalho com indicador e botão remover */}
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <GripVertical className="w-4 h-4 text-base-content/40" />
-                <span className="text-xs font-semibold text-base-content/60">
-                  Pilar {index + 1}
-                </span>
-                {pillar.lottie && pillar.lottie !== 'none' && (
-                  <span className="badge badge-secondary badge-xs">Animado</span>
-                )}
-              </div>
-              <button
-                type="button"
-                onClick={() => handleRemove(index)}
-                className="btn btn-ghost btn-sm btn-square text-error"
-                disabled={pillars.length === 1}
-                title="Remover pilar"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              
-              {/* Opção Visual: Ícone ou Lottie */}
-              <div className="md:col-span-2 space-y-2 border border-base-300 rounded-lg p-3 bg-base-100/50">
-                <span className="text-xs font-bold uppercase text-base-content/50 block mb-2">Elemento Visual</span>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {/* Seletor de Ícone */}
-                  <div className="form-control">
-                    <label className="label pt-0">
-                      <span className="label-text text-xs font-semibold">Ícone (Padrão)</span>
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => setIconPickerOpen(iconPickerOpen === index ? null : index)}
-                      className="btn btn-outline btn-sm justify-start gap-2"
-                    >
-                      {renderIcon(pillar.icon, 'w-4 h-4')}
-                      <span>{COMMON_ICONS.find(i => i.name === pillar.icon)?.label || pillar.icon}</span>
-                    </button>
-
-                    {/* Modal do Icon Picker */}
-                    {iconPickerOpen === index && (
-                      <div className="mt-2 p-3 bg-base-100 rounded-lg border border-base-300 shadow-lg relative z-10">
-                        <div className="grid grid-cols-5 gap-2 max-h-64 overflow-y-auto">
-                          {COMMON_ICONS.map((iconOption) => (
-                            <button
-                              key={iconOption.name}
-                              type="button"
-                              onClick={() => handleIconSelect(index, iconOption.name)}
-                              className={`btn btn-sm btn-square ${
-                                pillar.icon === iconOption.name ? 'btn-primary' : 'btn-ghost'
-                              }`}
-                              title={iconOption.label}
-                            >
-                              {renderIcon(iconOption.name, 'w-5 h-5')}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Seletor de Animação Lottie */}
-                  <div className="form-control">
-                    <label className="label pt-0">
-                      <span className="label-text text-xs font-semibold">Animação Lottie (Opcional)</span>
-                    </label>
-                    <AnimationPicker
-                      value={pillar.lottie || 'none'}
-                      onChange={(val) => handleChange(index, 'lottie', val)}
-                    />
-                    <label className="label pb-0">
-                      <span className="label-text-alt text-xs text-base-content/60">
-                        Se selecionada, substitui o ícone.
-                      </span>
-                    </label>
-                  </div>
-                </div>
-
-                {/* Seletor de Cor (Só afeta o ícone) */}
-                {(!pillar.lottie || pillar.lottie === 'none') && (
-                  <div className="form-control mt-2">
-                    <label className="label">
-                      <span className="label-text text-xs font-semibold">Cor do Ícone</span>
-                    </label>
-                    <div className="flex gap-2 items-center">
-                      <select
-                        className="select select-bordered select-sm flex-1"
-                        value={pillar.iconColor}
-                        onChange={(e) => handleChange(index, 'iconColor', e.target.value)}
-                      >
-                        {COLOR_OPTIONS.map((color) => (
-                          <option key={color.value} value={color.value}>
-                            {color.label}
-                          </option>
-                        ))}
-                      </select>
-                      {renderIcon(
-                        pillar.icon,
-                        `w-6 h-6 ${COLOR_OPTIONS.find(c => c.value === pillar.iconColor)?.class || 'text-primary'}`
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Título */}
-              <div className="form-control md:col-span-2">
-                <label className="label">
-                  <span className="label-text text-xs font-semibold">Título</span>
-                </label>
-                <input
-                  type="text"
-                  className="input input-bordered input-sm w-full"
-                  placeholder="Ex: Educação"
-                  value={pillar.title}
-                  onChange={(e) => handleChange(index, 'title', e.target.value)}
-                />
-              </div>
-
-              {/* Descrição */}
-              <div className="form-control md:col-span-2">
-                <label className="label">
-                  <span className="label-text text-xs font-semibold">Descrição</span>
-                </label>
-                <textarea
-                  className="textarea textarea-bordered textarea-sm w-full"
-                  placeholder="Ex: Formação cristã integral de crianças e jovens."
-                  rows={2}
-                  value={pillar.description}
-                  onChange={(e) => handleChange(index, 'description', e.target.value)}
-                />
-              </div>
-
-              {/* Botão (Opcional) */}
-              <div className="md:col-span-2 border-t border-base-300 pt-3 mt-1">
-                <span className="text-xs font-bold uppercase text-base-content/50 block mb-2">Botão de Ação (Opcional)</span>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="form-control">
-                    <label className="label pt-0">
-                      <span className="label-text text-xs font-semibold">Texto do Botão</span>
-                    </label>
-                    <input
-                      type="text"
-                      className="input input-bordered input-sm w-full"
-                      placeholder="Ex: Quero Doar"
-                      value={pillar.buttonText || ''}
-                      onChange={(e) => handleChange(index, 'buttonText', e.target.value)}
-                    />
-                  </div>
-                  <div className="form-control">
-                    <label className="label pt-0">
-                      <span className="label-text text-xs font-semibold">Link do Botão</span>
-                    </label>
-                    <input
-                      type="text"
-                      className="input input-bordered input-sm w-full"
-                      placeholder="Ex: /doar ou https://..."
-                      value={pillar.buttonLink || ''}
-                      onChange={(e) => handleChange(index, 'buttonLink', e.target.value)}
-                    />
-                  </div>
-                </div>
-              </div>
-
-            </div>
-          </div>
-        </div>
+         <PillarItemEditor 
+            key={index}
+            index={index}
+            pillar={pillar}
+            blockId={blockId}
+            isOnlyItem={pillars.length === 1}
+            onUpdate={(p) => handlePillarUpdate(index, p)}
+            onRemove={() => handleRemove(index)}
+            onOpenLibrary={() => setLibraryModalOpen(index)}
+         />
       ))}
 
-      {/* Botão adicionar */}
       <button
-        type="button"
-        onClick={handleAdd}
-        className="btn btn-outline btn-sm gap-2 w-full"
+        type="button" // Prevent form submission
+        onClick={(e) => { e.preventDefault(); handleAdd(); }}
+        className="btn btn-outline btn-sm gap-2 w-full border-dashed"
       >
         <Plus className="w-4 h-4" />
-        Adicionar Pilar
+        Adicionar Item
       </button>
 
-      {/* Contador */}
-      <div className="text-xs text-base-content/60 text-center">
-        {pillars.length} {pillars.length === 1 ? 'pilar' : 'pilares'}
+       <div className="text-center text-xs text-base-content/40 mt-2">
+         {pillars.length} itens configurados
       </div>
+
+      {/* Library Selection Modal */}
+      {libraryModalOpen !== null && (
+         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <div className="bg-base-100 rounded-xl shadow-2xl w-full max-w-2xl h-[80vh] overflow-hidden flex flex-col relative animate-in fade-in zoom-in-95 duration-200">
+               <button 
+                  onClick={() => setLibraryModalOpen(null)} 
+                  className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2 z-10"
+               >
+                  <LucideIcons.X className="w-5 h-5"/>
+               </button>
+               <div className="flex-1 overflow-hidden">
+                  <ModsLibrary 
+                     onAddMod={(modId) => {
+                         const newPillars = [...pillars];
+                         newPillars[libraryModalOpen] = {
+                           ...newPillars[libraryModalOpen],
+                           modalBlock: { modId, props: {} }
+                         };
+                         handleUpdate(newPillars);
+                         setLibraryModalOpen(null);
+                     }} 
+                     disableDrag={true} 
+                  />
+               </div>
+            </div>
+         </div>
+      )}
     </div>
   );
 }

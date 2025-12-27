@@ -214,6 +214,7 @@ export default function BlockEditor({
               propConfigs={modConfig.props || modConfig.fields || []}
               values={block.props}
               onChange={handlePropsChange}
+              blockId={block.id}
             />
           </div>
         )}

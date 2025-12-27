@@ -7,47 +7,53 @@ import { useDraggable } from '@dnd-kit/core';
 
 interface ModsLibraryProps {
   onAddMod: (modId: string) => void;
+  disableDrag?: boolean;
 }
 
 interface DraggableModItemProps {
   modId: string;
   modConfig: any;
   onAddMod: (modId: string) => void;
+  disableDrag?: boolean;
 }
 
-function DraggableModItem({ modId, modConfig, onAddMod }: DraggableModItemProps) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: `mod-${modId}`,
-    data: { type: 'mod', modId }
-  });
+function DraggableModItem({ modId, modConfig, onAddMod, disableDrag = false }: DraggableModItemProps) {
+  const { attributes, listeners, setNodeRef, isDragging } = !disableDrag 
+    ? useDraggable({
+        id: `mod-${modId}`,
+        data: { type: 'mod', modId }
+      })
+    : { attributes: {}, listeners: {}, setNodeRef: undefined, isDragging: false };
 
   return (
     <div
-      ref={setNodeRef}
-      className={`card bg-base-100 hover:bg-base-300 transition-all select-none ${
+      ref={disableDrag ? undefined : setNodeRef}
+      className={`card bg-base-100 hover:bg-base-300 transition-all select-none border border-base-200 ${
         isDragging ? 'opacity-50 cursor-grabbing' : ''
       }`}
     >
-      <div className="card-body p-4">
-        <div className="flex items-start gap-2">
-          {/* Drag Handle */}
-          <div
-            {...attributes}
-            {...listeners}
-            className="cursor-grab active:cursor-grabbing pt-1 touch-none"
-            style={{ touchAction: 'none' }}
-          >
-            <GripVertical className="w-4 h-4 text-base-content/40 pointer-events-none" />
-          </div>
+      <div className="card-body p-3 md:p-4">
+        <div className="flex items-start gap-3">
+          {/* Drag Handle - Only show if draggable */}
+          {!disableDrag && (
+            <div
+              {...attributes}
+              {...listeners}
+              className="cursor-grab active:cursor-grabbing pt-1 touch-none"
+              style={{ touchAction: 'none' }}
+            >
+              <GripVertical className="w-4 h-4 text-base-content/40 pointer-events-none" />
+            </div>
+          )}
 
           {/* Content */}
           <div className="flex-1 cursor-pointer" onClick={() => onAddMod(modId)}>
             <h3 className="font-semibold text-sm">{modConfig.name}</h3>
-            <p className="text-xs text-base-content/60 mt-1">
+            <p className="text-xs text-base-content/60 mt-1 line-clamp-2">
               {modConfig.description}
             </p>
             {modConfig.category && (
-              <span className="badge badge-sm badge-ghost mt-2">
+              <span className="badge badge-sm badge-ghost mt-2 font-normal text-xs">
                 {modConfig.category}
               </span>
             )}
@@ -59,9 +65,10 @@ function DraggableModItem({ modId, modConfig, onAddMod }: DraggableModItemProps)
               e.stopPropagation();
               onAddMod(modId);
             }}
-            className="btn btn-circle btn-sm btn-ghost flex-shrink-0"
+            className="btn btn-circle btn-sm btn-ghost flex-shrink-0 text-primary hover:bg-primary/10"
+            title="Adicionar"
           >
-            <Plus className="w-4 h-4 text-primary" />
+            <Plus className="w-5 h-5" />
           </button>
         </div>
       </div>
@@ -69,7 +76,7 @@ function DraggableModItem({ modId, modConfig, onAddMod }: DraggableModItemProps)
   );
 }
 
-export default function ModsLibrary({ onAddMod }: ModsLibraryProps) {
+export default function ModsLibrary({ onAddMod, disableDrag = false }: ModsLibraryProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
@@ -131,7 +138,7 @@ export default function ModsLibrary({ onAddMod }: ModsLibraryProps) {
       <div className="mb-4">
         <h2 className="text-xl font-bold mb-2">Biblioteca de Blocos</h2>
         <p className="text-sm text-base-content/60">
-          Clique ou arraste blocos para adicionar
+          Clique {disableDrag ? 'para selecionar' : 'ou arraste para adicionar'}
         </p>
       </div>
 
@@ -209,6 +216,7 @@ export default function ModsLibrary({ onAddMod }: ModsLibraryProps) {
               modId={modId}
               modConfig={modConfig}
               onAddMod={onAddMod}
+              disableDrag={disableDrag}
             />
           ))
         )}
