@@ -31,7 +31,7 @@ export default function Sidebar() {
   }, [user]);
 
   return (
-    <div className="flex min-h-full flex-col items-start bg-base-200 is-drawer-close:w-14 is-drawer-open:w-64 transition-all relative">
+    <div className="flex h-screen overflow-y-auto overflow-x-hidden flex-col items-start bg-base-200 is-drawer-close:w-14 is-drawer-open:w-64 transition-all relative">
       {/* Header */}
       <SidebarHeader />
 

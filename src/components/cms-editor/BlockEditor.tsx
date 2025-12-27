@@ -1,12 +1,11 @@
 'use client';
 
-import { useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { availableMods } from '@/components/mods';
-import DynamicModForm from './DynamicModForm';
+import { availableMods, ModComponents } from '@/components/mods';
 import type { CMSBlock } from '@/types/cms-types';
-import { ChevronUp, ChevronDown, Trash2, Edit, Check, GripVertical, MoreVertical } from 'lucide-react';
+import { Trash2, GripVertical, FileQuestion, ArrowUp, ArrowDown, Edit } from 'lucide-react';
+import dynamic from 'next/dynamic';
 
 interface BlockEditorProps {
   block: CMSBlock;
@@ -16,6 +15,8 @@ interface BlockEditorProps {
   onDelete: () => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
+  isSelected?: boolean;
+  onSelect?: () => void;
 }
 
 export default function BlockEditor({
@@ -25,10 +26,13 @@ export default function BlockEditor({
   onUpdate,
   onDelete,
   onMoveUp,
-  onMoveDown
+  onMoveDown,
+  isSelected,
+  onSelect
 }: BlockEditorProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
   const modConfig = availableMods[block.modId];
+  // @ts-ignore - ModComponents is a map of components
+  const Component = ModComponents[block.modId];
 
   const {
     attributes,
@@ -43,182 +47,115 @@ export default function BlockEditor({
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 100 : (isSelected ? 50 : 1),
+    position: 'relative' as const,
   };
 
-  if (!modConfig) {
+  if (!modConfig || !Component) {
     return (
-      <div className="alert alert-error">
-        <span>Mod "{block.modId}" não encontrado</span>
+      <div 
+        ref={setNodeRef} 
+        style={style} 
+        className="alert alert-error my-4 p-4 flex items-center gap-4"
+        onClick={onSelect}
+      >
+        <FileQuestion className="w-8 h-8" />
+        <div>
+           <h3 className="font-bold">Bloco Desconhecido</h3>
+           <p className="text-sm">O módulo "{block.modId}" não foi encontrado.</p>
+        </div>
+        <button className="btn btn-sm btn-circle btn-ghost ml-auto" onClick={onDelete}>
+           <Trash2 className="w-4 h-4" />
+        </button>
       </div>
     );
   }
-
-  const handlePropsChange = (newProps: Record<string, any>) => {
-    onUpdate({ ...block, props: newProps });
-  };
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className="card bg-base-100 shadow-md border border-base-300"
+      className={`group relative transition-all duration-200 ${
+        isSelected ? 'ring-2 ring-primary ring-offset-2 ring-offset-base-100 my-4' : 'hover:ring-1 hover:ring-primary/50 my-1'
+      }`}
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect?.();
+      }}
     >
-      {/* Block Header */}
-      <div className="card-body p-1.5 md:p-4">
-        {/* Desktop Layout */}
-        <div className="hidden md:flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {/* Drag Handle */}
-            <button
-              {...attributes}
-              {...listeners}
-              className="cursor-grab active:cursor-grabbing p-1 hover:bg-base-200 rounded transition-colors"
-              title="Arraste para reordenar"
-            >
-              <GripVertical className="w-5 h-5 text-base-content/40" />
-            </button>
-
-            <span className="badge badge-neutral">{index + 1}</span>
-            <div>
-              <h3 className="font-semibold">{modConfig.name}</h3>
-              <p className="text-sm text-base-content/60">{modConfig.description}</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {/* Reorder Buttons */}
-            <div className="join">
-              <button
-                className="btn btn-sm btn-ghost join-item"
-                onClick={onMoveUp}
-                disabled={index === 0}
-                title="Mover para cima"
-              >
-                <ChevronUp className="w-4 h-4" />
-              </button>
-              <button
-                className="btn btn-sm btn-ghost join-item"
-                onClick={onMoveDown}
-                disabled={index === totalBlocks - 1}
-                title="Mover para baixo"
-              >
-                <ChevronDown className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Edit Toggle */}
-            <button
-              className={`btn btn-sm gap-1 ${isExpanded ? 'btn-primary' : 'btn-ghost'}`}
-              onClick={() => setIsExpanded(!isExpanded)}
-            >
-              {isExpanded ? (
-                <>
-                  <Check className="w-4 h-4" />
-                  Fechar
-                </>
-              ) : (
-                <>
-                  <Edit className="w-4 h-4" />
-                  Editar
-                </>
-              )}
-            </button>
-
-            {/* Delete Button */}
-            <button
-              className="btn btn-sm btn-ghost text-error"
-              onClick={onDelete}
-              title="Remover bloco"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Layout - Compact */}
-        <div className="md:hidden flex items-center gap-1.5">
-          {/* Drag Handle - Visual */}
-          <button
-            {...attributes}
-            {...listeners}
-            className="cursor-grab active:cursor-grabbing touch-none flex-shrink-0"
-          >
-            <div className="flex flex-col gap-0.5 p-1.5">
-              <div className="w-1 h-1 rounded-full bg-base-content/40"></div>
-              <div className="w-1 h-1 rounded-full bg-base-content/40"></div>
-              <div className="w-1 h-1 rounded-full bg-base-content/40"></div>
-            </div>
-          </button>
-
-          {/* Number Badge - Smaller */}
-          <span className="badge badge-neutral badge-xs flex-shrink-0">{index + 1}</span>
-
-          {/* Block Name - Truncated */}
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-sm truncate">{modConfig.name}</h3>
-          </div>
-
-          {/* Arrow Buttons */}
-          <div className="flex flex-col gap-0.5">
-            <button
-              className="btn btn-xs btn-ghost p-1 min-h-0 h-6"
-              onClick={onMoveUp}
-              disabled={index === 0}
-            >
-              <ChevronUp className="w-3 h-3" />
-            </button>
-            <button
-              className="btn btn-xs btn-ghost p-1 min-h-0 h-6"
-              onClick={onMoveDown}
-              disabled={index === totalBlocks - 1}
-            >
-              <ChevronDown className="w-3 h-3" />
-            </button>
-          </div>
-
-          {/* Actions Dropdown */}
-          <div className="dropdown dropdown-end">
-            <label tabIndex={0} className="btn btn-ghost btn-sm btn-circle">
-              <MoreVertical className="w-4 h-4" />
-            </label>
-            <ul tabIndex={0} className="dropdown-content z-50 menu p-2 shadow-lg bg-base-100 rounded-box w-52 border border-base-300">
-              <li>
-                <button
-                  onClick={() => setIsExpanded(!isExpanded)}
-                  className="gap-2"
-                >
-                  <Edit className="w-4 h-4" />
-                  {isExpanded ? 'Fechar Editor' : 'Editar Bloco'}
-                </button>
-              </li>
-              <li className="divider my-0"></li>
-              <li>
-                <button
-                  onClick={onDelete}
-                  className="gap-2 text-error"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Excluir
-                </button>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        {/* Expanded Form */}
-        {isExpanded && (
-          <div className="mt-2 md:mt-6 pt-2 md:pt-6 border-t border-base-300">
-            <h4 className="font-semibold text-sm md:text-base mb-3 md:mb-4">Configurações do Bloco</h4>
-            <DynamicModForm
-              modId={block.modId}
-              propConfigs={modConfig.props || modConfig.fields || []}
-              values={block.props}
-              onChange={handlePropsChange}
-              blockId={block.id}
-            />
-          </div>
-        )}
+      {/* Visual Component Render */}
+      <div className={`relative bg-base-100 transition-all min-h-[60px] ${isSelected ? 'shadow-2xl' : 'shadow-sm group-hover:shadow-md'}`}>
+         {/* Interaction Blocker - Allows simple selection but prevents links/buttons inside from navigating */}
+         <div className="absolute inset-0 z-10 bg-transparent" />
+         
+         <div className="boundary-reset">
+            <Component {...block.props} />
+         </div>
       </div>
+
+      {/* Editor Controls Overlay - Always visible when selected, visible on hover otherwise */}
+      <div className={`absolute top-0 left-0 right-0 z-20 flex justify-between items-start pointer-events-none opacity-0 transition-opacity duration-200 -mt-3 mx-4 ${isSelected || isDragging ? 'opacity-100' : 'group-hover:opacity-100'}`}>
+          
+          {/* Left Handle */}
+          <div className="flex bg-primary text-primary-content rounded-md shadow-lg overflow-hidden pointer-events-auto scale-90 md:scale-100 origin-top-left">
+            <button
+               {...attributes}
+               {...listeners}
+               className="p-1.5 hover:bg-primary-focus cursor-grab active:cursor-grabbing flex items-center gap-2 px-3 transition-colors"
+               title="Arraste para mover"
+            >
+               <GripVertical className="w-4 h-4" />
+               <span className="text-xs font-bold font-mono uppercase tracking-wide">{modConfig.name}</span>
+            </button>
+          </div>
+
+          {/* Right Actions */}
+          <div className="flex items-center gap-1 bg-base-100 rounded-md shadow-lg border border-base-200 p-1 pointer-events-auto scale-90 md:scale-100 origin-top-right">
+             <button 
+               onClick={(e) => { e.stopPropagation(); onSelect?.(); }}
+               className="btn btn-xs btn-ghost btn-square text-primary"
+               title="Editar bloco"
+             >
+                <Edit className="w-3 h-3" />
+             </button>
+             
+             <div className="w-px h-4 bg-base-300 mx-1" />
+
+             <button 
+               onClick={(e) => { e.stopPropagation(); onMoveUp(); }}
+               disabled={index === 0}
+               className="btn btn-xs btn-ghost btn-square"
+               title="Mover para cima"
+             >
+                <ArrowUp className="w-3 h-3" />
+             </button>
+             <button 
+               onClick={(e) => { e.stopPropagation(); onMoveDown(); }}
+               disabled={index === totalBlocks - 1}
+               className="btn btn-xs btn-ghost btn-square"
+               title="Mover para baixo"
+             >
+                <ArrowDown className="w-3 h-3" />
+             </button>
+             
+             <div className="w-px h-4 bg-base-300 mx-1" />
+
+             <button
+               onClick={(e) => {
+                 e.stopPropagation();
+                 onDelete();
+               }}
+               className="btn btn-xs btn-ghost btn-square text-error hover:bg-error/10"
+               title="Excluir bloco"
+             >
+               <Trash2 className="w-3 h-3" />
+             </button>
+          </div>
+      </div>
+
+      {isSelected && (
+        <div className="absolute inset-0 border-2 border-primary pointer-events-none z-0" />
+      )}
     </div>
   );
 }

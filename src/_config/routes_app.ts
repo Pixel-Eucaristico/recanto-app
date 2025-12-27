@@ -14,13 +14,14 @@ import {
   FileEdit,
   Boxes
 } from 'lucide-react';
+import { LucideIcon } from 'lucide-react';
 import { Role } from "@/features/auth/types/user";
 
 export interface AppRoute {
   name: string;
   href: string;
   description?: string;
-  icon: React.ElementType; 
+  icon: LucideIcon; 
   roles: Role[];
 }
 

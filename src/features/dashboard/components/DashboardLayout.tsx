@@ -35,7 +35,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       </div>
 
       {/* Drawer sidebar */}
-      <div className="drawer-side is-drawer-close:overflow-visible">
+      <div className="drawer-side overflow-y-auto overflow-x-hidden">
         <label
           htmlFor="dashboard-drawer"
           aria-label="Fechar menu"
