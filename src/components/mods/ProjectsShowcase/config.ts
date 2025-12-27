@@ -10,6 +10,7 @@ export const ProjectsShowcaseConfig: ModConfig = {
     title: "",
     subtitle: "",
     projects: "[]",
+    bgColor: 'base-100',
   },
   fields: [
     {

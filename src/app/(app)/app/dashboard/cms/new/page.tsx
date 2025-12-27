@@ -65,7 +65,7 @@ export default function NewCMSPagePage() {
       const newPage = await contentPageService.create({
         title: formData.title,
         slug: finalSlug,
-        description: formData.description || undefined,
+        description: formData.description || null,
         blocks: [],
         is_published: false
       });

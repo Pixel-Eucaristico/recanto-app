@@ -62,7 +62,7 @@ export function ActionsGrid({
   };
 
   return (
-    <section className={`card py-16 px-6 ${bgColorClasses[bgColor]} w-full ${maxWidthClasses[maxWidth]}`}>
+    <section className={`card py-16 px-6 ${bgColorClasses[bgColor]} w-full ${maxWidthClasses[maxWidth]} mx-auto flex flex-col items-center`}>
       {title && (
         <motion.h3 className={`text-3xl font-semibold ${titleColorClasses[titleColor]} mb-8 text-center`}>
           {title}

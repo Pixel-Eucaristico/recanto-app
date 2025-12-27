@@ -15,9 +15,13 @@ interface EvangelizationAction {
 }
 
 interface EvangelizationActionsEditorProps {
-  value: string; // JSON string
-  onChange: (value: string) => void;
+  value: any;
+  onChange: (value: any) => void;
 }
+
+// ... imports remain the same ...
+
+const iconOptions = ['BookOpen', 'Users', 'Heart', 'UserPlus', 'Home', 'Sparkles'];
 
 interface SortableActionItemProps {
   action: EvangelizationAction;
@@ -25,8 +29,6 @@ interface SortableActionItemProps {
   onUpdate: (id: number, field: keyof EvangelizationAction, value: string) => void;
   onDelete: (id: number) => void;
 }
-
-const iconOptions = ['BookOpen', 'Users', 'Heart', 'UserPlus', 'Home', 'Sparkles'];
 
 function SortableActionItem({ action, index, onUpdate, onDelete }: SortableActionItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: action.id });
@@ -122,9 +124,13 @@ function SortableActionItem({ action, index, onUpdate, onDelete }: SortableActio
 }
 
 export default function EvangelizationActionsEditor({ value, onChange }: EvangelizationActionsEditorProps) {
+  // Inicializar actions do JSON string ou array vazio
   const [actions, setActions] = useState<EvangelizationAction[]>(() => {
     try {
-      return value ? JSON.parse(value) : [];
+      if (typeof value.actions === 'string') {
+        return JSON.parse(value.actions);
+      }
+      return [];
     } catch {
       return [];
     }
@@ -134,7 +140,7 @@ export default function EvangelizationActionsEditor({ value, onChange }: Evangel
 
   const updateActions = (newActions: EvangelizationAction[]) => {
     setActions(newActions);
-    onChange(JSON.stringify(newActions, null, 2));
+    onChange({ ...value, actions: JSON.stringify(newActions) });
   };
 
   const handleAdd = () => {
@@ -166,7 +172,54 @@ export default function EvangelizationActionsEditor({ value, onChange }: Evangel
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      <div className="space-y-4 p-4 bg-base-200 rounded-lg">
+        <h3 className="font-semibold text-lg">Configurações Gerais</h3>
+        
+        <div className="form-control">
+          <label className="label">
+            <span className="label-text">Título da Seção</span>
+          </label>
+          <input
+            type="text"
+            className="input input-bordered"
+            value={value.title || ''}
+            onChange={(e) => onChange({ ...value, title: e.target.value })}
+            placeholder="Ex: Nossa Evangelização"
+          />
+        </div>
+
+        <div className="form-control">
+          <label className="label">
+            <span className="label-text">Subtítulo</span>
+          </label>
+          <textarea
+            className="textarea textarea-bordered"
+            rows={2}
+            value={value.subtitle || ''}
+            onChange={(e) => onChange({ ...value, subtitle: e.target.value })}
+            placeholder="Subtítulo opcional..."
+          />
+        </div>
+
+        <div className="form-control">
+          <label className="label">
+            <span className="label-text">Cor de Fundo</span>
+          </label>
+          <select
+            className="select select-bordered"
+            value={value.bgColor || 'base-200'}
+            onChange={(e) => onChange({ ...value, bgColor: e.target.value })}
+          >
+            <option value="base-100">Padrão (Base 100)</option>
+            <option value="base-200">Cinza Claro (Base 200)</option>
+            <option value="base-300">Cinza Escuro (Base 300)</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="divider">Ações</div>
+
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium text-base-content/70">
           {actions.length} {actions.length === 1 ? 'ação' : 'ações'}

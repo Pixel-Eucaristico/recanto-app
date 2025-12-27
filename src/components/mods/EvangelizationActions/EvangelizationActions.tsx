@@ -30,34 +30,16 @@ const iconMap: Record<string, React.ElementType> = {
   Sparkles,
 };
 
-const defaultActions: EvangelizationItem[] = [
-  {
-    title: 'Catequese Infantil',
-    description: 'Formação catequética para crianças, preparando para os sacramentos.',
-    icon: 'BookOpen',
-    audience: 'Crianças de 7 a 12 anos',
-  },
-  {
-    title: 'Grupos de Jovens',
-    description: 'Encontros semanais para jovens com partilhas, orações e atividades.',
-    icon: 'Users',
-    audience: 'Jovens de 13 a 25 anos',
-  },
-  {
-    title: 'Pastoral Familiar',
-    description: 'Acompanhamento e formação para famílias, fortalecendo os laços na fé.',
-    icon: 'Heart',
-    audience: 'Famílias e casais',
-  },
-];
+
 
 export default function EvangelizationActions({
   title = "",
   subtitle = "",
   actions,
   ctaText = "",
-  ctaLink = ""
-}: EvangelizationActionsProps) {
+  ctaLink = "",
+  bgColor = "base-200"
+}: EvangelizationActionsProps & { bgColor?: 'base-100' | 'base-200' | 'base-300' }) {
   // Parse actions from JSON string or use default
   let parsedActions: EvangelizationItem[] = [];
 
@@ -74,8 +56,14 @@ export default function EvangelizationActions({
     return null;
   }
 
+  const bgColorClasses = {
+    'base-100': 'bg-base-100',
+    'base-200': 'bg-base-200',
+    'base-300': 'bg-base-300',
+  };
+
   return (
-    <section className="max-w-6xl mx-auto px-6 py-16 bg-base-200">
+    <section className={`max-w-5xl mx-auto px-6 py-16 ${bgColorClasses[bgColor] || 'bg-base-200'}`}>
       <div className="text-center mb-12">
         {title && (
           <h2 className="text-4xl font-bold text-base-content mb-4">
@@ -89,7 +77,7 @@ export default function EvangelizationActions({
         )}
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
         {parsedActions.map((item, index) => {
           const IconComponent = iconMap[item.icon] || Sparkles;
 
@@ -100,22 +88,17 @@ export default function EvangelizationActions({
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true, amount: 0.2 }}
               transition={{ delay: index * 0.1, duration: 0.4 }}
-              className="card bg-base-100 shadow-lg hover:shadow-xl transition-all duration-300 border border-base-300"
+              className="flex flex-col items-center text-center p-4"
             >
-              <div className="card-body items-center text-center">
-                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                  <IconComponent className="w-8 h-8 text-primary" />
-                </div>
-                <h3 className="card-title text-xl text-base-content mb-3">
-                  {item.title}
-                </h3>
-                <p className="text-base-content/80 leading-relaxed mb-4">
-                  {item.description}
-                </p>
-                <div className="badge badge-outline badge-lg">
-                  {item.audience}
-                </div>
+              <div className="mb-6">
+                <IconComponent className="w-16 h-16 text-primary" strokeWidth={1.5} />
               </div>
+              <h3 className="text-xl font-semibold text-base-content mb-3">
+                {item.title}
+              </h3>
+              <p className="text-base-content/80 leading-relaxed max-w-xs">
+                {item.description}
+              </p>
             </motion.div>
           );
         })}

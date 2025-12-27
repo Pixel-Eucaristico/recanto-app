@@ -61,8 +61,9 @@ const defaultProjects: Project[] = [
 export default function ProjectsShowcase({
   title = "",
   subtitle = "",
-  projects
-}: ProjectsShowcaseProps) {
+  projects,
+  bgColor = "base-100"
+}: ProjectsShowcaseProps & { bgColor?: 'base-100' | 'base-200' | 'base-300' }) {
   // Parse projects from JSON string or use default
   let parsedProjects: Project[] = [];
 
@@ -79,8 +80,14 @@ export default function ProjectsShowcase({
     return null;
   }
 
+  const bgColorClasses = {
+    'base-100': 'bg-base-100',
+    'base-200': 'bg-base-200',
+    'base-300': 'bg-base-300',
+  };
+
   return (
-    <section className="max-w-6xl mx-auto px-6 py-16 bg-base-100">
+    <section className={`max-w-5xl mx-auto px-6 py-16 ${bgColorClasses[bgColor] || 'bg-base-100'}`}>
       <div className="text-center mb-12">
         {title && (
           <h2 className="text-4xl font-bold text-base-content mb-4">
@@ -94,7 +101,7 @@ export default function ProjectsShowcase({
         )}
       </div>
 
-      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-2">
         {parsedProjects.map((project, index) => (
           <motion.div
             key={index}

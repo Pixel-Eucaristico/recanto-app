@@ -19,6 +19,21 @@ import {
 } from 'firebase/firestore';
 
 /**
+ * Remove undefined values from an object (Firestore doesn't accept undefined)
+ */
+function removeUndefinedValues<T extends Record<string, any>>(obj: T): T {
+  const result = { ...obj };
+  for (const key in result) {
+    if (result[key] === undefined) {
+      delete result[key];
+    } else if (result[key] !== null && typeof result[key] === 'object' && !Array.isArray(result[key])) {
+      result[key] = removeUndefinedValues(result[key]);
+    }
+  }
+  return result;
+}
+
+/**
  * Classe base genérica para serviços Firestore
  * Migrado do Realtime Database para Firestore com queries poderosas
  */
@@ -38,8 +53,10 @@ export class BaseFirebaseService<T extends { id: string }> {
       console.log(`📦 Dados a serem salvos:`, data);
 
       const collectionRef = collection(firestore, this.collectionName);
+      // Remove undefined values as Firestore doesn't accept them
+      const sanitizedData = removeUndefinedValues(data as Record<string, any>);
       const dataWithTimestamp = {
-        ...data,
+        ...sanitizedData,
         created_at: new Date().toISOString()
       };
 
@@ -108,8 +125,10 @@ export class BaseFirebaseService<T extends { id: string }> {
   async update(id: string, data: Partial<T>): Promise<T | null> {
     try {
       const docRef = doc(firestore, this.collectionName, id);
+      // Remove undefined values as Firestore doesn't accept them
+      const sanitizedData = removeUndefinedValues(data as Record<string, any>);
       const updateData = {
-        ...data,
+        ...sanitizedData,
         updated_at: new Date().toISOString()
       };
 

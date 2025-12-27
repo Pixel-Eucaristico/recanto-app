@@ -101,6 +101,22 @@ export function ProjectsShowcaseEditor({ value, onChange }: ProjectsShowcaseEdit
         />
       </div>
 
+      {/* Cor de Fundo */}
+      <div>
+        <label className="label">
+          <span className="label-text font-semibold">Cor de Fundo</span>
+        </label>
+        <select
+          value={value.bgColor || 'base-100'}
+          onChange={(e) => onChange({ ...value, bgColor: e.target.value })}
+          className="select select-bordered w-full"
+        >
+          <option value="base-100">Padrão (Base 100)</option>
+          <option value="base-200">Cinza Claro (Base 200)</option>
+          <option value="base-300">Cinza Escuro (Base 300)</option>
+        </select>
+      </div>
+
       {/* Editor de Projetos */}
       <div>
         <div className="flex items-center justify-between mb-3">

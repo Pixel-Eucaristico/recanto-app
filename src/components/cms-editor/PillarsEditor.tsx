@@ -3,12 +3,16 @@
 import { Plus, Trash2, GripVertical } from 'lucide-react';
 import { useState } from 'react';
 import * as LucideIcons from 'lucide-react';
+import { AnimationPicker } from './AnimationPicker';
 
 interface Pillar {
   icon: string;
+  lottie?: string;
   title: string;
   description: string;
   iconColor: string;
+  buttonText?: string;
+  buttonLink?: string;
 }
 
 interface PillarsEditorProps {
@@ -61,6 +65,7 @@ export function PillarsEditor({ value = [], onChange }: PillarsEditorProps) {
       return val.length > 0 ? val : [
         {
           icon: 'Book',
+          lottie: 'none',
           title: '',
           description: '',
           iconColor: 'primary',
@@ -70,6 +75,7 @@ export function PillarsEditor({ value = [], onChange }: PillarsEditorProps) {
     return [
       {
         icon: 'Book',
+        lottie: 'none',
         title: '',
         description: '',
         iconColor: 'primary',
@@ -85,6 +91,7 @@ export function PillarsEditor({ value = [], onChange }: PillarsEditorProps) {
       ...pillars,
       {
         icon: 'Book',
+        lottie: 'none',
         title: '',
         description: '',
         iconColor: 'primary',
@@ -132,6 +139,9 @@ export function PillarsEditor({ value = [], onChange }: PillarsEditorProps) {
                 <span className="text-xs font-semibold text-base-content/60">
                   Pilar {index + 1}
                 </span>
+                {pillar.lottie && pillar.lottie !== 'none' && (
+                  <span className="badge badge-secondary badge-xs">Animado</span>
+                )}
               </div>
               <button
                 type="button"
@@ -145,66 +155,90 @@ export function PillarsEditor({ value = [], onChange }: PillarsEditorProps) {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {/* Seletor de Ícone */}
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text text-xs font-semibold">Ícone</span>
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setIconPickerOpen(iconPickerOpen === index ? null : index)}
-                  className="btn btn-outline btn-sm justify-start gap-2"
-                >
-                  {renderIcon(pillar.icon, 'w-4 h-4')}
-                  <span>{COMMON_ICONS.find(i => i.name === pillar.icon)?.label || pillar.icon}</span>
-                </button>
+              
+              {/* Opção Visual: Ícone ou Lottie */}
+              <div className="md:col-span-2 space-y-2 border border-base-300 rounded-lg p-3 bg-base-100/50">
+                <span className="text-xs font-bold uppercase text-base-content/50 block mb-2">Elemento Visual</span>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {/* Seletor de Ícone */}
+                  <div className="form-control">
+                    <label className="label pt-0">
+                      <span className="label-text text-xs font-semibold">Ícone (Padrão)</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setIconPickerOpen(iconPickerOpen === index ? null : index)}
+                      className="btn btn-outline btn-sm justify-start gap-2"
+                    >
+                      {renderIcon(pillar.icon, 'w-4 h-4')}
+                      <span>{COMMON_ICONS.find(i => i.name === pillar.icon)?.label || pillar.icon}</span>
+                    </button>
 
-                {/* Modal do Icon Picker */}
-                {iconPickerOpen === index && (
-                  <div className="mt-2 p-3 bg-base-100 rounded-lg border border-base-300 shadow-lg">
-                    <div className="grid grid-cols-5 gap-2 max-h-64 overflow-y-auto">
-                      {COMMON_ICONS.map((iconOption) => (
-                        <button
-                          key={iconOption.name}
-                          type="button"
-                          onClick={() => handleIconSelect(index, iconOption.name)}
-                          className={`btn btn-sm btn-square ${
-                            pillar.icon === iconOption.name ? 'btn-primary' : 'btn-ghost'
-                          }`}
-                          title={iconOption.label}
-                        >
-                          {renderIcon(iconOption.name, 'w-5 h-5')}
-                        </button>
-                      ))}
+                    {/* Modal do Icon Picker */}
+                    {iconPickerOpen === index && (
+                      <div className="mt-2 p-3 bg-base-100 rounded-lg border border-base-300 shadow-lg relative z-10">
+                        <div className="grid grid-cols-5 gap-2 max-h-64 overflow-y-auto">
+                          {COMMON_ICONS.map((iconOption) => (
+                            <button
+                              key={iconOption.name}
+                              type="button"
+                              onClick={() => handleIconSelect(index, iconOption.name)}
+                              className={`btn btn-sm btn-square ${
+                                pillar.icon === iconOption.name ? 'btn-primary' : 'btn-ghost'
+                              }`}
+                              title={iconOption.label}
+                            >
+                              {renderIcon(iconOption.name, 'w-5 h-5')}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Seletor de Animação Lottie */}
+                  <div className="form-control">
+                    <label className="label pt-0">
+                      <span className="label-text text-xs font-semibold">Animação Lottie (Opcional)</span>
+                    </label>
+                    <AnimationPicker
+                      value={pillar.lottie || 'none'}
+                      onChange={(val) => handleChange(index, 'lottie', val)}
+                    />
+                    <label className="label pb-0">
+                      <span className="label-text-alt text-xs text-base-content/60">
+                        Se selecionada, substitui o ícone.
+                      </span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Seletor de Cor (Só afeta o ícone) */}
+                {(!pillar.lottie || pillar.lottie === 'none') && (
+                  <div className="form-control mt-2">
+                    <label className="label">
+                      <span className="label-text text-xs font-semibold">Cor do Ícone</span>
+                    </label>
+                    <div className="flex gap-2 items-center">
+                      <select
+                        className="select select-bordered select-sm flex-1"
+                        value={pillar.iconColor}
+                        onChange={(e) => handleChange(index, 'iconColor', e.target.value)}
+                      >
+                        {COLOR_OPTIONS.map((color) => (
+                          <option key={color.value} value={color.value}>
+                            {color.label}
+                          </option>
+                        ))}
+                      </select>
+                      {renderIcon(
+                        pillar.icon,
+                        `w-6 h-6 ${COLOR_OPTIONS.find(c => c.value === pillar.iconColor)?.class || 'text-primary'}`
+                      )}
                     </div>
                   </div>
                 )}
-              </div>
-
-              {/* Seletor de Cor */}
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text text-xs font-semibold">Cor do Ícone</span>
-                </label>
-                <select
-                  className="select select-bordered select-sm w-full"
-                  value={pillar.iconColor}
-                  onChange={(e) => handleChange(index, 'iconColor', e.target.value)}
-                >
-                  {COLOR_OPTIONS.map((color) => (
-                    <option key={color.value} value={color.value}>
-                      {color.label}
-                    </option>
-                  ))}
-                </select>
-                {/* Preview da cor */}
-                <div className="flex items-center gap-2 mt-2">
-                  <span className="text-xs text-base-content/60">Preview:</span>
-                  {renderIcon(
-                    pillar.icon,
-                    `w-6 h-6 ${COLOR_OPTIONS.find(c => c.value === pillar.iconColor)?.class || 'text-primary'}`
-                  )}
-                </div>
               </div>
 
               {/* Título */}
@@ -234,6 +268,38 @@ export function PillarsEditor({ value = [], onChange }: PillarsEditorProps) {
                   onChange={(e) => handleChange(index, 'description', e.target.value)}
                 />
               </div>
+
+              {/* Botão (Opcional) */}
+              <div className="md:col-span-2 border-t border-base-300 pt-3 mt-1">
+                <span className="text-xs font-bold uppercase text-base-content/50 block mb-2">Botão de Ação (Opcional)</span>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="form-control">
+                    <label className="label pt-0">
+                      <span className="label-text text-xs font-semibold">Texto do Botão</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="input input-bordered input-sm w-full"
+                      placeholder="Ex: Quero Doar"
+                      value={pillar.buttonText || ''}
+                      onChange={(e) => handleChange(index, 'buttonText', e.target.value)}
+                    />
+                  </div>
+                  <div className="form-control">
+                    <label className="label pt-0">
+                      <span className="label-text text-xs font-semibold">Link do Botão</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="input input-bordered input-sm w-full"
+                      placeholder="Ex: /doar ou https://..."
+                      value={pillar.buttonLink || ''}
+                      onChange={(e) => handleChange(index, 'buttonLink', e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
         </div>

@@ -4,7 +4,7 @@ export const EvangelizationActionsConfig: ModConfig = {
   id: 'EvangelizationActions',
   name: 'Ações de Evangelização',
   description: 'Grid de cards com ícones, descrição e público-alvo. Perfeito para evangelização.',
-  category: 'Conteúdo',
+  category: 'content',
   icon: 'Sparkles',
   defaultProps: {
     title: "",
@@ -12,6 +12,7 @@ export const EvangelizationActionsConfig: ModConfig = {
     actions: "[]",
     ctaText: "",
     ctaLink: "",
+    bgColor: 'base-200',
   },
   fields: [
     {
