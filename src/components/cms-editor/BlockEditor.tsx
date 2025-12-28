@@ -84,12 +84,21 @@ export default function BlockEditor({
       }}
     >
       {/* Visual Component Render */}
-      <div className={`relative bg-base-100 transition-all min-h-[60px] max-h-[500px] overflow-hidden ${isSelected ? 'shadow-2xl' : 'shadow-sm group-hover:shadow-md'}`}>
+      <div className={`relative bg-base-100 transition-all min-h-[100px] max-h-[500px] overflow-hidden ${isSelected ? 'shadow-2xl' : 'shadow-sm group-hover:shadow-md'}`}>
          {/* Interaction Blocker - Allows simple selection but prevents links/buttons inside from navigating */}
          <div className="absolute inset-0 z-10 bg-transparent" />
 
+         {/* Placeholder shown when component returns null or is empty */}
+         <div className="absolute inset-0 flex items-center justify-center bg-base-200/50 text-base-content/40 p-4">
+            <div className="text-center">
+               <FileQuestion className="w-10 h-10 mx-auto mb-2 opacity-50" />
+               <p className="font-semibold">{modConfig.name}</p>
+               <p className="text-xs">Clique para editar e adicionar conteúdo</p>
+            </div>
+         </div>
+
          {/* Preview container with scale for fullscreen components */}
-         <div className="boundary-reset origin-top [&_section]:!h-auto [&_section]:!min-h-[200px] [&_section]:!max-h-[480px]">
+         <div className="relative z-[1] boundary-reset origin-top [&_section]:!h-auto [&_section]:!min-h-[200px] [&_section]:!max-h-[480px] bg-base-100">
             {(() => {
               // Corrigir aninhamento incorreto de props (props.props -> props)
               // Alguns mods usam editor "props" que aninha tudo em block.props.props
@@ -102,7 +111,7 @@ export default function BlockEditor({
          </div>
 
          {/* Gradient fade indicator when content is clipped */}
-         <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-base-100 to-transparent pointer-events-none" />
+         <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-base-100 to-transparent pointer-events-none z-[2]" />
       </div>
 
       {/* Editor Controls Overlay - Always visible when selected, visible on hover otherwise */}
