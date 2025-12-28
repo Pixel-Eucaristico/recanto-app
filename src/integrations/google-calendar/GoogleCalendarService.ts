@@ -13,6 +13,10 @@ import {
 } from '@/types/google-calendar';
 import type { Event } from '@/types/firebase-entities';
 
+// Helper to clean environment variables (removes newlines, carriage returns, and trims)
+const cleanEnvVar = (value: string | undefined): string =>
+  (value || '').replace(/[\r\n]/g, '').trim();
+
 /**
  * Google Calendar Service for OAuth and sync operations
  */
@@ -22,9 +26,9 @@ export class GoogleCalendarService {
 
   constructor() {
     this.oauth2Client = new google.auth.OAuth2(
-      (process.env.GOOGLE_CLIENT_ID || '').trim(),
-      (process.env.GOOGLE_CLIENT_SECRET || '').trim(),
-      (process.env.GOOGLE_REDIRECT_URI || '').trim()
+      cleanEnvVar(process.env.GOOGLE_CLIENT_ID),
+      cleanEnvVar(process.env.GOOGLE_CLIENT_SECRET),
+      cleanEnvVar(process.env.GOOGLE_REDIRECT_URI)
     );
 
     this.calendar = google.calendar({ version: 'v3', auth: this.oauth2Client });

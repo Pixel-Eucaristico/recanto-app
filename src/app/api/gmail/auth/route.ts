@@ -4,9 +4,13 @@ import { NextResponse } from 'next/server';
  * GET /api/gmail/auth
  * Initiates Gmail OAuth2 flow
  */
+// Helper to clean environment variables (removes newlines, carriage returns, and trims)
+const cleanEnvVar = (value: string | undefined): string =>
+  (value || '').replace(/[\r\n]/g, '').trim();
+
 export async function GET() {
-  const clientId = (process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID || '').trim();
-  const appUrl = (process.env.NEXT_PUBLIC_APP_URL || '').trim();
+  const clientId = cleanEnvVar(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) || cleanEnvVar(process.env.GOOGLE_CLIENT_ID);
+  const appUrl = cleanEnvVar(process.env.NEXT_PUBLIC_APP_URL);
   const redirectUri = `${appUrl}/api/gmail/callback`;
 
   if (!clientId) {

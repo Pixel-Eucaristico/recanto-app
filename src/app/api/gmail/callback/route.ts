@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Helper to clean environment variables (removes newlines, carriage returns, and trims)
+const cleanEnvVar = (value: string | undefined): string =>
+  (value || '').replace(/[\r\n]/g, '').trim();
+
 /**
  * GET /api/gmail/callback
  * Handles OAuth2 callback from Google
@@ -9,7 +13,7 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get('code');
   const error = searchParams.get('error');
 
-  const appUrl = (process.env.NEXT_PUBLIC_APP_URL || '').trim();
+  const appUrl = cleanEnvVar(process.env.NEXT_PUBLIC_APP_URL);
 
   if (error) {
     return NextResponse.redirect(
@@ -25,8 +29,8 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const clientId = (process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID || '').trim();
-    const clientSecret = (process.env.GOOGLE_CLIENT_SECRET || '').trim();
+    const clientId = cleanEnvVar(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) || cleanEnvVar(process.env.GOOGLE_CLIENT_ID);
+    const clientSecret = cleanEnvVar(process.env.GOOGLE_CLIENT_SECRET);
     const redirectUri = `${appUrl}/api/gmail/callback`;
 
     if (!clientId || !clientSecret) {
