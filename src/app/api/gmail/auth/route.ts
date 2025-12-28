@@ -5,8 +5,9 @@ import { NextResponse } from 'next/server';
  * Initiates Gmail OAuth2 flow
  */
 export async function GET() {
-  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID;
-  const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/gmail/callback`;
+  const clientId = (process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID || '').trim();
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL || '').trim();
+  const redirectUri = `${appUrl}/api/gmail/callback`;
 
   if (!clientId) {
     return NextResponse.json(

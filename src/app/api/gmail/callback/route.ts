@@ -9,9 +9,11 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get('code');
   const error = searchParams.get('error');
 
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL || '').trim();
+
   if (error) {
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL}/app/dashboard/admin?error=gmail_auth_failed`
+      `${appUrl}/app/dashboard/admin?error=gmail_auth_failed`
     );
   }
 
@@ -23,9 +25,9 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID;
-    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-    const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/gmail/callback`;
+    const clientId = (process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID || '').trim();
+    const clientSecret = (process.env.GOOGLE_CLIENT_SECRET || '').trim();
+    const redirectUri = `${appUrl}/api/gmail/callback`;
 
     if (!clientId || !clientSecret) {
       throw new Error('Google OAuth credentials not configured');
@@ -65,13 +67,13 @@ export async function GET(request: NextRequest) {
 
     // Redirect back to admin with success message
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL}/app/dashboard/admin?gmail_connected=true`
+      `${appUrl}/app/dashboard/admin?gmail_connected=true`
     );
   } catch (error) {
     console.error('Error during Gmail OAuth callback:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL}/app/dashboard/admin?error=gmail_auth_failed&details=${encodeURIComponent(errorMessage)}`
+      `${appUrl}/app/dashboard/admin?error=gmail_auth_failed&details=${encodeURIComponent(errorMessage)}`
     );
   }
 }
