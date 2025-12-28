@@ -84,11 +84,12 @@ export default function BlockEditor({
       }}
     >
       {/* Visual Component Render */}
-      <div className={`relative bg-base-100 transition-all min-h-[60px] ${isSelected ? 'shadow-2xl' : 'shadow-sm group-hover:shadow-md'}`}>
+      <div className={`relative bg-base-100 transition-all min-h-[60px] max-h-[500px] overflow-hidden ${isSelected ? 'shadow-2xl' : 'shadow-sm group-hover:shadow-md'}`}>
          {/* Interaction Blocker - Allows simple selection but prevents links/buttons inside from navigating */}
          <div className="absolute inset-0 z-10 bg-transparent" />
 
-         <div className="boundary-reset">
+         {/* Preview container with scale for fullscreen components */}
+         <div className="boundary-reset origin-top [&_section]:!h-auto [&_section]:!min-h-[200px] [&_section]:!max-h-[480px]">
             {(() => {
               // Corrigir aninhamento incorreto de props (props.props -> props)
               // Alguns mods usam editor "props" que aninha tudo em block.props.props
@@ -99,6 +100,9 @@ export default function BlockEditor({
               return <Component {...actualProps} />;
             })()}
          </div>
+
+         {/* Gradient fade indicator when content is clipped */}
+         <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-base-100 to-transparent pointer-events-none" />
       </div>
 
       {/* Editor Controls Overlay - Always visible when selected, visible on hover otherwise */}
