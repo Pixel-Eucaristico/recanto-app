@@ -208,9 +208,9 @@ function PillarItemEditor({
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-          {/* Visuals Column */}
-          <div className="md:col-span-4 space-y-3">
+        <div className="flex flex-col gap-4">
+          {/* Visuals Row */}
+          <div className="space-y-3">
              <div className="p-3 bg-base-100/50 rounded-lg border border-base-300">
                 <span className="text-[10px] font-bold uppercase text-base-content/50 block mb-2">Ícone & Animação</span>
                 
@@ -263,8 +263,8 @@ function PillarItemEditor({
              </div>
           </div>
 
-           {/* Content Column */}
-          <div className="md:col-span-8 space-y-3">
+           {/* Content Section */}
+          <div className="space-y-3">
             <input
                 type="text"
                 className="input input-bordered input-sm font-bold w-full"

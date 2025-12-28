@@ -276,15 +276,30 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
 
     // Create default props based on mod config
     const defaultProps: Record<string, any> = {};
+    // Usar defaultProps global do config como fallback
+    const globalDefaults = modConfig.defaultProps || {};
     // Usar 'props' ou 'fields' (compatibilidade com diferentes formatos)
     const propConfigs = modConfig.props || modConfig.fields || [];
-    propConfigs.forEach((propConfig) => {
-      const propName = propConfig.name || propConfig.key || '';
-      const propDefault = propConfig.default ?? propConfig.defaultValue ?? '';
-      if (propName) {
-        defaultProps[propName] = propDefault;
-      }
-    });
+
+    // Caso especial: mods com único campo 'props' (ex: HeroWithAnimation)
+    // Nesses casos, o campo 'props' deve receber todo o objeto defaultProps
+    const hasNestedPropsEditor = propConfigs.length === 1 &&
+      (propConfigs[0].name === 'props' || propConfigs[0].key === 'props');
+
+    if (hasNestedPropsEditor) {
+      // Para mods com editor aninhado, usar globalDefaults como valor do campo 'props'
+      defaultProps['props'] = { ...globalDefaults };
+    } else {
+      // Para mods normais, mapear cada campo individualmente
+      propConfigs.forEach((propConfig) => {
+        const propName = propConfig.name || propConfig.key || '';
+        // Prioridade: field.default > field.defaultValue > modConfig.defaultProps[propName] > ''
+        const propDefault = propConfig.default ?? propConfig.defaultValue ?? globalDefaults[propName] ?? '';
+        if (propName) {
+          defaultProps[propName] = propDefault;
+        }
+      });
+    }
 
     const newBlock: CMSBlock = {
       id: `block-${modId}-${Date.now()}`,
