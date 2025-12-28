@@ -87,9 +87,17 @@ export default function BlockEditor({
       <div className={`relative bg-base-100 transition-all min-h-[60px] ${isSelected ? 'shadow-2xl' : 'shadow-sm group-hover:shadow-md'}`}>
          {/* Interaction Blocker - Allows simple selection but prevents links/buttons inside from navigating */}
          <div className="absolute inset-0 z-10 bg-transparent" />
-         
+
          <div className="boundary-reset">
-            <Component {...block.props} />
+            {(() => {
+              // Corrigir aninhamento incorreto de props (props.props -> props)
+              // Alguns mods usam editor "props" que aninha tudo em block.props.props
+              const actualProps = (block.props?.props && typeof block.props.props === 'object' && Object.keys(block.props.props).length > 0)
+                ? block.props.props
+                : block.props;
+
+              return <Component {...actualProps} />;
+            })()}
          </div>
       </div>
 
