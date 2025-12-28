@@ -97,8 +97,14 @@ export default function BlockEditor({
             </div>
          </div>
 
-         {/* Preview container with scale for fullscreen components */}
-         <div className="relative z-[1] boundary-reset origin-top [&_section]:!h-auto [&_section]:!min-h-[200px] [&_section]:!max-h-[480px] bg-base-100">
+         {/* Preview container - isolate fullscreen components */}
+         <div
+            className="relative z-[1] boundary-reset origin-top bg-base-100 isolate overflow-hidden"
+            style={{
+               contain: 'layout paint style',
+               maxHeight: '480px',
+            }}
+         >
             {(() => {
               // Corrigir aninhamento incorreto de props (props.props -> props)
               // Alguns mods usam editor "props" que aninha tudo em block.props.props

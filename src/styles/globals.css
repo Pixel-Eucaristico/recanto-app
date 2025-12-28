@@ -184,3 +184,22 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* CMS Editor - Isolate fullscreen components in preview */
+.boundary-reset section,
+.boundary-reset [class*="h-screen"],
+.boundary-reset [class*="min-h-screen"] {
+  height: auto !important;
+  min-height: 200px !important;
+  max-height: 460px !important;
+  position: relative !important;
+}
+
+.boundary-reset .fixed,
+.boundary-reset [class*="fixed"] {
+  position: absolute !important;
+}
+
+.boundary-reset .sticky {
+  position: relative !important;
+}
