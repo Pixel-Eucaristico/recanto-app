@@ -4,13 +4,13 @@ import React, { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { contentPageService } from '@/services/firebase';
-import { availableMods } from '@/components/mods';
+import { availableMods, ModComponents } from '@/components/mods';
 import ModsLibrary from '@/components/cms-editor/ModsLibrary';
 import BlockEditor from '@/components/cms-editor/BlockEditor';
 import { FontFamilyPicker } from '@/components/cms-editor/FontFamilyPicker';
 import { BgColorPicker } from '@/components/cms-editor/BgColorPicker';
 import type { CMSPage, CMSBlock } from '@/types/cms-types';
-import { ArrowLeft, Save, Eye, EyeOff, Edit, X, ArrowDown, Plus, Trash2, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { ArrowLeft, Save, Eye, EyeOff, Edit, X, ArrowDown, Plus, Trash2, PanelLeftClose, PanelLeftOpen, GripVertical } from 'lucide-react';
 import DynamicModForm from '@/components/cms-editor/DynamicModForm';
 import {
   DndContext,
@@ -882,14 +882,36 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
                 </p>
               </div>
             </div>
-          ) : (
-            // Dragging an existing block
-            <div className="card bg-base-200 shadow-xl opacity-90 border-2 border-primary w-96">
-              <div className="card-body p-4">
-                <h3 className="font-semibold">Movendo bloco...</h3>
+          ) : (() => {
+            const draggingBlock = page.blocks.find(b => b.id === activeId);
+            if (!draggingBlock) return null;
+            const modConfig = availableMods[draggingBlock.modId];
+            if (!modConfig) return null;
+            // @ts-ignore
+            const Component = ModComponents[draggingBlock.modId];
+
+            return (
+              <div className="card bg-base-100 shadow-2xl border-2 border-primary w-[400px] overflow-hidden opacity-90 scale-95 origin-top-left">
+                <div className="bg-primary text-primary-content px-4 py-2 flex items-center gap-2">
+                   <GripVertical className="w-4 h-4" />
+                   <span className="font-bold text-xs uppercase tracking-wider">{modConfig.name}</span>
+                </div>
+                <div className="max-h-[200px] overflow-hidden relative grayscale-[0.2]">
+                   {Component && (() => {
+                     const actualProps = (draggingBlock.props?.props && typeof draggingBlock.props.props === 'object' && Object.keys(draggingBlock.props.props).length > 0)
+                       ? draggingBlock.props.props
+                       : draggingBlock.props;
+                     return (
+                       <div className="pointer-events-none origin-top scale-[0.8] w-[125%]">
+                          <Component {...actualProps} />
+                       </div>
+                     );
+                   })()}
+                   <div className="absolute inset-0 bg-gradient-to-t from-base-100/50 to-transparent" />
+                </div>
               </div>
-            </div>
-          )
+            );
+          })()
         ) : null}
       </DragOverlay>
     </DndContext>

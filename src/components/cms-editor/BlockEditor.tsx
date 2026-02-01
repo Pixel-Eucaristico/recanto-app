@@ -84,12 +84,12 @@ export default function BlockEditor({
       }}
     >
       {/* Visual Component Render */}
-      <div className={`relative bg-base-100 transition-all ${isDragging ? 'max-h-[150px] scale-[0.98] opacity-50' : 'min-h-[100px]'} overflow-hidden ${isSelected ? 'shadow-2xl' : 'shadow-sm group-hover:shadow-md'}`}>
+      <div className={`relative bg-base-100 transition-all ${isDragging ? 'opacity-50' : ''} ${isSelected ? 'shadow-2xl' : 'shadow-sm group-hover:shadow-md'}`}>
          {/* Interaction Blocker - Allows simple selection but prevents links/buttons inside from navigating */}
          <div className="absolute inset-0 z-10 bg-transparent" />
 
          {/* Placeholder shown when component returns null or is empty */}
-         <div className="absolute inset-0 flex items-center justify-center bg-base-200/50 text-base-content/40 p-4">
+         <div className="absolute inset-0 flex items-center justify-center bg-base-200/50 text-base-content/40 p-4 -z-10">
             <div className="text-center">
                <FileQuestion className="w-10 h-10 mx-auto mb-2 opacity-50" />
                <p className="font-semibold">{modConfig.name}</p>
@@ -98,10 +98,11 @@ export default function BlockEditor({
          </div>
 
           <div
-            className="relative z-[1] boundary-reset origin-top bg-base-100 isolate overflow-hidden"
+            className="relative z-[1] boundary-reset origin-top bg-base-100 isolate"
             style={{
-               contain: 'layout paint style',
+               contain: isDragging ? 'paint style' : 'style',
                maxHeight: isDragging ? '150px' : 'none',
+               overflow: isDragging ? 'hidden' : 'visible',
             }}
          >
             {(() => {

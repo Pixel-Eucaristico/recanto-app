@@ -191,7 +191,6 @@
 .boundary-reset [class*="min-h-screen"] {
   height: auto !important;
   min-height: 200px !important;
-  max-height: 460px !important;
   position: relative !important;
 }
 
