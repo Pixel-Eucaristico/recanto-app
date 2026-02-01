@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import React from 'react';
 import { motion } from 'framer-motion';
+import { MarkdownRenderer } from '@/components/ui/MarkdownRenderer';
 
 interface Project {
   id?: number;
@@ -91,13 +92,13 @@ export default function ProjectsShowcase({
       <div className="text-center mb-12">
         {title && (
           <h2 className="text-4xl font-bold text-base-content mb-4">
-            {title}
+            <MarkdownRenderer content={title} />
           </h2>
         )}
         {subtitle && (
-          <p className="text-lg text-base-content/70 max-w-2xl mx-auto">
-            {subtitle}
-          </p>
+          <div className="text-lg text-base-content/70 max-w-2xl mx-auto">
+            <MarkdownRenderer content={subtitle} />
+          </div>
         )}
       </div>
 
@@ -122,14 +123,16 @@ export default function ProjectsShowcase({
             </figure>
             <div className="card-body">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="card-title text-base-content">{project.title}</h3>
+                <h3 className="card-title text-base-content">
+                  <MarkdownRenderer content={project.title} />
+                </h3>
                 <span className={`badge ${categoryColors[project.category] || 'badge-neutral'}`}>
                   {categoryLabels[project.category] || project.category}
                 </span>
               </div>
-              <p className="text-base-content/80 leading-relaxed">
-                {project.description}
-              </p>
+              <div className="text-base-content/80 leading-relaxed">
+                <MarkdownRenderer content={project.description} />
+              </div>
               {project.link && (
                 <div className="card-actions justify-end mt-4">
                   <a

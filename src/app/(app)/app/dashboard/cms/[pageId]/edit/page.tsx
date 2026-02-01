@@ -520,90 +520,29 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
                       <PanelLeftOpen className="w-5 h-5" />
                    </button>
                    <div className="divider my-0 w-8 self-center"></div>
-                   <div className="writing-vertical-rl rotate-180 flex items-center gap-2 text-sm font-bold tracking-wider opacity-50 whitespace-nowrap pt-4">
-                      {selectedBlock ? 'EDITANDO BLOCO' : 'BIBLIOTECA'}
+                   <div className="writing-vertical-rl rotate-180 flex items-center gap-2 text-sm font-bold tracking-wider opacity-50 whitespace-nowrap pt-4 uppercase">
+                      Biblioteca
                    </div>
                 </div>
              ) : (
-                /* Expanded State */
-                <>
-                  {selectedBlock && availableMods[selectedBlock.modId] ? (
-                    <div className="flex flex-col h-full animate-slide-in-right">
-                      {/* Sidebar Header */}
-                      <div className="p-4 border-b border-base-300 flex items-center justify-between bg-base-100/90 backdrop-blur z-10">
-                          <div>
-                            <h2 className="font-bold text-lg leading-tight">Editar Bloco</h2>
-                            <p className="text-xs text-base-content/60 truncate max-w-[150px]">{availableMods[selectedBlock.modId].name}</p>
-                          </div>
-                          <div className="flex items-center gap-1">
-                             <button 
-                               onClick={() => setSelectedBlockId(null)}
-                               className="btn btn-sm btn-ghost btn-circle"
-                               title="Voltar para biblioteca"
-                             >
-                               <X className="w-5 h-5" />
-                             </button>
-                             <button 
-                               onClick={toggleCollapse}
-                               className="btn btn-sm btn-ghost btn-circle"
-                               title="Recolher sidebar"
-                             >
-                                <PanelLeftClose className="w-5 h-5" />
-                             </button>
-                          </div>
-                      </div>
-                      
-                      {/* Sidebar Content (Scrollable) */}
-                      <div className="flex-1 overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-base-300 scrollbar-track-base-100">
-                          <DynamicModForm
-                            modId={selectedBlock.modId}
-                            propConfigs={availableMods[selectedBlock.modId].props || availableMods[selectedBlock.modId].fields || []}
-                            values={selectedBlock.props}
-                            onChange={(newProps) => {
-                              const index = page!.blocks.findIndex(b => b.id === selectedBlock.id);
-                              if (index !== -1) {
-                                handleUpdateBlock(index, { ...selectedBlock, props: newProps });
-                              }
-                            }}
-                            blockId={selectedBlock.id}
-                          />
-                      </div>
-                      
-                      {/* Delete Button Footer */}
-                      <div className="p-4 border-t border-base-300 bg-base-100">
-                          <button 
-                            onClick={() => {
-                              const index = page!.blocks.findIndex(b => b.id === selectedBlock.id);
-                              handleDeleteBlock(index);
-                              setSelectedBlockId(null);
-                            }}
-                            className="btn btn-outline btn-error btn-sm w-full gap-2"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            Excluir Bloco
-                          </button>
-                      </div>
+                /* Expanded State - Library Only */
+                <div className="flex flex-col h-full">
+                    {/* Library Header */}
+                    <div className="p-4 border-b border-base-300 flex items-center justify-between">
+                        <h2 className="font-bold text-lg">Biblioteca</h2>
+                        <button 
+                           onClick={toggleCollapse}
+                           className="btn btn-sm btn-ghost btn-circle"
+                           title="Recolher sidebar"
+                        >
+                            <PanelLeftClose className="w-5 h-5" />
+                        </button>
                     </div>
-                  ) : (
-                    <div className="flex flex-col h-full">
-                       {/* Library Header */}
-                        <div className="p-4 border-b border-base-300 flex items-center justify-between">
-                            <h2 className="font-bold text-lg">Biblioteca</h2>
-                            <button 
-                               onClick={toggleCollapse}
-                               className="btn btn-sm btn-ghost btn-circle"
-                               title="Recolher sidebar"
-                             >
-                                <PanelLeftClose className="w-5 h-5" />
-                             </button>
-                        </div>
-                        {/* Library Content */}
-                        <div className="flex-1 overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-base-300 scrollbar-track-base-100">
-                           <ModsLibrary onAddMod={handleAddMod} />
-                        </div>
+                    {/* Library Content */}
+                    <div className="flex-1 overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-base-300 scrollbar-track-base-100">
+                       <ModsLibrary onAddMod={handleAddMod} />
                     </div>
-                  )}
-                </>
+                </div>
              )}
         </div>
 
@@ -856,52 +795,37 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
         </div>
       </div>
 
-      {/* Mobile Bottom Sheet Modal */}
-      {mobileDrawerOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 flex items-end justify-center bg-black/50" onClick={() => {
-          setMobileDrawerOpen(false);
-          setSelectedBlockId(null);
-        }}>
-          <div
-            className="w-full max-w-lg bg-base-100 rounded-t-2xl shadow-xl max-h-[90vh] overflow-hidden flex flex-col animate-slide-up"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-base-300">
-              <div className="flex items-center gap-2">
-                {selectedBlockId && (
-                   <button 
-                     onClick={() => setSelectedBlockId(null)}
-                     className="btn btn-ghost btn-sm btn-circle"
-                     title="Voltar"
-                   >
-                     <ArrowLeft className="w-5 h-5" />
-                   </button>
-                )}
-                <h2 className="text-lg font-bold">
-                   {selectedBlockId ? 'Editar Bloco' : 'Biblioteca de Blocos'}
-                </h2>
+      {/* Desktop Editor Modal - Better space for editing */}
+      {selectedBlock && selectedBlockId && (
+        <div className="hidden lg:flex fixed inset-0 z-[100] items-center justify-center p-4 md:p-10 bg-black/70 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setSelectedBlockId(null)}>
+           <div 
+             className="bg-base-100 rounded-3xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-300 ring-1 ring-white/10"
+             onClick={(e) => e.stopPropagation()}
+           >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-6 md:p-8 border-b border-base-300 bg-base-100/50 backdrop-blur">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-primary/10 rounded-2xl text-primary">
+                    <Edit className="w-8 h-8" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-black tracking-tight">Editar Bloco</h2>
+                    <p className="text-sm opacity-60 font-medium">
+                      {availableMods[selectedBlock.modId].name}
+                    </p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setSelectedBlockId(null)}
+                  className="btn btn-ghost btn-circle btn-lg hover:bg-base-200 transition-colors"
+                >
+                  <X className="w-8 h-8" />
+                </button>
               </div>
-              <button
-                onClick={() => {
-                  setMobileDrawerOpen(false);
-                  setSelectedBlockId(null);
-                }}
-                className="btn btn-ghost btn-sm btn-circle"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
 
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto p-4">
-              {selectedBlock && selectedBlockId ? (
-                 <div className="flex flex-col gap-4">
-                    <div className="bg-base-200 p-3 rounded-lg text-xs">
-                       <p className="font-bold">{availableMods[selectedBlock.modId].name}</p>
-                       <p className="opacity-60">{availableMods[selectedBlock.modId].description}</p>
-                    </div>
-                    
+              {/* Modal Content */}
+              <div className="flex-1 overflow-y-auto p-6 md:p-10 scrollbar-thin scrollbar-thumb-base-300 scrollbar-track-base-100">
+                 <div className="max-w-4xl mx-auto">
                     <DynamicModForm
                       modId={selectedBlock.modId}
                       propConfigs={availableMods[selectedBlock.modId].props || availableMods[selectedBlock.modId].fields || []}
@@ -914,38 +838,32 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
                       }}
                       blockId={selectedBlock.id}
                     />
-
-                    <div className="divider"></div>
-
-                    <button 
-                      onClick={() => {
-                        const index = page!.blocks.findIndex(b => b.id === selectedBlock.id);
-                        handleDeleteBlock(index);
-                        setSelectedBlockId(null);
-                      }}
-                      className="btn btn-error btn-outline btn-sm w-full gap-2 mb-8"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      Excluir Bloco
-                    </button>
                  </div>
-              ) : (
-                <ModsLibrary
-                  onAddMod={(modId) => {
-                    handleAddMod(modId);
-                    // Open form immediately after adding on mobile
-                    const lastBlock = page?.blocks[page.blocks.length - 1];
-                    // We can't easily wait for state update here, but handleAddMod will trigger it.
-                    // Instead, let's just close or keep open.
-                    // Actually, if we want to edit immediately:
-                    // setSelectedBlockId is better handled inside handleAddMod? No.
-                    // For now, let's just let the user click the block in the canvas to edit.
-                    setMobileDrawerOpen(false);
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-6 md:p-8 border-t border-base-300 flex justify-between items-center bg-base-200/50 backdrop-blur">
+                <button 
+                  onClick={() => {
+                    const index = page!.blocks.findIndex(b => b.id === selectedBlock.id);
+                    handleDeleteBlock(index);
+                    setSelectedBlockId(null);
                   }}
-                />
-              )}
-            </div>
-          </div>
+                  className="btn btn-error btn-outline border-2 px-6 gap-2 hover:scale-105 transition-transform"
+                >
+                  <Trash2 className="w-5 h-5" />
+                  Excluir Bloco
+                </button>
+                <div className="flex gap-4">
+                  <button 
+                    onClick={() => setSelectedBlockId(null)}
+                    className="btn btn-primary btn-lg px-12 shadow-xl shadow-primary/20 hover:scale-105 transition-transform"
+                  >
+                    Pronto
+                  </button>
+                </div>
+              </div>
+           </div>
         </div>
       )}
 

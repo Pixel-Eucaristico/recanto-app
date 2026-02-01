@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import Lottie from 'lottie-react';
 import { useEffect, useState } from 'react';
+import { MarkdownRenderer } from '@/components/ui/MarkdownRenderer';
 
 export interface HeroStructureProps {
   title?: string;
@@ -131,20 +132,20 @@ export function HeroStructure({
             transition={{ duration: 0.6, delay: 0.2 }}
             className={`text-3xl md:text-4xl lg:text-5xl font-bold ${titleColorClasses[titleColor]}`}
           >
-            {title}
+            <MarkdownRenderer content={title} />
           </motion.h1>
         )}
 
         {/* Descrição */}
         {description && (
-          <motion.p
+          <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
             className="text-base md:text-lg lg:text-xl text-base-content"
           >
-            {description}
-          </motion.p>
+            <MarkdownRenderer content={description} />
+          </motion.div>
         )}
 
         {/* Animação Lottie */}
@@ -197,10 +198,12 @@ export function HeroStructure({
             transition={{ duration: 0.6, delay: 0.5 }}
             className={`${quoteColorClasses[quoteColor]} italic text-base md:text-lg space-y-2`}
           >
-            <p>&ldquo;{quote}&rdquo;</p>
+            <div className="italic text-base md:text-lg">
+              <MarkdownRenderer content={`“${quote}”`} />
+            </div>
             {quoteReference && (
               <cite className="text-sm not-italic font-medium">
-                {quoteReference}
+                <MarkdownRenderer content={quoteReference} />
               </cite>
             )}
           </motion.blockquote>

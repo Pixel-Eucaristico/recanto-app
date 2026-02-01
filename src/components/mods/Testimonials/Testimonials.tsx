@@ -4,6 +4,7 @@ import Image from 'next/image';
 import React, { useEffect, useState } from 'react';
 import { motion, TargetAndTransition } from 'framer-motion';
 import { CommunityFeedback } from '@/types/main-content';
+import { MarkdownRenderer } from '@/components/ui/MarkdownRenderer';
 
 const variants = {
   hidden: {
@@ -75,7 +76,7 @@ export default function Testimonials({
     <section className="max-w-6xl mx-auto px-6 py-12">
       {title && (
         <h2 className="text-3xl font-bold text-center mb-10 text-base-content">
-          {title}
+          <MarkdownRenderer content={title} />
         </h2>
       )}
 
@@ -92,25 +93,36 @@ export default function Testimonials({
           >
             <div className="card-body">
               <div className="flex items-center gap-4 mb-4">
-                <div className="avatar">
-                  <div className="w-12 rounded-full">
-                    <Image
-                      src={feedback.avatar}
-                      alt={feedback.name}
-                      width={48}
-                      height={48}
-                    />
+                <div className="avatar placeholder">
+                  <div className="bg-neutral text-neutral-content w-12 rounded-full">
+                    {feedback.avatar && typeof feedback.avatar === 'string' && feedback.avatar.trim() !== '' ? (
+                      <Image
+                        src={feedback.avatar}
+                        alt={feedback.name}
+                        width={48}
+                        height={48}
+                        className="rounded-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-xl uppercase">
+                        {feedback.name.charAt(0)}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-base-content">{feedback.name}</h3>
-                  <p className="text-sm text-base-content/60">{feedback.role}</p>
+                  <h3 className="font-semibold text-base-content">
+                    <MarkdownRenderer content={feedback.name} />
+                  </h3>
+                  <p className="text-sm text-base-content/60">
+                    <MarkdownRenderer content={feedback.role} />
+                  </p>
                 </div>
               </div>
 
-              <p className="text-base-content/80 italic">
-                &ldquo;{feedback.comment}&rdquo;
-              </p>
+              <div className="text-base-content/80 italic">
+                <MarkdownRenderer content={`“${feedback.comment}”`} />
+              </div>
 
               <p className="text-sm text-base-content/50 mt-4">{feedback.date}</p>
             </div>

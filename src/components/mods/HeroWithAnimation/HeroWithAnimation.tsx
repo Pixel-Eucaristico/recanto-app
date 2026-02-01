@@ -5,6 +5,7 @@ import Image from "next/image";
 import * as LucideIcons from "lucide-react";
 import * as FontAwesomeIcons from "react-icons/fa6";
 import { useEffect, useState } from "react";
+import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 
 export interface HeroWithAnimationProps {
   title: string;
@@ -129,16 +130,16 @@ export default function HeroWithAnimation({
             transition={{ duration: 0.8 }}
             className={`text-4xl md:text-6xl font-bold ${titleColorClass} drop-shadow`}
           >
-            {title}
+            <MarkdownRenderer content={title} />
           </motion.h1>
-          <motion.p
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.8 }}
             className="mt-4 text-lg md:text-xl max-w-xl text-base-content drop-shadow"
           >
-            {subtitle}
-          </motion.p>
+            <MarkdownRenderer content={subtitle} />
+          </motion.div>
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -176,11 +177,11 @@ export default function HeroWithAnimation({
     >
       <div className="text-center space-y-4">
         <h1 className={`text-3xl md:text-4xl font-bold ${titleColorClass}`}>
-          {title}
+          <MarkdownRenderer content={title} />
         </h1>
-        <p className="text-lg max-w-3xl mx-auto text-base-content">
-          {subtitle}
-        </p>
+        <div className="text-lg max-w-3xl mx-auto text-base-content">
+          <MarkdownRenderer content={subtitle} />
+        </div>
         <div className="max-w-md mx-auto">
           {!isLoading && animationData && (
             <Lottie animationData={animationData} loop />

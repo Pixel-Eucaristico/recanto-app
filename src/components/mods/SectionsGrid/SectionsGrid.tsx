@@ -19,6 +19,8 @@ export interface SectionsGridProps {
   spacing?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
+import { MarkdownRenderer } from '@/components/ui/MarkdownRenderer';
+
 /**
  * SectionsGrid - Grade de seções informativas com ícones
  * Perfeito para apresentar informações institucionais, história, valores
@@ -115,15 +117,14 @@ export function SectionsGrid({
                     strokeWidth={2}
                   />
                   <h3 className={`text-lg md:text-xl font-semibold ${iconColorClasses[section.iconColor || 'primary']}`}>
-                    {section.title}
+                    <MarkdownRenderer content={section.title} />
                   </h3>
                 </div>
 
                 {/* Conteúdo */}
-                <div
-                  className="text-base text-base-content/90 leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: section.content }}
-                />
+                <div className="text-base text-base-content/90 leading-relaxed">
+                  <MarkdownRenderer content={section.content} />
+                </div>
               </motion.div>
             );
           })}

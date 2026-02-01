@@ -25,6 +25,8 @@ const titleColorClasses = {
   error: "text-error",
 };
 
+import { MarkdownRenderer } from '@/components/ui/MarkdownRenderer';
+
 export default function TextImageAnimation({
   title = "",
   titleColor = "primary",
@@ -73,7 +75,7 @@ export default function TextImageAnimation({
           transition={{ duration: 0.6 }}
           className={`text-3xl font-bold ${titleColorClass}`}
         >
-          {title}
+          <MarkdownRenderer content={title} />
         </motion.h2>
       )}
       <div className="mt-8 grid md:grid-cols-2 gap-10 items-center max-w-6xl">
@@ -84,7 +86,9 @@ export default function TextImageAnimation({
           }`}
         >
           {safeParagraphs.map((paragraph, index) => (
-            <p key={index} dangerouslySetInnerHTML={{ __html: paragraph }} />
+            <div key={index}>
+              <MarkdownRenderer content={paragraph} />
+            </div>
           ))}
         </div>
 

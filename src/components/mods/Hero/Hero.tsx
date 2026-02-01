@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import { MarkdownRenderer } from '@/components/ui/MarkdownRenderer';
 
 interface HeroProps {
   title?: string;
@@ -50,8 +51,16 @@ export default function Hero({
           </div>
         )}
         <div>
-          {title && <h1 className="text-5xl font-bold">{title}</h1>}
-          {subtitle && <p className="py-6">{subtitle}</p>}
+          {title && (
+            <h1 className="text-5xl font-bold">
+              <MarkdownRenderer content={title} />
+            </h1>
+          )}
+          {subtitle && (
+            <div className="py-6">
+              <MarkdownRenderer content={subtitle} />
+            </div>
+          )}
           {ctaText && ctaLink && (
             <a href={ctaLink} className="btn btn-primary">
               {ctaText}

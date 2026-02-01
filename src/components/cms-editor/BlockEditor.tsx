@@ -84,7 +84,7 @@ export default function BlockEditor({
       }}
     >
       {/* Visual Component Render */}
-      <div className={`relative bg-base-100 transition-all min-h-[100px] max-h-[500px] overflow-hidden ${isSelected ? 'shadow-2xl' : 'shadow-sm group-hover:shadow-md'}`}>
+      <div className={`relative bg-base-100 transition-all ${isDragging ? 'max-h-[150px] scale-[0.98] opacity-50' : 'min-h-[100px]'} overflow-hidden ${isSelected ? 'shadow-2xl' : 'shadow-sm group-hover:shadow-md'}`}>
          {/* Interaction Blocker - Allows simple selection but prevents links/buttons inside from navigating */}
          <div className="absolute inset-0 z-10 bg-transparent" />
 
@@ -97,12 +97,11 @@ export default function BlockEditor({
             </div>
          </div>
 
-         {/* Preview container - isolate fullscreen components */}
-         <div
+          <div
             className="relative z-[1] boundary-reset origin-top bg-base-100 isolate overflow-hidden"
             style={{
                contain: 'layout paint style',
-               maxHeight: '480px',
+               maxHeight: isDragging ? '150px' : 'none',
             }}
          >
             {(() => {
@@ -116,8 +115,10 @@ export default function BlockEditor({
             })()}
          </div>
 
-         {/* Gradient fade indicator when content is clipped */}
-         <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-base-100 to-transparent pointer-events-none z-[2]" />
+         {/* Gradient fade indicator when content is clipped (only shown when dragging or if we want to keep a hint, but user asked for "full" so we might remove it for normal view) */}
+         {isDragging && (
+            <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-base-100 to-transparent pointer-events-none z-[2]" />
+         )}
       </div>
 
       {/* Editor Controls Overlay - Always visible when selected, visible on hover otherwise */}

@@ -36,5 +36,16 @@ export const infographicGridConfig: ModConfig = {
       default: 'Lora',
       description: 'Fonte para o texto do corpo dos cards',
     },
+    {
+      name: 'columns',
+      label: 'Número de Colunas',
+      type: 'select',
+      default: '2',
+      options: [
+        { label: '1 Coluna', value: '1' },
+        { label: '2 Colunas', value: '2' },
+      ],
+      description: 'Escolha exibir o grid em 1 ou 2 colunas no desktop',
+    },
   ],
 };

@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import type { OurLadyHeader as OurLadyHeaderType } from '@/types/cms-types';
+import { MarkdownRenderer } from '@/components/ui/MarkdownRenderer';
 
 interface OurLadyHeaderProps {
   header?: OurLadyHeaderType;
@@ -35,17 +36,15 @@ export function OurLadyHeader({ header, titleFont = 'Playfair Display', subtitle
             className="text-4xl md:text-5xl font-semibold text-primary"
             style={{ fontFamily: titleFont === 'system-ui' ? 'system-ui' : `'${titleFont}', serif` }}
           >
-            {header.title}
+            <MarkdownRenderer content={header.title} />
           </h1>
         )}
-        {header.subtitle && (
-          <p
+          <div
             className="mt-4 text-2xl text-primary"
             style={{ fontFamily: subtitleFont === 'system-ui' ? 'system-ui' : `'${subtitleFont}', serif` }}
           >
-            {header.subtitle}
-          </p>
-        )}
+            <MarkdownRenderer content={header.subtitle} />
+          </div>
       </header>
     </div>
   );
