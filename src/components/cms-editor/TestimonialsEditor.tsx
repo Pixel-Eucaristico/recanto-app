@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import ImageUpload from './ImageUpload';
 import { Plus, Trash2, User, GripVertical, ChevronDown, ChevronRight } from 'lucide-react';
 import {
   DndContext,
@@ -146,28 +147,12 @@ function SortableTestimonialItem({
 
           {/* URL do Avatar */}
           <div>
-            <label className="block text-sm font-medium mb-1 text-base-content">
-              URL do Avatar
-            </label>
-            <Input
-              type="text"
+            <ImageUpload
               value={testimonial.avatar}
-              onChange={(e) => onUpdate(testimonial.id, 'avatar', e.target.value)}
-              placeholder="https://randomuser.me/api/portraits/women/1.jpg"
-              className="input input-bordered w-full"
+              onChange={(url) => onUpdate(testimonial.id, 'avatar', url)}
+              label="Avatar"
+              folder="testimonials"
             />
-            <div className="flex items-start gap-2 mt-1">
-              <p className="text-xs text-base-content/50">
-                Use randomuser.me, unsplash.com ou envie para /public/assets
-              </p>
-              {testimonial.avatar && (
-                <div className="avatar">
-                  <div className="w-8 h-8 rounded-full">
-                    <img src={testimonial.avatar} alt="Preview" />
-                  </div>
-                </div>
-              )}
-            </div>
           </div>
 
           {/* Depoimento */}

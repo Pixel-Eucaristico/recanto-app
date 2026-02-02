@@ -147,7 +147,7 @@ export default function VocationalContactForm({
             transition={{ duration: 0.6 }}
             className={`text-2xl font-semibold ${colorVariants.text[titleColor]} text-center mb-4`}
           >
-            <MarkdownRenderer content={title} />
+            <MarkdownRenderer content={title} as="span" inline />
           </motion.h2>
         )}
         {subtitle && (
@@ -157,7 +157,7 @@ export default function VocationalContactForm({
             transition={{ delay: 0.2, duration: 0.6 }}
             className="text-center text-base-content/80 mb-6"
           >
-            <MarkdownRenderer content={subtitle} />
+            <MarkdownRenderer content={subtitle} as="span" inline />
           </motion.div>
         )}
         <motion.form

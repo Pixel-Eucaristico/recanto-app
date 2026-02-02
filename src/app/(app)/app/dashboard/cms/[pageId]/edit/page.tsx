@@ -803,10 +803,10 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
              onClick={(e) => e.stopPropagation()}
            >
               {/* Modal Header */}
-              <div className="flex items-center justify-between p-6 md:p-8 border-b border-base-300 bg-base-100/50 backdrop-blur">
+               <div className="flex items-center justify-between p-6 md:p-8 border-b border-base-300 bg-base-100/50 backdrop-blur">
                 <div className="flex items-center gap-4">
-                  <div className="p-3 bg-primary/10 rounded-2xl text-primary">
-                    <Edit className="w-8 h-8" />
+                  <div className="p-2 bg-primary/10 rounded-xl text-primary">
+                    <Edit className="w-5 h-5" />
                   </div>
                   <div>
                     <h2 className="text-2xl font-black tracking-tight">Editar Bloco</h2>
@@ -817,9 +817,9 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
                 </div>
                 <button 
                   onClick={() => setSelectedBlockId(null)}
-                  className="btn btn-ghost btn-circle btn-lg hover:bg-base-200 transition-colors"
+                  className="btn btn-ghost btn-circle hover:bg-base-200 transition-colors"
                 >
-                  <X className="w-8 h-8" />
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 
@@ -849,15 +849,15 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
                     handleDeleteBlock(index);
                     setSelectedBlockId(null);
                   }}
-                  className="btn btn-error btn-outline border-2 px-6 gap-2 hover:scale-105 transition-transform"
+                  className="btn btn-error btn-outline btn-sm md:btn-md border-2 px-4 gap-2 transition-transform"
                 >
-                  <Trash2 className="w-5 h-5" />
+                  <Trash2 className="w-4 h-4" />
                   Excluir Bloco
                 </button>
                 <div className="flex gap-4">
                   <button 
                     onClick={() => setSelectedBlockId(null)}
-                    className="btn btn-primary btn-lg px-12 shadow-xl shadow-primary/20 hover:scale-105 transition-transform"
+                    className="btn btn-primary px-8 shadow-lg shadow-primary/20 transition-transform"
                   >
                     Pronto
                   </button>

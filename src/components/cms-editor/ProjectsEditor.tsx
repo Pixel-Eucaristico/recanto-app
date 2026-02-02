@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Plus, Trash2, GripVertical } from 'lucide-react';
+import ImageUpload from './ImageUpload';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -110,20 +111,16 @@ function SortableProjectItem({ project, index, onUpdate, onDelete }: SortablePro
             />
           </div>
 
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">Imagem (URL)</span>
-            </label>
-            <input
-              type="url"
-              className="input input-bordered input-sm"
-              placeholder="https://..."
+          <div className="form-control md:col-span-2">
+            <ImageUpload
               value={project.image}
-              onChange={(e) => onUpdate(project.id, 'image', e.target.value)}
+              onChange={(url) => onUpdate(project.id, 'image', url)}
+              label="Imagem do Projeto"
+              folder="projects"
             />
           </div>
 
-          <div className="form-control">
+          <div className="form-control md:col-span-2">
             <label className="label">
               <span className="label-text">Link (opcional)</span>
             </label>

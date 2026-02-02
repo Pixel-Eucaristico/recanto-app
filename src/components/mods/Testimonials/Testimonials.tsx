@@ -76,7 +76,7 @@ export default function Testimonials({
     <section className="max-w-6xl mx-auto px-6 py-12">
       {title && (
         <h2 className="text-3xl font-bold text-center mb-10 text-base-content">
-          <MarkdownRenderer content={title} />
+          <MarkdownRenderer content={title} as="span" inline />
         </h2>
       )}
 
@@ -112,11 +112,11 @@ export default function Testimonials({
                 </div>
                 <div>
                   <h3 className="font-semibold text-base-content">
-                    <MarkdownRenderer content={feedback.name} />
+                    <MarkdownRenderer content={feedback.name} as="span" inline />
                   </h3>
-                  <p className="text-sm text-base-content/60">
-                    <MarkdownRenderer content={feedback.role} />
-                  </p>
+                  <div className="text-sm text-base-content/60">
+                    <MarkdownRenderer content={feedback.role} as="span" inline />
+                  </div>
                 </div>
               </div>
 

@@ -102,7 +102,7 @@ export default function VocationalBanner({
           transition={{ duration: 0.6 }}
           className={`text-4xl md:text-6xl font-bold ${colorVariants.text[titleColor]} drop-shadow`}
         >
-          <MarkdownRenderer content={title} />
+          <MarkdownRenderer content={title} as="span" inline />
         </motion.h1>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -110,7 +110,7 @@ export default function VocationalBanner({
           transition={{ delay: 0.3, duration: 0.6 }}
           className={`mt-4 text-lg md:text-xl ${colorVariants.text[subtitleColor]} drop-shadow`}
         >
-          <MarkdownRenderer content={subtitle} />
+          <MarkdownRenderer content={subtitle} as="span" inline />
         </motion.div>
         {animationData && (
           <motion.div

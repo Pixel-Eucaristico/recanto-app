@@ -3,6 +3,7 @@
 import { TextImageAnimationProps } from '@/components/mods/TextImageAnimation';
 import { AnimationPicker } from './AnimationPicker';
 import { WysiwygEditor } from './WysiwygEditor';
+import ImageUpload from './ImageUpload';
 import { Plus, Trash2, GripVertical, FileText, Image as ImageIcon, Info, ArrowLeft, ArrowRight, ChevronUp, ChevronDown } from 'lucide-react';
 
 interface TextImageAnimationEditorProps {
@@ -16,10 +17,10 @@ interface TextImageAnimationEditorProps {
  */
 export function TextImageAnimationEditor({ value, onChange }: TextImageAnimationEditorProps) {
   // Garantir valores padrão
-  const safeValue: TextImageAnimationProps = {
+  const safeValue: Required<TextImageAnimationProps> = {
     title: value?.title || '',
     titleColor: value?.titleColor || 'primary',
-    paragraphs: value?.paragraphs || [],
+    paragraphs: Array.isArray(value?.paragraphs) ? value.paragraphs : [],
     image: value?.image || '',
     imageAlt: value?.imageAlt || '',
     lottieUrl: value?.lottieUrl || '',
@@ -63,7 +64,7 @@ export function TextImageAnimationEditor({ value, onChange }: TextImageAnimation
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Título */}
       <div className="form-control">
         <label className="label">
@@ -86,7 +87,7 @@ export function TextImageAnimationEditor({ value, onChange }: TextImageAnimation
         <select
           className="select select-bordered w-full"
           value={safeValue.titleColor}
-          onChange={(e) => updateField('titleColor', e.target.value as any)}
+          onChange={(e) => updateField('titleColor', e.target.value as TextImageAnimationProps['titleColor'])}
         >
           <option value="primary">Principal (muda com o tema)</option>
           <option value="secondary">Secundário (muda com o tema)</option>
@@ -172,28 +173,15 @@ export function TextImageAnimationEditor({ value, onChange }: TextImageAnimation
 
       {/* Imagem */}
       <div className="form-control">
-        <label className="label">
-          <span className="label-text font-semibold">URL da Imagem</span>
-        </label>
-        <input
-          type="url"
-          className="input input-bordered w-full"
-          placeholder="https://cdn2.picryl.com/..."
-          value={safeValue.image}
-          onChange={(e) => updateField('image', e.target.value)}
+        <ImageUpload
+          value={safeValue.image || ''}
+          onChange={(url) => updateField('image', url)}
+          label="Imagem da Seção"
+          folder="content"
         />
         <label className="label">
           <span className="label-text-alt">Tamanho recomendado: 400x300px</span>
         </label>
-        {safeValue.image && (
-          <div className="mt-2">
-            <img
-              src={safeValue.image}
-              alt="Preview"
-              className="w-full max-w-md h-auto rounded-lg shadow-lg"
-            />
-          </div>
-        )}
       </div>
 
       {/* Alt Text da Imagem */}
@@ -221,7 +209,7 @@ export function TextImageAnimationEditor({ value, onChange }: TextImageAnimation
           <span className="label-text font-semibold">Animação Lottie (Abaixo da Imagem)</span>
         </label>
         <AnimationPicker
-          value={safeValue.lottieUrl}
+          value={safeValue.lottieUrl || 'none'}
           onChange={(newValue) => {
             // Converter de ID para URL se necessário
             if (newValue === 'none') {
@@ -248,13 +236,13 @@ export function TextImageAnimationEditor({ value, onChange }: TextImageAnimation
               safeValue.layout === 'text-left' ? 'border-primary ring-2 ring-primary' : 'border-base-300'
             }`}
           >
-            <div className="card-body p-4 text-center">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <FileText className="w-8 h-8" />
-                <ImageIcon className="w-8 h-8 text-base-content/40" />
+            <div className="card-body p-2 text-center">
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <FileText className="w-5 h-5" />
+                <ImageIcon className="w-5 h-5 text-base-content/40" />
               </div>
-              <div className="text-sm font-semibold">Texto à Esquerda</div>
-              <div className="text-xs text-base-content/60">Imagem à direita</div>
+              <div className="text-xs font-semibold">Texto à Esquerda</div>
+              <div className="text-[10px] text-base-content/60 leading-tight">Imagem à direita</div>
             </div>
           </button>
 
@@ -265,13 +253,13 @@ export function TextImageAnimationEditor({ value, onChange }: TextImageAnimation
               safeValue.layout === 'text-right' ? 'border-primary ring-2 ring-primary' : 'border-base-300'
             }`}
           >
-            <div className="card-body p-4 text-center">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <ImageIcon className="w-8 h-8 text-base-content/40" />
-                <FileText className="w-8 h-8" />
+            <div className="card-body p-2 text-center">
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <ImageIcon className="w-5 h-5 text-base-content/40" />
+                <FileText className="w-5 h-5" />
               </div>
-              <div className="text-sm font-semibold">Texto à Direita</div>
-              <div className="text-xs text-base-content/60">Imagem à esquerda</div>
+              <div className="text-xs font-semibold">Texto à Direita</div>
+              <div className="text-[10px] text-base-content/60 leading-tight">Imagem à esquerda</div>
             </div>
           </button>
         </div>

@@ -3,6 +3,7 @@
 import { HeroWithAnimationProps } from '@/components/mods/HeroWithAnimation';
 import { AnimationPicker } from './AnimationPicker';
 import { BgColorPicker } from './BgColorPicker';
+import ImageUpload from './ImageUpload';
 
 interface HeroWithAnimationEditorProps {
   value: HeroWithAnimationProps;
@@ -110,25 +111,12 @@ export function HeroWithAnimationEditor({ value, onChange }: HeroWithAnimationEd
       {/* Imagem de Fundo (Fullscreen variant) */}
       {value.variant === 'fullscreen' && (
         <div className="form-control">
-          <label className="label">
-            <span className="label-text font-semibold">URL da Imagem de Fundo</span>
-          </label>
-          <input
-            type="url"
-            className="input input-bordered w-full"
-            placeholder="https://cdn2.picryl.com/..."
+          <ImageUpload
             value={value.backgroundImage || ''}
-            onChange={(e) => updateField('backgroundImage', e.target.value)}
+            onChange={(url) => updateField('backgroundImage', url)}
+            label="Imagem de Fundo"
+            folder="heros"
           />
-          {value.backgroundImage && (
-            <div className="mt-2">
-              <img
-                src={value.backgroundImage}
-                alt="Preview"
-                className="w-full h-32 object-cover rounded-lg"
-              />
-            </div>
-          )}
         </div>
       )}
 
