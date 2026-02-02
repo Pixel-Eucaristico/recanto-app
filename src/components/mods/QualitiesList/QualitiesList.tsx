@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
+import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 
 export interface QualitiesListProps {
   title?: string;
@@ -81,7 +82,7 @@ export default function QualitiesList({
             transition={{ duration: 0.6 }}
             className={`text-3xl font-semibold ${colorVariants.text[titleColor]} mb-8`}
           >
-            {title}
+            <MarkdownRenderer content={title} />
           </motion.h2>
         )}
         <div className="space-y-4">
@@ -96,7 +97,9 @@ export default function QualitiesList({
               {showIcons && (
                 <Check className={`flex-shrink-0 w-5 h-5 mt-1 ${colorVariants.text[iconColor]}`} />
               )}
-              <p className="text-base-content">{item}</p>
+              <div className="text-base-content">
+                <MarkdownRenderer content={item} />
+              </div>
             </motion.div>
           ))}
         </div>

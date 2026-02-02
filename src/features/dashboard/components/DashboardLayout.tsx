@@ -3,6 +3,8 @@
 import Sidebar from "./Sidebar";
 import { Menu } from "lucide-react";
 
+import Link from "next/link";
+
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
@@ -23,9 +25,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           >
             <Menu className="w-5 h-5" />
           </label>
-          <div className="px-4 text-lg font-bold text-base-content">
+          <Link href="/" className="px-4 text-lg font-bold text-base-content hover:opacity-80 transition-opacity">
             Recanto Digital
-          </div>
+          </Link>
         </nav>
 
         {/* Page content */}

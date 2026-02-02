@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import Lottie from "lottie-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 
 export interface VocationalBannerProps {
   title?: string;
@@ -101,16 +102,16 @@ export default function VocationalBanner({
           transition={{ duration: 0.6 }}
           className={`text-4xl md:text-6xl font-bold ${colorVariants.text[titleColor]} drop-shadow`}
         >
-          {title}
+          <MarkdownRenderer content={title} as="span" inline />
         </motion.h1>
-        <motion.p
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.6 }}
           className={`mt-4 text-lg md:text-xl ${colorVariants.text[subtitleColor]} drop-shadow`}
         >
-          {subtitle}
-        </motion.p>
+          <MarkdownRenderer content={subtitle} as="span" inline />
+        </motion.div>
         {animationData && (
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}

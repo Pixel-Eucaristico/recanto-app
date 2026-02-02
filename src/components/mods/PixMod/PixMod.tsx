@@ -2,6 +2,7 @@
 'use client';
 
 import PixDisplay from '@/components/shared/PixDisplay';
+import { MarkdownRenderer } from '@/components/ui/MarkdownRenderer';
 
 interface PixModProps {
   pixKey: string;
@@ -24,7 +25,11 @@ export default function PixMod({ pixKey, name, city, amount, description, title 
 
   return (
     <div className="w-full max-w-md mx-auto py-8">
-      {title && <h2 className="text-2xl font-bold text-center mb-6">{title}</h2>}
+      {title && (
+        <h2 className="text-2xl font-bold text-center mb-6">
+          <MarkdownRenderer content={title} />
+        </h2>
+      )}
       <PixDisplay 
         pixKey={pixKey}
         merchantName={name}

@@ -11,27 +11,31 @@ export default function CardInfografico(item: typeof infograficoData[number]) {
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-      viewport={{ once: true, amount: 0.4 }}
-      className="break-inside-avoid pl-4 flex flex-col items-start gap-4 bg-base-100 p-2"
+      viewport={{ once: true, amount: 0.2 }}
+      className="flex flex-col items-start gap-4 bg-base-100 p-4 rounded-xl shadow-sm border border-base-200 h-full"
     >
-      <h3 className="w-full bg-primary rounded-lg px-3 text-xl font-display text-secondary font-semibold">
+      <h3 className="w-full bg-primary rounded-lg px-3 py-1 text-xl font-display text-secondary font-semibold leading-tight">
         {id}. {title}
       </h3>
-      <div>
-        {}
-        <div className={`w-12 h-12 flex-shrink-0 ${item.image_position} mr-3`}>
-          {lottieData ? (
-            <Lottie
-              autoplay
-              loop
-              animationData={lottieData}
-              style={{ height: "100%", width: "100%" }}
-            />
-          ) : Icon ? (
-            <Icon size={48} className="text-accent" />
-          ) : null}
-        </div>
-        <p className="mt-1 text-base font-body text-base-content" dangerouslySetInnerHTML={{__html:body}} />
+      <div className="w-full">
+        {lottieData || Icon ? (
+          <div className={`w-14 h-14 flex-shrink-0 mb-3 ${item.image_position === 'float-start' || item.image_position === 'float-left' ? 'float-start mr-4' : 'float-end ml-4'}`}>
+            {lottieData ? (
+              <Lottie
+                autoplay
+                loop
+                animationData={lottieData}
+                style={{ height: "100%", width: "100%" }}
+              />
+            ) : Icon ? (
+              <Icon size={56} className="text-accent" />
+            ) : null}
+          </div>
+        ) : null}
+        <p 
+          className="text-base font-body text-base-content leading-relaxed" 
+          dangerouslySetInnerHTML={{__html:body}} 
+        />
       </div>
     </motion.div>
   );

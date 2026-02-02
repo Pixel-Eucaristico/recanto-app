@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 
 export interface LocationSectionProps {
   title?: string;
@@ -81,7 +82,7 @@ export default function LocationSection({
             transition={{ duration: 0.6 }}
             className="text-3xl font-semibold text-primary mb-6"
           >
-            {title}
+            <MarkdownRenderer content={title} />
           </motion.h2>
         )}
         
@@ -93,13 +94,13 @@ export default function LocationSection({
         >
           {address && (
             <div className="font-medium">
-              {address.split('\n').map((line, i) => (
-                <p key={i}>{line}</p>
-              ))}
+              <MarkdownRenderer content={address} />
             </div>
           )}
           {visitInfo && (
-            <p className="text-base-content/80 italic">{visitInfo}</p>
+            <div className="text-base-content/80 italic">
+              <MarkdownRenderer content={visitInfo} />
+            </div>
           )}
         </motion.div>
 

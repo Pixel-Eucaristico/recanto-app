@@ -25,6 +25,8 @@ const titleColorClasses = {
   error: "text-error",
 };
 
+import { MarkdownRenderer } from '@/components/ui/MarkdownRenderer';
+
 export default function TextImageAnimation({
   title = "",
   titleColor = "primary",
@@ -65,50 +67,80 @@ export default function TextImageAnimation({
   const animationXValue = animationDirection === "left" ? -50 : 50;
 
   return (
-    <section className="w-full py-20 flex flex-col items-center text-center px-6">
+    <section className="w-full py-6 md:py-10 flex flex-col items-center px-6 overflow-hidden">
       {title && (
         <motion.h2
-          initial={{ opacity: 0, x: animationXValue }}
-          whileInView={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6 }}
-          className={`text-3xl font-bold ${titleColorClass}`}
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          viewport={{ once: true }}
+          className={`text-xl md:text-2xl font-extrabold tracking-tight mb-0.5 ${titleColorClass}`}
         >
-          {title}
+          <MarkdownRenderer content={title} />
         </motion.h2>
       )}
-      <div className="mt-8 grid md:grid-cols-2 gap-10 items-center max-w-6xl">
+      
+      <div className="mt-6 grid md:grid-cols-2 gap-6 lg:gap-10 items-center max-w-4xl w-full">
         {/* Text Content */}
         <div
-          className={`space-y-4 text-justify text-base-content ${
-            layout === "text-right" ? "order-1 md:order-2" : ""
+          className={`space-y-3 text-base-content/90 leading-relaxed text-sm md:text-base ${
+            layout === "text-right" ? "md:order-2" : "md:order-1"
           }`}
         >
           {safeParagraphs.map((paragraph, index) => (
-            <p key={index} dangerouslySetInnerHTML={{ __html: paragraph }} />
+            <motion.div 
+              key={index}
+              initial={{ opacity: 0, x: layout === "text-right" ? 15 : -15 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.4, delay: index * 0.05 }}
+              viewport={{ once: true }}
+            >
+              <MarkdownRenderer content={paragraph} />
+            </motion.div>
           ))}
         </div>
 
-        {/* Image + Animation */}
+        {/* Image + Animation Container */}
         <div
-          className={`flex flex-col items-center ${
-            layout === "text-right" ? "order-2 md:order-1" : ""
+          className={`relative flex flex-col items-center justify-center ${
+            layout === "text-right" ? "md:order-1" : "md:order-2"
           }`}
         >
-          {/* Só renderizar imagem se image não for vazio */}
+          {/* Image with Decorative Backdrop */}
           {image && (
-            <Image
-              src={image}
-              alt={imageAlt || "Imagem"}
-              width={400}
-              height={300}
-              className="rounded-box shadow-xl"
-            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.98 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+              viewport={{ once: true }}
+              className="relative group w-full max-w-[320px]"
+            >
+              <div className="absolute -inset-2 bg-primary/5 rounded-xl blur-lg group-hover:bg-primary/10 transition-colors" />
+              <Image
+                src={image}
+                alt={imageAlt || "Imagem ilustrativa"}
+                width={320}
+                height={210}
+                className="relative rounded-lg shadow-lg border border-base-content/5 object-cover w-full h-auto aspect-[3/2]"
+              />
+            </motion.div>
           )}
-          {/* Só renderizar animação se houver lottieUrl */}
+
+          {/* Lottie Animation */}
           {lottieUrl && (
-            <div className="w-40 h-40 mt-6">
-              {!isLoading && animationData && (
-                <Lottie animationData={animationData} loop />
+            <div className={`mt-3 relative transition-all duration-500 ${image ? '-mt-6 md:-mt-10' : ''}`}>
+              {isLoading ? (
+                <div className="w-20 h-20 md:w-28 md:h-28 flex items-center justify-center">
+                  <span className="loading loading-ring loading-sm text-primary/30"></span>
+                </div>
+              ) : (
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="w-20 h-20 md:w-28 md:h-28 drop-shadow-lg"
+                >
+                  {animationData && <Lottie animationData={animationData} loop />}
+                </motion.div>
               )}
             </div>
           )}

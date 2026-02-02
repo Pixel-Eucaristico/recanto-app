@@ -55,6 +55,8 @@ const textAlignVariants = {
   justify: 'text-justify',
 };
 
+import { MarkdownRenderer } from '@/components/ui/MarkdownRenderer';
+
 import dynamic from 'next/dynamic';
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
 import { useState, useEffect } from 'react';
@@ -94,7 +96,7 @@ export default function TextWithQuote({
             transition={{ duration: 0.6 }}
             className={`text-3xl font-semibold ${colorVariants.text[titleColor]} mb-6`}
           >
-            {title}
+            <MarkdownRenderer content={title} />
           </motion.h2>
         )}
         <motion.div
@@ -104,26 +106,26 @@ export default function TextWithQuote({
           className="space-y-6"
         >
           {content && (
-            <p className="text-lg text-base-content">
-              {content}
-            </p>
+            <div className="text-lg text-base-content">
+              <MarkdownRenderer content={content} />
+            </div>
           )}
           {quoteText && (
             <div className="italic border-l-4 border-primary pl-4 py-2">
-              <p className="text-base-content/80">
-                &ldquo;{quoteText}&rdquo;
-              </p>
+              <div className="text-base-content/80">
+                <MarkdownRenderer content={`“${quoteText}”`} />
+              </div>
               {quoteReference && (
-                <p className="text-sm text-base-content/60 mt-2">
-                  {quoteReference}
-                </p>
+                <div className="text-sm text-base-content/60 mt-2">
+                  <MarkdownRenderer content={quoteReference} />
+                </div>
               )}
             </div>
           )}
           {afterQuote && (
-            <p className="text-lg text-base-content mt-4">
-              {afterQuote}
-            </p>
+            <div className="text-lg text-base-content mt-4">
+              <MarkdownRenderer content={afterQuote} />
+            </div>
           )}
         </motion.div>
       </div>

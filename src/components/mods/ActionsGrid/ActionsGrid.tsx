@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import Image from 'next/image';
+import { MarkdownRenderer } from '@/components/ui/MarkdownRenderer';
 
 export interface ActionCard {
   title: string;
@@ -65,7 +66,7 @@ export function ActionsGrid({
     <section className={`card py-16 px-6 ${bgColorClasses[bgColor]} w-full ${maxWidthClasses[maxWidth]} mx-auto flex flex-col items-center`}>
       {title && (
         <motion.h3 className={`text-3xl font-semibold ${titleColorClasses[titleColor]} mb-8 text-center`}>
-          {title}
+          <MarkdownRenderer content={title} />
         </motion.h3>
       )}
 
@@ -85,10 +86,14 @@ export function ActionsGrid({
               />
             )}
             {action.title && (
-              <h4 className="text-xl font-semibold">{action.title}</h4>
+              <h4 className="text-xl font-semibold">
+                <MarkdownRenderer content={action.title} />
+              </h4>
             )}
             {action.description && (
-              <p>{action.description}</p>
+              <div className="text-base-content/80">
+                <MarkdownRenderer content={action.description} />
+              </div>
             )}
           </motion.div>
         ))}

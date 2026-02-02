@@ -9,6 +9,7 @@ import { ModComponents } from '@/components/mods'; // Import registry
 import { Box } from 'lucide-react';
 
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
+import { MarkdownRenderer } from '@/components/ui/MarkdownRenderer';
 
 export interface Pillar {
   icon: string;
@@ -118,7 +119,7 @@ export function PillarsGrid({
           viewport={{ once: true }}
           className={`text-3xl md:text-4xl font-semibold ${titleColorClasses[titleColor]} mb-10 text-center`}
         >
-          {title}
+          <MarkdownRenderer content={title} />
         </motion.h2>
       )}
 
@@ -158,9 +159,11 @@ export function PillarsGrid({
                 )}
               </div>
               <h3 className="font-bold text-lg mb-2 text-base-content">
-                {pillar.title}
+                <MarkdownRenderer content={pillar.title} />
               </h3>
-              <p className="text-sm text-base-content/80 mb-4 flex-grow">{pillar.description}</p>
+              <div className="text-sm text-base-content/80 mb-4 flex-grow">
+                <MarkdownRenderer content={pillar.description} />
+              </div>
               
               {hasButton && (
                  isModal ? (

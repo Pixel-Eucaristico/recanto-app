@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { MarkdownRenderer } from '@/components/ui/MarkdownRenderer';
 
 export interface CTAButton {
   text: string;
@@ -113,19 +114,19 @@ export function CallToAction({
           viewport={{ once: true }}
           className={`${titleSizeClasses[titleSize]} font-semibold ${titleColorClasses[titleColor]} mb-4`}
         >
-          {title}
+          <MarkdownRenderer content={title} />
         </motion.h2>
 
         {description && (
-          <motion.p
+          <motion.div
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
             viewport={{ once: true }}
-            className="text-lg md:text-xl text-base-content/80 mb-8"
+            className="text-lg md:text-xl text-base-content/80 mb-8 font-md-container"
           >
-            {description}
-          </motion.p>
+            <MarkdownRenderer content={description} />
+          </motion.div>
         )}
 
         <motion.div

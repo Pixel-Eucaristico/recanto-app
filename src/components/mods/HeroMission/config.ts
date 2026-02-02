@@ -89,7 +89,7 @@ export const HeroMissionConfig: ModConfig = {
     {
       name: 'backgroundImage',
       label: 'Imagem de Fundo (URL)',
-      type: 'url',
+      type: 'image',
       required: false,
       default: 'https://images.unsplash.com/photo-1438032005730-c779502df39b?w=1200',
       placeholder: 'https://...'

@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
+import { MarkdownRenderer } from '@/components/ui/MarkdownRenderer';
 
 export interface TextWithAnimationProps {
   title: string;
@@ -75,7 +76,7 @@ export function TextWithAnimation({
           viewport={{ once: true }}
           className={`text-3xl md:text-4xl font-semibold ${titleColorClasses[titleColor]} mb-6`}
         >
-          {title}
+          <MarkdownRenderer content={title} />
         </motion.h2>
       )}
 
@@ -92,9 +93,9 @@ export function TextWithAnimation({
             }`}
           >
             {paragraphs.map((paragraph, index) => (
-              <p key={index} className="text-base md:text-lg text-base-content">
-                {paragraph}
-              </p>
+              <div key={index} className="text-base md:text-lg text-base-content">
+                <MarkdownRenderer content={paragraph} />
+              </div>
             ))}
           </motion.div>
         )}

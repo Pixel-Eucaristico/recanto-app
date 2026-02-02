@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { eventService } from '@/services/firebase';
 import type { Event } from '@/types/firebase-entities';
 import { Calendar, Clock, MapPin, Loader2 } from 'lucide-react';
+import { MarkdownRenderer } from '@/components/ui/MarkdownRenderer';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -77,13 +78,13 @@ export default function EventsSection({
         <div className="text-center mb-12">
           {title && (
             <h2 className="text-3xl md:text-4xl font-bold text-slate-800 mb-4">
-              {title}
+              <MarkdownRenderer content={title} />
             </h2>
           )}
           {subtitle && (
-            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-              {subtitle}
-            </p>
+            <div className="text-lg text-slate-600 max-w-2xl mx-auto">
+              <MarkdownRenderer content={subtitle} />
+            </div>
           )}
         </div>
 
@@ -100,13 +101,15 @@ export default function EventsSection({
                     {eventTypeLabels[event.type as keyof typeof eventTypeLabels]}
                   </span>
                 </div>
-                <CardTitle className="text-xl">{event.title}</CardTitle>
+                <CardTitle className="text-xl">
+                  <MarkdownRenderer content={event.title} />
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {event.description && (
-                  <p className="text-slate-600 text-sm line-clamp-2">
-                    {event.description}
-                  </p>
+                  <div className="text-slate-600 text-sm line-clamp-2">
+                    <MarkdownRenderer content={event.description} />
+                  </div>
                 )}
 
                 <div className="space-y-2 text-sm text-slate-500">
