@@ -23,6 +23,7 @@ import { TextListEditor } from './TextListEditor';
 import { ActionsGridEditor } from './ActionsGridEditor';
 import { ProjectsShowcaseEditor } from './ProjectsShowcaseEditor';
 import { EvangelizationActionsVisualEditor } from './EvangelizationActionsVisualEditor';
+import ImageUpload from './ImageUpload';
 
 interface DynamicModFormProps {
   modId: string;
@@ -139,6 +140,27 @@ export default function DynamicModForm({
             className="checkbox checkbox-primary"
             checked={value}
             onChange={(e) => handleChange(propName, e.target.checked)}
+          />
+        );
+
+      case 'image':
+        return (
+          <ImageUpload
+            value={value}
+            onChange={(newValue) => handleChange(propName, newValue)}
+            label={config.label}
+            customFileName={(config as any).fileName}
+          />
+        );
+
+      case 'image-dated':
+        return (
+          <ImageUpload
+            value={value}
+            onChange={(newValue) => handleChange(propName, newValue)}
+            label={config.label}
+            mode="dated"
+            customFileName={(config as any).fileName}
           />
         );
 

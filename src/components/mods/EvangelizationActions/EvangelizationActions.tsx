@@ -3,6 +3,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { BookOpen, Users, Heart, UserPlus, Home, Sparkles } from 'lucide-react';
+import { MarkdownRenderer } from '@/components/ui/MarkdownRenderer';
 
 interface EvangelizationItem {
   id?: number;
@@ -67,13 +68,13 @@ export default function EvangelizationActions({
       <div className="text-center mb-12">
         {title && (
           <h2 className="text-4xl font-bold text-base-content mb-4">
-            {title}
+            <MarkdownRenderer content={title} />
           </h2>
         )}
         {subtitle && (
-          <p className="text-lg text-base-content/70 max-w-2xl mx-auto">
-            {subtitle}
-          </p>
+          <div className="text-lg text-base-content/70 max-w-2xl mx-auto">
+            <MarkdownRenderer content={subtitle} />
+          </div>
         )}
       </div>
 
@@ -94,11 +95,11 @@ export default function EvangelizationActions({
                 <IconComponent className="w-16 h-16 text-primary" strokeWidth={1.5} />
               </div>
               <h3 className="text-xl font-semibold text-base-content mb-3">
-                {item.title}
+                <MarkdownRenderer content={item.title} />
               </h3>
-              <p className="text-base-content/80 leading-relaxed max-w-xs">
-                {item.description}
-              </p>
+              <div className="text-base-content/80 leading-relaxed max-w-xs">
+                <MarkdownRenderer content={item.description} />
+              </div>
             </motion.div>
           );
         })}

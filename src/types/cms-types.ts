@@ -84,7 +84,7 @@ export interface ModPropConfig {
   key?: string;                    // Nome da prop (legacy)
   name?: string;                   // Nome da prop (novo padrão)
   label: string;                   // Label no editor
-  type: 'text' | 'textarea' | 'select' | 'number' | 'boolean' | 'json-editor' | 'image' | 'color' | 'date' | 'string' | 'url' | 'testimonials-editor' | 'paragraphs-editor' | 'animation-picker' | 'pillars-editor' | 'buttons-editor' | 'evangelization-actions-editor' | 'projects-editor' | 'our-lady-header-editor' | 'infographic-cards-editor' | 'html-editor' | 'wysiwyg-editor' | 'font-family' | 'bg-color' | 'hero-with-animation-editor' | 'text-image-animation-editor' | 'animation' | 'icon' | 'array';
+  type: 'text' | 'textarea' | 'select' | 'number' | 'boolean' | 'json-editor' | 'image' | 'image-dated' | 'color' | 'date' | 'string' | 'url' | 'testimonials-editor' | 'paragraphs-editor' | 'animation-picker' | 'pillars-editor' | 'buttons-editor' | 'evangelization-actions-editor' | 'projects-editor' | 'our-lady-header-editor' | 'infographic-cards-editor' | 'html-editor' | 'wysiwyg-editor' | 'font-family' | 'bg-color' | 'hero-with-animation-editor' | 'text-image-animation-editor' | 'sections-editor' | 'formation-stages-editor' | 'text-list-editor' | 'actions-grid-editor' | 'projects-showcase-editor' | 'animation' | 'icon' | 'array';
   options?: (string | SelectOption)[];  // Para type="select" - suporta strings simples ou {value, label}
   required?: boolean;
   default?: any;                   // Valor padrão (novo)

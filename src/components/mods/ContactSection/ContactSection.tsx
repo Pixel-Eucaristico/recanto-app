@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useState } from "react";
+import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 
 export interface ContactSectionProps {
   // Configurações da Seção
@@ -122,18 +123,18 @@ export default function ContactSection({
             transition={{ duration: 0.6 }}
             className="text-3xl md:text-4xl font-bold text-center text-primary mb-2"
           >
-            {title}
+            <MarkdownRenderer content={title} />
           </motion.h2>
         )}
         {subtitle && (
-          <motion.p
+          <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             transition={{ delay: 0.2, duration: 0.6 }}
             className="text-center text-lg text-base-content/80 mb-12 max-w-2xl mx-auto"
           >
-            {subtitle}
-          </motion.p>
+            <MarkdownRenderer content={subtitle} />
+          </motion.div>
         )}
 
         <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
@@ -145,7 +146,7 @@ export default function ContactSection({
             className="card bg-base-100 shadow-xl"
           >
             <div className="card-body">
-              {formTitle && <h3 className="card-title text-secondary mb-4">{formTitle}</h3>}
+              {formTitle && <h3 className="card-title text-secondary mb-4"><MarkdownRenderer content={formTitle} /></h3>}
               <form onSubmit={handleSubmit} className="space-y-4">
                 {showName && <input type="text" name="name" placeholder="Nome Completo" className="input input-bordered w-full" required />}
                 {showEmail && <input type="email" name="email" placeholder="E-mail" className="input input-bordered w-full" required />}
@@ -182,12 +183,12 @@ export default function ContactSection({
             className="flex flex-col justify-center space-y-8"
           >
             <div>
-              <h3 className="text-2xl font-bold text-secondary mb-6">{infoTitle}</h3>
+              <h3 className="text-2xl font-bold text-secondary mb-6"><MarkdownRenderer content={infoTitle} /></h3>
               
               {/* WhatsApp Block */}
               <div className="card bg-base-200 p-6 mb-6">
                 <h4 className="font-semibold text-lg mb-2">WhatsApp</h4>
-                <p className="text-base-content/70 mb-4">{whatsappText}</p>
+                <div className="text-base-content/70 mb-4"><MarkdownRenderer content={whatsappText} /></div>
                 <a 
                   href={whatsappLink || '#'} 
                   target="_blank" 
@@ -200,9 +201,9 @@ export default function ContactSection({
 
               {/* Phone Block */}
               <div className="pl-2 border-l-4 border-primary/30">
-                <h4 className="font-semibold text-lg mb-1">{phoneTitle}</h4>
-                <p className="text-xl font-bold text-primary mb-1">{phoneText}</p>
-                <p className="text-sm text-base-content/60">{scheduleText}</p>
+                <h4 className="font-semibold text-lg mb-1"><MarkdownRenderer content={phoneTitle} /></h4>
+                <div className="text-xl font-bold text-primary mb-1"><MarkdownRenderer content={phoneText} /></div>
+                <div className="text-sm text-base-content/60"><MarkdownRenderer content={scheduleText} /></div>
               </div>
             </div>
           </motion.div>

@@ -64,6 +64,8 @@ export default function Sidebar() {
   );
 }
 
+import Link from "next/link";
+
 /**
  * SidebarHeader Component
  * Displays the application logo and title
@@ -71,12 +73,15 @@ export default function Sidebar() {
  */
 function SidebarHeader() {
   return (
-    <div className="flex items-center gap-3 p-4 w-full border-b border-base-300">
+    <Link 
+      href="/" 
+      className="flex items-center gap-3 p-4 w-full border-b border-base-300 hover:bg-base-300 transition-colors"
+    >
       <Heart className="w-6 h-6 text-primary shrink-0" />
       <h1 className="font-bold text-lg text-base-content is-drawer-close:hidden">
         Recanto Digital
       </h1>
-    </div>
+    </Link>
   );
 }
 

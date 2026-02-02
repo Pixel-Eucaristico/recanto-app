@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import Lottie from "lottie-react";
 import { useEffect, useState } from "react";
+import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 
 export interface FormationStage {
   title: string;
@@ -98,8 +99,12 @@ function StageCard({ stage }: { stage: FormationStage }) {
           loop
         />
       )}
-      <h3 className="text-xl font-semibold text-base-content">{stage.title}</h3>
-      <p className="text-base-content/80">{stage.description}</p>
+      <h3 className="text-xl font-semibold text-base-content">
+        <MarkdownRenderer content={stage.title} />
+      </h3>
+      <div className="text-base-content/80">
+        <MarkdownRenderer content={stage.description} />
+      </div>
     </div>
   );
 }
@@ -128,7 +133,7 @@ export default function FormationStages({
             transition={{ duration: 0.6 }}
             className={`text-3xl font-semibold ${colorVariants.text[titleColor]} mb-6 text-center`}
           >
-            {title}
+            <MarkdownRenderer content={title} />
           </motion.h2>
         )}
         <motion.div
@@ -141,11 +146,11 @@ export default function FormationStages({
             <StageCard key={index} stage={stage} />
           ))}
         </motion.div>
-        {subtitle && (
           <div className="mt-8 p-4 bg-base-200 rounded-box text-center">
-            <p className="text-base-content">{subtitle}</p>
+            <div className="text-base-content">
+              <MarkdownRenderer content={subtitle} />
+            </div>
           </div>
-        )}
       </div>
     </section>
   );

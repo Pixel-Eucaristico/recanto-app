@@ -19,16 +19,16 @@ export function SidebarMenuItem({
   const content = (
     <>
       <Icon className="w-5 h-5 shrink-0" />
-      <span className="is-drawer-close:hidden">{label}</span>
+      <span className="is-drawer-close:hidden whitespace-nowrap">{label}</span>
     </>
   );
 
-  const className = "is-drawer-close:tooltip is-drawer-close:tooltip-right";
+  const className = "is-drawer-close:tooltip is-drawer-close:tooltip-right flex items-center gap-3 w-full text-left";
   const dataTip = tooltip || label;
 
   if (href) {
     return (
-      <li>
+      <li className="w-full">
         <Link href={href} className={className} data-tip={dataTip}>
           {content}
         </Link>
@@ -37,8 +37,8 @@ export function SidebarMenuItem({
   }
 
   return (
-    <li>
-      <button onClick={onClick} className={className} data-tip={dataTip}>
+    <li className="w-full">
+      <button type="button" onClick={onClick} className={className} data-tip={dataTip}>
         {content}
       </button>
     </li>

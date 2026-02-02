@@ -76,13 +76,15 @@ class AuthService {
     uid: string,
     name: string,
     email: string,
-    role: Role = null
+    role: Role = undefined,
+    photo_url: string = undefined
   ): Promise<FirebaseUser> {
     const userData: FirebaseUser = {
       id: uid,
       name,
       email,
       role,
+      photo_url,
       created_at: new Date().toISOString(),
     };
 
@@ -115,7 +117,7 @@ class AuthService {
       }
 
       const result = await signInWithPopup(auth, provider);
-      const { uid, displayName, email } = result.user;
+      const { uid, displayName, email, photoURL } = result.user;
 
       // Busca ou cria usuário
       let user = await userService.get(uid);
@@ -124,7 +126,9 @@ class AuthService {
         user = await this.createUserInDatabase(
           uid,
           displayName || email!.split('@')[0],
-          email!
+          email!,
+          undefined, // role
+          photoURL || undefined // photo
         );
       }
 
@@ -161,7 +165,9 @@ class AuthService {
           user = await this.createUserInDatabase(
             firebaseUser.uid,
             firebaseUser.displayName || firebaseUser.email!.split('@')[0],
-            firebaseUser.email!
+            firebaseUser.email!,
+            undefined, // role
+            firebaseUser.photoURL || undefined // photo
           );
         }
 
@@ -187,13 +193,27 @@ class AuthService {
         user = await this.createUserInDatabase(
           firebaseUser.uid,
           firebaseUser.displayName || firebaseUser.email.split('@')[0],
-          firebaseUser.email
+          firebaseUser.email,
+          undefined,
+          firebaseUser.photoURL || undefined
         );
       }
 
       return user;
     }
     return null;
+  }
+
+  /**
+   * Atualiza foto de perfil
+   */
+  async updateProfilePicture(uid: string, photoUrl: string): Promise<void> {
+    try {
+      await userService.update(uid, { photo_url: photoUrl });
+    } catch (error) {
+      console.error('Error updating profile picture:', error);
+      throw error;
+    }
   }
 }
 

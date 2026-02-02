@@ -10,6 +10,8 @@ export interface TextIntroProps {
   paddingY?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
+import { MarkdownRenderer } from '@/components/ui/MarkdownRenderer';
+
 /**
  * TextIntro - Seção de introdução/texto centralizado
  * Perfeito para mensagens de boas-vindas e introduções
@@ -68,8 +70,9 @@ export function TextIntro({
           transition={{ duration: 0.6 }}
           viewport={{ once: true }}
           className={`${textSizeClasses[textSize]} text-base-content`}
-          dangerouslySetInnerHTML={{ __html: content }}
-        />
+        >
+          <MarkdownRenderer content={content} />
+        </motion.div>
       </div>
     </section>
   );

@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
+import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 
 export interface VocationalContactFormProps {
   title?: string;
@@ -146,18 +147,18 @@ export default function VocationalContactForm({
             transition={{ duration: 0.6 }}
             className={`text-2xl font-semibold ${colorVariants.text[titleColor]} text-center mb-4`}
           >
-            {title}
+            <MarkdownRenderer content={title} as="span" inline />
           </motion.h2>
         )}
         {subtitle && (
-          <motion.p
+          <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             transition={{ delay: 0.2, duration: 0.6 }}
             className="text-center text-base-content/80 mb-6"
           >
-            {subtitle}
-          </motion.p>
+            <MarkdownRenderer content={subtitle} as="span" inline />
+          </motion.div>
         )}
         <motion.form
           initial={{ opacity: 0, y: 20 }}

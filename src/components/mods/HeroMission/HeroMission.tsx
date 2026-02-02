@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
+import { MarkdownRenderer } from '@/components/ui/MarkdownRenderer';
 
 interface HeroMissionProps {
   title?: string;
@@ -93,13 +94,13 @@ export default function HeroMission({
         >
           {title && (
             <h1 className={`mb-5 font-bold drop-shadow-lg ${titleSizeClasses[titleSize]} ${titleColorClasses[titleColor]}`}>
-              {title}
+              <MarkdownRenderer content={title} />
             </h1>
           )}
           {description && (
-            <p className={`mb-8 drop-shadow-md ${descSizeClasses[descSize]} ${descColorClasses[descColor]}`}>
-              {description}
-            </p>
+            <div className={`mb-8 drop-shadow-md ${descSizeClasses[descSize]} ${descColorClasses[descColor]}`}>
+              <MarkdownRenderer content={description} />
+            </div>
           )}
           {buttonText && buttonLink && (
             <Link href={buttonLink}>

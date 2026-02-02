@@ -1,0 +1,8 @@
+{
+  "projects": {
+    "default": "recanto-do-amor-miserico-e5a7b",
+    "dev": "recanto-app-dev"
+  },
+  "targets": {},
+  "etags": {}
+}
