@@ -31,5 +31,5 @@ interface SidebarMenuProps {
 }
 
 export function SidebarMenu({ children }: SidebarMenuProps) {
-  return <ul className="menu p-2">{children}</ul>;
+  return <ul className="menu w-full p-2">{children}</ul>;
 }

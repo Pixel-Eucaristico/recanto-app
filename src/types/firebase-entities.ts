@@ -7,8 +7,9 @@ export interface FirebaseUser {
   id: string;
   name: string;
   email: string;
-  role: Role;
+  role?: Role;
   phone?: string;
+  photo_url?: string;
   missionario_responsavel_id?: string; // Para recantianos
   filho_recantiano_id?: string; // Para pais
   created_at: string;

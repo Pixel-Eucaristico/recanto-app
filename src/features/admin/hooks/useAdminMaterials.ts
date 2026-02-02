@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Material } from '@/entities/Material';
 import { useToast } from "@/components/ui/use-toast";
 import { UploadFile } from '@/integrations/Core';
@@ -9,6 +9,8 @@ export function useAdminMaterials() {
     const [isLoading, setIsLoading] = useState(true);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [categoryFilter, setCategoryFilter] = useState('all');
 
     const fetchMaterials = async () => {
         setIsLoading(true);
@@ -25,6 +27,15 @@ export function useAdminMaterials() {
     useEffect(() => {
         fetchMaterials();
     }, []);
+
+    const filteredMaterials = useMemo(() => {
+        return materials.filter(mat => {
+            const matchesSearch = mat.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                mat.category.toLowerCase().includes(searchQuery.toLowerCase());
+            const matchesCategory = categoryFilter === 'all' || mat.category === categoryFilter;
+            return matchesSearch && matchesCategory;
+        });
+    }, [materials, searchQuery, categoryFilter]);
 
     const deleteMaterial = async (id: string) => {
         try {
@@ -72,11 +83,15 @@ export function useAdminMaterials() {
     };
 
     return {
-        materials,
+        materials: filteredMaterials,
         isLoading,
         isDialogOpen,
         setIsDialogOpen,
         editingMaterial,
+        searchQuery,
+        setSearchQuery,
+        categoryFilter,
+        setCategoryFilter,
         deleteMaterial,
         saveMaterial,
         openEdit,

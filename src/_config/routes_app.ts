@@ -12,7 +12,8 @@ import {
   Settings,
   Database,
   FileEdit,
-  Boxes
+  Boxes,
+  ArrowLeft
 } from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
 import { Role } from "@/features/auth/types/user";
@@ -27,11 +28,19 @@ export interface AppRoute {
 
 export const appRoutes: AppRoute[] = [
   {
-    name: 'Início',
+    name: 'Voltar para o Site',
+    href: '/',
+    icon: ArrowLeft,
+    roles: ['admin', 'missionario', 'recantiano', 'pai', 'colaborador', 'benfeitor']
+  },
+  /*
+  {
+    name: 'Início Dashboard',
     href: '/app/dashboard',
     icon: Home,
     roles: ['admin', 'missionario', 'recantiano', 'pai', 'colaborador', 'benfeitor']
   },
+  */
   /*
   {
     name: 'Formação',
@@ -82,12 +91,14 @@ export const appRoutes: AppRoute[] = [
     icon: UserCog,
     roles: ['admin']
   },
+  /*
   {
     name: 'Relatório Doações',
     href: '/app/dashboard/donation-report',
     icon: DollarSign,
     roles: ['admin']
   },
+  */
   /*
   {
     name: 'Integração Omie',

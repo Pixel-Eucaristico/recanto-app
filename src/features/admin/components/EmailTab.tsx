@@ -8,129 +8,186 @@ export default function EmailTab() {
     const { config, setConfig, isLoading, isSaving, gmailStatus, saveConfig, disconnectGmail } = useAdminEmail();
 
     if (isLoading) return (
-        <div className="flex justify-center p-12">
-            <span className="loading loading-spinner text-primary loading-lg"></span>
+        <div className="flex justify-center p-10">
+            <span className="loading loading-spinner text-primary"></span>
         </div>
     );
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
-            {/* Coluna Esquerda: Configurações Gerais */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-2 duration-400">
+            {/* Coluna Esquerda: Configurações */}
             <div className="card bg-base-100 shadow-sm border border-base-300">
-                <div className="card-body gap-8 p-8">
-                    <h3 className="card-title text-2xl font-bold text-base-content">Configurações de E-mail</h3>
+                <div className="card-body gap-6 p-6">
+                    <h3 className="card-title text-lg font-bold text-base-content">Configurações de E-mail</h3>
                     
-                    <fieldset className="fieldset bg-base-200/50 p-6 rounded-box border border-base-300">
-                        <legend className="fieldset-legend text-base-content/60 font-bold uppercase tracking-wider">Identidade</legend>
+                    <fieldset className="fieldset bg-base-200/50 p-5 rounded-box border border-base-300 gap-4">
+                        <legend className="fieldset-legend text-[10px] font-bold uppercase opacity-60">Identidade</legend>
                         
-                        <div className="flex flex-col gap-6 w-full">
-                            <label className="form-control w-full">
-                                <div className="label pt-0"><span className="label-text font-bold">Nome do Administrador</span></div>
-                                <input 
-                                    className="input input-bordered w-full" 
-                                    placeholder="Nome exibido nos e-mails"
-                                    value={config.name || ''} 
-                                    onChange={(e) => setConfig({ ...config, name: e.target.value })} 
-                                />
-                            </label>
-
-                            <label className="form-control w-full">
-                                <div className="label pt-0"><span className="label-text font-bold">E-mail de Notificação</span></div>
-                                <input 
-                                    className="input input-bordered w-full" 
-                                    type="email" 
-                                    placeholder="admin@exemplo.com"
-                                    value={config.email || ''} 
-                                    onChange={(e) => setConfig({ ...config, email: e.target.value })} 
-                                />
-                            </label>
-
-                            <label className="form-control w-full">
-                                <div className="label pt-0"><span className="label-text font-bold">Serviço de Envio</span></div>
-                                <select 
-                                    className="select select-bordered w-full" 
-                                    value={config.provider || 'gmail'} 
-                                    onChange={(e) => setConfig({ ...config, provider: e.target.value as any })}
-                                >
-                                    <option value="gmail">Google Gmail API</option>
-                                    <option value="smtp">Servidor SMTP Manual</option>
-                                </select>
-                            </label>
+                        <div className="w-full">
+                            <label className="fieldset-label font-bold text-xs text-base-content/70 mb-1">Nome do Remetente</label>
+                            <input 
+                                className="input input-bordered w-full bg-base-100" 
+                                placeholder="Ex: Admin Recanto"
+                                value={config.name || ''} 
+                                onChange={(e) => setConfig({ ...config, name: e.target.value })} 
+                            />
                         </div>
+
+                        <div className="w-full">
+                            <label className="fieldset-label font-bold text-xs text-base-content/70 mb-1">E-mail de Notificação</label>
+                            <input 
+                                className="input input-bordered w-full bg-base-100" 
+                                type="email" 
+                                placeholder="admin@recanto.org"
+                                value={config.email || ''} 
+                                onChange={(e) => setConfig({ ...config, email: e.target.value })} 
+                            />
+                        </div>
+
+                        <div className="w-full">
+                            <label className="fieldset-label font-bold text-xs text-base-content/70 mb-1">Provedor</label>
+                            <select 
+                                className="select select-bordered w-full bg-base-100 h-[38px] min-h-0" 
+                                value={config.provider || 'gmail'} 
+                                onChange={(e) => setConfig({ ...config, provider: e.target.value as any })}
+                            >
+                                <option value="gmail">Gmail API</option>
+                                <option value="smtp">SMTP Manual</option>
+                            </select>
+                        </div>
+
+                        {/* Configurações SMTP (Visível apenas se provedor for SMTP) */}
+                        {config.provider === 'smtp' && (
+                            <div className="animate-in slide-in-from-top-2 duration-300 flex flex-col gap-4 mt-2">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="w-full">
+                                        <label className="fieldset-label font-bold text-[10px] uppercase opacity-60 mb-1">Servidor SMTP</label>
+                                        <input 
+                                            className="input input-bordered w-full bg-base-100 h-[38px]" 
+                                            placeholder="smtp.example.com"
+                                            value={config.smtp?.host || ''} 
+                                            onChange={(e) => setConfig({ 
+                                                ...config, 
+                                                smtp: { ...(config.smtp || { host: '', port: 587, user: '', pass: '' }), host: e.target.value } 
+                                            })} 
+                                        />
+                                    </div>
+                                    <div className="w-full">
+                                        <label className="fieldset-label font-bold text-[10px] uppercase opacity-60 mb-1">Porta</label>
+                                        <input 
+                                            className="input input-bordered w-full bg-base-100 h-[38px]" 
+                                            type="number"
+                                            placeholder="587"
+                                            value={config.smtp?.port || ''} 
+                                            onChange={(e) => setConfig({ 
+                                                ...config, 
+                                                smtp: { ...(config.smtp || { host: '', port: 587, user: '', pass: '' }), port: parseInt(e.target.value) } 
+                                            })} 
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="w-full">
+                                    <label className="fieldset-label font-bold text-[10px] uppercase opacity-60 mb-1">Usuário / E-mail</label>
+                                    <input 
+                                        className="input input-bordered w-full bg-base-100 h-[38px]" 
+                                        placeholder="user@example.com"
+                                        value={config.smtp?.user || ''} 
+                                        onChange={(e) => setConfig({ 
+                                            ...config, 
+                                            smtp: { ...(config.smtp || { host: '', port: 587, user: '', pass: '' }), user: e.target.value } 
+                                        })} 
+                                    />
+                                </div>
+
+                                <div className="w-full">
+                                    <label className="fieldset-label font-bold text-[10px] uppercase opacity-60 mb-1">Senha / Token de App</label>
+                                    <input 
+                                        className="input input-bordered w-full bg-base-100 h-[38px]" 
+                                        type="password"
+                                        placeholder="••••••••"
+                                        value={config.smtp?.pass || ''} 
+                                        onChange={(e) => setConfig({ 
+                                            ...config, 
+                                            smtp: { ...(config.smtp || { host: '', port: 587, user: '', pass: '' }), pass: e.target.value } 
+                                        })} 
+                                    />
+                                </div>
+                            </div>
+                        )}
                     </fieldset>
 
-                    <fieldset className="fieldset bg-base-200/50 p-6 rounded-box border border-base-300">
-                        <legend className="fieldset-legend text-base-content/60 font-bold uppercase tracking-wider">Alertas</legend>
-                        <div className="flex flex-col gap-5">
-                            <label className="flex items-center gap-4 cursor-pointer group">
+                    <fieldset className="fieldset bg-base-200/50 p-5 rounded-box border border-base-300 gap-3">
+                        <legend className="fieldset-legend text-[10px] font-bold uppercase opacity-60">Alertas Automáticos</legend>
+                        <div className="flex flex-col gap-3">
+                            <label className="flex items-center gap-3 cursor-pointer group">
                                 <input 
                                     type="checkbox" 
-                                    className="checkbox checkbox-primary" 
+                                    className="checkbox checkbox-sm checkbox-primary" 
                                     checked={config.notify_on_contact} 
                                     onChange={(e) => setConfig({ ...config, notify_on_contact: e.target.checked })} 
                                 />
-                                <span className="label-text font-medium text-base group-hover:text-primary transition-colors">Novos formulários de contato</span>
+                                <span className="label-text text-sm group-hover:text-primary transition-colors">Novos contatos do site</span>
                             </label>
-                            <label className="flex items-center gap-4 cursor-pointer group">
+                            <label className="flex items-center gap-3 cursor-pointer group">
                                 <input 
                                     type="checkbox" 
-                                    className="checkbox checkbox-primary" 
+                                    className="checkbox checkbox-sm checkbox-primary" 
                                     checked={config.notify_on_story} 
                                     onChange={(e) => setConfig({ ...config, notify_on_story: e.target.checked })} 
                                 />
-                                <span className="label-text font-medium text-base group-hover:text-primary transition-colors">Novas histórias de usuários</span>
+                                <span className="label-text text-sm group-hover:text-primary transition-colors">Novos depoimentos</span>
                             </label>
                         </div>
                     </fieldset>
 
-                    <div className="card-actions justify-end mt-4">
-                        <button className="btn btn-primary px-10 shadow-md" onClick={() => saveConfig(config)} disabled={isSaving}>
-                            {isSaving ? <span className="loading loading-spinner"></span> : "Salvar Tudo"}
+                    <div className="card-actions justify-end">
+                        <button className="btn btn-primary btn-md px-8" onClick={() => saveConfig(config)} disabled={isSaving}>
+                            {isSaving ? <span className="loading loading-spinner loading-xs"></span> : "Salvar Tudo"}
                         </button>
                     </div>
                 </div>
             </div>
 
-            {/* Coluna Direita: API e Informações */}
-            <div className="flex flex-col gap-8">
+            {/* Coluna Direita: API */}
+            <div className="flex flex-col gap-6">
                 <div className="card bg-base-100 shadow-sm border border-base-300">
-                    <div className="card-body p-8">
-                        <h3 className="card-title text-2xl font-bold text-base-content mb-4">Conexão Gmail</h3>
+                    <div className="card-body p-6">
+                        <h3 className="card-title text-lg font-bold text-base-content mb-2">Conexão Gmail</h3>
                         
                         {gmailStatus?.connected ? (
-                            <div className="p-6 rounded-2xl bg-success/10 border border-success/20 flex items-start gap-4">
-                                <CheckCircle2 className="w-6 h-6 shrink-0 text-success" />
+                            <div className="p-5 rounded-xl bg-success/5 border border-success/20 flex items-start gap-3">
+                                <CheckCircle2 className="w-5 h-5 shrink-0 text-success" />
                                 <div className="flex-1">
-                                    <h4 className="font-bold text-success text-lg">Gmail Conectado</h4>
-                                    <p className="text-sm opacity-80 text-base-content mt-1">O sistema está enviando e-mails via API oficial.</p>
+                                    <h4 className="font-bold text-success text-sm">Gmail Conectado</h4>
+                                    <p className="text-xs opacity-70 text-base-content mt-1">Envios via API oficial ativos.</p>
                                     <button 
-                                        className="btn btn-link btn-xs mt-3 p-0 h-auto text-error underline hover:text-error/80" 
+                                        className="btn btn-link btn-xs mt-2 p-0 h-auto text-error no-underline hover:underline" 
                                         onClick={() => { if(confirm('Desconectar conta?')) disconnectGmail(); }}
                                     >
-                                        Desconectar Conta Google
+                                        Desconectar Google
                                     </button>
                                 </div>
                             </div>
                         ) : (
-                            <div className="space-y-6">
-                                <p className="text-base-content/70 leading-relaxed italic">
-                                    Vincule sua conta Google para garantir que os e-mails não caiam no SPAM e sejam entregues com segurança.
+                            <div className="space-y-4">
+                                <p className="text-xs text-base-content/60 leading-relaxed italic">
+                                    Conecte sua conta Google para evitar que e-mails caiam no SPAM.
                                 </p>
-                                <button className="btn btn-outline btn-block gap-3 border-base-300 hover:border-primary" onClick={() => window.location.href = '/api/gmail/auth'}>
-                                    <Mail className="w-5 h-5 shrink-0" /> Autorizar Acesso Google
+                                <button className="btn btn-outline btn-sm btn-block gap-2 border-base-300" onClick={() => window.location.href = '/api/gmail/auth'}>
+                                    <Mail className="w-4 h-4 shrink-0" /> Autorizar Google
                                 </button>
                             </div>
                         )}
                     </div>
                 </div>
 
-                {/* Importante / Info Alert */}
-                <div className="p-6 rounded-2xl bg-info/10 border border-info/20 flex items-start gap-4">
-                    <Info className="w-6 h-6 shrink-0 text-info" />
+                <div className="p-5 rounded-xl bg-info/5 border border-info/20 flex items-start gap-3">
+                    <Info className="w-5 h-5 shrink-0 text-info" />
                     <div className="flex-1">
-                        <h4 className="font-bold text-info text-sm uppercase tracking-widest mb-2">Atenção Especial</h4>
-                        <p className="text-sm text-base-content/80 leading-relaxed">
-                            O Recanto utiliza estas configurações para manter os administradores cientes de novas interações. Certifique-se de que o e-mail informado tem acesso constante.
+                        <h4 className="font-bold text-info text-[10px] uppercase tracking-wider mb-1">Aviso</h4>
+                        <p className="text-[11px] text-base-content/70 leading-relaxed italic">
+                            O sistema utiliza estas configurações para alertas administrativos. Verifique se o e-mail informado está correto.
                         </p>
                     </div>
                 </div>

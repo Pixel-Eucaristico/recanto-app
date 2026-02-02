@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Role } from '@/features/auth/types/user';
-import { User as UserIcon, Mail, Phone, ShieldCheck, X } from 'lucide-react';
+import { User as UserIcon, X } from 'lucide-react';
 
 interface Props {
     isOpen: boolean;
@@ -34,101 +34,86 @@ export default function UserFormDialog({ isOpen, setIsOpen, user, onSave }: Prop
     if (!isOpen) return null;
 
     return (
-        <div className="modal modal-open items-center justify-center p-4">
-            <div className="modal-box w-full max-w-lg bg-base-100 border border-base-300 shadow-2xl p-0 overflow-hidden rounded-3xl animate-in zoom-in-95 duration-200">
-                {/* Header */}
-                <div className="bg-base-200/80 p-6 border-b border-base-300 flex justify-between items-center">
-                    <div>
-                        <h3 className="text-2xl font-bold text-base-content flex items-center gap-3">
-                            <UserIcon className="w-6 h-6 shrink-0 text-primary" />
-                            {user ? 'Editar Membro' : 'Novo Membro'}
-                        </h3>
-                    </div>
-                    <button className="btn btn-ghost btn-circle btn-sm" onClick={() => setIsOpen(false)}><X className="w-5 h-5" /></button>
+        <div className="modal modal-open">
+            <div className="modal-box max-w-lg bg-base-100 border border-base-300 shadow-xl p-0 overflow-hidden rounded-2xl animate-in zoom-in-95 duration-200">
+                {/* Header MD (Padronizado) */}
+                <div className="bg-base-200 px-6 py-4 border-b border-base-300 flex justify-between items-center">
+                    <h3 className="text-lg font-bold text-base-content flex items-center gap-2">
+                        <UserIcon className="w-5 h-5 text-primary" />
+                        {user ? 'Editar Membro' : 'Novo Membro'}
+                    </h3>
+                    <button type="button" className="btn btn-ghost btn-circle btn-sm" onClick={() => setIsOpen(false)}>
+                        <X className="w-4 h-4" />
+                    </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-10 flex flex-col gap-8">
-                    <fieldset className="fieldset p-0 m-0 border-none bg-transparent flex flex-col gap-8">
-                        {/* Nome */}
-                        <div className="form-control w-full">
-                            <label className="label pt-0 pb-1">
-                                <span className="label-text font-bold text-base flex items-center gap-2">
-                                    <UserIcon className="w-4 h-4 shrink-0 opacity-40" /> Nome Completo
-                                </span>
-                            </label>
-                            <input 
-                                className="input input-bordered w-full bg-base-100 h-12" 
-                                placeholder="Ex: Maria Oliveira"
-                                value={formData.name} 
-                                onChange={(e) => setFormData({...formData, name: e.target.value})} 
-                                required 
-                            />
-                        </div>
-
-                        {/* E-mail */}
-                        <div className="form-control w-full">
-                            <label className="label pt-0 pb-1">
-                                <span className="label-text font-bold text-base flex items-center gap-2">
-                                    <Mail className="w-4 h-4 shrink-0 opacity-40" /> E-mail de Acesso
-                                </span>
-                            </label>
-                            <input 
-                                className="input input-bordered w-full bg-base-100 h-12" 
-                                type="email" 
-                                placeholder="email@recanto.org"
-                                value={formData.email} 
-                                onChange={(e) => setFormData({...formData, email: e.target.value})} 
-                                required 
-                                disabled={!!user} 
-                            />
-                        </div>
-
-                        {/* Grid Telefona e Funçao */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="form-control w-full">
-                                <label className="label pt-0 pb-1">
-                                    <span className="label-text font-bold text-base flex items-center gap-2">
-                                        <Phone className="w-4 h-4 shrink-0 opacity-40" /> WhatsApp
-                                    </span>
-                                </label>
+                <form onSubmit={handleSubmit} className="p-6">
+                    <fieldset className="fieldset gap-4 p-0">
+                        {/* Nome e Email em Grid 2 colunas */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="w-full">
+                                <label className="fieldset-label font-bold text-base-content/70">Nome Completo</label>
                                 <input 
-                                    className="input input-bordered w-full bg-base-100 h-12" 
+                                    className="input input-bordered w-full h-[38px]" 
+                                    placeholder="Nome do membro"
+                                    value={formData.name} 
+                                    onChange={(e) => setFormData({...formData, name: e.target.value})} 
+                                    required 
+                                />
+                            </div>
+
+                            <div className="w-full">
+                                <label className="fieldset-label font-bold text-base-content/70">E-mail</label>
+                                <input 
+                                    className="input input-bordered w-full h-[38px]" 
+                                    type="email" 
+                                    placeholder="exemplo@recanto.org"
+                                    value={formData.email} 
+                                    onChange={(e) => setFormData({...formData, email: e.target.value})} 
+                                    required 
+                                    disabled={!!user} 
+                                />
+                            </div>
+                        </div>
+
+                        {/* WhatsApp e Função em Grid 2 colunas */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="w-full">
+                                <label className="fieldset-label font-bold text-base-content/70">WhatsApp / Telefone</label>
+                                <input 
+                                    className="input input-bordered w-full h-[38px]" 
                                     placeholder="(00) 00000-0000"
                                     value={formData.phone} 
                                     onChange={(e) => setFormData({...formData, phone: e.target.value})} 
                                 />
                             </div>
 
-                            <div className="form-control w-full">
-                                <label className="label pt-0 pb-1">
-                                    <span className="label-text font-bold text-base flex items-center gap-2">
-                                        <ShieldCheck className="w-4 h-4 shrink-0 opacity-40" /> Nível de Acesso
-                                    </span>
-                                </label>
+                            <div className="w-full">
+                                <label className="fieldset-label font-bold text-base-content/70">Função/Acesso</label>
                                 <select 
-                                    className="select select-bordered w-full bg-base-100 h-12 font-semibold" 
+                                    className="select select-bordered w-full h-[38px] min-h-0" 
                                     value={formData.role || 'recantiano'} 
                                     onChange={(e) => setFormData({...formData, role: e.target.value as Role})}
                                 >
                                     <option value="admin">Administrador</option>
                                     <option value="missionario">Missionário</option>
                                     <option value="recantiano">Recantiano</option>
-                                    <option value="pai">Pai/Mãe de Acolhimento</option>
+                                    <option value="pai">Pai/Mãe</option>
                                 </select>
                             </div>
                         </div>
                     </fieldset>
 
-                    {/* Footer / Ações */}
-                    <div className="bg-base-200/50 -mx-10 -mb-10 p-8 flex justify-end gap-4 border-t border-base-300">
-                        <button type="button" className="btn btn-ghost px-8" onClick={() => setIsOpen(false)}>Cancelar</button>
-                        <button type="submit" className="btn btn-primary px-12 shadow-md" disabled={isSubmitting}>
-                            {isSubmitting ? <span className="loading loading-spinner"></span> : (user ? "Salvar Alterações" : "Criar Membro")}
+                    {/* Footer Standard MD */}
+                    <div className="card-actions justify-end mt-6 gap-2 border-t border-base-300 pt-4">
+                        <button type="button" className="btn btn-ghost btn-sm" onClick={() => setIsOpen(false)}>Cancelar</button>
+                        <button type="submit" className="btn btn-primary btn-sm px-6 font-bold" disabled={isSubmitting}>
+                            {isSubmitting ? <span className="loading loading-spinner loading-xs"></span> : (user ? "Salvar" : "Criar Membro")}
                         </button>
                     </div>
                 </form>
             </div>
-            <div className="modal-backdrop bg-black/40 backdrop-blur-sm" onClick={() => setIsOpen(false)}></div>
+            <div className="modal-backdrop bg-black/50" onClick={() => setIsOpen(false)}></div>
         </div>
     );
 }
