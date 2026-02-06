@@ -521,8 +521,11 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
                       <PanelLeftOpen className="w-5 h-5" />
                    </button>
                    <div className="divider my-0 w-8 self-center"></div>
-                   <div className="writing-vertical-rl rotate-180 flex items-center gap-2 text-sm font-bold tracking-wider opacity-50 whitespace-nowrap pt-4 uppercase">
-                      Biblioteca
+                   
+                   <div className="flex-1 flex items-center justify-center">
+                     <div className="rotate-90 whitespace-nowrap text-[10px] font-black tracking-[0.2em] opacity-30 select-none uppercase origin-center">
+                        Biblioteca
+                     </div>
                    </div>
                 </div>
              ) : (
@@ -923,7 +926,7 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
       {mobileDrawerOpen && (
         <div className="fixed inset-0 z-[200] flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setMobileDrawerOpen(false)}>
           <div 
-            className="bg-base-100 w-full md:max-w-4xl max-h-[85vh] md:max-h-[80vh] rounded-t-[2.5rem] md:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom md:zoom-in-95 duration-500"
+            className="bg-base-100 w-full md:max-w-6xl h-[92vh] md:h-[85vh] rounded-t-[2.5rem] md:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom md:zoom-in-95 duration-500"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-6 border-b border-base-200">

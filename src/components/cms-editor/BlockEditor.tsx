@@ -98,13 +98,13 @@ export default function BlockEditor({
          </div>
 
           <div
-            className="relative z-[1] boundary-reset origin-top bg-base-100 isolate"
+            className="relative z-[1] boundary-reset origin-top bg-base-100 isolate min-h-[140px] flex flex-col justify-center"
             style={{
                contain: isDragging ? 'paint style' : 'style',
                maxHeight: isDragging ? '150px' : 'none',
                overflow: isDragging ? 'hidden' : 'visible',
             }}
-         >
+          >
             {(() => {
               // Corrigir aninhamento incorreto de props (props.props -> props)
               // Alguns mods usam editor "props" que aninha tudo em block.props.props
