@@ -97,6 +97,7 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [urlType, setUrlType] = useState<'home' | 'custom'>('home');
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
+  const [libraryCallback, setLibraryCallback] = useState<((modId: string) => void) | null>(null);
   const [sidebarWidth, setSidebarWidth] = useState(320);
   const [isResizing, setIsResizing] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -520,8 +521,11 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
                       <PanelLeftOpen className="w-5 h-5" />
                    </button>
                    <div className="divider my-0 w-8 self-center"></div>
-                   <div className="writing-vertical-rl rotate-180 flex items-center gap-2 text-sm font-bold tracking-wider opacity-50 whitespace-nowrap pt-4 uppercase">
-                      Biblioteca
+                   
+                   <div className="flex-1 flex items-center justify-center">
+                     <div className="rotate-90 whitespace-nowrap text-[10px] font-black tracking-[0.2em] opacity-30 select-none uppercase origin-center">
+                        Biblioteca
+                     </div>
                    </div>
                 </div>
              ) : (
@@ -786,7 +790,7 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
           {/* Mobile FAB Button - Fixed at bottom */}
           <button
             onClick={() => setMobileDrawerOpen(true)}
-            className="lg:hidden fixed bottom-4 right-4 btn btn-primary btn-circle btn-lg shadow-2xl z-50"
+            className="fixed bottom-4 right-4 btn btn-primary btn-circle btn-lg shadow-2xl z-20"
             aria-label="Adicionar bloco"
           >
             <Plus className="w-6 h-6" />
@@ -795,9 +799,8 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
         </div>
       </div>
 
-      {/* Desktop Editor Modal - Better space for editing */}
       {selectedBlock && selectedBlockId && (
-        <div className="hidden lg:flex fixed inset-0 z-[100] items-center justify-center p-4 md:p-10 bg-black/70 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setSelectedBlockId(null)}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 md:p-10 bg-black/80 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setSelectedBlockId(null)}>
            <div 
              className="bg-base-100 rounded-3xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-300 ring-1 ring-white/10"
              onClick={(e) => e.stopPropagation()}
@@ -837,6 +840,10 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
                         }
                       }}
                       blockId={selectedBlock.id}
+                      onOpenLibrary={(callback) => {
+                        setLibraryCallback(() => callback);
+                        setMobileDrawerOpen(true);
+                      }}
                     />
                  </div>
               </div>
@@ -914,6 +921,39 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
           })()
         ) : null}
       </DragOverlay>
+      
+      {/* Reusable Library Drawer (Mobile & Desktop) */}
+      {mobileDrawerOpen && (
+        <div className="fixed inset-0 z-[200] flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setMobileDrawerOpen(false)}>
+          <div 
+            className="bg-base-100 w-full md:max-w-6xl h-[92vh] md:h-[85vh] rounded-t-[2.5rem] md:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom md:zoom-in-95 duration-500"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-6 border-b border-base-200">
+               <div className="flex items-center gap-3">
+                 <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                    <Plus className="w-5 h-5" />
+                 </div>
+                 <h3 className="font-bold text-lg">Adicionar Bloco</h3>
+               </div>
+               <button onClick={() => setMobileDrawerOpen(false)} className="btn btn-sm btn-circle btn-ghost">
+                 <X className="w-5 h-5" />
+               </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 pb-10">
+               <ModsLibrary onAddMod={(id) => {
+                 if (libraryCallback) {
+                   libraryCallback(id);
+                 } else {
+                   handleAddMod(id);
+                 }
+                 setMobileDrawerOpen(false);
+                 setLibraryCallback(null);
+               }} />
+            </div>
+          </div>
+        </div>
+      )}
     </DndContext>
   );
 }

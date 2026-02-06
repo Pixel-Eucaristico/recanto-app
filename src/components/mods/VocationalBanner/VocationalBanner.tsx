@@ -55,31 +55,19 @@ export default function VocationalBanner({
   const [animationData, setAnimationData] = useState(null);
 
   useEffect(() => {
-    // Só carregar se lottieUrl existir e não for vazio
     if (lottieUrl && lottieUrl.trim() !== '') {
-      // Normalizar URL: se não começar com / ou http, adicionar /animations/
-      let animationPath = lottieUrl;
-      if (!lottieUrl.startsWith('/') && !lottieUrl.startsWith('http')) {
-        animationPath = `/animations/${lottieUrl}`;
-      }
+      const { getLottieUrl } = require("@/utils/lottie-utils");
+      const finalUrl = getLottieUrl(lottieUrl);
 
-      fetch(animationPath)
-        .then((res) => {
-          // Verificar se a resposta é JSON válido
-          const contentType = res.headers.get('content-type');
-          if (contentType && contentType.includes('application/json')) {
-            return res.json();
-          }
-          // Silenciosamente ignorar se não for JSON
-          return null;
-        })
+      fetch(finalUrl)
+        .then((res) => res.json())
         .then((data) => {
           if (data) {
             setAnimationData(data);
           }
         })
-        .catch(() => {
-          // Silenciosamente ignorar erros de carregamento
+        .catch((err) => {
+          console.error("[VocationalBanner] Erro ao carregar Lottie:", err);
           setAnimationData(null);
         });
     }

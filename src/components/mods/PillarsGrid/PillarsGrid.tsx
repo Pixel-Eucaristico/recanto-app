@@ -41,11 +41,13 @@ function PillarLottie({ file }: { file: string }) {
 
   useEffect(() => {
     if (file) {
-      if (file.startsWith('http')) {
-        fetch(file).then((res) => res.json()).then(setAnimationData).catch(console.error);
-      } else {
-        fetch(`/animations/${file}`).then((res) => res.json()).then(setAnimationData).catch(console.error);
-      }
+      const { getLottieUrl } = require("@/utils/lottie-utils");
+      const finalUrl = getLottieUrl(file);
+      
+      fetch(finalUrl)
+        .then((res) => res.json())
+        .then(setAnimationData)
+        .catch((err) => console.error("[PillarLottie] Erro:", err));
     }
   }, [file]);
 

@@ -30,6 +30,7 @@ interface PillarsEditorProps {
   value: Pillar[];
   onChange: (value: Pillar[]) => void;
   blockId?: string;
+  onOpenLibrary?: (callback: (modId: string) => void) => void;
 }
 
 // Lista dos ícones mais comuns para pilares/features
@@ -81,7 +82,7 @@ interface PillarItemEditorProps {
    isOnlyItem: boolean;
    onUpdate: (updatedPillar: Pillar) => void;
    onRemove: () => void;
-   onOpenLibrary: () => void;
+   onOpenLibrary: (callback: (modId: string) => void) => void;
 }
 
 function PillarItemEditor({ 
@@ -106,13 +107,6 @@ function PillarItemEditor({
     onUpdate({ ...pillar, [field]: value });
   };
 
-  const handleBlockChange = (modId: string) => {
-     onUpdate({
-        ...pillar,
-        modalBlock: { modId, props: {} } // Reset props on new block
-     });
-  };
-
    const handleBlockPropChange = (propName: string, propValue: any) => {
       const currentBlock = pillar.modalBlock || { modId: 'PixMod', props: {} };
       onUpdate({
@@ -124,62 +118,62 @@ function PillarItemEditor({
       });
    };
 
-   // Nested Form Renderer
-   const renderNestedBlockForm = () => {
-      if (!pillar.modalBlock) return null;
-      const config = availableMods[pillar.modalBlock.modId];
-      if (!config) return <div className="text-error text-xs">Mod {pillar.modalBlock.modId} não encontrado.</div>;
-      const props = config.props || config.fields || [];
+    // Nested Form Renderer
+    const renderNestedBlockForm = () => {
+       if (!pillar.modalBlock) return null;
+       const config = availableMods[pillar.modalBlock.modId];
+       if (!config) return <div className="text-error text-xs">Mod {pillar.modalBlock.modId} não encontrado.</div>;
+       const props = config.props || config.fields || [];
 
-      return (
-         <div className="space-y-2 mt-2">
-            {props.map((prop: ModPropConfig) => {
-               const propName = prop.name || (prop as any).key;
-               if (['pillars-editor', 'sections-editor', 'testimonials-editor'].includes(prop.type)) return null;
-               const value = pillar.modalBlock!.props[propName] ?? prop.default ?? '';
+       return (
+          <div className="space-y-2 mt-2">
+             {props.map((prop: ModPropConfig) => {
+                const propName = prop.name || (prop as any).key;
+                if (['pillars-editor', 'sections-editor', 'testimonials-editor'].includes(prop.type)) return null;
+                const value = pillar.modalBlock!.props[propName] ?? prop.default ?? '';
 
-               return (
-                  <div key={propName} className="form-control">
-                     <label className="label pt-0 pb-1">
-                        <span className="label-text text-xs font-semibold">{prop.label}</span>
-                     </label>
-                     {prop.type === 'select' && (
-                        <select 
-                           className="select select-bordered select-sm w-full"
-                           value={value}
-                           onChange={(e) => handleBlockPropChange(propName, e.target.value)}
-                        >
-                           {prop.options?.map((opt: any) => (
-                              <option key={typeof opt === 'string' ? opt : opt.value} value={typeof opt === 'string' ? opt : opt.value}>
-                                 {typeof opt === 'string' ? opt : opt.label}
-                              </option>
-                           ))}
-                        </select>
-                     )}
-                     {(prop.type === 'text' || prop.type === 'url' || prop.type === 'string') && (
-                        <input 
-                           type="text"
-                           className="input input-bordered input-sm w-full"
-                           placeholder={prop.placeholder}
-                           value={value}
-                           onChange={(e) => handleBlockPropChange(propName, e.target.value)}
-                        />
-                     )}
-                     {prop.type === 'number' && (
-                        <input 
-                           type="number"
-                           className="input input-bordered input-sm w-full"
-                           placeholder={prop.placeholder}
-                           value={value}
-                           onChange={(e) => handleBlockPropChange(propName, e.target.value)}
-                        />
-                     )}
-                  </div>
-               );
-            })}
-         </div>
-      );
-   };
+                return (
+                   <div key={propName} className="form-control">
+                      <label className="label pt-0 pb-1">
+                         <span className="label-text text-xs font-semibold">{prop.label}</span>
+                      </label>
+                      {prop.type === 'select' && (
+                         <select 
+                            className="select select-bordered select-sm w-full"
+                            value={value}
+                            onChange={(e) => handleBlockPropChange(propName, e.target.value)}
+                         >
+                            {prop.options?.map((opt: any) => (
+                               <option key={typeof opt === 'string' ? opt : opt.value} value={typeof opt === 'string' ? opt : opt.value}>
+                                  {typeof opt === 'string' ? opt : opt.label}
+                               </option>
+                            ))}
+                         </select>
+                      )}
+                      {(prop.type === 'text' || prop.type === 'url' || prop.type === 'string') && (
+                         <input 
+                            type="text"
+                            className="input input-bordered input-sm w-full"
+                            placeholder={prop.placeholder}
+                            value={value}
+                            onChange={(e) => handleBlockPropChange(propName, e.target.value)}
+                         />
+                      )}
+                      {prop.type === 'number' && (
+                         <input 
+                            type="number"
+                            className="input input-bordered input-sm w-full"
+                            placeholder={prop.placeholder}
+                            value={value}
+                            onChange={(e) => handleBlockPropChange(propName, e.target.value)}
+                         />
+                      )}
+                   </div>
+                );
+             })}
+          </div>
+       );
+    };
 
   return (
     <div className="card bg-base-200 shadow-sm border border-base-300">
@@ -330,13 +324,14 @@ function PillarItemEditor({
                                          ? 'border-primary bg-primary/10 scale-[1.02]' 
                                          : 'border-base-300 hover:border-primary/50 hover:bg-base-100'
                                       }
-                                      lg:cursor-default 
                                    `}
                                    onClick={() => {
-                                      // Only open library on click if small screen
-                                      if (window.innerWidth < 1024) {
-                                         onOpenLibrary();
-                                      }
+                                      onOpenLibrary((modId) => {
+                                         onUpdate({
+                                            ...pillar,
+                                            modalBlock: { modId, props: {} }
+                                         });
+                                      });
                                    }}
                                 >
                                    <div className="flex flex-col items-center gap-2 pointer-events-none">
@@ -374,8 +369,6 @@ function PillarItemEditor({
                                       {/* Remove Action */}
                                       <button
                                          onClick={() => {
-                                            // Clear the block (keep modalBlock object but empty modId undefined or handle it)
-                                            // Actually better to nullify modalBlock or set modId to empty string
                                             onUpdate({ ...pillar, modalBlock: undefined });
                                          }}
                                          className="btn btn-sm btn-ghost btn-square text-error hover:bg-error/10"
@@ -416,7 +409,7 @@ function PillarItemEditor({
   );
 }
 
-export function PillarsEditor({ value = [], onChange, blockId }: PillarsEditorProps) {
+export function PillarsEditor({ value = [], onChange, blockId, onOpenLibrary }: PillarsEditorProps) {
   
   const normalizeValue = (val: any): Pillar[] => {
     const defaultPillar: Pillar = {
@@ -516,7 +509,13 @@ export function PillarsEditor({ value = [], onChange, blockId }: PillarsEditorPr
             isOnlyItem={pillars.length === 1}
             onUpdate={(p) => handlePillarUpdate(index, p)}
             onRemove={() => handleRemove(index)}
-            onOpenLibrary={() => setLibraryModalOpen(index)}
+            onOpenLibrary={(cb) => {
+               if (onOpenLibrary) {
+                  onOpenLibrary(cb);
+               } else {
+                  setLibraryModalOpen(index);
+               }
+            }}
          />
       ))}
 
@@ -533,9 +532,9 @@ export function PillarsEditor({ value = [], onChange, blockId }: PillarsEditorPr
          {pillars.length} itens configurados
       </div>
 
-      {/* Library Selection Modal */}
+      {/* Library Selection Modal (Fallback/Internal) */}
       {libraryModalOpen !== null && (
-         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
             <div className="bg-base-100 rounded-xl shadow-2xl w-full max-w-2xl h-[80vh] overflow-hidden flex flex-col relative animate-in fade-in zoom-in-95 duration-200">
                <button 
                   onClick={() => setLibraryModalOpen(null)} 

@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile } from 'fs/promises';
-import path from 'path';
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,38 +24,32 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Validar se é JSON válido
+    // Validar se é JSON válido e uma animação Lottie válida (Deep Check)
     try {
       const jsonData = JSON.parse(buffer.toString());
 
-      // Validar se é animação Lottie válida
-      if (!jsonData.v || !jsonData.layers) {
+      // Blindagem: Verifica propriedades essenciais de um Lottie legítimo
+      if (!jsonData.v || !jsonData.layers || !Array.isArray(jsonData.layers)) {
         return NextResponse.json(
-          { error: 'JSON não é uma animação Lottie válida' },
+          { error: 'O conteúdo do arquivo não é uma animação Lottie válida (formato incorreto).' },
           { status: 400 }
         );
       }
     } catch (e) {
       return NextResponse.json(
-        { error: 'Arquivo não é um JSON válido' },
+        { error: 'Arquivo corrompido ou JSON inválido.' },
         { status: 400 }
       );
     }
 
-    // Gerar nome único para o arquivo
-    const timestamp = Date.now();
-    const filename = `${timestamp}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-
-    // Caminho para salvar em public/animations
-    const filepath = path.join(process.cwd(), 'public', 'animations', filename);
-
-    // Salvar o arquivo
-    await writeFile(filepath, buffer);
+    // Fazer upload para o Cloudflare R2 com organização: cms/animations/ANO/MES/DIA/
+    const { storageService } = await import('@/services/storage/R2StorageService');
+    const publicUrl = await storageService.uploadFile(file, 'animations', 'cms');
 
     return NextResponse.json({
       success: true,
-      filename,
-      message: 'Animação enviada com sucesso!'
+      filename: publicUrl, // Retornamos a URL completa do R2
+      message: 'Animação enviada com sucesso para a nuvem!'
     });
 
   } catch (error) {

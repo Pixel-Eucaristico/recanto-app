@@ -139,17 +139,13 @@ function AnimationRenderer({ file }: { file: string }) {
   useEffect(() => {
     if (!file || file === 'none') return;
 
-    if (file.startsWith('http')) {
-      fetch(file)
-        .then(res => res.json())
-        .then(data => setAnimationData(data))
-        .catch(err => console.error('Erro ao carregar animação externa:', err));
-    } else {
-      fetch(`/animations/${file}`)
-        .then(res => res.json())
-        .then(data => setAnimationData(data))
-        .catch(err => console.error('Erro ao carregar animação local:', err));
-    }
+    const { getLottieUrl } = require("@/utils/lottie-utils");
+    const finalUrl = getLottieUrl(file);
+
+    fetch(finalUrl)
+      .then(res => res.json())
+      .then(data => setAnimationData(data))
+      .catch(err => console.error('Erro ao carregar animação:', err));
   }, [file]);
 
   if (!animationData) return null;

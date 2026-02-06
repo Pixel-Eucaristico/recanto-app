@@ -67,7 +67,10 @@ function CardInfografico({ card, index, titleFont, bodyFont }: CardInfograficoPr
 
   useEffect(() => {
     if (card.lottieFile && card.lottieFile !== 'none') {
-      fetch(`/animations/${card.lottieFile}`)
+      const { getLottieUrl } = require("@/utils/lottie-utils");
+      const finalUrl = getLottieUrl(card.lottieFile);
+
+      fetch(finalUrl)
         .then((res) => res.json())
         .then((data) => setAnimationData(data))
         .catch(() => setAnimationData(null));

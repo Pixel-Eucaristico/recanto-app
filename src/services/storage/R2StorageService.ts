@@ -8,7 +8,8 @@ export class R2StorageService implements IStorageService {
 
   constructor() {
     this.bucketName = (process.env.R2_BUCKET_NAME || '').replace(/"/g, '').trim();
-    this.publicUrl = (process.env.NEXT_PUBLIC_R2_PUBLIC_URL || '').replace(/"/g, '').trim();
+    const rawUrl = (process.env.NEXT_PUBLIC_R2_PUBLIC_URL || '').replace(/"/g, '').trim();
+    this.publicUrl = rawUrl.endsWith('/') ? rawUrl.slice(0, -1) : rawUrl;
     
     const accountId = (process.env.R2_ACCOUNT_ID || '').replace(/"/g, '').trim();
     const accessKeyId = (process.env.R2_ACCESS_KEY_ID || '').replace(/"/g, '').trim();
@@ -28,16 +29,39 @@ export class R2StorageService implements IStorageService {
     });
   }
 
-  async uploadFile(file: File | any, folder: string = 'uploads', customFileName?: string): Promise<string> {
+  /**
+   * Faz upload de um arquivo para o R2 com estrutura organizada:
+   * [origin]/[type]/[year]/[month]/[day]/[timestamp]-[sanitized-name]
+   */
+  async uploadFile(
+    file: File | any, 
+    type: string = 'uploads', 
+    origin: string = 'cms',
+    customFileName?: string
+  ): Promise<string> {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    
     const timestamp = Date.now();
-    const sanitizedName = file.name.replace(/[^a-z0-9.]/gi, '_').toLowerCase();
     
-    // Se um nome personalizado for fornecido, usa ele. Caso contrário, usa o padrão.
+    // Sanitização rigorosa do nome do arquivo
+    // Remove qualquer tentativa de Path Traversal ou extensões duplas perigosas
+    const originalName = file.name || 'unnamed_file';
+    const extension = originalName.split('.').pop()?.toLowerCase() || '';
+    const nameWithoutExt = originalName.split('.').slice(0, -1).join('_')
+      .replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    
+    const sanitizedName = `${nameWithoutExt}.${extension}`;
+    
+    // Montagem do caminho: origem/tipo/ano/mes/dia/
+    const folderPath = `${origin}/${type}/${year}/${month}/${day}`;
+    
     const fileName = customFileName 
-      ? `${folder}/${customFileName}` 
-      : `${folder}/${timestamp}-${sanitizedName}`;
+      ? `${folderPath}/${customFileName}` 
+      : `${folderPath}/${timestamp}-${sanitizedName}`;
     
-    // Ensure we have a Buffer/Uint8Array for S3 upload in Node.js
     let body;
     if (file instanceof File) {
       const arrayBuffer = await file.arrayBuffer();
@@ -50,7 +74,7 @@ export class R2StorageService implements IStorageService {
       Bucket: this.bucketName,
       Key: fileName,
       Body: body,
-      ContentType: file.type || 'image/jpeg',
+      ContentType: file.type || 'application/octet-stream',
     });
 
     await this.client.send(command);
@@ -59,14 +83,39 @@ export class R2StorageService implements IStorageService {
   }
 
   async deleteFile(url: string): Promise<void> {
+    // Extrair a chave do bucket a partir da URL (remove o domínio publico)
     const key = url.replace(`${this.publicUrl}/`, '');
     
+    // Segurança: Garantir que não estamos tentando deletar fora do domínio permitido
+    if (key.startsWith('http')) {
+       throw new Error('URL de exclusão inválida');
+    }
+
     const command = new DeleteObjectCommand({
       Bucket: this.bucketName,
       Key: key,
     });
 
     await this.client.send(command);
+  }
+
+  /**
+   * Lista arquivos de uma pasta específica de forma recursiva (para lidar com a estrutura de data)
+   */
+  async listFiles(prefix: string): Promise<string[]> {
+    const { ListObjectsV2Command } = await import("@aws-sdk/client-s3");
+    
+    const command = new ListObjectsV2Command({
+      Bucket: this.bucketName,
+      Prefix: prefix.endsWith('/') ? prefix : `${prefix}/`,
+    });
+
+    const result = await this.client.send(command);
+    
+    return (result.Contents || [])
+      .map((item) => item.Key || '')
+      .filter((key) => !key.endsWith('/')) // Remove as próprias "pastas" (objetos de prefixo)
+      .map((key) => `${this.publicUrl}/${key}`);
   }
 }
 

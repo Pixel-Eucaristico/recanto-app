@@ -84,11 +84,8 @@ export function HeroStructure({
     setIsLoading(true);
     setError(null);
 
-    // Construir URL correta baseado no tipo de valor
-    // Se começar com http, usar direto. Caso contrário, buscar de /animations/
-    const fetchUrl = animationUrl.startsWith('http')
-      ? animationUrl
-      : `/animations/${animationUrl}`;
+    const { getLottieUrl } = require("@/utils/lottie-utils");
+    const fetchUrl = getLottieUrl(animationUrl);
 
     console.log('🌐 [HeroStructure] URL final do fetch:', fetchUrl);
 

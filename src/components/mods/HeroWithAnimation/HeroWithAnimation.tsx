@@ -80,19 +80,24 @@ export default function HeroWithAnimation({
   }
 
   useEffect(() => {
-    // Só buscar animação se lottieUrl não for vazio
-    if (!lottieUrl) {
+    const { getLottieUrl } = require("@/utils/lottie-utils");
+    const finalUrl = getLottieUrl(lottieUrl);
+    
+    if (!finalUrl) {
       setIsLoading(false);
       return;
     }
 
-    fetch(lottieUrl)
+    fetch(finalUrl)
       .then((res) => res.json())
       .then((data) => {
         setAnimationData(data);
         setIsLoading(false);
       })
-      .catch(() => setIsLoading(false));
+      .catch((err) => {
+        console.error("[HeroWithAnimation] Erro ao carregar Lottie:", err);
+        setIsLoading(false);
+      });
   }, [lottieUrl]);
 
   // Converter nome do ícone para componente (suporta Lucide e Font Awesome)
