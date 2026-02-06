@@ -16,6 +16,7 @@ interface InfoSection {
 interface SectionsEditorProps {
   value: InfoSection[];
   onChange: (value: InfoSection[]) => void;
+  onOpenLibrary?: (callback: (modId: string) => void) => void;
 }
 
 // Lista dos ícones mais comuns para seções informativas
@@ -60,7 +61,7 @@ const COLOR_OPTIONS = [
  * Editor visual de seções informativas com ícones, títulos e conteúdo rico
  * Ideal para páginas institucionais (história, carisma, valores, etc.)
  */
-export function SectionsEditor({ value = [], onChange }: SectionsEditorProps) {
+export function SectionsEditor({ value = [], onChange, onOpenLibrary }: SectionsEditorProps) {
   // Garantir que value seja sempre um array
   const normalizeValue = (val: any): InfoSection[] => {
     if (Array.isArray(val)) {

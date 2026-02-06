@@ -31,6 +31,7 @@ interface DynamicModFormProps {
   values: Record<string, any>;
   onChange: (values: Record<string, any>) => void;
   blockId?: string;
+  onOpenLibrary?: (callback: (modId: string) => void) => void;
 }
 
 export default function DynamicModForm({
@@ -38,7 +39,8 @@ export default function DynamicModForm({
   propConfigs,
   values,
   onChange,
-  blockId
+  blockId,
+  onOpenLibrary
 }: DynamicModFormProps) {
   const [formValues, setFormValues] = useState<Record<string, any>>(values);
 
@@ -213,6 +215,7 @@ export default function DynamicModForm({
             value={value}
             onChange={(newValue) => handleChange(propName, newValue)}
             blockId={blockId} // Pass blockId for DND
+            onOpenLibrary={onOpenLibrary}
           />
         );
 
@@ -221,6 +224,7 @@ export default function DynamicModForm({
           <SectionsEditor
             value={value}
             onChange={(newValue) => handleChange(propName, newValue)}
+            onOpenLibrary={onOpenLibrary}
           />
         );
 

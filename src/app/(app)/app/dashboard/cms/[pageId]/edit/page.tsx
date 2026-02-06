@@ -97,6 +97,7 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [urlType, setUrlType] = useState<'home' | 'custom'>('home');
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
+  const [libraryCallback, setLibraryCallback] = useState<((modId: string) => void) | null>(null);
   const [sidebarWidth, setSidebarWidth] = useState(320);
   const [isResizing, setIsResizing] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -786,7 +787,7 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
           {/* Mobile FAB Button - Fixed at bottom */}
           <button
             onClick={() => setMobileDrawerOpen(true)}
-            className="lg:hidden fixed bottom-4 right-4 btn btn-primary btn-circle btn-lg shadow-2xl z-50"
+            className="fixed bottom-4 right-4 btn btn-primary btn-circle btn-lg shadow-2xl z-20"
             aria-label="Adicionar bloco"
           >
             <Plus className="w-6 h-6" />
@@ -836,6 +837,10 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
                         }
                       }}
                       blockId={selectedBlock.id}
+                      onOpenLibrary={(callback) => {
+                        setLibraryCallback(() => callback);
+                        setMobileDrawerOpen(true);
+                      }}
                     />
                  </div>
               </div>
@@ -914,11 +919,11 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
         ) : null}
       </DragOverlay>
       
-      {/* Mobile Drawer for Mods Library */}
-      {mobileDrawerOpen && !selectedBlockId && (
-        <div className="lg:hidden fixed inset-0 z-[100] flex items-end justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setMobileDrawerOpen(false)}>
+      {/* Reusable Library Drawer (Mobile & Desktop) */}
+      {mobileDrawerOpen && (
+        <div className="fixed inset-0 z-[200] flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setMobileDrawerOpen(false)}>
           <div 
-            className="bg-base-100 w-full max-h-[85vh] rounded-t-[2.5rem] shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-500"
+            className="bg-base-100 w-full md:max-w-4xl max-h-[85vh] md:max-h-[80vh] rounded-t-[2.5rem] md:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom md:zoom-in-95 duration-500"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-6 border-b border-base-200">
@@ -934,8 +939,13 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
             </div>
             <div className="flex-1 overflow-y-auto p-4 pb-10">
                <ModsLibrary onAddMod={(id) => {
-                 handleAddMod(id);
+                 if (libraryCallback) {
+                   libraryCallback(id);
+                 } else {
+                   handleAddMod(id);
+                 }
                  setMobileDrawerOpen(false);
+                 setLibraryCallback(null);
                }} />
             </div>
           </div>
