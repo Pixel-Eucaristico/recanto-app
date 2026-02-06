@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, memo } from 'react';
-import { Film, X, Check, Trash2, Cloud, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Film, X, Check, Trash2, Cloud, Search, ChevronLeft, ChevronRight, Upload, AlertTriangle } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
@@ -24,19 +24,32 @@ export function AnimationPicker({ value = 'none', onChange }: AnimationPickerPro
   const [availableAnimations, setAvailableAnimations] = useState<Animation[]>([{ id: 'none', name: 'Sem Animação', file: null }]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   // Controle de Paginação (O "Método Correto" para Ativos Pesados)
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12; // 12 itens é o equilíbrio perfeito para performance
 
+  const fetchAnimations = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/animations');
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setAvailableAnimations(data);
+        return data;
+      }
+    } catch (err) {
+      console.error('Erro ao carregar animações:', err);
+    } finally {
+      setLoading(false);
+    }
+    return null;
+  };
+
   useEffect(() => {
-    fetch('/api/animations')
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) setAvailableAnimations(data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    fetchAnimations();
   }, []);
 
   const filteredAnimations = useMemo(() => {
@@ -61,6 +74,84 @@ export function AnimationPicker({ value = 'none', onChange }: AnimationPickerPro
     setIsOpen(false);
   };
 
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validar se é JSON
+    if (!file.name.endsWith('.json')) {
+      alert('Por favor, selecione um arquivo .json de animação Lottie.');
+      return;
+    }
+
+    try {
+      setUploading(true);
+      setError(null);
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('folder', 'animations');
+      formData.append('origin', 'cms');
+
+      const response = await fetch('/api/upload/r2', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Falha no upload');
+      }
+
+      // IMPORTANTE: O storage agora salva em origin/type/year/month/day/file.json
+      // Precisamos recarregar a lista para garantir que o novo arquivo apareça
+      const animations = await fetchAnimations(); 
+      
+      // Selecionar automaticamente a nova animação enviada
+      if (result.url) {
+        // Encontrar o item na lista recém-carregada para garantir que temos o objeto Animation completo
+        const newAnim = animations?.find((a: any) => a.file === result.url);
+        
+        setSelected(result.url);
+        onChange(result.url);
+        
+        // Pequeno delay para garantir que o usuário veja a seleção antes de fechar
+        setTimeout(() => {
+          setIsOpen(false);
+        }, 300);
+      }
+    } catch (err: any) {
+      setError(err.message);
+      alert('Erro no upload: ' + err.message);
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleDelete = async (e: React.MouseEvent, anim: Animation) => {
+    e.stopPropagation();
+    if (!anim.file || !confirm(`Deseja excluir definitivamente a animação "${anim.name}"?`)) return;
+
+    try {
+      const response = await fetch(`/api/animations?url=${encodeURIComponent(anim.file)}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) throw new Error('Falha ao excluir');
+
+      if (selected === anim.id) {
+        setSelected('none');
+        onChange('none');
+      }
+      
+      await fetchAnimations();
+    } catch (err: any) {
+      alert('Erro ao excluir: ' + err.message);
+    }
+  };
+
   return (
     <div className="w-full">
       <button 
@@ -72,6 +163,11 @@ export function AnimationPicker({ value = 'none', onChange }: AnimationPickerPro
         <span className="truncate flex-1 text-left">
           {availableAnimations.find(a => a.id === selected)?.name || 'Selecionar Animação'}
         </span>
+        {availableAnimations.find(a => a.id === selected)?.isR2 && (
+          <div className="badge badge-primary badge-sm gap-1 font-black opacity-80">
+            <Cloud className="w-2.5 h-2.5" /> CLOUD
+          </div>
+        )}
       </button>
 
       {isOpen && (
@@ -89,14 +185,30 @@ export function AnimationPicker({ value = 'none', onChange }: AnimationPickerPro
                 </div>
                 <button onClick={() => setIsOpen(false)} className="btn btn-sm btn-circle btn-ghost"><X /></button>
               </div>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-20" />
-                <input 
-                  className="input input-bordered w-full pl-10 focus:ring-2 focus:ring-primary/20" 
-                  placeholder="Pesquisar animação..." 
-                  value={searchTerm} 
-                  onChange={e => setSearchTerm(e.target.value)} 
-                />
+              <div className="flex flex-col md:flex-row gap-4 items-center">
+                <div className="relative flex-1 w-full">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-20" />
+                  <input 
+                    className="input input-bordered w-full pl-10 focus:ring-2 focus:ring-primary/20" 
+                    placeholder="Pesquisar animação..." 
+                    value={searchTerm} 
+                    onChange={e => setSearchTerm(e.target.value)} 
+                  />
+                </div>
+                
+                <div className="flex items-center gap-2 w-full md:w-auto">
+                  <label className={`btn btn-primary btn-md flex-1 md:flex-none gap-2 shadow-lg shadow-primary/20 ${uploading ? 'loading' : ''}`}>
+                    {!uploading && <Upload className="w-4 h-4" />}
+                    {uploading ? 'ENVIANDO...' : 'UPLOAD JSON'}
+                    <input 
+                      type="file" 
+                      className="hidden" 
+                      accept=".json" 
+                      onChange={handleUpload} 
+                      disabled={uploading}
+                    />
+                  </label>
+                </div>
               </div>
             </div>
 
@@ -115,6 +227,7 @@ export function AnimationPicker({ value = 'none', onChange }: AnimationPickerPro
                       animation={anim} 
                       isSelected={selected === anim.id} 
                       onSelect={() => handleSelect(anim.id)}
+                      onDelete={(e: any) => handleDelete(e, anim)}
                     />
                   ))}
                   {pageItems.length === 0 && (
@@ -193,7 +306,7 @@ export function AnimationPicker({ value = 'none', onChange }: AnimationPickerPro
 }
 
 // Card Estático que carrega apenas os dados necessários
-const StaticCard = memo(({ animation, isSelected, onSelect }: any) => {
+const StaticCard = memo(({ animation, isSelected, onSelect, onDelete }: any) => {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
@@ -219,28 +332,56 @@ const StaticCard = memo(({ animation, isSelected, onSelect }: any) => {
   return (
     <div 
       onClick={onSelect}
-      className={`h-40 md:h-44 bg-base-100 rounded-2xl border-2 cursor-pointer p-3 flex flex-col transition-all duration-200 group ${
-        isSelected ? 'border-primary ring-2 ring-primary bg-primary/5' : 'border-base-300 hover:border-primary/40 shadow-sm'
+      className={`relative h-44 md:h-48 bg-base-100 rounded-[2rem] border-2 cursor-pointer p-2 flex flex-col transition-all duration-300 group ${
+        isSelected ? 'border-primary ring-4 ring-primary/10 bg-primary/[0.02]' : 'border-base-200 hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/5 shadow-sm'
       }`}
     >
-      <div className="flex-1 bg-base-200/50 rounded-xl flex items-center justify-center overflow-hidden relative">
+      <div className="flex-1 bg-base-200/30 rounded-[1.5rem] flex items-center justify-center overflow-hidden relative">
+        {/* Badge de Nuvem Premium */}
+        {animation.isR2 && (
+          <div className="absolute top-3 left-3 z-20 transition-all duration-500 group-hover:opacity-40 group-hover:scale-90">
+            <div className="flex items-center gap-1.5 bg-base-100/80 dark:bg-black/40 backdrop-blur-xl px-2.5 py-1 rounded-full border border-white/20 shadow-sm">
+              <Cloud className="w-3 h-3 text-primary" />
+              <span className="text-[9px] font-black text-base-content/60 uppercase tracking-widest hidden sm:inline">R2 Cloud</span>
+            </div>
+          </div>
+        )}
+        
+        {/* Botão de Excluir Integrado */}
+        {animation.isR2 && !isSelected && (
+          <button 
+            onClick={(e) => { e.stopPropagation(); onDelete(e); }}
+            className="absolute top-3 right-3 p-2 bg-red-500/10 hover:bg-red-500 text-red-600 hover:text-white backdrop-blur-md rounded-full border border-red-500/20 transition-all duration-300 opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100 active:scale-90 z-20"
+            title="Excluir animação"
+          >
+             <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        )}
+
+        {/* Seleção - Floating Check */}
+        {isSelected && (
+          <div className="absolute inset-0 bg-primary/5 backdrop-blur-[1px] flex items-center justify-center z-10">
+             <div className="bg-primary text-white p-2.5 rounded-full shadow-2xl scale-110 animate-in zoom-in-50 duration-300">
+                <Check className="w-5 h-5 stroke-[3]" />
+             </div>
+          </div>
+        )}
+
         {data ? (
-          <Lottie animationData={data} loop className="h-full w-full" renderer="canvas" />
+          <Lottie animationData={data} loop className="h-[80%] w-[80%]" renderer="svg" />
         ) : (
-          <div className="flex flex-col items-center gap-2 opacity-5">
-             <Film className="w-8 h-8" />
-             {loading && <span className="loading loading-dots loading-xs"></span>}
+          <div className="flex flex-col items-center gap-3 opacity-10">
+             <Film className="w-10 h-10" />
+             {loading && <span className="loading loading-spinner loading-xs text-primary"></span>}
           </div>
         )}
       </div>
-      <p className="text-[10px] font-black text-center mt-3 truncate opacity-50 uppercase tracking-tighter">
-        {animation.name}
-      </p>
-      {isSelected && (
-        <div className="absolute top-2 right-2 bg-primary text-white p-0.5 rounded-full shadow-lg">
-           <Check className="w-3 h-3" />
-        </div>
-      )}
+      
+      <div className="px-2 py-3">
+        <p className="text-[10px] font-black text-center truncate opacity-40 group-hover:opacity-100 transition-opacity uppercase tracking-[0.1em]">
+          {animation.name}
+        </p>
+      </div>
     </div>
   );
 });

@@ -56,7 +56,14 @@ export class R2StorageService implements IStorageService {
     const sanitizedName = `${nameWithoutExt}.${extension}`;
     
     // Montagem do caminho: origem/tipo/ano/mes/dia/
-    const folderPath = `${origin}/${type}/${year}/${month}/${day}`;
+    // Se o 'type' já começar com a origem, removemos para não duplicar
+    const cleanType = type.startsWith(`${origin}/`) ? type.replace(`${origin}/`, '') : type;
+    
+    // Se o 'type' já parece conter uma data (ex: pastas/yyyy/mm), não adicionamos a data automática
+    const hasDateStructure = /\/\d{4}\//.test(cleanType);
+    const folderPath = hasDateStructure 
+      ? `${origin}/${cleanType}`
+      : `${origin}/${cleanType}/${year}/${month}/${day}`;
     
     const fileName = customFileName 
       ? `${folderPath}/${customFileName}` 

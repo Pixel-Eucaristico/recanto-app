@@ -25,8 +25,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           >
             <Menu className="w-5 h-5" />
           </label>
-          <Link href="/" className="px-4 text-lg font-bold text-base-content hover:opacity-80 transition-opacity">
-            Recanto Digital
+          <Link href="/" className="px-4 flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <img src="/logo.svg" alt="Recanto Logo" className="w-6 h-6 object-contain" />
+            <span className="text-lg font-bold text-base-content">Recanto Digital</span>
           </Link>
         </nav>
 

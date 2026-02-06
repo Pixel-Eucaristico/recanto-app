@@ -57,9 +57,7 @@ export default function ImageUpload({
       const formData = new FormData();
       formData.append('file', file);
       
-      const targetFolder = mode === 'dated' 
-        ? `${folder}/${new Date().getFullYear()}/${new Date().getMonth() + 1}`
-        : folder;
+      const targetFolder = 'images';
         
       formData.append('folder', targetFolder);
       if (customFileName) formData.append('fileName', customFileName);
@@ -75,6 +73,20 @@ export default function ImageUpload({
       }
 
       const { url } = await response.json();
+      
+      // Lógica de substituição: Se o upload novo deu certo, deletamos a imagem antiga do R2 (se existir)
+      if (value && isR2Image) {
+        try {
+          // Chamada silenciosa para deletar a antiga
+          await fetch(`/api/upload/r2?url=${encodeURIComponent(value)}`, {
+            method: 'DELETE',
+          });
+          console.log('[ImageUpload] Imagem antiga removida com sucesso');
+        } catch (delErr) {
+          console.warn('[ImageUpload] Erro ao limpar imagem antiga:', delErr);
+        }
+      }
+
       onChange(url);
     } catch (err: any) {
       setError(err.message);

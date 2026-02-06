@@ -26,7 +26,7 @@ export default function Sidebar() {
 
     return appRoutes.filter((route) => {
       if (route.roles.includes(null)) return true;
-      return route.roles.includes(user.role);
+      return route.roles.includes((user?.role || null) as any);
     });
   }, [user]);
 
@@ -77,7 +77,7 @@ function SidebarHeader() {
       href="/" 
       className="flex items-center gap-3 p-4 w-full border-b border-base-300 hover:bg-base-300 transition-colors"
     >
-      <Heart className="w-6 h-6 text-primary shrink-0" />
+      <img src="/logo.svg" alt="Recanto Logo" className="w-8 h-8 shrink-0 object-contain" />
       <h1 className="font-bold text-lg text-base-content is-drawer-close:hidden">
         Recanto Digital
       </h1>
