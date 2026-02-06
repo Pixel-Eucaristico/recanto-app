@@ -795,9 +795,8 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
         </div>
       </div>
 
-      {/* Desktop Editor Modal - Better space for editing */}
       {selectedBlock && selectedBlockId && (
-        <div className="hidden lg:flex fixed inset-0 z-[100] items-center justify-center p-4 md:p-10 bg-black/70 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setSelectedBlockId(null)}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 md:p-10 bg-black/80 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setSelectedBlockId(null)}>
            <div 
              className="bg-base-100 rounded-3xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-300 ring-1 ring-white/10"
              onClick={(e) => e.stopPropagation()}
@@ -914,6 +913,34 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
           })()
         ) : null}
       </DragOverlay>
+      
+      {/* Mobile Drawer for Mods Library */}
+      {mobileDrawerOpen && !selectedBlockId && (
+        <div className="lg:hidden fixed inset-0 z-[100] flex items-end justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setMobileDrawerOpen(false)}>
+          <div 
+            className="bg-base-100 w-full max-h-[85vh] rounded-t-[2.5rem] shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-500"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-6 border-b border-base-200">
+               <div className="flex items-center gap-3">
+                 <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                    <Plus className="w-5 h-5" />
+                 </div>
+                 <h3 className="font-bold text-lg">Adicionar Bloco</h3>
+               </div>
+               <button onClick={() => setMobileDrawerOpen(false)} className="btn btn-sm btn-circle btn-ghost">
+                 <X className="w-5 h-5" />
+               </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 pb-10">
+               <ModsLibrary onAddMod={(id) => {
+                 handleAddMod(id);
+                 setMobileDrawerOpen(false);
+               }} />
+            </div>
+          </div>
+        </div>
+      )}
     </DndContext>
   );
 }

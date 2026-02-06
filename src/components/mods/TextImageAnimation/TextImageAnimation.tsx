@@ -48,19 +48,24 @@ export default function TextImageAnimation({
   const safeParagraphs = Array.isArray(paragraphs) ? paragraphs : [];
 
   useEffect(() => {
-    // Só buscar animação se lottieUrl não for vazio
-    if (!lottieUrl) {
+    const { getLottieUrl } = require("@/utils/lottie-utils");
+    const finalUrl = getLottieUrl(lottieUrl);
+
+    if (!finalUrl) {
       setIsLoading(false);
       return;
     }
 
-    fetch(lottieUrl)
+    fetch(finalUrl)
       .then((res) => res.json())
       .then((data) => {
         setAnimationData(data);
         setIsLoading(false);
       })
-      .catch(() => setIsLoading(false));
+      .catch((err) => {
+        console.error("[TextImageAnimation] Erro ao carregar Lottie:", err);
+        setIsLoading(false);
+      });
   }, [lottieUrl]);
 
   const titleColorClass = titleColorClasses[titleColor];

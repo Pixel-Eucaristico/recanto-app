@@ -40,7 +40,10 @@ export function TextWithAnimation({
   // Carregar animação dinamicamente
   useEffect(() => {
     if (animation && animation !== 'none') {
-      fetch(`/animations/${animation}`)
+      const { getLottieUrl } = require("@/utils/lottie-utils");
+      const finalUrl = getLottieUrl(animation);
+      
+      fetch(finalUrl)
         .then((res) => res.json())
         .then((data) => setAnimationData(data))
         .catch((err) => console.error('Erro ao carregar animação:', err));

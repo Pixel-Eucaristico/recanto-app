@@ -62,29 +62,18 @@ function StageCard({ stage }: { stage: FormationStage }) {
 
   useEffect(() => {
     if (stage.lottieUrl && stage.lottieUrl.trim() !== '') {
-      // Normalizar URL: se não começar com / ou http, adicionar /animations/
-      let animationPath = stage.lottieUrl;
-      if (!stage.lottieUrl.startsWith('/') && !stage.lottieUrl.startsWith('http')) {
-        animationPath = `/animations/${stage.lottieUrl}`;
-      }
+      const { getLottieUrl } = require("@/utils/lottie-utils");
+      const finalUrl = getLottieUrl(stage.lottieUrl);
 
-      fetch(animationPath)
-        .then((res) => {
-          // Verificar se a resposta é JSON válido
-          const contentType = res.headers.get('content-type');
-          if (contentType && contentType.includes('application/json')) {
-            return res.json();
-          }
-          // Silenciosamente ignorar se não for JSON
-          return null;
-        })
+      fetch(finalUrl)
+        .then((res) => res.json())
         .then((data) => {
           if (data) {
             setAnimationData(data);
           }
         })
-        .catch(() => {
-          // Silenciosamente ignorar erros de carregamento
+        .catch((err) => {
+          console.error("[StageCard] Erro ao carregar Lottie:", err);
           setAnimationData(null);
         });
     }
