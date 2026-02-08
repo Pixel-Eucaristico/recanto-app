@@ -40,7 +40,9 @@ class EventService extends BaseFirebaseService<Event> {
    * OTIMIZADO: Query do Firestore com orderBy + limit (impossível no Realtime!)
    */
   async getUpcomingEvents(limit: number = 10): Promise<Event[]> {
-    const today = new Date().toISOString();
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+    
     const { collection, query, where, orderBy: firestoreOrderBy, limit: firestoreLimit, getDocs } = await import('firebase/firestore');
     const { firestore } = await import('@/domains/auth/services/firebaseClient');
 

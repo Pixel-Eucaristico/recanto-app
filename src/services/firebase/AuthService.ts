@@ -27,7 +27,7 @@ class AuthService {
     email: string,
     password: string,
     name: string,
-    role: Role = null
+    role: Role = 'visitante'
   ): Promise<FirebaseUser> {
     try {
       // Cria usuário no Firebase Auth
@@ -76,15 +76,15 @@ class AuthService {
     uid: string,
     name: string,
     email: string,
-    role: Role = undefined,
-    photo_url: string = undefined
+    role: Role = 'visitante',
+    photo_url: string | null = null
   ): Promise<FirebaseUser> {
     const userData: FirebaseUser = {
       id: uid,
       name,
       email,
-      role,
-      photo_url,
+      role: role || 'visitante',
+      photo_url: photo_url || null,
       created_at: new Date().toISOString(),
     };
 
@@ -127,8 +127,8 @@ class AuthService {
           uid,
           displayName || email!.split('@')[0],
           email!,
-          undefined, // role
-          photoURL || undefined // photo
+          'visitante', // role padrão
+          photoURL || null // photo
         );
       }
 
@@ -166,8 +166,8 @@ class AuthService {
             firebaseUser.uid,
             firebaseUser.displayName || firebaseUser.email!.split('@')[0],
             firebaseUser.email!,
-            undefined, // role
-            firebaseUser.photoURL || undefined // photo
+            'visitante', // role padrão
+            firebaseUser.photoURL || null // photo
           );
         }
 
@@ -194,8 +194,8 @@ class AuthService {
           firebaseUser.uid,
           firebaseUser.displayName || firebaseUser.email.split('@')[0],
           firebaseUser.email,
-          undefined,
-          firebaseUser.photoURL || undefined
+          'visitante',
+          firebaseUser.photoURL || null
         );
       }
 
