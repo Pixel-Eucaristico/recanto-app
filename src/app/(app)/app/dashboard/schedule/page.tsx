@@ -317,8 +317,8 @@ export default function SchedulePage() {
         setEditingEvent(event);
         setTitle(event.title);
         setDescription(event.description || '');
-        setStartTime(new Date(event.start).toISOString().slice(0, 16));
-        setEndTime(event.end ? new Date(event.end).toISOString().slice(0, 16) : '');
+        setStartTime(format(new Date(event.start), "yyyy-MM-dd'T'HH:mm"));
+        setEndTime(event.end ? format(new Date(event.end), "yyyy-MM-dd'T'HH:mm") : '');
         setType(event.type);
         setLocation(event.location || '');
         setIsPublic(event.is_public);
