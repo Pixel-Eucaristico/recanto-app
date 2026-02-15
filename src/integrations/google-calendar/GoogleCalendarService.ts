@@ -132,20 +132,22 @@ export class GoogleCalendarService {
     googleEvent: GoogleCalendarEvent,
     userId: string
   ): Partial<Event> {
-    const start =
-      googleEvent.start.dateTime || `${googleEvent.start.date}T00:00:00Z`;
-    const end = googleEvent.end.dateTime || `${googleEvent.end.date}T23:59:59Z`;
+    // Handle All-Day events (Google only provides 'date' for them)
+    let start, end;
+    if (googleEvent.start.date) {
+      // For all-day events, we set them to start at 00:00 in Sao Paulo
+      // 00:00 BRT (UTC-3) is 03:00 UTC
+      start = `${googleEvent.start.date}T03:00:00.000Z`;
+      end = `${googleEvent.end.date}T23:59:59.000Z`;
+    } else {
+      start = googleEvent.start.dateTime!;
+      end = googleEvent.end.dateTime!;
+    }
 
     // ✅ Recuperar metadados customizados do Google Calendar
     const extendedProps = googleEvent.extendedProperties?.private;
     const eventType = extendedProps?.eventType as Event['type'] | undefined;
     const isPublic = extendedProps?.isPublic === 'true';
-
-    console.log('📋 [googleEventToFirestoreEvent] Metadados recuperados do Google:', {
-      eventType: eventType || '(não encontrado)',
-      isPublic,
-      hasExtendedProps: !!extendedProps
-    });
 
     const event: any = {
       title: googleEvent.summary || 'Sem título',
@@ -155,12 +157,10 @@ export class GoogleCalendarService {
       google_calendar_id: googleEvent.id,
       last_synced_at: new Date().toISOString(),
       created_by: userId,
-      is_public: isPublic, // ✅ Recuperar do Google Calendar
-      target_audience: [], // Admin can configure later
-      type: eventType || 'outro', // ✅ Recuperar do Google Calendar ou usar padrão
+      is_public: isPublic,
+      type: eventType || 'outro',
     };
 
-    // Only add location if it exists (Firestore doesn't accept undefined)
     if (googleEvent.location) {
       event.location = googleEvent.location;
     }
@@ -195,8 +195,8 @@ export class GoogleCalendarService {
       const calendars = calendarList.data.items.map(cal => ({
         id: cal.id!,
         summary: cal.summary || 'Sem nome',
-        description: cal.description,
-        primary: cal.primary
+        description: cal.description || undefined,
+        primary: cal.primary || undefined
       }));
 
       console.log('✅ [GoogleCalendarService] Calendários processados:', calendars.length);
@@ -457,7 +457,7 @@ export class GoogleCalendarService {
           console.log(`   - Google Event ID: ${googleEvent.id}`);
           console.log(`   - Google updated: ${googleEvent.updated}`);
 
-          const existingEvent = existingEventsMap.get(googleEvent.id);
+          const existingEvent = existingEventsMap.get(googleEvent.id) as any;
 
           if (existingEvent) {
             console.log(`   ✏️ Evento já existe no Firestore (ID: ${existingEvent.id})`);
@@ -472,13 +472,19 @@ export class GoogleCalendarService {
               console.log(`   ✏️ Google tem dados mais recentes, atualizando...`);
               // Update existing event usando Admin SDK
               const updates = this.googleEventToFirestoreEvent(googleEvent, userId);
+              
+              // PRESERVE existing metadata if not present in Google
+              const finalUpdates = {
+                ...updates,
+                // Keep existing target_audience if it exists and updates doesn't have it
+                target_audience: existingEvent.target_audience || ['admin', 'missionario', 'recantiano'],
+                updated_at: new Date().toISOString(),
+              };
+
               await firestore
                 .collection('events')
                 .doc(existingEvent.id)
-                .update({
-                  ...updates,
-                  updated_at: new Date().toISOString(),
-                });
+                .update(finalUpdates);
               result.eventsUpdated++;
               console.log(`   ✅ Evento atualizado no Firestore`);
             } else {
@@ -486,21 +492,17 @@ export class GoogleCalendarService {
               console.log(`      (Google: ${new Date(googleUpdatedTime).toISOString()} vs Firestore: ${new Date(firestoreUpdatedTime).toISOString()})`);
             }
           } else {
-            console.log(`   ➕ Evento novo, criando no Firestore...`);
-            // Create new event usando Admin SDK
             const newEvent = this.googleEventToFirestoreEvent(googleEvent, userId);
-            console.log(`   - Dados do novo evento:`, {
-              title: newEvent.title,
-              start: newEvent.start,
-              end: newEvent.end,
-              google_calendar_id: newEvent.google_calendar_id
-            });
+            
+            // Set default audience for new events from Google
+            const eventWithDefaults = {
+                ...newEvent,
+                target_audience: ['admin', 'missionario', 'recantiano'],
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+            };
 
-            const docRef = await firestore.collection('events').add({
-              ...newEvent,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            });
+            const docRef = await firestore.collection('events').add(eventWithDefaults);
             result.eventsAdded++;
             console.log(`   ✅ Evento criado no Firestore com ID: ${docRef.id}`);
           }

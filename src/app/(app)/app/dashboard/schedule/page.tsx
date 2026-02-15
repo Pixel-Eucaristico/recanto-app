@@ -1,27 +1,32 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
+import { cn } from '@/lib/utils';
 import { useAuth } from '@/features/dashboard/contexts/AuthContext';
 import { eventService } from '@/services/firebase';
 import type { Event as EventType } from '@/types/firebase-entities';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Button } from '@/components/ui/daisyui/button';
+import { Input } from '@/components/ui/daisyui/input';
+import { Textarea } from '@/components/ui/daisyui/textarea';
+import { Select } from '@/components/ui/daisyui/select';
+import { Checkbox } from '@/components/ui/daisyui/checkbox';
+import { Radio } from '@/components/ui/daisyui/radio';
+import { Fieldset, FieldsetLegend, FieldsetLabel } from '@/components/ui/daisyui/fieldset';
+import { Card, CardBody, CardTitle, CardActions } from '@/components/ui/daisyui/card';
+import { Modal } from '@/components/ui/daisyui/modal';
+
 import { Loader2, Calendar, Plus, Clock, RefreshCw, CheckCircle2, Globe, Edit, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert } from '@/components/ui/daisyui/alert';
 import { useToast } from '@/components/ui/use-toast';
 
 const eventIcons = {
-    oracao: <Calendar className="w-6 h-6 text-amber-500" />,
-    reuniao: <Calendar className="w-6 h-6 text-purple-500" />,
-    formacao: <Calendar className="w-6 h-6 text-blue-500" />,
-    celebracao: <Calendar className="w-6 h-6 text-emerald-500" />,
-    outro: <Calendar className="w-6 h-6 text-slate-500" />,
+    oracao: <Calendar className="w-6 h-6 !text-primary" />,
+    reuniao: <Calendar className="w-6 h-6 !text-secondary" />,
+    formacao: <Calendar className="w-6 h-6 !text-info" />,
+    celebracao: <Calendar className="w-6 h-6 !text-success" />,
+    outro: <Calendar className="w-6 h-6 !text-base-content/40" />,
 };
 
 export default function SchedulePage() {
@@ -35,10 +40,12 @@ export default function SchedulePage() {
     const [syncMessage, setSyncMessage] = useState('');
     const [isCalendarConnected, setIsCalendarConnected] = useState(false);
     const [editingEvent, setEditingEvent] = useState<EventType | null>(null);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [eventToDelete, setEventToDelete] = useState<{ id: string; title: string } | null>(null);
 
     // Calendar Selection State
     const [showCalendarSelector, setShowCalendarSelector] = useState(false);
-    const [availableCalendars, setAvailableCalendars] = useState<Array<{ id: string; summary: string; primary?: boolean }>>([]);
+    const [availableCalendars, setAvailableCalendars] = useState<Array<{ id: string; summary: string; description?: string; primary?: boolean }>>([]);
     const [selectedCalendarId, setSelectedCalendarId] = useState<string>('');
     const [createNewCalendar, setCreateNewCalendar] = useState(false);
     const [customCalendarName, setCustomCalendarName] = useState('');
@@ -310,22 +317,30 @@ export default function SchedulePage() {
         setEditingEvent(event);
         setTitle(event.title);
         setDescription(event.description || '');
-        setStartTime(new Date(event.start).toISOString().slice(0, 16));
-        setEndTime(event.end ? new Date(event.end).toISOString().slice(0, 16) : '');
+        setStartTime(format(new Date(event.start), "yyyy-MM-dd'T'HH:mm"));
+        setEndTime(event.end ? format(new Date(event.end), "yyyy-MM-dd'T'HH:mm") : '');
         setType(event.type);
         setLocation(event.location || '');
         setIsPublic(event.is_public);
         setOpenDialog(true);
     };
 
-    const deleteEvent = async (eventId: string, eventTitle: string) => {
+    const openDeleteDialog = (event: EventType) => {
+        setEventToDelete({ id: event.id, title: event.title });
+        setIsDeleteDialogOpen(true);
+    };
+
+    const deleteEvent = async () => {
+        if (!eventToDelete) return;
+
         try {
-            await eventService.delete(eventId);
-            setEvents(events.filter(e => e.id !== eventId));
+            await eventService.delete(eventToDelete.id);
+            setEvents(events.filter(e => e.id !== eventToDelete.id));
             toast({
                 title: "Sucesso!",
-                description: `Evento "${eventTitle}" excluído com sucesso.`
+                description: `Evento "${eventToDelete.title}" excluído com sucesso.`
             });
+            setIsDeleteDialogOpen(false);
         } catch (error) {
             console.error("Failed to delete event:", error);
             toast({
@@ -570,332 +585,393 @@ export default function SchedulePage() {
             <div className="flex flex-col gap-4">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <header>
-                        <h1 className="text-3xl font-bold text-slate-800">Agenda Comunitária</h1>
-                        <p className="text-slate-500 mt-2">Nossos compromissos, orações e eventos em comunidade.</p>
+                        <h1 className="text-3xl font-bold !text-base-content">Agenda Comunitária</h1>
+                        <p className="!text-base-content/60 mt-2">Nossos compromissos, orações e eventos em comunidade.</p>
                     </header>
                     <div className="flex gap-2 flex-wrap">
-                        {/* Google Calendar - Todos os usuários podem conectar */}
                         {!isCalendarConnected ? (
-                            <Button onClick={handleConnectCalendar} variant="outline" className="gap-2">
+                            <Button onClick={handleConnectCalendar} variant="outline" size="md" className="gap-2">
                                 <Calendar className="w-4 h-4" /> Conectar Google Calendar
                             </Button>
                         ) : (
-                            <>
-                                <Button onClick={handleSync} disabled={isSyncing} variant="outline" size="sm" className="gap-1">
-                                    <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                            <div className="flex gap-2">
+                                <Button onClick={handleSync} loading={isSyncing} variant="outline" size="md" className="gap-2">
+                                    <RefreshCw className={cn("w-4 h-4", isSyncing && "animate-spin")} />
                                     Sincronizar
                                 </Button>
-                                <Button onClick={handleDisconnect} disabled={isSyncing} variant="ghost" size="sm" className="gap-1">
+                                <Button onClick={handleDisconnect} disabled={isSyncing} variant="ghost" size="md">
                                     Desconectar
                                 </Button>
-                            </>
+                            </div>
                         )}
-                        {/* Criar evento - Só admin */}
                         {user?.role === 'admin' && (
-                            <Button onClick={openNewEventDialog} className="gap-2">
+                            <Button onClick={openNewEventDialog} variant="primary" size="md" className="gap-2">
                                 <Plus className="w-4 h-4" /> Novo Evento
                             </Button>
                         )}
                     </div>
 
-                    {/* Dialog de Criação/Edição - Só admin pode abrir */}
-                    <Dialog open={openDialog} onOpenChange={(open) => { setOpenDialog(open); if (!open) resetForm(); }}>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>{editingEvent ? 'Editar Evento' : 'Criar Novo Evento'}</DialogTitle>
-                            </DialogHeader>
-                            <form onSubmit={createOrUpdateEvent} className="space-y-4">
-                                <Input placeholder="Título do Evento" value={title} onChange={e => setTitle(e.target.value)} required />
-                                <Textarea placeholder="Descrição" value={description} onChange={e => setDescription(e.target.value)} />
-                                <div>
-                                    <label className="text-sm font-medium">Tipo</label>
-                                    <select value={type} onChange={e => setType(e.target.value as EventType['type'])} className="w-full px-3 py-2 border rounded-md">
-                                        <option value="oracao">Oração</option>
-                                        <option value="reuniao">Reunião</option>
-                                        <option value="formacao">Formação</option>
-                                        <option value="celebracao">Celebração</option>
-                                        <option value="outro">Outro</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="text-sm font-medium">Início</label>
-                                    <Input type="datetime-local" value={startTime} onChange={e => setStartTime(e.target.value)} required />
-                                </div>
-                                <div>
-                                    <label className="text-sm font-medium">Término</label>
-                                    <Input type="datetime-local" value={endTime} onChange={e => setEndTime(e.target.value)} />
-                                </div>
-                                <Input placeholder="Local (opcional)" value={location} onChange={e => setLocation(e.target.value)} />
-                                <div className="flex items-center gap-2">
-                                    <input
-                                        type="checkbox"
-                                        id="isPublic"
-                                        checked={isPublic}
-                                        onChange={e => setIsPublic(e.target.checked)}
-                                        className="w-4 h-4"
-                                    />
-                                    <label htmlFor="isPublic" className="text-sm font-medium">
-                                        Tornar público (visível na página inicial)
-                                    </label>
-                                </div>
-                                <Button type="submit" disabled={isCreating} className="gap-2">
-                                    {isCreating && <Loader2 className="w-4 h-4 animate-spin" />}
-                                    {isCreating ? (editingEvent ? 'Atualizando...' : 'Criando...') : (editingEvent ? 'Atualizar Evento' : 'Criar Evento')}
-                                </Button>
-                            </form>
-                        </DialogContent>
-                    </Dialog>
+                    {/* Modal de Criação/Edição */}
+                    <Modal
+                        isOpen={openDialog}
+                        onClose={() => { setOpenDialog(false); resetForm(); }}
+                        title={editingEvent ? 'Editar Evento' : 'Criar Novo Evento'}
+                        className="max-w-xl"
+                    >
+                        <form onSubmit={createOrUpdateEvent} className="space-y-4">
+                            <Fieldset>
+                                <FieldsetLegend>Título do Evento</FieldsetLegend>
+                                <Input
+                                    placeholder="Ex: Oração Comunitária"
+                                    value={title}
+                                    onChange={e => setTitle(e.target.value)}
+                                    required
+                                    className="!text-base-content w-full"
+                                />
+                            </Fieldset>
 
-                    {/* Dialog de Seleção de Calendário */}
-                    <Dialog open={showCalendarSelector} onOpenChange={setShowCalendarSelector}>
-                        <DialogContent className="max-w-2xl">
-                            <DialogHeader>
-                                <DialogTitle>Escolha ou Crie um Calendário</DialogTitle>
-                                <p className="text-sm text-slate-500 mt-2">
-                                    Selecione um dos seus calendários existentes ou crie um novo calendário personalizado
-                                </p>
-                            </DialogHeader>
-                            <div className="space-y-4 mt-4">
-                                {/* Opção: Calendários Existentes */}
-                                <div className="space-y-3">
-                                    <label className="flex items-center gap-2 font-medium">
-                                        <input
-                                            type="radio"
-                                            checked={!createNewCalendar}
-                                            onChange={() => setCreateNewCalendar(false)}
-                                            className="w-4 h-4"
-                                        />
-                                        Usar calendário existente
-                                    </label>
-                                    {!createNewCalendar && (
-                                        <div className="ml-6 space-y-2">
-                                            {isLoadingCalendars ? (
-                                                <div className="flex items-center gap-2 p-4 text-slate-500">
-                                                    <Loader2 className="w-5 h-5 animate-spin" />
-                                                    <span>Carregando seus calendários do Google...</span>
-                                                </div>
-                                            ) : availableCalendars.length === 0 ? (
-                                                <div className="p-4 bg-amber-50 border border-amber-200 rounded-md">
-                                                    <p className="text-sm text-amber-800">
-                                                        ⚠️ Nenhum calendário encontrado na sua conta Google.
-                                                    </p>
-                                                    <p className="text-xs text-amber-600 mt-1">
-                                                        Selecione a opção abaixo para criar um novo calendário.
-                                                    </p>
-                                                </div>
-                                            ) : (
-                                                availableCalendars.map(cal => (
-                                                    <label key={cal.id} className="flex items-center gap-2 p-3 border rounded-md hover:bg-slate-50 cursor-pointer">
-                                                        <input
-                                                            type="radio"
-                                                            name="calendar"
-                                                            value={cal.id}
-                                                            checked={selectedCalendarId === cal.id}
-                                                            onChange={e => setSelectedCalendarId(e.target.value)}
-                                                            className="w-4 h-4"
-                                                        />
-                                                        <div className="flex-1">
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="font-medium">{cal.summary}</span>
-                                                                {cal.primary && (
-                                                                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">Principal</span>
-                                                                )}
-                                                            </div>
-                                                            {cal.description && (
-                                                                <p className="text-sm text-slate-500">{cal.description}</p>
+                            <Fieldset>
+                                <FieldsetLegend>Descrição</FieldsetLegend>
+                                <Textarea
+                                    placeholder="Detalhes do compromisso..."
+                                    value={description}
+                                    onChange={e => setDescription(e.target.value)}
+                                    className="!text-base-content w-full"
+                                />
+                            </Fieldset>
+
+                            <Fieldset>
+                                <FieldsetLegend>Tipo</FieldsetLegend>
+                                <Select
+                                    value={type}
+                                    onChange={e => setType(e.target.value as EventType['type'])}
+                                    className="!text-base-content w-full"
+                                >
+                                    <option value="oracao" className="bg-base-100 text-base-content">Oração</option>
+                                    <option value="reuniao" className="bg-base-100 text-base-content">Reunião</option>
+                                    <option value="formacao" className="bg-base-100 text-base-content">Formação</option>
+                                    <option value="celebracao" className="bg-base-100 text-base-content">Celebração</option>
+                                    <option value="outro" className="bg-base-100 text-base-content">Outro</option>
+                                </Select>
+                            </Fieldset>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <Fieldset>
+                                    <FieldsetLegend>Início</FieldsetLegend>
+                                    <Input
+                                        type="datetime-local"
+                                        value={startTime}
+                                        onChange={e => setStartTime(e.target.value)}
+                                        required
+                                        className="!text-base-content"
+                                    />
+                                </Fieldset>
+                                <Fieldset>
+                                    <FieldsetLegend>Término</FieldsetLegend>
+                                    <Input
+                                        type="datetime-local"
+                                        value={endTime}
+                                        onChange={e => setEndTime(e.target.value)}
+                                        className="!text-base-content"
+                                    />
+                                </Fieldset>
+                            </div>
+
+                            <Fieldset>
+                                <FieldsetLegend>Local</FieldsetLegend>
+                                <Input
+                                    placeholder="Ex: Capela, Salão, Online..."
+                                    value={location}
+                                    onChange={e => setLocation(e.target.value)}
+                                    className="!text-base-content w-full"
+                                />
+                            </Fieldset>
+
+                            <div className="flex items-center gap-3 p-3 bg-base-200/50 rounded-lg border border-base-300">
+                                <Checkbox
+                                    id="isPublic"
+                                    checked={isPublic}
+                                    onChange={e => setIsPublic(e.target.checked)}
+                                    variant="primary"
+                                    size="md"
+                                />
+                                <label htmlFor="isPublic" className="text-sm font-medium cursor-pointer !text-base-content">
+                                    Tornar público (visível na página inicial)
+                                </label>
+                            </div>
+
+                            <Button type="submit" loading={isCreating} variant="primary" block>
+                                {editingEvent ? 'Atualizar Evento' : 'Criar Evento'}
+                            </Button>
+                        </form>
+                    </Modal>
+
+                    {/* Modal de Seleção de Calendário */}
+                    <Modal
+                        isOpen={showCalendarSelector}
+                        onClose={() => setShowCalendarSelector(false)}
+                        title="Escolha ou Crie um Calendário"
+                        className="max-w-2xl"
+                    >
+                        <div className="space-y-4">
+                            <p className="text-sm !text-base-content/60">
+                                Selecione um dos seus calendários existentes ou crie um novo calendário personalizado
+                            </p>
+                            {/* Opção: Calendários Existentes */}
+                            <div className="space-y-3">
+                                <label className="flex items-center gap-3 font-medium cursor-pointer p-2 hover:bg-base-200 rounded-lg transition-colors !text-base-content">
+                                    <Radio
+                                        checked={!createNewCalendar}
+                                        onChange={() => setCreateNewCalendar(false)}
+                                        variant="primary"
+                                    />
+                                    Usar calendário existente
+                                </label>
+                                {!createNewCalendar && (
+                                    <div className="ml-9 space-y-2">
+                                        {isLoadingCalendars ? (
+                                            <div className="flex items-center gap-2 p-4 !text-base-content/60">
+                                                <Loader2 className="w-5 h-5 animate-spin" />
+                                                <span>Carregando seus calendários do Google...</span>
+                                            </div>
+                                        ) : availableCalendars.length === 0 ? (
+                                            <div className="p-4 bg-warning/10 border border-warning/20 rounded-md">
+                                                <p className="text-sm !text-warning">
+                                                    ⚠️ Nenhum calendário encontrado na sua conta Google.
+                                                </p>
+                                                <p className="text-xs !text-warning/80 mt-1">
+                                                    Selecione a opção abaixo para criar um novo calendário.
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            availableCalendars.map(cal => (
+                                                <label key={cal.id} className="flex items-center gap-3 p-3 border border-base-300 rounded-md hover:bg-base-200 cursor-pointer transition-colors !text-base-content">
+                                                    <Radio
+                                                        name="calendar"
+                                                        value={cal.id}
+                                                        checked={selectedCalendarId === cal.id}
+                                                        onChange={e => setSelectedCalendarId(e.target.value)}
+                                                        variant="primary"
+                                                    />
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-medium">{cal.summary}</span>
+                                                            {cal.primary && (
+                                                                <span className="badge badge-info badge-sm">Principal</span>
                                                             )}
                                                         </div>
-                                                    </label>
-                                                ))
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Divisor */}
-                                <div className="relative">
-                                    <div className="absolute inset-0 flex items-center">
-                                        <span className="w-full border-t" />
+                                                        {cal.description && (
+                                                            <p className="text-sm !text-base-content/50">{cal.description}</p>
+                                                        )}
+                                                    </div>
+                                                </label>
+                                            ))
+                                        )}
                                     </div>
-                                    <div className="relative flex justify-center text-xs uppercase">
-                                        <span className="bg-white px-2 text-slate-500">ou</span>
-                                    </div>
-                                </div>
+                                )}
+                            </div>
 
-                                {/* Opção: Criar Novo Calendário */}
-                                <div className="space-y-3">
-                                    <label className="flex items-center gap-2 font-medium">
-                                        <input
-                                            type="radio"
-                                            checked={createNewCalendar}
-                                            onChange={() => setCreateNewCalendar(true)}
-                                            className="w-4 h-4"
-                                        />
-                                        Criar novo calendário personalizado
-                                    </label>
-                                    {createNewCalendar && (
-                                        <div className="ml-6">
+                            {/* Divisor */}
+                            <div className="divider">ou</div>
+
+                            {/* Opção: Criar Novo Calendário */}
+                            <div className="space-y-3">
+                                <label className="flex items-center gap-3 font-medium cursor-pointer p-2 hover:bg-base-200 rounded-lg transition-colors !text-base-content">
+                                    <Radio
+                                        checked={createNewCalendar}
+                                        onChange={() => setCreateNewCalendar(true)}
+                                        variant="primary"
+                                    />
+                                    Criar novo calendário personalizado
+                                </label>
+                                {createNewCalendar && (
+                                    <div className="ml-9">
+                                        <Fieldset>
                                             <Input
-                                                placeholder="Digite o nome do novo calendário (ex: Recanto do Amor)"
+                                                placeholder="Ex: Recanto do Amor"
                                                 value={customCalendarName}
                                                 onChange={e => setCustomCalendarName(e.target.value)}
+                                                className="!text-base-content"
                                             />
-                                            <p className="text-xs text-slate-500 mt-1">
+                                            <FieldsetLabel>
                                                 Um novo calendário será criado na sua conta Google com este nome
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Botão Confirmar */}
-                                <Button
-                                    onClick={handleConfirmCalendarSelection}
-                                    disabled={isConfiguringCalendar || (!createNewCalendar && !selectedCalendarId) || (createNewCalendar && !customCalendarName.trim())}
-                                    className="w-full gap-2"
-                                >
-                                    {isConfiguringCalendar && <Loader2 className="w-4 h-4 animate-spin" />}
-                                    {isConfiguringCalendar ? 'Configurando...' : 'Confirmar Seleção'}
-                                </Button>
+                                            </FieldsetLabel>
+                                        </Fieldset>
+                                    </div>
+                                )}
                             </div>
-                        </DialogContent>
-                    </Dialog>
+
+                            {/* Botão Confirmar */}
+                            <Button
+                                onClick={handleConfirmCalendarSelection}
+                                disabled={isLoadingCalendars || (!createNewCalendar && !selectedCalendarId) || (createNewCalendar && !customCalendarName)}
+                                variant="primary"
+                                block
+                                loading={isConfiguringCalendar}
+                            >
+                                Confirmar Seleção
+                            </Button>
+                        </div>
+                    </Modal>
                 </div>
 
                 {syncMessage && (
-                    <Alert className={`${
-                        syncMessage.includes('✅') ? 'bg-green-50 border-green-200' :
-                        syncMessage.includes('❌') ? 'bg-red-50 border-red-200' :
-                        'bg-blue-50 border-blue-200'
-                    }`}>
-                        <AlertDescription className={`${
-                            syncMessage.includes('✅') ? 'text-green-800' :
-                            syncMessage.includes('❌') ? 'text-red-800' :
-                            'text-blue-800'
-                        } flex items-center gap-2`}>
+                    <Alert
+                        variant={
+                            syncMessage.includes('✅') ? 'success' :
+                            syncMessage.includes('❌') ? 'error' :
+                            'info'
+                        }
+                    >
+                        <div className="flex items-center gap-2">
                             {isSyncing && <RefreshCw className="w-4 h-4 animate-spin" />}
-                            {syncMessage}
-                        </AlertDescription>
+                            <span>{syncMessage}</span>
+                        </div>
                     </Alert>
                 )}
 
                 {isCalendarConnected && (
-                    <Alert className="bg-blue-50 border-blue-200">
-                        <AlertDescription className="text-sm text-blue-800">
-                            <strong>📌 Como funciona a sincronização:</strong>
-                            <ul className="list-disc list-inside mt-2 space-y-1">
-                                <li><strong>Sincronizar:</strong> Importa eventos do Google e exporta eventos locais em uma única operação</li>
-                                <li><strong>Proteção contra duplicatas:</strong> Eventos já sincronizados não são duplicados</li>
-                                <li><strong>Automático:</strong> Novos eventos criados aqui são enviados automaticamente ao Google</li>
+                    <Alert variant="info">
+                        <div className="text-sm">
+                            <h4 className="font-bold flex items-center gap-2 mb-2">
+                                📌 Como funciona a sincronização:
+                            </h4>
+                            <ul className="list-disc list-inside space-y-1 ml-2">
+                                <li><strong>Sincronizar:</strong> Importa eventos do Google e exporta novos eventos locais.</li>
+                                <li><strong>Proteção:</strong> Eventos já sincronizados não são duplicados.</li>
+                                <li><strong>Automático:</strong> Novos eventos criados aqui são enviados ao Google.</li>
                             </ul>
-                        </AlertDescription>
+                        </div>
                     </Alert>
                 )}
 
                 {!isCalendarConnected && events.length > 0 && (
-                    <Alert className="bg-amber-50 border-amber-200">
-                        <AlertDescription className="text-sm text-amber-800">
+                    <Alert variant="warning">
+                        <span>
                             ℹ️ Você tem <strong>{events.length} eventos</strong> salvos localmente.
-                            Conecte o Google Calendar para sincronizar com sua agenda externa.
-                        </AlertDescription>
+                            Conecte o Google Calendar para sincronizar.
+                        </span>
                     </Alert>
                 )}
             </div>
 
             <div className="space-y-4">
                 {events.length === 0 ? (
-                    <div className="text-center py-12">
-                        <Calendar className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold text-slate-700 mb-2">
+                    <div className="text-center py-12 px-4 bg-base-200/50 rounded-xl border border-dashed border-base-300">
+                        <Calendar className="w-16 h-16 !text-base-content/10 mx-auto mb-4" />
+                        <h3 className="text-xl font-bold !text-base-content mb-2">
                             Nenhum evento agendado
                         </h3>
-                        <p className="text-slate-500">
-                            {user?.role === 'admin' ? 'Crie o primeiro evento para a comunidade.' : 'Aguarde novos eventos serem agendados.'}
+                        <p className="!text-base-content/50 max-w-sm mx-auto">
+                            {user?.role === 'admin' ? 'Crie o primeiro evento para a comunidade para que todos possam acompanhar.' : 'Aguarde novos eventos serem agendados pela coordenação.'}
                         </p>
                     </div>
                 ) : (
                     events.map(event => (
-                        <Card key={event.id}>
-                            <CardHeader className="flex flex-row items-start gap-4">
-                                <div className="pt-1">{eventIcons[event.type]}</div>
-                                <div className="flex-1">
-                                    <div className="flex items-start justify-between">
-                                        <CardTitle className="flex items-center gap-2">
-                                            {event.title}
-                                            {event.is_public && (
-                                                <Globe className="w-4 h-4 text-green-600" title="Público" />
+                        <Card key={event.id} variant="bordered" bg="base-100">
+                            <CardBody className="gap-2">
+                                <div className="flex flex-row items-start gap-4">
+                                    <div className="pt-1">{eventIcons[event.type]}</div>
+                                    <div className="flex-1">
+                                        <div className="flex items-start justify-between gap-2">
+                                            <CardTitle className="text-lg leading-tight flex items-center gap-2">
+                                                {event.title}
+                                                {event.is_public && (
+                                                    <Globe className="w-4 h-4 text-success" />
+                                                )}
+                                                {event.google_calendar_id && (
+                                                    <CheckCircle2 className="w-4 h-4 text-info" />
+                                                )}
+                                            </CardTitle>
+                                            {user?.role === 'admin' && (
+                                                <div className="flex gap-2 shrink-0">
+                                                    <Button
+                                                        onClick={() => togglePublic(event.id, event.is_public)}
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="px-2"
+                                                    >
+                                                        <Globe className="w-4 h-4" />
+                                                    </Button>
+                                                    <Button
+                                                        onClick={() => openEditEventDialog(event)}
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="px-2"
+                                                    >
+                                                        <Edit className="w-4 h-4" />
+                                                    </Button>
+                                                    <Button 
+                                                        variant="error" 
+                                                        size="sm" 
+                                                        className="px-2"
+                                                        onClick={() => openDeleteDialog(event)}
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </Button>
+                                                </div>
                                             )}
-                                            {event.google_calendar_id && (
-                                                <CheckCircle2 className="w-4 h-4 text-blue-600" title="Sincronizado com Google Calendar" />
+                                        </div>
+
+                                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-base-content/60 mt-1">
+                                            <span className="flex items-center gap-1.5">
+                                                <Calendar className="w-4 h-4" />
+                                                {format(new Date(event.start), 'EEEE, dd/MM/yyyy', { locale: ptBR })}
+                                            </span>
+                                            <span className="flex items-center gap-1.5">
+                                                <Clock className="w-4 h-4" />
+                                                {format(new Date(event.start), 'HH:mm', { locale: ptBR })}
+                                                {event.end && ` - ${format(new Date(event.end), 'HH:mm', { locale: ptBR })}`}
+                                            </span>
+                                            {event.location && (
+                                                <span>📍 {event.location}</span>
                                             )}
-                                        </CardTitle>
-                                        {user?.role === 'admin' && (
-                                            <div className="flex gap-2">
-                                                <Button
-                                                    onClick={() => togglePublic(event.id, event.is_public)}
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="gap-1"
-                                                >
-                                                    <Globe className="w-4 h-4" />
-                                                    {event.is_public ? 'Privado' : 'Público'}
-                                                </Button>
-                                                <Button
-                                                    onClick={() => openEditEventDialog(event)}
-                                                    variant="outline"
-                                                    size="sm"
-                                                    className="gap-1"
-                                                >
-                                                    <Edit className="w-4 h-4" />
-                                                </Button>
-                                                <AlertDialog>
-                                                    <AlertDialogTrigger asChild>
-                                                        <Button variant="destructive" size="sm" className="gap-1">
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </Button>
-                                                    </AlertDialogTrigger>
-                                                    <AlertDialogContent>
-                                                        <AlertDialogHeader>
-                                                            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
-                                                        </AlertDialogHeader>
-                                                        <AlertDialogDescription>
-                                                            Tem certeza que deseja excluir o evento "{event.title}"? Esta ação não pode ser desfeita.
-                                                        </AlertDialogDescription>
-                                                        <AlertDialogFooter>
-                                                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                                            <AlertDialogAction onClick={() => deleteEvent(event.id, event.title)}>
-                                                                Excluir
-                                                            </AlertDialogAction>
-                                                        </AlertDialogFooter>
-                                                    </AlertDialogContent>
-                                                </AlertDialog>
+                                        </div>
+
+                                        {event.description && (
+                                            <div className="mt-4 p-4 bg-base-200/30 rounded-lg border border-base-200">
+                                                <p className="!text-base-content/80 text-sm italic leading-relaxed">
+                                                    {event.description}
+                                                </p>
                                             </div>
                                         )}
                                     </div>
-                                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500 mt-2">
-                                        <span className="flex items-center gap-1.5">
-                                            <Calendar className="w-4 h-4" />
-                                            {format(new Date(event.start), 'EEEE, dd/MM/yyyy', { locale: ptBR })}
-                                        </span>
-                                        <span className="flex items-center gap-1.5">
-                                            <Clock className="w-4 h-4" />
-                                            {format(new Date(event.start), 'HH:mm', { locale: ptBR })}
-                                            {event.end && ` - ${format(new Date(event.end), 'HH:mm', { locale: ptBR })}`}
-                                        </span>
-                                        {event.location && (
-                                            <span className="text-slate-500">📍 {event.location}</span>
-                                        )}
-                                    </div>
                                 </div>
-                            </CardHeader>
-                            {event.description && (
-                                <CardContent>
-                                    <p className="text-slate-600">{event.description}</p>
-                                </CardContent>
-                            )}
+                            </CardBody>
                         </Card>
                     ))
                 )}
             </div>
+
+            {/* Modal de Exclusão DaisyUI */}
+            <Modal
+                isOpen={isDeleteDialogOpen}
+                onClose={() => setIsDeleteDialogOpen(false)}
+                title="Confirmar Exclusão"
+                className="max-w-md"
+            >
+                <div className="space-y-4">
+                    <p className="!text-base-content/70">
+                        Tem certeza que deseja excluir o evento <strong className="!text-base-content">"{eventToDelete?.title}"</strong>? Esta ação não pode ser desfeita.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-2 mt-6">
+                        <Button
+                            variant="ghost"
+                            onClick={() => setIsDeleteDialogOpen(false)}
+                            className="flex-1"
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            variant="error"
+                            onClick={deleteEvent}
+                            className="flex-1"
+                        >
+                            Excluir Evento
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 }

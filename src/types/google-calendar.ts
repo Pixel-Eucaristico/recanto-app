@@ -59,6 +59,9 @@ export interface GoogleCalendarEvent {
     private?: {
       [key: string]: string;
     };
+    private?: {
+      [key: string]: string;
+    };
     shared?: {
       [key: string]: string;
     };

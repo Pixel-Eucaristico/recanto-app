@@ -130,6 +130,7 @@ export function LoginForm({ isRegister = false }: LoginFormProps) {
               Google
             </button>
 
+{/* 
             <button
               type="button"
               className={`btn btn-outline ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -146,7 +147,8 @@ export function LoginForm({ isRegister = false }: LoginFormProps) {
               disabled={isLoading}
             >
               Twitter
-            </button>
+            </button> 
+            */}
           </div>
         </>
       )}
