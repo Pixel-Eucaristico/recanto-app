@@ -5,8 +5,10 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { contentPageService } from '@/services/firebase';
 import { ArrowLeft, Plus } from 'lucide-react';
+import { useRequireFeature } from '@/hooks/useRequireFeature';
 
 export default function NewCMSPagePage() {
+  const { isLoading: checkingAccess, hasAccess } = useRequireFeature('manage:cms');
   const router = useRouter();
   const [formData, setFormData] = useState({
     title: '',
@@ -16,6 +18,15 @@ export default function NewCMSPagePage() {
   const [slugType, setSlugType] = useState<'home' | 'custom'>('home');
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Aguarda verificação de acesso
+  if (checkingAccess || !hasAccess) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <span className="loading loading-spinner loading-lg text-primary"></span>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

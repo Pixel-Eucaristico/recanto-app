@@ -5,18 +5,13 @@ import {
   FileText,
   MessageCircle,
   Users,
-  Heart,
-  ListTodo,
-  Eye,
-  Edit,
-  Trash2,
-  Plus,
-  Settings
+  Heart
 } from 'lucide-react';
 
 /**
  * Mapeamento de Roles para Features padrão.
- * Se um usuário não tiver features específicas no banco, essas serão usadas.
+ * NOTA: Essas permissões devem estar sincronizadas com a collection permissions_config no Firestore.
+ * Use a interface de Grupos de Acesso no admin para modificar as permissões.
  */
 export const DEFAULT_ROLE_PERMISSIONS: Record<Exclude<Role, null>, string[]> = {
   admin: ['*'],
@@ -25,8 +20,12 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Exclude<Role, null>, string[]> = {
     'create:content',
     'update:content',
     'read:calendar',
+    'manage:calendar',
     'read:forum',
-    'create:forum_post'
+    'create:forum_topic',
+    'create:forum_post',
+    'manage:followup',
+    'manage:challenges'
   ],
   recantiano: [
     'read:content',

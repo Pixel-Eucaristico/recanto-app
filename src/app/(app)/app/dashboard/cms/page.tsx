@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { contentPageService } from '@/services/firebase';
+import { useRequireFeature } from '@/hooks/useRequireFeature';
 import type { CMSPage } from '@/types/cms-types';
 import {
   Plus,
@@ -12,7 +13,6 @@ import {
   Eye,
   EyeOff,
   Home,
-  GripVertical,
   Menu as MenuIcon,
   Star,
   Folder,
@@ -23,7 +23,6 @@ import {
 } from 'lucide-react';
 import {
   DndContext,
-  closestCenter,
   PointerSensor,
   useSensor,
   useSensors,
@@ -40,14 +39,23 @@ import {
   arrayMove
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import * as LucideIcons from 'lucide-react';
 import { PageMenuConfig } from '@/components/cms-editor/PageMenuConfig';
 import { ConfirmModal, PromptModal, AlertModal } from '@/components/ui/modals';
 
 export default function CMSPagesListPage() {
+  const { isLoading: checkingAccess, hasAccess } = useRequireFeature('manage:cms');
   const router = useRouter();
   const [pages, setPages] = useState<CMSPage[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Aguarda verificação de acesso
+  if (checkingAccess || !hasAccess) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <span className="loading loading-spinner loading-lg text-primary"></span>
+      </div>
+    );
+  }
   const [error, setError] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);

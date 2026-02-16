@@ -4,6 +4,7 @@ import React, { useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/daisyui/tabs";
+import { useRequireFeature } from '@/hooks/useRequireFeature';
 
 import ContentTab from '@/features/admin/components/ContentTab';
 import EmailTab from '@/features/admin/components/EmailTab';
@@ -11,8 +12,18 @@ import UsersTab from '@/features/admin/components/UsersTab';
 import RolesTab from '@/features/admin/components/RolesTab';
 
 const AdminPage = () => {
+    const { isLoading: checkingAccess, hasAccess } = useRequireFeature('manage:users');
     const { toast } = useToast();
     const searchParams = useSearchParams();
+
+    // Aguarda verificação de acesso
+    if (checkingAccess || !hasAccess) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <span className="loading loading-spinner loading-lg text-primary"></span>
+            </div>
+        );
+    }
 
     useEffect(() => {
         const error = searchParams.get('error');

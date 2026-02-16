@@ -16,6 +16,7 @@ import { Card, CardBody, CardTitle, CardActions } from '@/components/ui/daisyui/
 import { Modal } from '@/components/ui/daisyui/modal';
 import { FeatureGuard } from '@/components/auth/FeatureGuard';
 import { Role } from '@/features/auth/types/user';
+import { useRequireFeature } from '@/hooks/useRequireFeature';
 
 import { Loader2, Calendar, Plus, Clock, RefreshCw, CheckCircle2, Globe, Edit, Trash2, Shield } from 'lucide-react';
 import { format } from 'date-fns';
@@ -32,10 +33,20 @@ const eventIcons = {
 };
 
 export default function SchedulePage() {
+    const { isLoading: checkingAccess, hasAccess } = useRequireFeature('manage:calendar');
     const { user, can } = useAuth();
     const { toast } = useToast();
     const [events, setEvents] = useState<EventType[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+
+    // Aguarda verificação de acesso
+    if (checkingAccess || !hasAccess) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <span className="loading loading-spinner loading-lg text-primary"></span>
+            </div>
+        );
+    }
     const [openDialog, setOpenDialog] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
     const [isCreating, setIsCreating] = useState(false);

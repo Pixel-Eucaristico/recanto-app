@@ -22,8 +22,10 @@ export interface AppRoute {
   name: string;
   href: string;
   description?: string;
-  icon: LucideIcon; 
+  icon: LucideIcon;
   roles: Role[];
+  /** Feature necessária para ver/acessar esta rota (se não definida, usa apenas roles) */
+  requiredFeature?: string;
 }
 
 export const appRoutes: AppRoute[] = [
@@ -46,19 +48,22 @@ export const appRoutes: AppRoute[] = [
     name: 'Formação',
     href: '/app/dashboard/formation',
     icon: BookOpen,
-    roles: ['admin', 'missionario', 'recantiano']
+    roles: ['admin', 'missionario', 'recantiano'],
+    requiredFeature: 'read:content'
   },
   {
     name: 'Fórum',
     href: '/app/dashboard/forum',
     icon: MessageCircle,
-    roles: ['admin', 'missionario', 'recantiano']
+    roles: ['admin', 'missionario', 'recantiano'],
+    requiredFeature: 'read:forum'
   },
   {
     name: 'Acompanhamentos',
     href: '/app/dashboard/follow-up',
     icon: Users,
-    roles: ['admin', 'missionario', 'pai']
+    roles: ['admin', 'missionario', 'pai'],
+    requiredFeature: 'manage:followup'
   },
   */
   {
@@ -71,25 +76,29 @@ export const appRoutes: AppRoute[] = [
     name: 'Agenda',
     href: '/app/dashboard/schedule',
     icon: Calendar,
-    roles: ['admin', 'missionario']
+    roles: ['admin', 'missionario'],
+    requiredFeature: 'manage:calendar'
   },
   {
     name: 'Minhas Tarefas',
     href: '/app/dashboard/tarefas',
     icon: ListTodo,
-    roles: ['colaborador']
+    roles: ['colaborador'],
+    requiredFeature: 'read:tasks'
   },
   {
     name: 'Gerenciar Site',
     href: '/app/dashboard/cms',
     icon: FileEdit,
-    roles: ['admin', 'missionario']
+    roles: ['admin'],
+    requiredFeature: 'manage:cms'
   },
   {
     name: 'Admin',
     href: '/app/dashboard/admin',
     icon: UserCog,
-    roles: ['admin']
+    roles: ['admin'],
+    requiredFeature: 'manage:users'
   },
   /*
   {
