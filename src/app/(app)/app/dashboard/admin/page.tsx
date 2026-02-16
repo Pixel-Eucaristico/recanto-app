@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/daisyu
 import ContentTab from '@/features/admin/components/ContentTab';
 import EmailTab from '@/features/admin/components/EmailTab';
 import UsersTab from '@/features/admin/components/UsersTab';
+import RolesTab from '@/features/admin/components/RolesTab';
 
 const AdminPage = () => {
     const { toast } = useToast();
@@ -41,6 +42,7 @@ const AdminPage = () => {
                 <TabsList className="bg-base-200">
                     <TabsTrigger value="content">Conteúdo</TabsTrigger>
                     <TabsTrigger value="users">Equipe</TabsTrigger>
+                    <TabsTrigger value="roles">Permissões</TabsTrigger>
                     <TabsTrigger value="email">Configurações</TabsTrigger>
                 </TabsList>
 
@@ -50,6 +52,10 @@ const AdminPage = () => {
                 
                 <TabsContent value="users">
                     <UsersTab />
+                </TabsContent>
+
+                <TabsContent value="roles">
+                    <RolesTab />
                 </TabsContent>
 
                 <TabsContent value="email">

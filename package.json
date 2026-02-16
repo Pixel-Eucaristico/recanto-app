@@ -9,7 +9,11 @@
     "lint": "next lint",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "setup": "npm run firebase:rules && npm run firebase:indexes",
+    "firebase:rules": "npx firebase deploy --only firestore:rules",
+    "firebase:indexes": "npx firebase deploy --only firestore:indexes",
+    "firebase:deploy": "npx firebase deploy"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.980.0",

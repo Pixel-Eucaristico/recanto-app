@@ -71,7 +71,7 @@ export class BaseFirebaseService<T extends { id: string }> {
       console.log(`✅ [${this.collectionName}] setDoc OK`);
 
       console.log(`🎉 [${this.collectionName}] Criação completa!`, dataWithId);
-      return dataWithId as T & { id: string };
+      return dataWithId as unknown as T & { id: string };
     } catch (error) {
       console.error(`❌ Error creating ${this.collectionName}:`, error);
       console.error(`❌ Error details:`, JSON.stringify(error, null, 2));
@@ -81,6 +81,7 @@ export class BaseFirebaseService<T extends { id: string }> {
 
   /**
    * Obtém um registro por ID
+   * @throws Error se houver problema de conexão (não confundir com "não encontrado")
    */
   async get(id: string): Promise<T | null> {
     try {
@@ -88,12 +89,18 @@ export class BaseFirebaseService<T extends { id: string }> {
       const snapshot = await getDoc(docRef);
 
       if (snapshot.exists()) {
-        return snapshot.data() as T;
+        const data = snapshot.data() as T;
+        return { ...data, id: snapshot.id };
       }
+      // Documento realmente não existe
       return null;
-    } catch (error) {
+    } catch (error: any) {
+      // IMPORTANTE: Propagar erro de conexão para não confundir com "não encontrado"
       console.error(`Error getting ${this.collectionName}/${id}:`, error);
-      return null;
+
+      // Re-throw para que o chamador saiba que houve erro de conexão
+      // e não assuma que o documento não existe
+      throw new Error(`Firestore offline ou erro de conexão: ${error.message}`);
     }
   }
 
@@ -112,7 +119,7 @@ export class BaseFirebaseService<T extends { id: string }> {
       }
 
       const snapshot = await getDocs(q);
-      return snapshot.docs.map(doc => doc.data() as T);
+      return snapshot.docs.map(doc => ({ ...(doc.data() as T), id: doc.id }));
     } catch (error) {
       console.error(`Error listing ${this.collectionName}:`, error);
       return [];
@@ -162,7 +169,7 @@ export class BaseFirebaseService<T extends { id: string }> {
       const q = query(collectionRef, where(field, '==', value));
       const snapshot = await getDocs(q);
 
-      return snapshot.docs.map(doc => doc.data() as T);
+      return snapshot.docs.map(doc => ({ ...(doc.data() as T), id: doc.id }));
     } catch (error) {
       console.error(`Error querying ${this.collectionName} by ${field}:`, error);
       return [];
@@ -183,7 +190,7 @@ export class BaseFirebaseService<T extends { id: string }> {
       const q = query(collectionRef, ...constraints);
       const snapshot = await getDocs(q);
 
-      return snapshot.docs.map(doc => doc.data() as T);
+      return snapshot.docs.map(doc => ({ ...(doc.data() as T), id: doc.id }));
     } catch (error) {
       console.error(`Error querying ${this.collectionName} with filters:`, error);
       return [];
@@ -211,7 +218,7 @@ export class BaseFirebaseService<T extends { id: string }> {
       const q = query(collectionRef, ...constraints);
       const snapshot = await getDocs(q);
 
-      return snapshot.docs.map(doc => doc.data() as T);
+      return snapshot.docs.map(doc => ({ ...(doc.data() as T), id: doc.id }));
     } catch (error) {
       console.error(`Error querying ${this.collectionName} with order:`, error);
       return [];
@@ -225,10 +232,13 @@ export class BaseFirebaseService<T extends { id: string }> {
     const collectionRef = collection(firestore, this.collectionName);
 
     const unsubscribe = onSnapshot(collectionRef, (snapshot) => {
-      const items = snapshot.docs.map(doc => doc.data() as T);
+      const items = snapshot.docs.map(doc => ({ ...(doc.data() as T), id: doc.id }));
       callback(items);
     }, (error) => {
-      console.error(`Error in onSnapshot for ${this.collectionName}:`, error);
+      console.error(`❌ [${this.collectionName}] Erro no onSnapshot:`, error.message);
+      if (error.code === 'permission-denied') {
+        console.warn(`🛑 [${this.collectionName}] Acesso negado. Verifique as regras do Firestore para esta coleção.`);
+      }
       callback([]);
     });
 
@@ -251,10 +261,13 @@ export class BaseFirebaseService<T extends { id: string }> {
     const q = query(collectionRef, ...constraints);
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const items = snapshot.docs.map(doc => doc.data() as T);
+      const items = snapshot.docs.map(doc => ({ ...(doc.data() as T), id: doc.id }));
       callback(items);
     }, (error) => {
-      console.error(`Error in onQueryChange for ${this.collectionName}:`, error);
+      console.error(`❌ [${this.collectionName}] Erro no onQueryChange:`, error.message);
+      if (error.code === 'permission-denied') {
+        console.warn(`🛑 [${this.collectionName}] Query negada por falta de permissão ou índice ausente.`);
+      }
       callback([]);
     });
 

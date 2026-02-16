@@ -9,7 +9,10 @@ export async function POST(req: Request) {
   const { token } = await req.json();
 
   try {
-    const decoded = await adminAuth.verifyIdToken(token, true);
+    // Em desenvolvimento, desativamos checkRevocation (true) para evitar o erro de JWT Signature do Google Auth
+    // causado por desvios leves no relógio. A validação local do token continua ativa.
+    const checkRevocation = process.env.NODE_ENV === 'production';
+    const decoded = await adminAuth.verifyIdToken(token, checkRevocation);
     await sessionService.set(token);
     return NextResponse.json({ user: decoded });
   } catch (e) {

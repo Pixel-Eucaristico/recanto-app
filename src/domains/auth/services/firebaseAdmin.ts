@@ -14,32 +14,56 @@ if (!getApps().length) {
       });
     } catch (e) {
       console.warn("Failed to parse FIREBASE_SERVICE_ACCOUNT_KEY, falling back to individual variables.", e);
-      // Fallback logic duplicated in catch to guarantee assignment
-      const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+    // Fallback logic duplicated in catch to guarantee assignment
+      const rawPrivateKey = process.env.FIREBASE_PRIVATE_KEY || '';
+      // Remove aspas excedentes e garante que \n literais sejam transformados em quebras reais
+      const privateKey = rawPrivateKey
+        .trim()
+        .replace(/^"/, "")
+        .replace(/"$/, "")
+        .replace(/\\n/g, "\n");
+        
+      const projectId = process.env.FIREBASE_PROJECT_ID?.replace(/"/g, "");
+      const clientEmail = process.env.FIREBASE_CLIENT_EMAIL?.replace(/"/g, "");
+
+      console.log(`[FirebaseAdmin] PID: ${projectId} | KeyLen: ${privateKey.length} | FirstChars: ${privateKey.substring(0, 30)}`);
+      console.log(`[FirebaseAdmin] System Time: ${new Date().toLocaleString('pt-BR')} (Year: ${new Date().getFullYear()})`);
+
       app = initializeApp({
         credential: cert({
-          projectId: process.env.FIREBASE_PROJECT_ID,
-          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-          privateKey: privateKey ? privateKey.replace(/\\n/g, "\n") : undefined,
+          projectId,
+          clientEmail,
+          privateKey,
         }),
       });
+      console.log(`✅ [FirebaseAdmin] Initialized Project: ${projectId}`);
     }
   } else {
     // Fallback to individual environment variables
-    const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+    const rawPrivateKey = process.env.FIREBASE_PRIVATE_KEY || '';
+    const privateKey = rawPrivateKey
+      .trim()
+      .replace(/^"/, "")
+      .replace(/"$/, "")
+      .replace(/\\n/g, "\n");
+      
+    const projectId = process.env.FIREBASE_PROJECT_ID?.replace(/"/g, "");
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL?.replace(/"/g, "");
+
+    console.log(`[FirebaseAdmin] PID: ${projectId} | KeyLen: ${privateKey.length} | FirstChars: ${privateKey.substring(0, 30)}`);
+
     if (!privateKey) {
         console.error("FIREBASE_PRIVATE_KEY is missing!");
     }
 
     app = initializeApp({
       credential: cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        // Handle both escaped newlines (from .env) and real newlines
-        privateKey: privateKey ? privateKey.replace(/\\n/g, "\n") : undefined,
+        projectId,
+        clientEmail,
+        privateKey,
       }),
     });
-    console.log(`✅ [FirebaseAdmin] Initialized with individual variables for project: ${process.env.FIREBASE_PROJECT_ID}`);
+    console.log(`✅ [FirebaseAdmin] Initialized with individual variables for project: ${projectId}`);
   }
 } else {
   app = getApps()[0]!;

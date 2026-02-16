@@ -14,8 +14,10 @@ import { Radio } from '@/components/ui/daisyui/radio';
 import { Fieldset, FieldsetLegend, FieldsetLabel } from '@/components/ui/daisyui/fieldset';
 import { Card, CardBody, CardTitle, CardActions } from '@/components/ui/daisyui/card';
 import { Modal } from '@/components/ui/daisyui/modal';
+import { FeatureGuard } from '@/components/auth/FeatureGuard';
+import { Role } from '@/features/auth/types/user';
 
-import { Loader2, Calendar, Plus, Clock, RefreshCw, CheckCircle2, Globe, Edit, Trash2 } from 'lucide-react';
+import { Loader2, Calendar, Plus, Clock, RefreshCw, CheckCircle2, Globe, Edit, Trash2, Shield } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Alert } from '@/components/ui/daisyui/alert';
@@ -30,7 +32,7 @@ const eventIcons = {
 };
 
 export default function SchedulePage() {
-    const { user } = useAuth();
+    const { user, can } = useAuth();
     const { toast } = useToast();
     const [events, setEvents] = useState<EventType[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -60,15 +62,26 @@ export default function SchedulePage() {
     const [type, setType] = useState<EventType['type']>('oracao');
     const [location, setLocation] = useState('');
     const [isPublic, setIsPublic] = useState(false);
+    const [targetAudience, setTargetAudience] = useState<Role[]>(['admin', 'missionario', 'recantiano', 'pai', 'colaborador', 'benfeitor']);
 
     useEffect(() => {
         const loadData = async () => {
             setIsLoading(true);
             try {
                 console.log('📅 Carregando eventos do Firestore...');
-                const eventList = await eventService.getUpcomingEvents(50);
-                console.log('📅 Eventos carregados:', eventList.length, 'eventos');
-                setEvents(eventList);
+                const isGuest = !user;
+                const eventList = await eventService.getUpcomingEvents(100, isGuest);
+                
+                // Filtragem de visibilidade por Role/Feature
+                const visibleEvents = eventList.filter(ev => {
+                    if (user?.role === 'admin' || can('manage:calendar')) return true;
+                    if (ev.is_public) return true;
+                    if (ev.target_audience && user?.role && ev.target_audience.includes(user.role)) return true;
+                    return false;
+                });
+
+                console.log('📅 Eventos visíveis:', visibleEvents.length);
+                setEvents(visibleEvents);
 
                 // Check if Google Calendar is connected for this user
                 if (user) {
@@ -77,8 +90,8 @@ export default function SchedulePage() {
                         const data = await response.json();
                         setIsCalendarConnected(data.connected);
 
-                        // Iniciar sync automático se admin e calendário conectado
-                        if (data.connected && user.role === 'admin') {
+                        // Iniciar sync automático se tiver permissão e calendário conectado
+                        if (data.connected && (user.role === 'admin' || can('manage:calendar'))) {
                             await fetch('/api/calendar/auto-sync', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
@@ -209,6 +222,7 @@ export default function SchedulePage() {
                     start: startDate.toISOString(),
                     end: endDate.toISOString(),
                     is_public: isPublic,
+                    target_audience: targetAudience,
                 };
 
                 // Only add optional fields if they have values
@@ -249,7 +263,7 @@ export default function SchedulePage() {
                     start: startDate.toISOString(),
                     end: endDate.toISOString(),
                     is_public: isPublic,
-                    target_audience: ['admin', 'missionario', 'recantiano', 'pai', 'colaborador', 'benfeitor'],
+                    target_audience: targetAudience,
                     created_by: user.id,
                     created_at: new Date().toISOString(),
                 };
@@ -305,6 +319,7 @@ export default function SchedulePage() {
         setType('oracao');
         setLocation('');
         setIsPublic(false);
+        setTargetAudience(['admin', 'missionario', 'recantiano', 'pai', 'colaborador', 'benfeitor']);
         setEditingEvent(null);
     };
 
@@ -322,6 +337,7 @@ export default function SchedulePage() {
         setType(event.type);
         setLocation(event.location || '');
         setIsPublic(event.is_public);
+        setTargetAudience(event.target_audience || []);
         setOpenDialog(true);
     };
 
@@ -589,26 +605,28 @@ export default function SchedulePage() {
                         <p className="!text-base-content/60 mt-2">Nossos compromissos, orações e eventos em comunidade.</p>
                     </header>
                     <div className="flex gap-2 flex-wrap">
-                        {!isCalendarConnected ? (
-                            <Button onClick={handleConnectCalendar} variant="outline" size="md" className="gap-2">
-                                <Calendar className="w-4 h-4" /> Conectar Google Calendar
-                            </Button>
-                        ) : (
-                            <div className="flex gap-2">
-                                <Button onClick={handleSync} loading={isSyncing} variant="outline" size="md" className="gap-2">
-                                    <RefreshCw className={cn("w-4 h-4", isSyncing && "animate-spin")} />
-                                    Sincronizar
+                        {can('manage:calendar') && (
+                            !isCalendarConnected ? (
+                                <Button onClick={handleConnectCalendar} variant="outline" size="md" className="gap-2">
+                                    <Calendar className="w-4 h-4" /> Conectar Google Calendar
                                 </Button>
-                                <Button onClick={handleDisconnect} disabled={isSyncing} variant="ghost" size="md">
-                                    Desconectar
-                                </Button>
-                            </div>
+                            ) : (
+                                <div className="flex gap-2">
+                                    <Button onClick={handleSync} loading={isSyncing} variant="outline" size="md" className="gap-2">
+                                        <RefreshCw className={cn("w-4 h-4", isSyncing && "animate-spin")} />
+                                        Sincronizar
+                                    </Button>
+                                    <Button onClick={handleDisconnect} disabled={isSyncing} variant="ghost" size="md">
+                                        Desconectar
+                                    </Button>
+                                </div>
+                            )
                         )}
-                        {user?.role === 'admin' && (
+                        <FeatureGuard feature="manage:calendar">
                             <Button onClick={openNewEventDialog} variant="primary" size="md" className="gap-2">
                                 <Plus className="w-4 h-4" /> Novo Evento
                             </Button>
-                        )}
+                        </FeatureGuard>
                     </div>
 
                     {/* Modal de Criação/Edição */}
@@ -696,9 +714,34 @@ export default function SchedulePage() {
                                     size="md"
                                 />
                                 <label htmlFor="isPublic" className="text-sm font-medium cursor-pointer !text-base-content">
-                                    Tornar público (visível na página inicial)
+                                    Tornar público (visível para todos na página inicial)
                                 </label>
                             </div>
+
+                            {!isPublic && (
+                                <div className="p-4 bg-base-200/50 rounded-lg border border-base-300 space-y-3">
+                                    <label className="text-xs font-bold uppercase tracking-wider text-base-content/70 flex items-center gap-2">
+                                        <Shield className="w-3.5 h-3.5" /> Quem pode ver este evento privado?
+                                    </label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {(['missionario', 'recantiano', 'pai', 'colaborador', 'benfeitor'] as Role[]).map(r => (
+                                            <label key={r} className="flex items-center gap-2 cursor-pointer hover:bg-base-200 p-1 rounded transition-colors">
+                                                <Checkbox 
+                                                    checked={targetAudience.includes(r)} 
+                                                    onChange={() => {
+                                                        setTargetAudience(prev => 
+                                                            prev.includes(r) ? prev.filter(item => item !== r) : [...prev, r]
+                                                        );
+                                                    }}
+                                                    size="xs"
+                                                />
+                                                <span className="text-xs capitalize">{r}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                    <p className="text-[10px] opacity-40 italic mt-2">* Admins e gestores de agenda sempre têm acesso.</p>
+                                </div>
+                            )}
 
                             <Button type="submit" loading={isCreating} variant="primary" block>
                                 {editingEvent ? 'Atualizar Evento' : 'Criar Evento'}
