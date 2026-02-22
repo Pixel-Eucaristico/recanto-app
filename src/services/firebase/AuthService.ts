@@ -13,6 +13,8 @@ import {
   User as FirebaseAuthUser,
   onAuthStateChanged,
   AuthProvider,
+  linkWithPopup,
+  updatePassword,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { userService } from './UserService';
@@ -178,7 +180,38 @@ class AuthService {
       }
     } catch (error: any) {
       console.error('Error logging in with provider:', error);
+      if (error.code === 'auth/account-exists-with-different-credential') {
+        throw new Error('Este email já está cadastrado. Faça login com sua senha e vincule a conta no Perfil.');
+      }
       throw new Error(error.message || 'Erro ao fazer login com provedor');
+    }
+  }
+
+  /**
+   * Vincula a conta atual com o provedor Google
+   */
+  async linkGoogleAccount(): Promise<void> {
+    try {
+      if (!auth.currentUser) throw new Error('Nenhum usuário logado');
+      await linkWithPopup(auth.currentUser, googleProvider);
+      console.log('✅ [AuthService] Conta Google vinculada com sucesso.');
+    } catch (error: any) {
+      console.error('Error linking Google account:', error);
+      throw new Error(error.message || 'Erro ao vincular conta Google');
+    }
+  }
+
+  /**
+   * Cria uma senha local para a conta atual
+   */
+  async createLocalPassword(password: string): Promise<void> {
+    try {
+      if (!auth.currentUser) throw new Error('Nenhum usuário logado');
+      await updatePassword(auth.currentUser, password);
+      console.log('✅ [AuthService] Senha local criada/atualizada com sucesso.');
+    } catch (error: any) {
+      console.error('Error creating local password:', error);
+      throw new Error(error.message || 'Erro ao criar senha local');
     }
   }
 

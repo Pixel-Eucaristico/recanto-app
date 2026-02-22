@@ -8,7 +8,7 @@ import { authService } from '@/services/firebase/AuthService';
 import { useToast } from '@/components/ui/use-toast';
 
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, authProviders, linkGoogleAccount, createLocalPassword } = useAuth();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -18,6 +18,11 @@ export default function ProfilePage() {
   const [name, setName] = useState(user?.name || '');
   const [phone, setPhone] = useState(user?.phone || '');
   const [photoUrl, setPhotoUrl] = useState(user?.photo_url || '');
+
+  // Estados de vinculação
+  const [showPasswordInput, setShowPasswordInput] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [isLinking, setIsLinking] = useState(false);
 
   if (!user) {
     return (
@@ -61,6 +66,36 @@ export default function ProfilePage() {
       toast({ title: "Erro", description: "Não foi possível salvar as alterações.", variant: "destructive" });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleLinkGoogle = async () => {
+    setIsLinking(true);
+    try {
+      await linkGoogleAccount();
+      toast({ title: "Sucesso!", description: "Conta Google vinculada com sucesso." });
+    } catch (error: any) {
+      toast({ title: "Erro", description: error.message || "Não foi possível vincular a conta.", variant: "destructive" });
+    } finally {
+      setIsLinking(false);
+    }
+  };
+
+  const handleCreatePassword = async () => {
+    if (newPassword.length < 6) {
+      toast({ title: "Erro", description: "A senha precisa ter pelo menos 6 caracteres.", variant: "destructive" });
+      return;
+    }
+    setIsLinking(true);
+    try {
+      await createLocalPassword(newPassword);
+      setShowPasswordInput(false);
+      setNewPassword('');
+      toast({ title: "Sucesso!", description: "Senha local criada com sucesso." });
+    } catch (error: any) {
+      toast({ title: "Erro", description: error.message || "Não foi possível criar a senha.", variant: "destructive" });
+    } finally {
+      setIsLinking(false);
     }
   };
 
@@ -186,11 +221,67 @@ export default function ProfilePage() {
                 Segurança e Acesso
               </h2>
 
-              <div className="flex flex-col gap-2">
-                <button className="btn btn-outline btn-sm justify-start gap-3">
-                  <Lock className="w-4 h-4 opacity-50" />
-                  Alterar Senha de Acesso
-                </button>
+              <div className="flex flex-col gap-3">
+                {authProviders?.includes('password') ? (
+                  <button className="btn btn-outline btn-sm justify-start gap-3">
+                    <Lock className="w-4 h-4 opacity-50" />
+                    Alterar Senha de Acesso
+                  </button>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    <p className="text-sm opacity-70">Você acessou usando o Google. Que tal criar uma senha parar logar diretamente no futuro?</p>
+                    {showPasswordInput ? (
+                       <div className="flex gap-2">
+                         <input 
+                           type="password" 
+                           placeholder="Nova Senha (mín. 6)" 
+                           className="input input-sm input-bordered w-full" 
+                           value={newPassword}
+                           onChange={(e) => setNewPassword(e.target.value)}
+                         />
+                         <button 
+                           onClick={handleCreatePassword} 
+                           className="btn btn-primary btn-sm"
+                           disabled={isLinking || newPassword.length < 6}
+                         >
+                           {isLinking ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Salvar'}
+                         </button>
+                         <button onClick={() => setShowPasswordInput(false)} className="btn btn-ghost btn-sm px-2 text-error">
+                           <X className="w-4 h-4" />
+                         </button>
+                       </div>
+                    ) : (
+                      <button onClick={() => setShowPasswordInput(true)} className="btn btn-outline btn-sm justify-start gap-3">
+                        <Lock className="w-4 h-4 opacity-50" />
+                        Criar Senha Local
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* Google link / unlink status */}
+                {!authProviders?.includes('google.com') ? (
+                  <button 
+                    onClick={handleLinkGoogle} 
+                    className="btn btn-outline btn-sm justify-start gap-3 w-full sm:w-auto"
+                    disabled={isLinking}
+                  >
+                    {isLinking ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <span className="font-bold flex items-center justify-center bg-white text-black w-4 h-4 rounded-full text-[10px]">G</span>
+                    )}
+                    Vincular Conta Google
+                  </button>
+                ) : (
+                  <button className="btn btn-ghost btn-sm justify-start gap-3 w-full sm:w-auto text-success opacity-80 pointer-events-none">
+                    <Check className="w-4 h-4" />
+                    Conta Google Vinculada
+                  </button>
+                )}
+
+                <div className="divider my-0 opacity-50"></div>
+
                 <button className="btn btn-outline btn-sm justify-start gap-3">
                   <Shield className="w-4 h-4 opacity-50" />
                   Ativar Autenticação em Duas Etapas

@@ -9,9 +9,12 @@ import { permissionsConfigService } from "@/entities/PermissionsConfig";
 
 interface AuthContextProps {
   user: FirebaseUser | null;
+  authProviders: string[];
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name: string, role?: Role) => Promise<void>;
   loginWithProvider: (provider: 'google' | 'facebook' | 'twitter') => Promise<void>;
+  linkGoogleAccount: () => Promise<void>;
+  createLocalPassword: (password: string) => Promise<void>;
   loginAs: (role: Role) => Promise<void>;
   logout: () => Promise<void>;
   can: (feature: string) => boolean;
@@ -22,6 +25,7 @@ const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [authProviders, setAuthProviders] = useState<string[]>([]);
   const [dynamicPermissions, setDynamicPermissions] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
 
@@ -56,6 +60,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const currentUser = auth.currentUser;
 
           if (currentUser) {
+            setAuthProviders(currentUser.providerData.map(p => p.providerId));
             const token = await currentUser.getIdToken();
 
             const response = await fetch('/api/auth/login', {
@@ -75,6 +80,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       } else {
         setUser(null);
+        setAuthProviders([]);
         setLoading(false);
       }
     });
@@ -148,6 +154,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const linkGoogleAccount = async () => {
+    try {
+      await authService.linkGoogleAccount();
+    } catch (error) {
+      console.error('Erro ao vincular conta Google:', error);
+      throw error;
+    }
+  };
+
+  const createLocalPassword = async (password: string) => {
+    try {
+      await authService.createLocalPassword(password);
+    } catch (error) {
+      console.error('Erro ao criar senha local:', error);
+      throw error;
+    }
+  };
+
   // Função temporária para desenvolvimento - simula login com role
   const loginAs = async (role: Role) => {
     const testEmail = `test-${role}@recanto.com`;
@@ -179,7 +203,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, loginWithProvider, loginAs, logout, can, loading }}>
+    <AuthContext.Provider value={{ user, authProviders, login, register, loginWithProvider, linkGoogleAccount, createLocalPassword, loginAs, logout, can, loading }}>
       {loading ? (
         <div className="flex items-center justify-center h-screen">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
