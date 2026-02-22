@@ -44,11 +44,23 @@ export default function RolesTab() {
       const data = await permissionsConfigService.list();
 
       if (data.length === 0) {
-        setRoles(Object.entries(DEFAULT_ROLE_PERMISSIONS).map(([role, features]) => ({
+        // Se o banco estiver vazio, carrega os padrões em memória
+        const defaultRoles = Object.entries(DEFAULT_ROLE_PERMISSIONS).map(([role, features]) => ({
           id: role,
           display_name: DEFAULT_ROLE_DISPLAY_NAMES[role] || role,
           features: [...features],
-        })));
+        }));
+        setRoles(defaultRoles);
+
+        // Auto-seed: salva automaticamente no Firestore para que as regras de segurança funcionem pra todos
+        console.log("Auto-initializing default roles in Firestore...");
+        Promise.all(defaultRoles.map(r => 
+          permissionsConfigService.update(r.id, {
+            features: r.features,
+            display_name: r.display_name
+          }).catch(e => console.error(`Failed to auto-seed role ${r.id}:`, e))
+        )).then(() => console.log("Auto-seed complete."));
+
       } else {
         // Adicionar display_name padrão se não existir
         setRoles(data.map(r => ({
