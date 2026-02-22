@@ -64,8 +64,8 @@ service cloud.firestore {
     match /permissions_config/{roleId} {
       // Leitura: pública para resolver permissões dinâmicas (mesmo antes do login)
       allow read: if true;
-      // Escrita: quem tem manage:roles
-      allow write: if hasFeature('manage:roles');
+      // Escrita: admin sempre pode, ou quem tem manage:roles
+      allow write: if isAdmin() || hasFeature('manage:roles');
     }
 
     // ===========================
