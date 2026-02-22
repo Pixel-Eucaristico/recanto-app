@@ -40,8 +40,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Exclude<Role, null>, string[]> = {
   ],
   colaborador: [
     'read:content',
-    'read:calendar',
-    'read:tasks'
+    'read:calendar'
   ],
   benfeitor: [
     'read:content',
@@ -210,12 +209,6 @@ export const FEATURES_INFO: FeatureInfo[] = [
     id: 'read:parent_zone',
     label: 'Área dos Pais',
     description: 'Acesso à área exclusiva para pais e responsáveis',
-    category: 'special'
-  },
-  {
-    id: 'read:tasks',
-    label: 'Ver Tarefas',
-    description: 'Visualizar tarefas atribuídas',
     category: 'special'
   },
   {

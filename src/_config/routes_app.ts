@@ -80,13 +80,6 @@ export const appRoutes: AppRoute[] = [
     requiredFeature: 'manage:calendar'
   },
   {
-    name: 'Minhas Tarefas',
-    href: '/app/dashboard/tarefas',
-    icon: ListTodo,
-    roles: ['colaborador'],
-    requiredFeature: 'read:tasks'
-  },
-  {
     name: 'Gerenciar Site',
     href: '/app/dashboard/cms',
     icon: FileEdit,

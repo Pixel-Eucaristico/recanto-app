@@ -180,6 +180,9 @@ class AuthService {
       }
     } catch (error: any) {
       console.error('Error logging in with provider:', error);
+      if (error.code === 'auth/popup-blocked') {
+        throw new Error('O popup de login foi bloqueado pelo seu navegador. Por favor, permita popups para este site na barra de endereços e tente novamente.');
+      }
       if (error.code === 'auth/account-exists-with-different-credential') {
         throw new Error('Este email já está cadastrado. Faça login com sua senha e vincule a conta no Perfil.');
       }
@@ -197,6 +200,9 @@ class AuthService {
       console.log('✅ [AuthService] Conta Google vinculada com sucesso.');
     } catch (error: any) {
       console.error('Error linking Google account:', error);
+      if (error.code === 'auth/popup-blocked') {
+        throw new Error('O popup de vinculação foi bloqueado pelo navegador. Por favor, permita popups para este site.');
+      }
       throw new Error(error.message || 'Erro ao vincular conta Google');
     }
   }

@@ -139,19 +139,3 @@ export interface DesafioRegistro {
   created_at: string;
   updated_at?: string;
 }
-
-// ============================================
-// Tarefas para Colaboradores (Semana 15 - Fase 3)
-// ============================================
-export interface Tarefa {
-  id: string;
-  title: string;
-  description: string;
-  assigned_to: string; // ID do colaborador
-  assigned_by: string; // ID do admin
-  status: 'pendente' | 'em_andamento' | 'concluida';
-  priority: 'baixa' | 'media' | 'alta';
-  due_date?: string;
-  created_at: string;
-  updated_at?: string;
-}
