@@ -38,8 +38,10 @@ class EventService extends BaseFirebaseService<Event> {
   /**
    * Busca próximos eventos
    * OTIMIZADO: Query do Firestore com orderBy + limit (impossível no Realtime!)
+   * @param limit Limite de eventos
+   * @param onlyPublic Se verdadeiro, filtra apenas eventos públicos (evita Permission Denied para visitantes)
    */
-  async getUpcomingEvents(limit: number = 10): Promise<Event[]> {
+  async getUpcomingEvents(limit: number = 10, onlyPublic: boolean = false): Promise<Event[]> {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
     
@@ -47,12 +49,20 @@ class EventService extends BaseFirebaseService<Event> {
     const { firestore } = await import('@/domains/auth/services/firebaseClient');
 
     const collectionRef = collection(firestore, 'events');
-    const q = query(
-      collectionRef,
+    
+    // Inicia constraints base
+    const constraints: any[] = [
       where('start', '>=', today),
       firestoreOrderBy('start', 'asc'),
       firestoreLimit(limit)
-    );
+    ];
+
+    // Se for apenas público, adiciona o filtro (necessita índice composto no Firestore)
+    if (onlyPublic) {
+      constraints.unshift(where('is_public', '==', true));
+    }
+
+    const q = query(collectionRef, ...constraints);
 
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Event));

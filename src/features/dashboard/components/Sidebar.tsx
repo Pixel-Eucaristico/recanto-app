@@ -18,17 +18,22 @@ import {
  * Follows Single Responsibility Principle - Only manages sidebar structure
  */
 export default function Sidebar() {
-  const { user, logout } = useAuth();
+  const { user, logout, can } = useAuth();
 
-  // Filter routes based on user role (memoized for performance)
+  // Filter routes based on user permissions (memoized for performance)
   const filteredRoutes = useMemo(() => {
     if (!user) return [];
 
     return appRoutes.filter((route) => {
+      // Se tem requiredFeature, verifica com can()
+      if (route.requiredFeature) {
+        return can(route.requiredFeature);
+      }
+      // Fallback: verifica role (para rotas sem requiredFeature)
       if (route.roles.includes(null)) return true;
       return route.roles.includes((user?.role || null) as any);
     });
-  }, [user]);
+  }, [user, can]);
 
   return (
     <div className="flex h-screen overflow-y-auto overflow-x-hidden flex-col items-start bg-base-200 is-drawer-close:w-14 is-drawer-open:w-64 transition-all relative">

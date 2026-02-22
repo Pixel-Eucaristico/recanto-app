@@ -28,7 +28,9 @@ if (process.env.NODE_ENV === 'development') {
 
   const missing = requiredEnv.filter((key) => !process.env[key]);
   if (missing.length > 0 && typeof window !== 'undefined') {
-    console.warn(`[Firebase] ${missing.length} variáveis de ambiente não definidas no client`);
+    console.warn(`[Firebase] ${missing.length} variáveis de ambiente não definidas no client:`, missing);
+  } else if (typeof window !== 'undefined') {
+    console.log(`[Firebase] Client inicializado para o projeto: ${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}`);
   }
 }
 

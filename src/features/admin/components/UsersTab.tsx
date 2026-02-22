@@ -8,9 +8,12 @@ import UserFormDialog from './UserFormDialog';
 
 export default function UsersTab() {
     const { 
-        users, isLoading, searchQuery, setSearchQuery, roleFilter, setRoleFilter, 
+        users, isLoading: usersLoading, searchQuery, setSearchQuery, roleFilter, setRoleFilter, 
         deleteUser, saveUser 
     } = useAdminUsers();
+
+    const [roles, setRoles] = useState<any[]>([]);
+    const [isLoadingRoles, setIsLoadingRoles] = useState(true);
 
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<any>(null);
@@ -30,6 +33,23 @@ export default function UsersTab() {
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, []);
+
+    useEffect(() => {
+        const loadRoles = async () => {
+            try {
+                const { permissionsConfigService } = await import('@/entities/PermissionsConfig');
+                const rolesData = await permissionsConfigService.list();
+                setRoles(rolesData);
+            } catch (error) {
+                console.error('Erro ao carregar roles no UsersTab:', error);
+            } finally {
+                setIsLoadingRoles(false);
+            }
+        };
+        loadRoles();
+    }, []);
+
+    const isLoading = usersLoading || isLoadingRoles;
 
     const openEdit = (user: any) => {
         setEditingUser(user);
@@ -189,6 +209,7 @@ export default function UsersTab() {
                 setIsOpen={setIsDialogOpen} 
                 user={editingUser} 
                 onSave={saveUser} 
+                availableRoles={roles}
             />
         </div>
     );

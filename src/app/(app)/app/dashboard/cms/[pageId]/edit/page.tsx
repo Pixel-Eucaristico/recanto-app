@@ -4,6 +4,7 @@ import React, { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { contentPageService } from '@/services/firebase';
+import { useRequireFeature } from '@/hooks/useRequireFeature';
 import { availableMods, ModComponents } from '@/components/mods';
 import ModsLibrary from '@/components/cms-editor/ModsLibrary';
 import BlockEditor from '@/components/cms-editor/BlockEditor';
@@ -14,7 +15,6 @@ import { ArrowLeft, Save, Eye, EyeOff, Edit, X, ArrowDown, Plus, Trash2, PanelLe
 import DynamicModForm from '@/components/cms-editor/DynamicModForm';
 import {
   DndContext,
-  closestCenter,
   rectIntersection,
   PointerSensor,
   useSensor,
@@ -85,6 +85,7 @@ function DroppableBlocksArea({ blocks, children }: DroppableBlocksAreaProps) {
 }
 
 export default function CMSPageEditor({ params }: PageEditorProps) {
+  const { isLoading: checkingAccess, hasAccess } = useRequireFeature('manage:cms');
   const { pageId } = use(params);
   const router = useRouter();
   const [page, setPage] = useState<CMSPage | null>(null);
@@ -95,6 +96,15 @@ export default function CMSPageEditor({ params }: PageEditorProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+
+  // Aguarda verificação de acesso
+  if (checkingAccess || !hasAccess) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <span className="loading loading-spinner loading-lg text-primary"></span>
+      </div>
+    );
+  }
   const [urlType, setUrlType] = useState<'home' | 'custom'>('home');
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [libraryCallback, setLibraryCallback] = useState<((modId: string) => void) | null>(null);

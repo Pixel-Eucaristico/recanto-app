@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Plus, Save, Eye, EyeOff, ArrowLeft, Loader2 } from 'lucide-react';
 import { menuConfigService, MenuConfig, MenuItem } from '@/services/firebase';
 import { menuNavbar } from '@/_config/routes_main';
 import { Button } from '@/components/ui/button';
 import SmartLink from '@/components/common/SmartLink';
 import { MenuItemEditor } from '@/components/cms-editor/MenuItemEditor';
+import { useRequireFeature } from '@/hooks/useRequireFeature';
 import {
   DndContext,
   closestCenter,
@@ -22,6 +24,7 @@ import {
 } from '@dnd-kit/sortable';
 
 export default function MenuEditorPage() {
+  const { isLoading: checkingAccess, hasAccess } = useRequireFeature('manage:menu');
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -38,8 +41,17 @@ export default function MenuEditorPage() {
   );
 
   useEffect(() => {
-    loadMenu();
-  }, []);
+    if (hasAccess) loadMenu();
+  }, [hasAccess]);
+
+  // Aguarda verificação de acesso
+  if (checkingAccess || !hasAccess) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <span className="loading loading-spinner loading-lg text-primary"></span>
+      </div>
+    );
+  }
 
   const loadMenu = async () => {
     try {

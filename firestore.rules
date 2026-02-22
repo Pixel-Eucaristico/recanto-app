@@ -12,34 +12,32 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Obtém o role do usuário atual
-    function getUserRole() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
-    }
-
-    // Verifica se o usuário é admin
+    // Verifica se o usuário é admin (usado para config de sistema)
     function isAdmin() {
-      return isAuthenticated() && getUserRole() == 'admin';
+      return isAuthenticated() &&
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
-    // Verifica se o usuário é missionário
-    function isMissionario() {
-      return isAuthenticated() && getUserRole() == 'missionario';
-    }
+    // Verifica se o usuário tem uma feature específica
+    // Verifica: 1) Se é admin, 2) Se tem a feature individual, 3) Se o grupo/role dele tem a feature
+    function hasFeature(feature) {
+      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      let userRole = userDoc.role;
+      let userFeatures = userDoc.features;
 
-    // Verifica se o usuário é recantiano
-    function isRecantiano() {
-      return isAuthenticated() && getUserRole() == 'recantiano';
-    }
-
-    // Verifica se o usuário é pai
-    function isPai() {
-      return isAuthenticated() && getUserRole() == 'pai';
-    }
-
-    // Verifica se o usuário é o próprio ou admin
-    function isOwnerOrAdmin(userId) {
-      return isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      return isAuthenticated() &&
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             (
+               // Admin sempre tem acesso total
+               userRole == 'admin' ||
+               // Verifica features individuais do usuário
+               (userFeatures != null && userFeatures.hasAny([feature, '*'])) ||
+               // Verifica features do grupo/role do usuário no permissions_config
+               (userRole != null &&
+                exists(/databases/$(database)/documents/permissions_config/$(userRole)) &&
+                get(/databases/$(database)/documents/permissions_config/$(userRole)).data.features.hasAny([feature, '*']))
+             );
     }
 
     // ===========================
@@ -49,73 +47,83 @@ service cloud.firestore {
       // Leitura: usuários autenticados podem ler
       allow read: if isAuthenticated();
 
-      // Escrita: próprio usuário ou admin
+      // Escrita: próprio usuário ou quem tem manage:users
       allow create: if isAuthenticated();
-      allow update: if isOwnerOrAdmin(userId);
-      allow delete: if isAdmin();
+      allow update: if request.auth.uid == userId || hasFeature('manage:users');
+      allow delete: if hasFeature('manage:users');
 
-      // Campo 'role' só pode ser alterado por admins
-      allow update: if isAdmin() ||
+      // Campo 'role' e 'features' só podem ser alterados por quem tem manage:users
+      allow update: if hasFeature('manage:users') ||
                       (request.auth.uid == userId &&
-                       !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']));
+                       !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'features']));
+    }
+
+    // ===========================
+    // Permissions Config Collection
+    // ===========================
+    match /permissions_config/{roleId} {
+      // Leitura: pública para resolver permissões dinâmicas (mesmo antes do login)
+      allow read: if true;
+      // Escrita: quem tem manage:roles
+      allow write: if hasFeature('manage:roles');
     }
 
     // ===========================
     // Materials Collection
     // ===========================
     match /materials/{materialId} {
-      // Leitura: usuários autenticados
-      allow read: if isAuthenticated();
+      // Leitura: quem tem read:content ou manage:materials
+      allow read: if hasFeature('read:content') || hasFeature('manage:materials');
 
-      // Criação: apenas admins
-      allow create: if isAdmin() &&
+      // Criação: quem tem create:content ou manage:materials
+      allow create: if (hasFeature('create:content') || hasFeature('manage:materials')) &&
                       request.resource.data.keys().hasAll([
                         'title', 'type', 'category', 'target_audience', 'created_by', 'created_at'
                       ]);
 
-      // Atualização: apenas admins
-      allow update: if isAdmin() &&
+      // Atualização: quem tem update:content ou manage:materials
+      allow update: if (hasFeature('update:content') || hasFeature('manage:materials')) &&
                       request.resource.data.keys().hasAll([
                         'id', 'title', 'type', 'category', 'target_audience', 'created_by', 'created_at'
                       ]);
 
-      // Deleção: apenas admins
-      allow delete: if isAdmin();
+      // Deleção: quem tem delete:content ou manage:materials
+      allow delete: if hasFeature('delete:content') || hasFeature('manage:materials');
     }
 
     // ===========================
     // Donations Collection
     // ===========================
     match /donations/{donationId} {
-      // Leitura: admin ou próprio doador
-      allow read: if isAdmin() ||
+      // Leitura: quem tem manage:donations ou próprio doador
+      allow read: if hasFeature('manage:donations') ||
                     (isAuthenticated() && resource.data.donor_id == request.auth.uid);
 
-      // Criação: usuários autenticados
+      // Criação: usuários autenticados (qualquer um pode doar)
       allow create: if isAuthenticated() &&
                       request.resource.data.keys().hasAll([
                         'value', 'method', 'date', 'status', 'created_at'
                       ]);
 
-      // Atualização: apenas admins
-      allow update: if isAdmin() &&
+      // Atualização: quem tem manage:donations
+      allow update: if hasFeature('manage:donations') &&
                       request.resource.data.keys().hasAll([
                         'id', 'value', 'method', 'date', 'status', 'created_at'
                       ]);
 
-      // Deleção: apenas admins
-      allow delete: if isAdmin();
+      // Deleção: quem tem manage:donations
+      allow delete: if hasFeature('manage:donations');
     }
 
     // ===========================
     // Forum Topics Collection
     // ===========================
     match /forum_topics/{topicId} {
-      // Leitura: usuários autenticados
-      allow read: if isAuthenticated();
+      // Leitura: quem tem read:forum
+      allow read: if hasFeature('read:forum');
 
-      // Criação: admin, missionário ou recantiano
-      allow create: if (isAdmin() || isMissionario() || isRecantiano()) &&
+      // Criação: quem tem create:forum_topic
+      allow create: if hasFeature('create:forum_topic') &&
                       request.resource.data.keys().hasAll([
                         'title', 'created_by', 'created_at'
                       ]);
@@ -135,11 +143,11 @@ service cloud.firestore {
     // Forum Posts Collection
     // ===========================
     match /forum_posts/{postId} {
-      // Leitura: usuários autenticados
-      allow read: if isAuthenticated();
+      // Leitura: quem tem read:forum
+      allow read: if hasFeature('read:forum');
 
-      // Criação: usuários autenticados
-      allow create: if isAuthenticated() &&
+      // Criação: quem tem create:forum_post
+      allow create: if hasFeature('create:forum_post') &&
                       request.resource.data.keys().hasAll([
                         'topic_id', 'content', 'created_by', 'is_approved', 'created_at'
                       ]);
@@ -159,47 +167,44 @@ service cloud.firestore {
     // Events Collection
     // ===========================
     match /events/{eventId} {
-      // Leitura: usuários autenticados podem ver todos os eventos
-      // Visitantes não autenticados podem ver apenas eventos públicos
-      allow read: if isAuthenticated() ||
+      // Leitura: quem tem read:calendar ou read:public_calendar (para eventos públicos)
+      allow read: if hasFeature('read:calendar') ||
+                    (resource.data.is_public == true && hasFeature('read:public_calendar')) ||
                     (resource.data.is_public == true);
 
-      // Criação: admin ou missionário (sem validação restritiva)
-      allow create: if isAdmin() || isMissionario();
+      // Criação: quem tem manage:calendar
+      allow create: if hasFeature('manage:calendar');
 
-      // Atualização: admin ou missionário
-      // Campo is_public só pode ser alterado por admins
-      allow update: if (isAdmin() || isMissionario()) &&
-                      (isAdmin() || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['is_public']));
+      // Atualização: quem tem manage:calendar
+      allow update: if hasFeature('manage:calendar');
 
-      // Deleção: apenas admin
-      allow delete: if isAdmin();
+      // Deleção: quem tem manage:calendar
+      allow delete: if hasFeature('manage:calendar');
     }
 
     // ===========================
     // Acompanhamentos Collection
     // ===========================
     match /acompanhamentos/{acompanhamentoId} {
-      // Leitura: admin, missionário, pai ou o próprio recantiano
-      allow read: if isAdmin() ||
-                    isMissionario() ||
-                    isPai() ||
+      // Leitura: quem tem manage:followup, pai (read:parent_zone) ou o próprio recantiano
+      allow read: if hasFeature('manage:followup') ||
+                    hasFeature('read:parent_zone') ||
                     (isAuthenticated() && resource.data.recantiano_id == request.auth.uid);
 
-      // Criação: admin ou missionário
-      allow create: if (isAdmin() || isMissionario()) &&
+      // Criação: quem tem manage:followup
+      allow create: if hasFeature('manage:followup') &&
                       request.resource.data.keys().hasAll([
                         'recantiano_id', 'missionario_id', 'date', 'tipo', 'created_at'
                       ]);
 
-      // Atualização: admin ou missionário
-      allow update: if (isAdmin() || isMissionario()) &&
+      // Atualização: quem tem manage:followup
+      allow update: if hasFeature('manage:followup') &&
                       request.resource.data.keys().hasAll([
                         'id', 'recantiano_id', 'missionario_id', 'date', 'tipo', 'created_at'
                       ]);
 
-      // Deleção: admin ou missionário
-      allow delete: if isAdmin() || isMissionario();
+      // Deleção: quem tem manage:followup
+      allow delete: if hasFeature('manage:followup');
     }
 
     // ===========================
@@ -209,29 +214,28 @@ service cloud.firestore {
       // Leitura: usuários autenticados
       allow read: if isAuthenticated();
 
-      // Criação: apenas admins
-      allow create: if isAdmin() &&
+      // Criação: quem tem manage:challenges
+      allow create: if hasFeature('manage:challenges') &&
                       request.resource.data.keys().hasAll([
                         'title', 'description', 'category', 'difficulty', 'created_at'
                       ]);
 
-      // Atualização: apenas admins
-      allow update: if isAdmin() &&
+      // Atualização: quem tem manage:challenges
+      allow update: if hasFeature('manage:challenges') &&
                       request.resource.data.keys().hasAll([
                         'id', 'title', 'description', 'category', 'difficulty', 'created_at'
                       ]);
 
-      // Deleção: apenas admins
-      allow delete: if isAdmin();
+      // Deleção: quem tem manage:challenges
+      allow delete: if hasFeature('manage:challenges');
     }
 
     // ===========================
     // Desafio Registros Collection
     // ===========================
     match /desafio_registros/{registroId} {
-      // Leitura: admin, missionário ou o próprio recantiano
-      allow read: if isAdmin() ||
-                    isMissionario() ||
+      // Leitura: quem tem manage:challenges ou o próprio recantiano
+      allow read: if hasFeature('manage:challenges') ||
                     (isAuthenticated() && resource.data.recantiano_id == request.auth.uid);
 
       // Criação: usuários autenticados
@@ -240,27 +244,26 @@ service cloud.firestore {
                         'desafio_id', 'recantiano_id', 'completed', 'created_at'
                       ]);
 
-      // Atualização: admin, missionário ou o próprio recantiano
-      allow update: if (isAdmin() ||
-                      isMissionario() ||
+      // Atualização: quem tem manage:challenges ou o próprio recantiano
+      allow update: if (hasFeature('manage:challenges') ||
                       (isAuthenticated() && resource.data.recantiano_id == request.auth.uid)) &&
                       request.resource.data.keys().hasAll([
                         'id', 'desafio_id', 'recantiano_id', 'completed', 'created_at'
                       ]);
 
-      // Deleção: apenas admins
-      allow delete: if isAdmin();
+      // Deleção: quem tem manage:challenges
+      allow delete: if hasFeature('manage:challenges');
     }
 
     // ===========================
     // Google Calendar Configs Collection
     // ===========================
     match /google_calendar_configs/{userId} {
-      // Leitura: apenas o próprio admin
-      allow read: if isAuthenticated() && request.auth.uid == userId && isAdmin();
+      // Leitura: próprio usuário que tem manage:calendar
+      allow read: if isAuthenticated() && request.auth.uid == userId && hasFeature('manage:calendar');
 
-      // Escrita: apenas o próprio admin
-      allow write: if isAuthenticated() && request.auth.uid == userId && isAdmin();
+      // Escrita: próprio usuário que tem manage:calendar
+      allow write: if isAuthenticated() && request.auth.uid == userId && hasFeature('manage:calendar');
     }
 
     // ===========================
@@ -271,14 +274,14 @@ service cloud.firestore {
       // Permite que visitantes não autenticados busquem páginas publicadas
       allow read: if true;
 
-      // Criação: apenas admins
-      allow create: if isAdmin();
+      // Criação: quem tem manage:cms
+      allow create: if hasFeature('manage:cms');
 
-      // Atualização: apenas admins
-      allow update: if isAdmin();
+      // Atualização: quem tem manage:cms
+      allow update: if hasFeature('manage:cms');
 
-      // Deleção: apenas admins
-      allow delete: if isAdmin();
+      // Deleção: quem tem manage:cms
+      allow delete: if hasFeature('manage:cms');
     }
 
     // ===========================
@@ -289,14 +292,44 @@ service cloud.firestore {
       // O filtro por is_published é feito no código
       allow read: if true;
 
-      // Criação: apenas admins e missionários
-      allow create: if isAdmin() || isMissionario();
+      // Criação: quem tem manage:menu
+      allow create: if hasFeature('manage:menu');
 
-      // Atualização: apenas admins e missionários
-      allow update: if isAdmin() || isMissionario();
+      // Atualização: quem tem manage:menu
+      allow update: if hasFeature('manage:menu');
 
-      // Deleção: apenas admins
-      allow delete: if isAdmin();
+      // Deleção: quem tem manage:menu
+      allow delete: if hasFeature('manage:menu');
+    }
+
+    // ===========================
+    // Mods Configs Collection (CMS)
+    // ===========================
+    match /mods_configs/{configId} {
+      // Leitura: pública (para carregar definições de blocos)
+      allow read: if true;
+      // Escrita: quem tem manage:cms
+      allow write: if hasFeature('manage:cms');
+    }
+
+    // ===========================
+    // Form Submissions Collection
+    // ===========================
+    match /form_submissions/{submissionId} {
+      // Criação: qualquer visitante (para enviar contato/feedback)
+      allow create: if true;
+      // Leitura/Update/Delete: quem tem read:submissions
+      allow read, update, delete: if hasFeature('read:submissions');
+    }
+
+    // ===========================
+    // Global Configs
+    // ===========================
+    match /config/{docId} {
+      // Configurações gerais do sistema
+      // Apenas admins podem ler e escrever (isso precisa ser isAdmin direto pois é config de sistema)
+      allow read: if isAdmin();
+      allow write: if isAdmin();
     }
   }
 }

@@ -74,7 +74,7 @@ export default function DocumentationPage() {
                         <li>Acessa a página de doações e o "Canto da Gratidão".</li>
                      </Role>
                       <Role icon={<Briefcase className="w-5 h-5 text-orange-600"/>} title="Colaborador">
-                        <li>Perfil para voluntários, com acesso a uma área de "Tarefas" para apoiar atividades.</li>
+                        <li>Perfil para voluntários. Podem apoiar atividades e interagir com o conteúdo.</li>
                      </Role>
                      <Role icon={<Wrench className="w-5 h-5 text-gray-600"/>} title="Admin">
                         <li>Acesso total para gerenciar conteúdo, eventos, doações e usuários.</li>
