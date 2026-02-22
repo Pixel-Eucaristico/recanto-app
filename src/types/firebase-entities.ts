@@ -8,8 +8,11 @@ export interface FirebaseUser {
   name: string;
   email: string;
   role?: Role;
+  features?: string[];
   phone?: string;
   photo_url?: string | null;
+  theme_light?: string; // Preferência de tema do dashboard (claro)
+  theme_dark?: string; // Preferência de tema do dashboard (escuro)
   missionario_responsavel_id?: string; // Para recantianos
   filho_recantiano_id?: string; // Para pais
   created_at: string;
@@ -135,22 +138,6 @@ export interface DesafioRegistro {
   completed: boolean;
   completion_date?: string;
   reflection?: string; // Diário de registro
-  created_at: string;
-  updated_at?: string;
-}
-
-// ============================================
-// Tarefas para Colaboradores (Semana 15 - Fase 3)
-// ============================================
-export interface Tarefa {
-  id: string;
-  title: string;
-  description: string;
-  assigned_to: string; // ID do colaborador
-  assigned_by: string; // ID do admin
-  status: 'pendente' | 'em_andamento' | 'concluida';
-  priority: 'baixa' | 'media' | 'alta';
-  due_date?: string;
   created_at: string;
   updated_at?: string;
 }
