@@ -16,15 +16,15 @@ service cloud.firestore {
     function isAdmin() {
       return isAuthenticated() &&
              exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'admin';
     }
 
     // Verifica se o usuário tem uma feature específica
     // Verifica: 1) Se é admin, 2) Se tem a feature individual, 3) Se o grupo/role dele tem a feature
     function hasFeature(feature) {
       let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-      let userRole = userDoc.role;
-      let userFeatures = userDoc.features;
+      let userRole = userDoc.get('role', '');
+      let userFeatures = userDoc.get('features', []);
 
       return isAuthenticated() &&
              exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
@@ -32,11 +32,11 @@ service cloud.firestore {
                // Admin sempre tem acesso total
                userRole == 'admin' ||
                // Verifica features individuais do usuário
-               (userFeatures != null && userFeatures.hasAny([feature, '*'])) ||
+               (userFeatures.hasAny([feature, '*'])) ||
                // Verifica features do grupo/role do usuário no permissions_config
-               (userRole != null &&
+               (userRole != '' &&
                 exists(/databases/$(database)/documents/permissions_config/$(userRole)) &&
-                get(/databases/$(database)/documents/permissions_config/$(userRole)).data.features.hasAny([feature, '*']))
+                get(/databases/$(database)/documents/permissions_config/$(userRole)).data.get('features', []).hasAny([feature, '*']))
              );
     }
 
