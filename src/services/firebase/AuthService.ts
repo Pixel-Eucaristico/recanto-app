@@ -109,18 +109,49 @@ class AuthService {
       return existingDoc.data() as FirebaseUser;
     }
 
+    // ==========================================
+    // INÍCIO DO FLUXO: RESGATE INTELIGENTE DE CONVITE (CLAIM ACCOUNT)
+    // ==========================================
+    console.log(`[AuthService] Verificando se existe um perfil provisório/convite para o email: ${email}`);
+    let finalRole = role;
+    let finalFeatures: string[] | undefined = undefined;
+    let finalPhone: string | undefined = undefined;
+
+    try {
+      const existingUserByEmail = await userService.getUserByEmail(email);
+      
+      if (existingUserByEmail && existingUserByEmail.id !== uid) {
+         console.log(`[AuthService] Perfil provisório encontrado (ID: ${existingUserByEmail.id}). Resgatando dados (Role: ${existingUserByEmail.role})...`);
+         
+         // Resgatar os dados inseridos manualmente pelo Admin
+         if (existingUserByEmail.role) finalRole = existingUserByEmail.role as Role;
+         if (existingUserByEmail.features) finalFeatures = existingUserByEmail.features;
+         if (existingUserByEmail.phone) finalPhone = existingUserByEmail.phone;
+         
+         // Deletar o documento temporário/provísório para evitar duplicação do email no banco
+         await userService.delete(existingUserByEmail.id);
+         console.log(`[AuthService] Perfil provisório (${existingUserByEmail.id}) deletado com sucesso.`);
+      }
+    } catch (checkError) {
+      console.error('[AuthService] Erro ao buscar/resgatar perfil provisório por email. Criando perfil normal:', checkError);
+    }
+    // ==========================================
+
     const userData: FirebaseUser = {
       id: uid,
       name,
       email,
-      role: role,
+      role: finalRole,
       photo_url: photo_url || null,
       created_at: new Date().toISOString(),
     };
 
+    if (finalFeatures) userData.features = finalFeatures;
+    if (finalPhone) userData.phone = finalPhone;
+
     // Usar merge: true como proteção adicional contra sobrescrita acidental
     await setDoc(userRef, userData, { merge: true });
-    console.log(`✅ [AuthService] Novo usuário criado: ${uid} com role: ${role}`);
+    console.log(`✅ [AuthService] Novo usuário criado: ${uid} com role final: ${finalRole}`);
 
     return userData;
   }

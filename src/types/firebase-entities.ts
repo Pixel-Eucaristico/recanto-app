@@ -11,6 +11,8 @@ export interface FirebaseUser {
   features?: string[];
   phone?: string;
   photo_url?: string | null;
+  theme_light?: string; // Preferência de tema do dashboard (claro)
+  theme_dark?: string; // Preferência de tema do dashboard (escuro)
   missionario_responsavel_id?: string; // Para recantianos
   filho_recantiano_id?: string; // Para pais
   created_at: string;

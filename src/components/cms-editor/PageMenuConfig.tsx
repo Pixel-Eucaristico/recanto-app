@@ -128,46 +128,44 @@ export function PageMenuConfig({ page, onSave }: PageMenuConfigProps) {
     { name: 'MessageCircle', label: 'Mensagem' },
   ];
 
-  // Temas disponíveis (sem cores hardcoded - usa variáveis CSS do DaisyUI)
+  // Temas disponíveis categorizados e em ordem alfabética
   const availableThemes = [
-    // Temas customizados
-    { value: 'recanto-light', label: 'Recanto Light' },
-    { value: 'recanto-dark', label: 'Recanto Dark' },
-    { value: 'nossa-senhora-light', label: 'Nossa Senhora Light' },
-    { value: 'nossa-senhora-dark', label: 'Nossa Senhora Dark' },
-    // Temas DaisyUI
-    { value: 'light', label: 'Light' },
-    { value: 'dark', label: 'Dark' },
-    { value: 'cupcake', label: 'Cupcake' },
-    { value: 'bumblebee', label: 'Bumblebee' },
-    { value: 'emerald', label: 'Emerald' },
-    { value: 'corporate', label: 'Corporate' },
-    { value: 'synthwave', label: 'Synthwave' },
-    { value: 'retro', label: 'Retro' },
-    { value: 'cyberpunk', label: 'Cyberpunk' },
-    { value: 'valentine', label: 'Valentine' },
-    { value: 'halloween', label: 'Halloween' },
-    { value: 'garden', label: 'Garden' },
-    { value: 'forest', label: 'Forest' },
-    { value: 'aqua', label: 'Aqua' },
-    { value: 'lofi', label: 'Lofi' },
-    { value: 'pastel', label: 'Pastel' },
-    { value: 'fantasy', label: 'Fantasy' },
-    { value: 'wireframe', label: 'Wireframe' },
-    { value: 'black', label: 'Black' },
-    { value: 'luxury', label: 'Luxury' },
-    { value: 'dracula', label: 'Dracula' },
-    { value: 'cmyk', label: 'CMYK' },
-    { value: 'autumn', label: 'Autumn' },
-    { value: 'business', label: 'Business' },
-    { value: 'acid', label: 'Acid' },
-    { value: 'lemonade', label: 'Lemonade' },
-    { value: 'night', label: 'Night' },
-    { value: 'coffee', label: 'Coffee' },
-    { value: 'winter', label: 'Winter' },
-    { value: 'dim', label: 'Dim' },
-    { value: 'nord', label: 'Nord' },
-    { value: 'sunset', label: 'Sunset' },
+    { value: 'acid', label: 'Acid (Claro)' },
+    { value: 'aqua', label: 'Aqua (Escuro)' },
+    { value: 'autumn', label: 'Autumn (Claro)' },
+    { value: 'black', label: 'Black (Escuro)' },
+    { value: 'bumblebee', label: 'Bumblebee (Claro)' },
+    { value: 'business', label: 'Business (Escuro)' },
+    { value: 'cmyk', label: 'CMYK (Claro)' },
+    { value: 'coffee', label: 'Coffee (Escuro)' },
+    { value: 'corporate', label: 'Corporate (Claro)' },
+    { value: 'cupcake', label: 'Cupcake (Claro)' },
+    { value: 'cyberpunk', label: 'Cyberpunk (Claro)' },
+    { value: 'dark', label: 'Dark (Escuro)' },
+    { value: 'dim', label: 'Dim (Escuro)' },
+    { value: 'dracula', label: 'Dracula (Escuro)' },
+    { value: 'emerald', label: 'Emerald (Claro)' },
+    { value: 'fantasy', label: 'Fantasy (Claro)' },
+    { value: 'forest', label: 'Forest (Escuro)' },
+    { value: 'garden', label: 'Garden (Claro)' },
+    { value: 'halloween', label: 'Halloween (Escuro)' },
+    { value: 'lemonade', label: 'Lemonade (Claro)' },
+    { value: 'light', label: 'Light (Claro)' },
+    { value: 'lofi', label: 'Lofi (Claro)' },
+    { value: 'luxury', label: 'Luxury (Escuro)' },
+    { value: 'night', label: 'Night (Escuro)' },
+    { value: 'nord', label: 'Nord (Claro)' },
+    { value: 'nossa-senhora-dark', label: 'Nossa Senhora Dark (Escuro)' },
+    { value: 'nossa-senhora-light', label: 'Nossa Senhora Light (Claro)' },
+    { value: 'pastel', label: 'Pastel (Claro)' },
+    { value: 'recanto-dark', label: 'Recanto Dark (Escuro)' },
+    { value: 'recanto-light', label: 'Recanto Light (Claro)' },
+    { value: 'retro', label: 'Retro (Claro)' },
+    { value: 'sunset', label: 'Sunset (Escuro)' },
+    { value: 'synthwave', label: 'Synthwave (Escuro)' },
+    { value: 'valentine', label: 'Valentine (Claro)' },
+    { value: 'winter', label: 'Winter (Claro)' },
+    { value: 'wireframe', label: 'Wireframe (Claro)' }
   ];
 
   // Componente de preview de tema com cores semânticas
@@ -279,9 +277,7 @@ export function PageMenuConfig({ page, onSave }: PageMenuConfigProps) {
                   />
                   <label className="label">
                     <span className="label-text-alt text-sm">
-                      {config.menu_url_type === 'page'
-                        ? `URL atual: ${page.slug}`
-                        : 'Digite a URL completa incluindo http:// ou https://'}
+                      Digite a URL completa incluindo http:// ou https://
                     </span>
                   </label>
                 </div>
