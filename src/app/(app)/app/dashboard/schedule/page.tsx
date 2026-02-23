@@ -944,7 +944,7 @@ export default function SchedulePage() {
                                                     <CheckCircle2 className="w-4 h-4 text-info" />
                                                 )}
                                             </CardTitle>
-                                            {user?.role === 'admin' && (
+                                            {(user?.role === 'admin' || can('manage:calendar')) && (
                                                 <div className="flex gap-2 shrink-0">
                                                     <Button
                                                         onClick={(e) => { e.stopPropagation(); togglePublic(event.id, event.is_public); }}
