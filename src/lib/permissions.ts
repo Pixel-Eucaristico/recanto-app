@@ -28,14 +28,19 @@ export function hasFeature(
 
   const userFeatures = user.features || [];
   const userRole = user.role;
+  
+  // LOG PARA DEBUG EM PRODUÇÃO
+  console.log(`[ACL Debug] Checking feature '${feature}' for user role '${userRole}'`);
 
   // 1. Acesso total (Super Admin ou Power User)
   if (userRole === 'admin' || userFeatures.includes('*')) {
+    console.log(`[ACL Debug] -> Granted via Admin/*`);
     return true;
   }
 
   // 2. Verifica nas permissões individuais (Override)
   if (userFeatures.includes(feature)) {
+    console.log(`[ACL Debug] -> Granted via individual user feature`);
     return true;
   }
 
@@ -44,19 +49,25 @@ export function hasFeature(
     // Tenta primeiro o dinâmico (Firestore), depois o padrão (Código)
     const rolePermissions = dynamicPermissions?.[userRole] || DEFAULT_ROLE_PERMISSIONS[userRole];
     
+    console.log(`[ACL Debug] Dynamic Permissions Loaded for '${userRole}':`, dynamicPermissions?.[userRole] ? 'YES' : 'NO (Using Default)');
+    console.log(`[ACL Debug] Final Role Permissions for '${userRole}':`, rolePermissions);
+
     if (rolePermissions) {
       // O grupo tem acesso total?
       if (rolePermissions.includes('*')) {
+        console.log(`[ACL Debug] -> Granted via group wildcard *`);
         return true;
       }
 
       // O grupo tem essa permissão específica?
       if (rolePermissions.includes(feature)) {
+        console.log(`[ACL Debug] -> Granted via group feature match`);
         return true;
       }
     }
   }
 
+  console.log(`[ACL Debug] -> Denied`);
   return false;
 }
 

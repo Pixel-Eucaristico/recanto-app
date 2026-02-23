@@ -55,6 +55,8 @@ export default function SchedulePage() {
     const [editingEvent, setEditingEvent] = useState<EventType | null>(null);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [eventToDelete, setEventToDelete] = useState<{ id: string; title: string } | null>(null);
+    const [viewingEvent, setViewingEvent] = useState<EventType | null>(null);
+    const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
 
     // Calendar Selection State
     const [showCalendarSelector, setShowCalendarSelector] = useState(false);
@@ -355,6 +357,11 @@ export default function SchedulePage() {
     const openDeleteDialog = (event: EventType) => {
         setEventToDelete({ id: event.id, title: event.title });
         setIsDeleteDialogOpen(true);
+    };
+
+    const openViewEventDialog = (event: EventType) => {
+        setViewingEvent(event);
+        setIsViewDialogOpen(true);
     };
 
     const deleteEvent = async () => {
@@ -923,7 +930,7 @@ export default function SchedulePage() {
                 ) : (
                     events.map(event => (
                         <Card key={event.id} variant="bordered" bg="base-100">
-                            <CardBody className="gap-2">
+                            <CardBody className="gap-2 cursor-pointer hover:bg-base-200/30 transition-colors" onClick={() => openViewEventDialog(event)}>
                                 <div className="flex flex-row items-start gap-4">
                                     <div className="pt-1">{eventIcons[event.type]}</div>
                                     <div className="flex-1">
@@ -940,7 +947,7 @@ export default function SchedulePage() {
                                             {user?.role === 'admin' && (
                                                 <div className="flex gap-2 shrink-0">
                                                     <Button
-                                                        onClick={() => togglePublic(event.id, event.is_public)}
+                                                        onClick={(e) => { e.stopPropagation(); togglePublic(event.id, event.is_public); }}
                                                         variant="ghost"
                                                         size="sm"
                                                         className="px-2"
@@ -948,7 +955,7 @@ export default function SchedulePage() {
                                                         <Globe className="w-4 h-4" />
                                                     </Button>
                                                     <Button
-                                                        onClick={() => openEditEventDialog(event)}
+                                                        onClick={(e) => { e.stopPropagation(); openEditEventDialog(event); }}
                                                         variant="outline"
                                                         size="sm"
                                                         className="px-2"
@@ -959,7 +966,7 @@ export default function SchedulePage() {
                                                         variant="error" 
                                                         size="sm" 
                                                         className="px-2"
-                                                        onClick={() => openDeleteDialog(event)}
+                                                        onClick={(e) => { e.stopPropagation(); openDeleteDialog(event); }}
                                                     >
                                                         <Trash2 className="w-4 h-4" />
                                                     </Button>
@@ -996,6 +1003,60 @@ export default function SchedulePage() {
                     ))
                 )}
             </div>
+
+            {/* Modal de Exibição (Read-only) */}
+            <Modal
+                isOpen={isViewDialogOpen}
+                onClose={() => setIsViewDialogOpen(false)}
+                title={viewingEvent?.title || 'Detalhes do Evento'}
+                className="max-w-md"
+            >
+                {viewingEvent && (
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-2 mb-2">
+                            {eventIcons[viewingEvent.type]}
+                            <span className="font-semibold capitalize text-base-content/80 text-sm">
+                                {viewingEvent.type}
+                            </span>
+                        </div>
+                        
+                        <div className="space-y-3 bg-base-200/30 p-4 rounded-lg border border-base-200">
+                            <div className="flex items-center gap-2 text-sm">
+                                <Calendar className="w-4 h-4 text-primary" />
+                                <span className="!text-base-content">{format(new Date(viewingEvent.start), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm">
+                                <Clock className="w-4 h-4 text-info" />
+                                <span className="!text-base-content">
+                                    {format(new Date(viewingEvent.start), 'HH:mm', { locale: ptBR })}
+                                    {viewingEvent.end && ` até ${format(new Date(viewingEvent.end), 'HH:mm', { locale: ptBR })}`}
+                                </span>
+                            </div>
+                            {viewingEvent.location && (
+                                <div className="flex items-center gap-2 text-sm">
+                                    <Globe className="w-4 h-4 text-success" />
+                                    <span className="!text-base-content">{viewingEvent.location}</span>
+                                </div>
+                            )}
+                        </div>
+
+                        {viewingEvent.description && (
+                            <div className="mt-4">
+                                <h4 className="text-xs font-bold uppercase text-base-content/50 mb-2">Descrição</h4>
+                                <p className="text-sm text-base-content/80 leading-relaxed whitespace-pre-wrap">
+                                    {viewingEvent.description}
+                                </p>
+                            </div>
+                        )}
+
+                        <div className="mt-6 pt-4 border-t border-base-300">
+                            <Button variant="ghost" block onClick={() => setIsViewDialogOpen(false)}>
+                                Fechar
+                            </Button>
+                        </div>
+                    </div>
+                )}
+            </Modal>
 
             {/* Modal de Exclusão DaisyUI */}
             <Modal
