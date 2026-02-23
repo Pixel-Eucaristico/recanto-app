@@ -77,7 +77,7 @@ export const appRoutes: AppRoute[] = [
     href: '/app/dashboard/schedule',
     icon: Calendar,
     roles: ['admin', 'missionario'],
-    requiredFeature: 'manage:calendar'
+    requiredFeature: 'read:calendar'
   },
   {
     name: 'Gerenciar Site',
