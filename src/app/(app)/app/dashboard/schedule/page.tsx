@@ -33,7 +33,7 @@ const eventIcons = {
 };
 
 export default function SchedulePage() {
-    const { isLoading: checkingAccess, hasAccess } = useRequireFeature('manage:calendar');
+    const { isLoading: checkingAccess, hasAccess } = useRequireFeature('read:calendar');
     const { user, can } = useAuth();
     const { toast } = useToast();
     const [events, setEvents] = useState<EventType[]>([]);
