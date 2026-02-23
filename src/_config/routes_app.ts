@@ -35,12 +35,15 @@ export const appRoutes: AppRoute[] = [
     icon: ArrowLeft,
     roles: ['admin', 'missionario', 'recantiano', 'pai', 'colaborador', 'benfeitor']
   },
+  /*
   {
     name: 'Início Dashboard',
     href: '/app/dashboard',
     icon: Home,
     roles: ['admin', 'missionario', 'recantiano', 'pai', 'colaborador', 'benfeitor']
   },
+  */
+  /*
   {
     name: 'Formação',
     href: '/app/dashboard/formation',
@@ -62,6 +65,7 @@ export const appRoutes: AppRoute[] = [
     roles: ['admin', 'missionario', 'pai'],
     requiredFeature: 'manage:followup'
   },
+  */
   {
     name: 'Meus Desafios',
     href: '/app/dashboard/challenges',
@@ -89,12 +93,15 @@ export const appRoutes: AppRoute[] = [
     roles: ['admin'],
     requiredFeature: 'manage:users'
   },
+  /*
   {
     name: 'Relatório Doações',
     href: '/app/dashboard/donation-report',
     icon: DollarSign,
     roles: ['admin']
   },
+  */
+  /*
   {
     name: 'Integração Omie',
     href: '/app/dashboard/omie',
@@ -125,4 +132,5 @@ export const appRoutes: AppRoute[] = [
     icon: Boxes,
     roles: ['admin']
   }
+  */
 ];
