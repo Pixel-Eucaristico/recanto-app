@@ -21,6 +21,10 @@ import { userService } from './UserService';
 import { FirebaseUser } from '@/types/firebase-entities';
 import { Role } from '@/features/auth/types/user';
 
+const DEV_LOG = process.env.NODE_ENV !== 'production';
+const devLog = (...args: unknown[]) => { if (DEV_LOG) console.log(...args); };
+const devWarn = (...args: unknown[]) => { if (DEV_LOG) console.warn(...args); };
+
 class AuthService {
   /**
    * Registra novo usuário
@@ -64,13 +68,13 @@ class AuthService {
         }
 
         // Usuário realmente não existe no Firestore (não é erro de conexão)
-        console.log(`[AuthService] Criando perfil inicial para o novo usuário: ${uid}`);
+        devLog(`[AuthService] Criando perfil inicial para o novo usuário: ${uid}`);
         return await this.createUserInDatabase(uid, displayName || userEmail!.split('@')[0], userEmail!, 'visitante');
 
       } catch (firestoreError: any) {
         // Erro de conexão - NÃO criar usuário, pode sobrescrever dados existentes
         console.error('[AuthService] Erro ao buscar usuário no Firestore:', firestoreError.message);
-        console.warn('[AuthService] Login no Firebase Auth OK, mas Firestore offline. Retornando dados básicos.');
+        devWarn('[AuthService] Login no Firebase Auth OK, mas Firestore offline. Retornando dados básicos.');
 
         // Retorna dados mínimos do Firebase Auth (sem role do Firestore)
         return {
@@ -105,14 +109,14 @@ class AuthService {
     // VERIFICAR se já existe ANTES de criar
     const existingDoc = await getDoc(userRef);
     if (existingDoc.exists()) {
-      console.warn(`[AuthService] Usuário ${uid} já existe! Retornando dados existentes (não sobrescrevendo)`);
+      devWarn(`[AuthService] Usuário ${uid} já existe! Retornando dados existentes (não sobrescrevendo)`);
       return existingDoc.data() as FirebaseUser;
     }
 
     // ==========================================
     // INÍCIO DO FLUXO: RESGATE INTELIGENTE DE CONVITE (CLAIM ACCOUNT)
     // ==========================================
-    console.log(`[AuthService] Verificando se existe um perfil provisório/convite para o email: ${email}`);
+    devLog(`[AuthService] Verificando se existe um perfil provisório/convite para o email: ${email}`);
     let finalRole = role;
     let finalFeatures: string[] | undefined = undefined;
     let finalPhone: string | undefined = undefined;
@@ -121,7 +125,7 @@ class AuthService {
       const existingUserByEmail = await userService.getUserByEmail(email);
       
       if (existingUserByEmail && existingUserByEmail.id !== uid) {
-         console.log(`[AuthService] Perfil provisório encontrado (ID: ${existingUserByEmail.id}). Resgatando dados (Role: ${existingUserByEmail.role})...`);
+         devLog(`[AuthService] Perfil provisório encontrado (ID: ${existingUserByEmail.id}). Resgatando dados (Role: ${existingUserByEmail.role})...`);
          
          // Resgatar os dados inseridos manualmente pelo Admin
          if (existingUserByEmail.role) finalRole = existingUserByEmail.role as Role;
@@ -130,7 +134,7 @@ class AuthService {
          
          // Deletar o documento temporário/provísório para evitar duplicação do email no banco
          await userService.delete(existingUserByEmail.id);
-         console.log(`[AuthService] Perfil provisório (${existingUserByEmail.id}) deletado com sucesso.`);
+         devLog(`[AuthService] Perfil provisório (${existingUserByEmail.id}) deletado com sucesso.`);
       }
     } catch (checkError) {
       console.error('[AuthService] Erro ao buscar/resgatar perfil provisório por email. Criando perfil normal:', checkError);
@@ -151,7 +155,7 @@ class AuthService {
 
     // Usar merge: true como proteção adicional contra sobrescrita acidental
     await setDoc(userRef, userData, { merge: true });
-    console.log(`✅ [AuthService] Novo usuário criado: ${uid} com role final: ${finalRole}`);
+    devLog(`✅ [AuthService] Novo usuário criado: ${uid} com role final: ${finalRole}`);
 
     return userData;
   }
@@ -189,7 +193,7 @@ class AuthService {
         }
 
         // Usuário realmente não existe no Firestore
-        console.log(`[AuthService] Criando perfil via provedor social para: ${uid}`);
+        devLog(`[AuthService] Criando perfil via provedor social para: ${uid}`);
         return await this.createUserInDatabase(
           uid,
           displayName || email!.split('@')[0],
@@ -228,7 +232,7 @@ class AuthService {
     try {
       if (!auth.currentUser) throw new Error('Nenhum usuário logado');
       await linkWithPopup(auth.currentUser, googleProvider);
-      console.log('✅ [AuthService] Conta Google vinculada com sucesso.');
+      devLog('✅ [AuthService] Conta Google vinculada com sucesso.');
     } catch (error: any) {
       console.error('Error linking Google account:', error);
       if (error.code === 'auth/popup-blocked') {
@@ -245,7 +249,7 @@ class AuthService {
     try {
       if (!auth.currentUser) throw new Error('Nenhum usuário logado');
       await updatePassword(auth.currentUser, password);
-      console.log('✅ [AuthService] Senha local criada/atualizada com sucesso.');
+      devLog('✅ [AuthService] Senha local criada/atualizada com sucesso.');
     } catch (error: any) {
       console.error('Error creating local password:', error);
       throw new Error(error.message || 'Erro ao criar senha local');
@@ -270,18 +274,18 @@ class AuthService {
   onAuthStateChange(callback: (user: FirebaseUser | null) => void): () => void {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        console.log(`🔄 [AuthService] onAuthStateChange disparado para UID: ${firebaseUser.uid}`);
+        devLog(`🔄 [AuthService] onAuthStateChange disparado para UID: ${firebaseUser.uid}`);
 
         try {
           // Busca dados completos do usuário pelo UID
           const user = await userService.get(firebaseUser.uid);
 
           if (user) {
-            console.log(`✅ [AuthService] Usuário encontrado: ${user.email}, role: ${user.role}`);
+            devLog(`✅ [AuthService] Usuário encontrado: ${user.email}, role: ${user.role}`);
             callback(user);
           } else {
             // Usuário não existe no Firestore - criar perfil inicial
-            console.warn(`⚠️ [AuthService] Usuário não encontrado no Firestore, criando perfil: ${firebaseUser.uid}`);
+            devWarn(`⚠️ [AuthService] Usuário não encontrado no Firestore, criando perfil: ${firebaseUser.uid}`);
             const newUser = await this.createUserInDatabase(
               firebaseUser.uid,
               firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Usuário',
@@ -294,7 +298,7 @@ class AuthService {
         } catch (error: any) {
           // Erro de conexão - retornar dados básicos do Firebase Auth
           console.error(`❌ [AuthService] Erro ao buscar usuário no Firestore:`, error.message);
-          console.warn(`⚠️ [AuthService] Usando dados do Firebase Auth (Firestore offline)`);
+          devWarn(`⚠️ [AuthService] Usando dados do Firebase Auth (Firestore offline)`);
 
           // Retorna dados mínimos para não travar o app
           callback({
@@ -307,7 +311,7 @@ class AuthService {
           });
         }
       } else {
-        console.log(`🔓 [AuthService] Usuário deslogado`);
+        devLog(`🔓 [AuthService] Usuário deslogado`);
         callback(null);
       }
     });

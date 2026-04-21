@@ -7,6 +7,10 @@ import { FirebaseUser } from "@/types/firebase-entities";
 import { hasFeature } from "@/lib/permissions";
 import { permissionsConfigService } from "@/entities/PermissionsConfig";
 
+const DEV_LOG = process.env.NODE_ENV !== 'production';
+const devLog = (...args: unknown[]) => { if (DEV_LOG) console.log(...args); };
+const devWarn = (...args: unknown[]) => { if (DEV_LOG) console.warn(...args); };
+
 interface AuthContextProps {
   user: FirebaseUser | null;
   authProviders: string[];
@@ -32,7 +36,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Observa mudanças no estado de autenticação
   useEffect(() => {
     const unsubscribe = authService.onAuthStateChange(async (firebaseUser) => {
-      console.log('🔄 [AuthContext] Recebido usuário do AuthService:', firebaseUser?.email, 'role:', firebaseUser?.role);
+      devLog('🔄 [AuthContext] Recebido usuário do AuthService:', firebaseUser?.email, 'role:', firebaseUser?.role);
 
       if (firebaseUser) {
         // DESENVOLVIMENTO: Aplicar role temporário APENAS se for admin querendo testar outra role
@@ -42,7 +46,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (tempRole && tempRole !== 'null' && process.env.NODE_ENV !== 'production') {
           // Só permite override se o usuário REAL for admin (verificado pelo banco)
           if (firebaseUser.role === 'admin') {
-            console.log(`🎭 [AuthContext] DEV: Simulando role "${tempRole}" (usuário real é admin)`);
+            devLog(`🎭 [AuthContext] DEV: Simulando role "${tempRole}" (usuário real é admin)`);
             finalUser = { ...firebaseUser, role: tempRole as Role };
           } else {
             // Se não for admin, limpar o tempRole para evitar confusão
@@ -70,7 +74,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             });
 
             if (response.ok) {
-              console.log('✅ [AuthContext] Sessão sincronizada com o servidor.');
+              devLog('✅ [AuthContext] Sessão sincronizada com o servidor.');
             } else {
               console.error('❌ [AuthContext] Erro ao sincronizar sessão:', await response.text());
             }
@@ -95,10 +99,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Atraso de 500ms para evitar INTERNAL ASSERTION FAILED no Firestore durante o mount
     const timer = setTimeout(() => {
       try {
-        console.log('🔐 [AuthContext] Iniciando listener de permissões dinâmicas...');
+        devLog('🔐 [AuthContext] Iniciando listener de permissões dinâmicas...');
         unsubscribe = permissionsConfigService.onValueChange((configs: any[]) => {
           if (!configs || configs.length === 0) {
-            console.warn('⚠️ [AuthContext] Nenhuma configuração de permissão encontrada no Firestore.');
+            devWarn('⚠️ [AuthContext] Nenhuma configuração de permissão encontrada no Firestore.');
             return;
           }
           
@@ -107,7 +111,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (c && c.id) map[c.id] = c.features || [];
           });
           
-          console.log(`✅ [AuthContext] ${Object.keys(map).length} grupos de permissão carregados.`);
+          devLog(`✅ [AuthContext] ${Object.keys(map).length} grupos de permissão carregados.`);
           setDynamicPermissions(map);
         });
       } catch (error) {
@@ -118,7 +122,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       clearTimeout(timer);
       if (unsubscribe) {
-        console.log('🔕 [AuthContext] Removendo listener de permissões.');
+        devLog('🔕 [AuthContext] Removendo listener de permissões.');
         unsubscribe();
       }
     };
