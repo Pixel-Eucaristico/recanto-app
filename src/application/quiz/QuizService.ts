@@ -2,12 +2,12 @@ import { quizRepository, IQuizRepository } from '@/infrastructure/quiz/QuizRepos
 import { attemptRepository, IAttemptRepository } from '@/infrastructure/quiz/AttemptRepository';
 import { QuizEntity } from '@/domain/quiz/entities/Quiz';
 import { QuizAttemptEntity, ScoreResult } from '@/domain/quiz/entities/QuizAttempt';
-import { Quiz, QuizAttempt, ShuffledQuiz } from '@/domain/quiz/types';
+import { Quiz, QuizAttempt, QuestionAnswer, ShuffledQuiz } from '@/domain/quiz/types';
 
 export interface SubmitAttemptInput {
   userId: string;
   quizId: string;
-  answers: Record<string, string>;
+  answers: Record<string, QuestionAnswer>;
   questionOrder: string[];
 }
 
@@ -42,11 +42,23 @@ export class QuizService {
     return QuizEntity.shuffleForAttempt(quiz);
   }
 
-  async submit(input: SubmitAttemptInput): Promise<SubmitAttemptResult> {
+  /**
+   * Submete tentativa. Apenas a PRIMEIRA tentativa do usuário é persistida
+   * (registro histórico para o formador + entrada no caderno). Retakes são
+   * recalculados runtime e retornam score sem gravar em `quiz_attempts`.
+   */
+  async submit(input: SubmitAttemptInput): Promise<SubmitAttemptResult & { persisted: boolean }> {
     const quiz = await this.quizRepo.findById(input.quizId);
     if (!quiz) throw new Error('Quiz não encontrado.');
 
     const scoreDetail = QuizAttemptEntity.score(quiz, input.answers);
+
+    const existing = await this.attemptRepo.findByUserAndQuiz(input.userId, input.quizId);
+    if (existing.length > 0) {
+      // Retake — não persiste, retorna a tentativa original + score da nova rodada
+      return { attempt: existing[0], scoreDetail, persisted: false };
+    }
+
     const attemptData = QuizAttemptEntity.fromScore(
       {
         user_id: input.userId,
@@ -58,7 +70,12 @@ export class QuizService {
       scoreDetail,
     );
     const attempt = await this.attemptRepo.create(attemptData);
-    return { attempt, scoreDetail };
+    return { attempt, scoreDetail, persisted: true };
+  }
+
+  async hasAttempted(userId: string, quizId: string): Promise<boolean> {
+    const existing = await this.attemptRepo.findByUserAndQuiz(userId, quizId);
+    return existing.length > 0;
   }
 
   async hasPassed(userId: string, quizId: string): Promise<boolean> {

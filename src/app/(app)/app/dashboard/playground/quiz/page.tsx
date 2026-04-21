@@ -61,7 +61,7 @@ export default function QuizPlaygroundPage() {
           )}
 
           {shuffled && result && (
-            <QuizResult shuffled={shuffled} result={result.scoreDetail} onRestart={restart} />
+            <QuizResult shuffled={shuffled} result={result.scoreDetail} persisted={result.persisted} onRestart={restart} />
           )}
         </div>
       )}

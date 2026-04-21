@@ -2,53 +2,92 @@
 
 import { useMemo, useState } from 'react';
 import { CheckCircle2, XCircle, ChevronRight, Send } from 'lucide-react';
-import { ShuffledQuiz } from '@/domain/quiz/types';
+import {
+  ShuffledQuiz,
+  QuizQuestion,
+  QuestionAnswer,
+  MultipleChoiceQuestion,
+  FillBlankQuestion,
+  MatchingQuestion,
+  SequenceQuestion,
+  ClassifyQuestion,
+} from '@/domain/quiz/types';
+import { QuizAttemptEntity } from '@/domain/quiz/entities/QuizAttempt';
 import { RichContent } from '@/shared/components/RichContent';
+import { FillBlankPlayer } from '../FillBlankQuestion';
+import { MatchingPlayer } from '../MatchingQuestion';
+import { SequencePlayer } from '../SequenceQuestion';
+import { ClassifyPlayer } from '../ClassifyQuestion';
 
 interface QuizPlayerProps {
   shuffled: ShuffledQuiz;
   submitting: boolean;
-  onSubmit: (answers: Record<string, string>) => Promise<unknown>;
+  onSubmit: (answers: Record<string, QuestionAnswer>) => Promise<unknown>;
 }
 
-type Feedback = { correctOptionId: string; selectedOptionId: string; isCorrect: boolean };
+function emptyAnswer(q: QuizQuestion): QuestionAnswer {
+  const kind = q.kind ?? 'multiple_choice';
+  if (kind === 'multiple_choice' || kind === 'true_false') return '';
+  if (kind === 'fill_blank') return [];
+  if (kind === 'matching') return {};
+  if (kind === 'sequence') return [];
+  if (kind === 'classify') return {};
+  return '';
+}
 
 export function QuizPlayer({ shuffled, submitting, onSubmit }: QuizPlayerProps) {
   const questions = shuffled.questions;
   const total = questions.length;
 
   const [index, setIndex] = useState(0);
-  const [selected, setSelected] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState<Feedback | null>(null);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [answers, setAnswers] = useState<Record<string, QuestionAnswer>>({});
+  const [revealed, setRevealed] = useState<boolean>(false);
 
   const q = questions[index];
+  const kind = q?.kind ?? 'multiple_choice';
   const isLast = index === total - 1;
-  const correct = useMemo(() => q?.options.find(o => o.is_correct), [q]);
 
-  function handleVerify() {
-    if (!q || !selected || !correct) return;
-    const isCorrect = selected === correct.id;
-    setFeedback({ correctOptionId: correct.id, selectedOptionId: selected, isCorrect });
-    setAnswers(prev => ({ ...prev, [q.id]: selected }));
+  const currentAnswer = (answers[q.id] ?? emptyAnswer(q)) as QuestionAnswer;
+
+  const scoreForCurrent = useMemo(() => {
+    if (!revealed || !q) return null;
+    const result = QuizAttemptEntity.score({ questions: [q], passing_score: 100 } as any, { [q.id]: currentAnswer });
+    return result.detail[0];
+  }, [revealed, q, currentAnswer]);
+
+  function setCurrent(v: QuestionAnswer) {
+    setAnswers(prev => ({ ...prev, [q.id]: v }));
   }
 
-  async function handleNext() {
+  function canVerify(): boolean {
+    if (!q) return false;
+    if (kind === 'multiple_choice' || kind === 'true_false') return typeof currentAnswer === 'string' && currentAnswer.length > 0;
+    if (kind === 'fill_blank') {
+      const arr = Array.isArray(currentAnswer) ? currentAnswer : [];
+      return arr.some(v => v && v.trim().length > 0);
+    }
+    if (kind === 'matching') return typeof currentAnswer === 'object' && !Array.isArray(currentAnswer) && Object.keys(currentAnswer).length > 0;
+    if (kind === 'sequence') return Array.isArray(currentAnswer) && currentAnswer.length > 0;
+    if (kind === 'classify') return typeof currentAnswer === 'object' && !Array.isArray(currentAnswer) && Object.keys(currentAnswer).length > 0;
+    return false;
+  }
+
+  function verify() {
+    setRevealed(true);
+  }
+
+  async function next() {
     if (isLast) {
-      // finalizar — inclui respostas anteriores + atual
-      const finalAnswers = { ...answers };
-      if (selected && q) finalAnswers[q.id] = selected;
-      await onSubmit(finalAnswers);
+      await onSubmit(answers);
       return;
     }
-    setIndex(idx => idx + 1);
-    setSelected(null);
-    setFeedback(null);
+    setIndex(i => i + 1);
+    setRevealed(false);
   }
 
   if (!q) return null;
 
-  const progressPct = ((index + (feedback ? 1 : 0)) / total) * 100;
+  const progressPct = ((index + (revealed ? 1 : 0)) / total) * 100;
 
   return (
     <div className="space-y-5">
@@ -59,7 +98,9 @@ export function QuizPlayer({ shuffled, submitting, onSubmit }: QuizPlayerProps) 
             <div className="mt-1"><RichContent markdown={shuffled.quiz.description} /></div>
           )}
         </div>
-        <span className="badge badge-ghost flex-shrink-0">Pergunta {index + 1} / {total}</span>
+        <span className="badge badge-ghost flex-shrink-0">
+          {index + 1} / {total} · {kindLabel(kind)}
+        </span>
       </div>
 
       <progress className="progress progress-primary w-full" value={progressPct} max={100} />
@@ -71,57 +112,19 @@ export function QuizPlayer({ shuffled, submitting, onSubmit }: QuizPlayerProps) 
             <div className="flex-1 font-medium"><RichContent markdown={q.text} /></div>
           </div>
 
-          <div className="space-y-2">
-            {q.options.map(opt => {
-              const picked = selected === opt.id;
-              let stateClass = 'border-base-300 hover:border-primary/50';
-              let icon = null;
-              if (feedback) {
-                if (opt.id === feedback.correctOptionId) {
-                  stateClass = 'border-success bg-success/10';
-                  icon = <CheckCircle2 className="w-4 h-4 text-success" />;
-                } else if (opt.id === feedback.selectedOptionId) {
-                  stateClass = 'border-error bg-error/10';
-                  icon = <XCircle className="w-4 h-4 text-error" />;
-                } else {
-                  stateClass = 'border-base-300 opacity-60';
-                }
-              } else if (picked) {
-                stateClass = 'border-primary bg-primary/10';
-              }
-              return (
-                <label
-                  key={opt.id}
-                  className={`flex items-start justify-between gap-2 p-3 rounded-lg border transition-colors ${
-                    feedback ? 'cursor-default' : 'cursor-pointer'
-                  } ${stateClass}`}
-                >
-                  <div className="flex items-start gap-2 flex-1">
-                    <input
-                      type="radio"
-                      className="radio radio-primary radio-sm mt-0.5 flex-shrink-0"
-                      name={`q-${q.id}`}
-                      checked={picked}
-                      disabled={!!feedback}
-                      onChange={() => setSelected(opt.id)}
-                    />
-                    <div className="flex-1"><RichContent markdown={opt.text} /></div>
-                  </div>
-                  {icon && <div className="flex-shrink-0">{icon}</div>}
-                </label>
-              );
-            })}
-          </div>
+          {renderPlayer(q, currentAnswer, setCurrent, revealed)}
 
-          {feedback && (
-            <div className={`alert ${feedback.isCorrect ? 'alert-success' : 'alert-error'} text-sm items-start`}>
-              {feedback.isCorrect ? (
+          {revealed && scoreForCurrent && (
+            <div className={`alert ${scoreForCurrent.isCorrect ? 'alert-success' : 'alert-error'} text-sm items-start`}>
+              {scoreForCurrent.isCorrect ? (
                 <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
               ) : (
                 <XCircle className="w-5 h-5 flex-shrink-0" />
               )}
               <div className="flex-1">
-                <strong>{feedback.isCorrect ? 'Correto!' : 'Incorreto.'}</strong>
+                <strong>
+                  {scoreForCurrent.isCorrect ? 'Correto!' : `Parcial: ${Math.round(scoreForCurrent.fraction * 100)}%`}
+                </strong>
                 {q.explanation && <div className="mt-1"><RichContent markdown={q.explanation} /></div>}
               </div>
             </div>
@@ -130,20 +133,12 @@ export function QuizPlayer({ shuffled, submitting, onSubmit }: QuizPlayerProps) 
       </div>
 
       <div className="flex justify-end">
-        {!feedback ? (
-          <button
-            className="btn btn-primary gap-1"
-            onClick={handleVerify}
-            disabled={!selected}
-          >
+        {!revealed ? (
+          <button className="btn btn-primary gap-1" onClick={verify} disabled={!canVerify()}>
             Verificar resposta
           </button>
         ) : (
-          <button
-            className="btn btn-primary gap-1"
-            onClick={handleNext}
-            disabled={submitting}
-          >
+          <button className="btn btn-primary gap-1" onClick={next} disabled={submitting}>
             {isLast ? (
               <>
                 <Send className="w-4 h-4" />
@@ -160,4 +155,116 @@ export function QuizPlayer({ shuffled, submitting, onSubmit }: QuizPlayerProps) 
       </div>
     </div>
   );
+}
+
+function renderPlayer(
+  q: QuizQuestion,
+  answer: QuestionAnswer,
+  setAnswer: (v: QuestionAnswer) => void,
+  revealed: boolean,
+) {
+  const kind = q.kind ?? 'multiple_choice';
+
+  if (kind === 'multiple_choice' || kind === 'true_false') {
+    const mc = q as MultipleChoiceQuestion;
+    const selected = typeof answer === 'string' ? answer : '';
+    const correct = mc.options.find(o => o.is_correct);
+    return (
+      <div className="space-y-2">
+        {mc.options.map(opt => {
+          const picked = selected === opt.id;
+          let cls = 'border-base-300 hover:border-primary/50';
+          if (revealed) {
+            if (opt.id === correct?.id) cls = 'border-success bg-success/10';
+            else if (opt.id === selected) cls = 'border-error bg-error/10';
+            else cls = 'border-base-300 opacity-60';
+          } else if (picked) {
+            cls = 'border-primary bg-primary/10';
+          }
+          return (
+            <label
+              key={opt.id}
+              className={`flex items-start gap-2 p-3 rounded-lg border ${revealed ? 'cursor-default' : 'cursor-pointer'} ${cls}`}
+            >
+              <input
+                type="radio"
+                className="radio radio-primary radio-sm mt-0.5"
+                name={`q-${q.id}`}
+                checked={picked}
+                disabled={revealed}
+                onChange={() => setAnswer(opt.id)}
+              />
+              <div className="flex-1"><RichContent markdown={opt.text} /></div>
+            </label>
+          );
+        })}
+      </div>
+    );
+  }
+
+  if (kind === 'fill_blank') {
+    const fb = q as FillBlankQuestion;
+    return (
+      <FillBlankPlayer
+        question={fb}
+        value={Array.isArray(answer) ? (answer as string[]) : []}
+        onChange={setAnswer}
+        disabled={revealed}
+        feedback={revealed ? { correctBlanks: fb.blanks, isCorrect: false } : undefined}
+      />
+    );
+  }
+
+  if (kind === 'matching') {
+    const m = q as MatchingQuestion;
+    return (
+      <MatchingPlayer
+        question={m}
+        value={typeof answer === 'object' && !Array.isArray(answer) ? (answer as Record<string, string>) : {}}
+        onChange={setAnswer}
+        disabled={revealed}
+        feedback={revealed}
+      />
+    );
+  }
+
+  if (kind === 'sequence') {
+    const s = q as SequenceQuestion;
+    return (
+      <SequencePlayer
+        question={s}
+        value={Array.isArray(answer) ? (answer as string[]) : []}
+        onChange={setAnswer}
+        disabled={revealed}
+        feedback={revealed}
+      />
+    );
+  }
+
+  if (kind === 'classify') {
+    const c = q as ClassifyQuestion;
+    return (
+      <ClassifyPlayer
+        question={c}
+        value={typeof answer === 'object' && !Array.isArray(answer) ? (answer as Record<string, string>) : {}}
+        onChange={setAnswer}
+        disabled={revealed}
+        feedback={revealed}
+      />
+    );
+  }
+
+  return null;
+}
+
+function kindLabel(kind: string): string {
+  switch (kind) {
+    case 'multiple_choice': return 'Múltipla escolha';
+    case 'true_false': return 'V/F';
+    case 'fill_blank': return 'Lacunas';
+    case 'matching': return 'Relacionar';
+    case 'sequence': return 'Ordenar';
+    case 'classify': return 'Classificar';
+    default: return kind;
+  }
 }

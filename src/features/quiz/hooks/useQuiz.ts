@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { quizService } from '@/application/quiz/QuizService';
-import { ShuffledQuiz, QuizAttempt } from '@/domain/quiz/types';
+import { ShuffledQuiz, QuizAttempt, QuestionAnswer } from '@/domain/quiz/types';
 import { ScoreResult } from '@/domain/quiz/entities/QuizAttempt';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 
@@ -17,8 +17,9 @@ export function useQuiz({ lessonId, quizId }: UseQuizOptions) {
   const [loading, setLoading] = useState<boolean>(!!(lessonId || quizId));
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState<{ attempt: QuizAttempt; scoreDetail: ScoreResult } | null>(null);
+  const [result, setResult] = useState<{ attempt: QuizAttempt; scoreDetail: ScoreResult; persisted: boolean } | null>(null);
   const [passed, setPassed] = useState<boolean>(false);
+  const [hasAttempted, setHasAttempted] = useState<boolean>(false);
 
   const load = useCallback(async () => {
     if (!lessonId && !quizId) return;
@@ -33,6 +34,7 @@ export function useQuiz({ lessonId, quizId }: UseQuizOptions) {
       setShuffled(q);
       if (q && user) {
         setPassed(await quizService.hasPassed(user.id, q.quiz.id));
+        setHasAttempted(await quizService.hasAttempted(user.id, q.quiz.id));
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -43,7 +45,7 @@ export function useQuiz({ lessonId, quizId }: UseQuizOptions) {
 
   useEffect(() => { load(); }, [load]);
 
-  const submit = useCallback(async (answers: Record<string, string>) => {
+  const submit = useCallback(async (answers: Record<string, QuestionAnswer>) => {
     if (!shuffled || !user) return null;
     setSubmitting(true);
     setError(null);
@@ -56,6 +58,7 @@ export function useQuiz({ lessonId, quizId }: UseQuizOptions) {
       });
       setResult(res);
       setPassed(res.attempt.passed || passed);
+      if (res.persisted) setHasAttempted(true);
       return res;
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -70,5 +73,5 @@ export function useQuiz({ lessonId, quizId }: UseQuizOptions) {
     await load();
   }, [load]);
 
-  return { shuffled, loading, error, submitting, result, passed, submit, restart };
+  return { shuffled, loading, error, submitting, result, passed, hasAttempted, submit, restart };
 }
