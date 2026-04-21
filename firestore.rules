@@ -407,6 +407,29 @@ service cloud.firestore {
     }
 
     // ===========================
+    // Flashcard Decks Collection
+    // ===========================
+    match /flashcard_decks/{deckId} {
+      allow read: if hasFeature('read:formation') || hasFeature('manage:formation');
+      allow create: if hasFeature('manage:formation');
+      allow update: if hasFeature('manage:formation');
+      allow delete: if hasFeature('manage:formation');
+    }
+
+    // ===========================
+    // Flashcard Reviews Collection
+    // ===========================
+    match /flashcard_reviews/{reviewId} {
+      allow read: if hasFeature('review:formation') ||
+                    (isAuthenticated() && resource.data.user_id == request.auth.uid);
+      allow create: if isAuthenticated() &&
+                      hasFeature('complete:formation') &&
+                      request.resource.data.user_id == request.auth.uid;
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    // ===========================
     // Spiritual Reflections Collection (Caderno Espiritual)
     // ===========================
     match /spiritual_reflections/{reflectionId} {

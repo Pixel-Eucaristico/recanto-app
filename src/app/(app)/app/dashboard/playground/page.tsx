@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { FlaskConical, PlayCircle, FileEdit, Award } from 'lucide-react';
+import { FlaskConical, PlayCircle, FileEdit, Award, Layers } from 'lucide-react';
 
 export default function PlaygroundIndexPage() {
   const demos = [
@@ -21,7 +21,13 @@ export default function PlaygroundIndexPage() {
       href: '/app/dashboard/playground/quiz',
       icon: Award,
       title: 'Quiz',
-      description: 'QuizBuilder + QuizPlayer + QuizResult com randomização (Feature 4).',
+      description: 'QuizBuilder + QuizPlayer + QuizResult com 6 tipos de pergunta (Feature 4+5).',
+    },
+    {
+      href: '/app/dashboard/playground/flashcards',
+      icon: Layers,
+      title: 'Flashcards',
+      description: 'Deck com flip 3D + acertei/errei (Feature 6).',
     },
   ];
 
