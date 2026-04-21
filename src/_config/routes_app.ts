@@ -2,6 +2,7 @@ import {
   Home,
   Users,
   BookOpen,
+  BookHeart,
   MessageCircle,
   Calendar,
   DollarSign,
@@ -72,6 +73,13 @@ export const appRoutes: AppRoute[] = [
     icon: BookOpen,
     roles: ['admin', 'missionario', 'recantiano', 'pai', 'colaborador', 'benfeitor'],
     requiredFeature: 'read:formation'
+  },
+  {
+    name: 'Minha Jornada',
+    href: '/app/dashboard/my-notebook',
+    icon: BookHeart,
+    roles: ['admin', 'missionario', 'recantiano', 'pai', 'colaborador'],
+    requiredFeature: 'complete:formation'
   },
   {
     name: 'Meus Desafios',

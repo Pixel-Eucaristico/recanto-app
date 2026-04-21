@@ -379,5 +379,23 @@ service cloud.firestore {
       // Deleção: só admin
       allow delete: if isAdmin();
     }
+
+    // ===========================
+    // Spiritual Reflections Collection (Caderno Espiritual)
+    // ===========================
+    match /spiritual_reflections/{reflectionId} {
+      // Leitura: dono ou quem revisa (review:formation)
+      allow read: if hasFeature('review:formation') ||
+                    (isAuthenticated() && resource.data.user_id == request.auth.uid);
+      // Criação: próprio usuário com complete:formation
+      allow create: if isAuthenticated() &&
+                      hasFeature('complete:formation') &&
+                      request.resource.data.user_id == request.auth.uid;
+      // Atualização: dono (editar rascunho / enviar) OU quem revisa (adicionar comentário)
+      allow update: if (isAuthenticated() && resource.data.user_id == request.auth.uid) ||
+                      hasFeature('review:formation');
+      // Deleção: só admin
+      allow delete: if isAdmin();
+    }
   }
 }

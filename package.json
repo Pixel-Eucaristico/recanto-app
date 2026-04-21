@@ -16,7 +16,9 @@
     "firebase:deploy": "npx --yes firebase-tools deploy --project recanto-app-dev",
     "firebase:ci": "node scripts/deploy-firebase.mjs",
     "vercel-build": "npm run firebase:ci && next build",
-    "seed:formation": "node scripts/seed-formation.mjs"
+    "seed:formation": "node scripts/seed-formation.mjs",
+    "seed:notebook": "node scripts/seed-notebook.mjs",
+    "seed:all": "npm run seed:formation && npm run seed:notebook"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.980.0",
