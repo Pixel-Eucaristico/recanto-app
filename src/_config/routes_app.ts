@@ -67,6 +67,13 @@ export const appRoutes: AppRoute[] = [
   },
   */
   {
+    name: 'Trilhas',
+    href: '/app/dashboard/formation',
+    icon: BookOpen,
+    roles: ['admin', 'missionario', 'recantiano', 'pai', 'colaborador', 'benfeitor'],
+    requiredFeature: 'read:formation'
+  },
+  {
     name: 'Meus Desafios',
     href: '/app/dashboard/challenges',
     icon: Award,

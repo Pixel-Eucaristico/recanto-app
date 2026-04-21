@@ -25,26 +25,44 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Exclude<Role, null>, string[]> = {
     'create:forum_topic',
     'create:forum_post',
     'manage:followup',
-    'manage:challenges'
+    'manage:challenges',
+    'read:formation',
+    'complete:formation',
+    'manage:formation',
+    'review:formation',
+    'log:habits',
+    'read:prayer'
   ],
   recantiano: [
     'read:content',
     'read:calendar',
     'read:forum',
-    'create:forum_post'
+    'create:forum_post',
+    'read:formation',
+    'complete:formation',
+    'log:habits',
+    'read:prayer'
   ],
   pai: [
     'read:content',
     'read:calendar',
-    'read:parent_zone'
+    'read:parent_zone',
+    'read:formation',
+    'log:habits',
+    'read:prayer'
   ],
   colaborador: [
     'read:content',
-    'read:calendar'
+    'read:calendar',
+    'read:formation',
+    'log:habits',
+    'read:prayer'
   ],
   benfeitor: [
     'read:content',
-    'read:gratitude_corner'
+    'read:gratitude_corner',
+    'read:formation',
+    'read:prayer'
   ],
   visitante: [
     'read:public_content',
@@ -202,6 +220,60 @@ export const FEATURES_INFO: FeatureInfo[] = [
     label: 'Gerenciar Desafios',
     description: 'Criar e editar desafios para os recantianos',
     category: 'users'
+  },
+
+  // ===== FORMAÇÃO =====
+  {
+    id: 'read:formation',
+    label: 'Ver Trilhas de Formação',
+    description: 'Acessar trilhas, módulos e aulas de formação',
+    category: 'content'
+  },
+  {
+    id: 'complete:formation',
+    label: 'Completar Aulas',
+    description: 'Enviar reflexões, fazer quiz e marcar aulas como concluídas',
+    category: 'content'
+  },
+  {
+    id: 'manage:formation',
+    label: 'Gerenciar Trilhas e Aulas',
+    description: 'Criar, editar e publicar trilhas, módulos e aulas (admin e missionário)',
+    category: 'admin'
+  },
+  {
+    id: 'review:formation',
+    label: 'Revisar Progresso dos Alunos',
+    description: 'Ver progresso e reflexões dos alunos no curso',
+    category: 'users'
+  },
+
+  // ===== HÁBITOS =====
+  {
+    id: 'log:habits',
+    label: 'Registrar Hábitos Diários',
+    description: 'Marcar hábitos espirituais do dia (Terço, Oração, Regra de Vida)',
+    category: 'special'
+  },
+  {
+    id: 'manage:habits',
+    label: 'Gerenciar Hábitos',
+    description: 'Criar e editar hábitos obrigatórios por nível',
+    category: 'admin'
+  },
+
+  // ===== CENTRAL DE ORAÇÃO =====
+  {
+    id: 'read:prayer',
+    label: 'Acessar Central de Oração',
+    description: 'Abrir a Chapel com textos de oração da comunidade',
+    category: 'special'
+  },
+  {
+    id: 'manage:prayer',
+    label: 'Gerenciar Textos de Oração',
+    description: 'Criar e editar os textos da Central de Oração',
+    category: 'admin'
   },
 
   // ===== ÁREAS ESPECIAIS =====
