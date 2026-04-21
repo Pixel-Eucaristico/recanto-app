@@ -9,6 +9,7 @@ export interface LoadSessionInput {
   moduleId: string;
   trackId: string;
   minWatchPercent: number;
+  minWatchSeconds?: number;
   durationSeconds: number;
 }
 
@@ -26,8 +27,10 @@ export class VideoSessionService {
       userId: input.userId,
       lessonId: input.lessonId,
       minWatchPercent: input.minWatchPercent,
+      minWatchSeconds: input.minWatchSeconds ?? 0,
       durationSeconds: input.durationSeconds,
       watchPercent: progress.video_watch_percent ?? 0,
+      watchSeconds: progress.video_watch_seconds ?? 0,
       lastPositionSeconds: progress.video_last_position_seconds ?? 0,
       completedAt: progress.video_completed_at,
     });
@@ -36,6 +39,7 @@ export class VideoSessionService {
   async save(session: VideoSession): Promise<LessonProgress> {
     const data: Partial<LessonProgress> = {
       video_watch_percent: session.watchPercent,
+      video_watch_seconds: session.watchSeconds,
       video_last_position_seconds: session.lastPositionSeconds,
     };
     if (VideoSessionEntity.isMinimumReached(session) && !session.completedAt) {

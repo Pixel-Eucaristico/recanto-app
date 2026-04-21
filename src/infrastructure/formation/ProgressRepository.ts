@@ -24,6 +24,14 @@ function progressId(userId: string, lessonId: string): string {
   return `${userId}_${lessonId}`;
 }
 
+function stripUndefined<T extends Record<string, unknown>>(obj: T): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v !== undefined) out[k] = v;
+  }
+  return out;
+}
+
 export class FirebaseProgressRepository implements IProgressRepository {
   private readonly collectionName = 'formation_progress';
 
@@ -59,7 +67,7 @@ export class FirebaseProgressRepository implements IProgressRepository {
     data: Partial<Omit<LessonProgress, 'id' | 'user_id' | 'lesson_id'>>
   ): Promise<LessonProgress> {
     const ref = this.docRef(userId, lessonId);
-    const payload = { ...data, updated_at: new Date().toISOString() };
+    const payload = stripUndefined({ ...data, updated_at: new Date().toISOString() });
     await updateDoc(ref, payload).catch(async () => {
       await setDoc(ref, { user_id: userId, lesson_id: lessonId, ...payload });
     });

@@ -2,18 +2,31 @@
 
 interface WatchProgressBarProps {
   watchPercent: number;
+  watchSeconds?: number;
   minWatchPercent: number;
+  minWatchSeconds?: number;
 }
 
-export function WatchProgressBar({ watchPercent, minWatchPercent }: WatchProgressBarProps) {
+function formatTime(s: number): string {
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return `${m}:${sec.toString().padStart(2, '0')}`;
+}
+
+export function WatchProgressBar({ watchPercent, watchSeconds, minWatchPercent, minWatchSeconds }: WatchProgressBarProps) {
   const pct = Math.min(100, Math.max(0, watchPercent));
-  const reached = pct >= minWatchPercent;
+  const reached =
+    pct >= minWatchPercent ||
+    (minWatchSeconds && minWatchSeconds > 0 && watchSeconds !== undefined && watchSeconds >= minWatchSeconds);
+
   return (
     <div className="space-y-1">
       <div className="flex justify-between text-xs text-base-content/60">
-        <span>Assistido</span>
+        <span>
+          Assistido {watchSeconds !== undefined ? formatTime(watchSeconds) : ''} ({pct.toFixed(1)}%)
+        </span>
         <span className={reached ? 'text-success font-medium' : ''}>
-          {pct.toFixed(1)}% / mín. {minWatchPercent}%
+          Mín. {minWatchPercent}%{minWatchSeconds && minWatchSeconds > 0 ? ` ou ${formatTime(minWatchSeconds)}` : ''}
         </span>
       </div>
       <div className="relative h-2 bg-base-300 rounded-full overflow-hidden">

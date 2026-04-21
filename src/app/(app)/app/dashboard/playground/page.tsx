@@ -1,0 +1,55 @@
+'use client';
+
+import Link from 'next/link';
+import { FlaskConical, PlayCircle, FileEdit } from 'lucide-react';
+
+export default function PlaygroundIndexPage() {
+  const demos = [
+    {
+      href: '/app/dashboard/playground/video-player',
+      icon: PlayCircle,
+      title: 'Video Player',
+      description: 'LockedVideoPlayer com anti-skip e countdown (Feature 3).',
+    },
+    {
+      href: '/app/dashboard/playground/reflection-editor',
+      icon: FileEdit,
+      title: 'Reflection Editor',
+      description: 'ReflectionEditor do caderno espiritual (Feature 2).',
+    },
+  ];
+
+  return (
+    <div className="min-h-screen bg-base-200 p-6 space-y-6">
+      <header className="bg-base-100 border border-base-300 rounded-2xl shadow-sm p-6">
+        <div className="flex items-center gap-3">
+          <div className="p-3 rounded-xl bg-primary/10">
+            <FlaskConical className="w-8 h-8 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-base-content">Playground</h1>
+            <p className="text-base-content/60 text-sm">
+              Demos isoladas dos componentes antes da integração na página da aula (Feature 6).
+            </p>
+          </div>
+        </div>
+      </header>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {demos.map(d => (
+          <Link
+            key={d.href}
+            href={d.href}
+            className="card bg-base-100 border border-base-300 hover:shadow-md transition-shadow"
+          >
+            <div className="card-body gap-2">
+              <d.icon className="w-6 h-6 text-primary" />
+              <h2 className="card-title text-base-content">{d.title}</h2>
+              <p className="text-sm text-base-content/60">{d.description}</p>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}

@@ -3,6 +3,7 @@ import { LessonProgress, ProgressStatus } from '@/domain/formation/types';
 export class Progress {
   static initial(userId: string, lessonId: string, moduleId: string, trackId: string): Omit<LessonProgress, 'id'> {
     const now = new Date().toISOString();
+    // Firestore rejects `undefined` in setDoc — omit optional fields that have no value yet.
     return {
       user_id: userId,
       lesson_id: lessonId,
@@ -10,13 +11,11 @@ export class Progress {
       track_id: trackId,
       status: 'locked',
       video_watch_percent: 0,
+      video_watch_seconds: 0,
       video_last_position_seconds: 0,
-      video_completed_at: undefined,
       reflection_submitted: false,
       quiz_passed: false,
       forum_post_made: false,
-      unlocked_at: undefined,
-      completed_at: undefined,
       created_at: now,
     };
   }

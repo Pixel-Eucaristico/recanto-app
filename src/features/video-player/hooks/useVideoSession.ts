@@ -11,6 +11,7 @@ interface UseVideoSessionInput {
   moduleId: string;
   trackId: string;
   minWatchPercent: number;
+  minWatchSeconds?: number;
   durationSeconds: number;
 }
 
@@ -35,6 +36,7 @@ export function useVideoSession(input: UseVideoSessionInput) {
           moduleId: input.moduleId,
           trackId: input.trackId,
           minWatchPercent: input.minWatchPercent,
+          minWatchSeconds: input.minWatchSeconds,
           durationSeconds: input.durationSeconds,
         });
         if (!cancelled) {
@@ -48,7 +50,7 @@ export function useVideoSession(input: UseVideoSessionInput) {
       }
     })();
     return () => { cancelled = true; };
-  }, [input.userId, input.lessonId, input.moduleId, input.trackId, input.minWatchPercent, input.durationSeconds]);
+  }, [input.userId, input.lessonId, input.moduleId, input.trackId, input.minWatchPercent, input.minWatchSeconds, input.durationSeconds]);
 
   const flushSave = useCallback(async () => {
     if (!latestSession.current) return;

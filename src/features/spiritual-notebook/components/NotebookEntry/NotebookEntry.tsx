@@ -1,6 +1,7 @@
 'use client';
 
 import { CheckCircle2, Clock, FileEdit } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import { Reflection } from '@/domain/spiritual-notebook/types';
 import { ReflectionEntity } from '@/domain/spiritual-notebook/entities/Reflection';
 
@@ -41,9 +42,9 @@ export function NotebookEntry({ reflection }: NotebookEntryProps) {
           </div>
         </div>
 
-        <p className="text-sm text-base-content/80 whitespace-pre-wrap">
-          {ReflectionEntity.preview(reflection.content, 300)}
-        </p>
+        <div className="prose prose-sm max-w-none text-base-content/80">
+          <ReactMarkdown>{ReflectionEntity.preview(reflection.content, 300)}</ReactMarkdown>
+        </div>
 
         {reflection.status === 'reviewed' && reflection.review_notes && (
           <div className="bg-base-200 rounded-lg p-3 mt-1">

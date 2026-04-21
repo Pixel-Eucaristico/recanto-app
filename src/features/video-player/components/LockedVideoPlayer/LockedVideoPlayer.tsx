@@ -5,6 +5,8 @@ import { Lock, CheckCircle2 } from 'lucide-react';
 import { VideoSession } from '@/domain/video-player/types';
 import { VideoSessionEntity } from '@/domain/video-player/entities/VideoSession';
 import { WatchProgressBar } from '../WatchProgressBar';
+import { LockedYouTubePlayer } from '../LockedYouTubePlayer';
+import { parseVideoSource } from '../../utils/parseVideoSource';
 
 interface LockedVideoPlayerProps {
   videoUrl: string;
@@ -13,10 +15,19 @@ interface LockedVideoPlayerProps {
 }
 
 export function LockedVideoPlayer({ videoUrl, session, onTick }: LockedVideoPlayerProps) {
+  const source = parseVideoSource(videoUrl);
+
+  if (source.kind === 'youtube') {
+    return <LockedYouTubePlayer videoId={source.value} session={session} onTick={onTick} />;
+  }
+
+  return <LockedMp4Player videoUrl={source.value} session={session} onTick={onTick} />;
+}
+
+function LockedMp4Player({ videoUrl, session, onTick }: LockedVideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const lockState = VideoSessionEntity.lockState(session);
 
-  // resume position
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
@@ -39,10 +50,7 @@ export function LockedVideoPlayer({ videoUrl, session, onTick }: LockedVideoPlay
     const v = videoRef.current;
     if (!v) return;
     const maxAllowed = VideoSessionEntity.maxAllowedSeekSeconds(session);
-    if (v.currentTime > maxAllowed) {
-      // reverte skip
-      v.currentTime = maxAllowed;
-    }
+    if (v.currentTime > maxAllowed) v.currentTime = maxAllowed;
   }
 
   return (
@@ -67,7 +75,7 @@ export function LockedVideoPlayer({ videoUrl, session, onTick }: LockedVideoPlay
             ) : (
               <>
                 <Lock className="w-4 h-4 text-warning" />
-                <span>Assista {session.minWatchPercent}% para continuar</span>
+                <span>{minimumLabel(session)}</span>
               </>
             )}
           </div>
@@ -76,8 +84,19 @@ export function LockedVideoPlayer({ videoUrl, session, onTick }: LockedVideoPlay
 
       <WatchProgressBar
         watchPercent={session.watchPercent}
+        watchSeconds={session.watchSeconds}
         minWatchPercent={session.minWatchPercent}
+        minWatchSeconds={session.minWatchSeconds}
       />
     </div>
   );
+}
+
+function minimumLabel(session: VideoSession): string {
+  if (session.minWatchSeconds > 0) {
+    const m = Math.floor(session.minWatchSeconds / 60);
+    const s = Math.floor(session.minWatchSeconds % 60);
+    return `${m}:${s.toString().padStart(2, '0')} ou ${session.minWatchPercent}%`;
+  }
+  return `Assista ${session.minWatchPercent}% para continuar`;
 }

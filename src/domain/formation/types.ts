@@ -76,6 +76,7 @@ export interface LessonProgress {
   track_id: string;
   status: ProgressStatus;
   video_watch_percent: number;
+  video_watch_seconds: number;
   video_last_position_seconds: number;
   video_completed_at?: string;
   reflection_submitted: boolean;
