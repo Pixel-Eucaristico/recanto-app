@@ -1,14 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import dynamic from 'next/dynamic';
 import { Save, Send, CheckCircle2, Lock } from 'lucide-react';
 import { ReflectionEntity, REFLECTION_MIN_LENGTH, REFLECTION_MAX_LENGTH } from '@/domain/spiritual-notebook/entities/Reflection';
 import { Reflection } from '@/domain/spiritual-notebook/types';
-import '@uiw/react-md-editor/markdown-editor.css';
-import '@uiw/react-markdown-preview/markdown.css';
-
-const MDEditor = dynamic(() => import('@uiw/react-md-editor'), { ssr: false });
+import { MarkdownField } from '@/shared/components/MarkdownField';
 
 interface ReflectionEditorProps {
   reflection: Reflection | null;
@@ -34,7 +30,7 @@ export function ReflectionEditor({ reflection, saving, error, onSaveDraft, onSub
   const charCount = content.trim().length;
 
   return (
-    <div className="space-y-3" data-color-mode="auto">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm">
           <span className={`badge ${status === 'reviewed' ? 'badge-success' : status === 'submitted' ? 'badge-info' : 'badge-ghost'}`}>
@@ -51,19 +47,14 @@ export function ReflectionEditor({ reflection, saving, error, onSaveDraft, onSub
         </span>
       </div>
 
-      <div className="rounded-xl overflow-hidden border border-base-300">
-        <MDEditor
-          value={content}
-          onChange={v => { if (!locked) setContent((v ?? '').slice(0, REFLECTION_MAX_LENGTH)); }}
-          height={360}
-          preview={locked ? 'preview' : 'live'}
-          textareaProps={{
-            placeholder: 'Escreva sua reflexão em Markdown...\n\n**negrito**, *itálico*, # títulos, - listas, > citações, `código`',
-            disabled: locked,
-            maxLength: REFLECTION_MAX_LENGTH,
-          }}
-        />
-      </div>
+      <MarkdownField
+        value={content}
+        onChange={v => { if (!locked) setContent(v.slice(0, REFLECTION_MAX_LENGTH)); }}
+        height={360}
+        preview={locked ? 'preview' : 'live'}
+        disabled={locked}
+        placeholder="Escreva sua reflexão em Markdown...\n\n**negrito**, *itálico*, # títulos, - listas, > citações, `código`"
+      />
 
       <p className="text-xs text-base-content/50">
         Suporta Markdown completo: <strong>negrito</strong>, <em>itálico</em>, títulos, listas, citações e código.

@@ -1,0 +1,1 @@
+export { PracticalActivity } from './PracticalActivity';

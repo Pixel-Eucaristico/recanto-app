@@ -21,6 +21,14 @@ export interface WithId {
   id: string;
 }
 
+function stripUndefined(obj: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v !== undefined) out[k] = v;
+  }
+  return out;
+}
+
 export interface QueryFilter {
   field: string;
   operator: WhereFilterOp;
@@ -52,7 +60,7 @@ export class BaseRepository<T extends WithId> implements IBaseRepository<T> {
   }
 
   protected serialize(data: Omit<T, 'id'>): Record<string, unknown> {
-    return { ...data, updated_at: new Date().toISOString() };
+    return stripUndefined({ ...data, updated_at: new Date().toISOString() });
   }
 
   protected deserialize(id: string, data: Record<string, unknown>): T {
@@ -81,8 +89,8 @@ export class BaseRepository<T extends WithId> implements IBaseRepository<T> {
 
   async update(id: string, data: Partial<Omit<T, 'id'>>): Promise<T | null> {
     const ref = this.docRef(id);
-    const payload = { ...data, updated_at: new Date().toISOString() };
-    await updateDoc(ref, payload as Record<string, unknown>);
+    const payload = stripUndefined({ ...data, updated_at: new Date().toISOString() });
+    await updateDoc(ref, payload);
     return this.get(id);
   }
 

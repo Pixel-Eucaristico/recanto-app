@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { FlaskConical, PlayCircle, FileEdit } from 'lucide-react';
+import { FlaskConical, PlayCircle, FileEdit, Award } from 'lucide-react';
 
 export default function PlaygroundIndexPage() {
   const demos = [
@@ -16,6 +16,12 @@ export default function PlaygroundIndexPage() {
       icon: FileEdit,
       title: 'Reflection Editor',
       description: 'ReflectionEditor do caderno espiritual (Feature 2).',
+    },
+    {
+      href: '/app/dashboard/playground/quiz',
+      icon: Award,
+      title: 'Quiz',
+      description: 'QuizBuilder + QuizPlayer + QuizResult com randomização (Feature 4).',
     },
   ];
 
