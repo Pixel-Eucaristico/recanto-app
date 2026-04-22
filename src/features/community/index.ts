@@ -4,6 +4,8 @@ export { ReplyComposer } from './components/ReplyComposer';
 export { PollComposer } from './components/PollComposer';
 export { QuickPoll } from './components/QuickPoll';
 export { PollList } from './components/PollList';
+export { SharingWall } from './components/SharingWall';
+export { WallPostCard } from './components/WallPostCard';
 export { useCommunityFeed } from './hooks/useCommunityFeed';
 export { useCommunityPost } from './hooks/useCommunityPost';
 export { usePoll } from './hooks/usePoll';
