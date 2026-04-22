@@ -9,9 +9,7 @@ interface PollListProps {
   scope: CommunityVisibility;
   userId: string;
   userName: string;
-  /** Se true, mostra composer pra criar enquete (precisa post:community). */
   canPost?: boolean;
-  /** Se true, mostra controles de voto. */
   canVote?: boolean;
 }
 

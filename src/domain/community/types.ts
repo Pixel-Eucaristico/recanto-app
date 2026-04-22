@@ -19,6 +19,8 @@ export interface CommunityPost {
   body: string;
   /** Alvo: global, trilha, módulo ou aula. */
   visibility: CommunityVisibility;
+  /** Categoria (id de community_categories). Opcional para retrocompat. */
+  category_id?: string;
   /** Opções da enquete (apenas quando kind === 'poll'). */
   poll_options?: PollOption[];
   /** Trancar enquete após essa data (ISO). Opcional. */
@@ -30,6 +32,31 @@ export interface CommunityPost {
   created_by: string;
   created_by_name: string;
   created_at: string;
+  updated_at?: string;
+}
+
+export interface CommunityCategory {
+  id: string;
+  /** Slug único (ex: 'geral', 'duvidas', 'curso-pre-vocacional'). */
+  slug: string;
+  /** Nome amigável. */
+  name: string;
+  /** Descrição curta (opcional, markdown). */
+  description?: string;
+  /** Ícone lucide (nome) — opcional, pra UI. */
+  icon?: string;
+  /** Ordem de exibição. */
+  order: number;
+  /**
+   * Escopo: se vazio, categoria é global. Se preenchido, a categoria "pertence" a um curso
+   * (track_id) ou aula (lesson_id) — usado pra auto-selecionar ao postar dentro daquele contexto.
+   */
+  course_track_id?: string;
+  course_lesson_id?: string;
+  /** Só admin pode editar. Sempre true por enquanto. */
+  is_locked?: boolean;
+  created_at: string;
+  created_by: string;
   updated_at?: string;
 }
 

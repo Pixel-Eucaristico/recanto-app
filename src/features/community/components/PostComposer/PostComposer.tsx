@@ -5,18 +5,22 @@ import { Send } from 'lucide-react';
 import { communityService } from '@/application/community/CommunityService';
 import { CommunityKind, CommunityPost, CommunityVisibility } from '@/domain/community/types';
 import { MarkdownField } from '@/shared/components/MarkdownField';
+import { CategoryPicker } from '@/features/community/components/CategoryPicker';
 
 interface PostComposerProps {
   kind: CommunityKind;
   visibility: CommunityVisibility;
   userId: string;
   userName: string;
+  /** Categoria fixa — quando definida, bloqueia o picker (ex: post dentro de aula). */
+  lockedCategoryId?: string;
   onCreated?: (post: CommunityPost) => void;
 }
 
-export function PostComposer({ kind, visibility, userId, userName, onCreated }: PostComposerProps) {
+export function PostComposer({ kind, visibility, userId, userName, lockedCategoryId, onCreated }: PostComposerProps) {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
+  const [categoryId, setCategoryId] = useState<string | undefined>(lockedCategoryId);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,11 +33,13 @@ export function PostComposer({ kind, visibility, userId, userName, onCreated }: 
         title: title.trim(),
         body: body.trim(),
         visibility,
+        category_id: categoryId,
         created_by: userId,
         created_by_name: userName,
       });
       setTitle('');
       setBody('');
+      if (!lockedCategoryId) setCategoryId(undefined);
       onCreated?.(post);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -57,6 +63,15 @@ export function PostComposer({ kind, visibility, userId, userName, onCreated }: 
             value={title}
             onChange={e => setTitle(e.target.value)}
             placeholder="Ex.: Como vivo a caridade no dia a dia?"
+          />
+        </label>
+        <label className="form-control max-w-sm">
+          <span className="label-text text-xs mb-1">Categoria</span>
+          <CategoryPicker
+            value={categoryId}
+            onChange={setCategoryId}
+            visibility={visibility}
+            lockedTo={lockedCategoryId}
           />
         </label>
         <label className="form-control">

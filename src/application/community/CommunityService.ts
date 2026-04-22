@@ -1,8 +1,17 @@
 import { communityPostRepository } from '@/infrastructure/community/CommunityPostRepository';
 import { communityReplyRepository } from '@/infrastructure/community/CommunityReplyRepository';
+import { communityCategoryRepository } from '@/infrastructure/community/CommunityCategoryRepository';
 import { pollVoteRepository } from '@/infrastructure/community/PollVoteRepository';
-import { CommunityPost, CommunityReply, CommunityVisibility, PollOption, PollTally } from '@/domain/community/types';
+import {
+  CommunityCategory,
+  CommunityPost,
+  CommunityReply,
+  CommunityVisibility,
+  PollOption,
+  PollTally,
+} from '@/domain/community/types';
 import { CommunityPostEntity } from '@/domain/community/entities/CommunityPost';
+import { CommunityCategoryEntity } from '@/domain/community/entities/CommunityCategory';
 import { PollEntity } from '@/domain/community/entities/Poll';
 
 export interface CreatePostInput {
@@ -10,10 +19,23 @@ export interface CreatePostInput {
   title: string;
   body: string;
   visibility: CommunityVisibility;
+  category_id?: string;
   poll_options?: PollOption[];
   poll_closes_at?: string;
   created_by: string;
   created_by_name: string;
+}
+
+export interface SaveCategoryInput {
+  id?: string;
+  name: string;
+  slug?: string;
+  description?: string;
+  icon?: string;
+  order?: number;
+  course_track_id?: string;
+  course_lesson_id?: string;
+  created_by: string;
 }
 
 export class CommunityService {
@@ -24,6 +46,11 @@ export class CommunityService {
     return communityPostRepository.findByLesson(scope.track_id, scope.lesson_id);
   }
 
+  /** Usado pelo fórum home — agrega posts de todos os escopos (global + cursos). */
+  async listAllAggregated(): Promise<CommunityPost[]> {
+    return communityPostRepository.findAll();
+  }
+
   async createPost(input: CreatePostInput): Promise<CommunityPost> {
     const now = new Date().toISOString();
     const draft: CommunityPost = {
@@ -32,6 +59,7 @@ export class CommunityService {
       title: input.title.trim(),
       body: input.body.trim(),
       visibility: input.visibility,
+      category_id: input.category_id,
       poll_options: input.kind === 'poll' ? input.poll_options : undefined,
       poll_closes_at: input.kind === 'poll' ? input.poll_closes_at : undefined,
       is_pinned: false,
@@ -44,6 +72,51 @@ export class CommunityService {
     if (errors.length > 0) throw new Error(errors.join(' '));
     const { id: _id, ...payload } = draft;
     return communityPostRepository.create(payload);
+  }
+
+  async listCategories(): Promise<CommunityCategory[]> {
+    return communityCategoryRepository.listAll();
+  }
+
+  async saveCategory(input: SaveCategoryInput): Promise<CommunityCategory> {
+    const now = new Date().toISOString();
+    const name = input.name.trim();
+    if (name.length === 0) throw new Error('Nome da categoria vazio.');
+    const slug = (input.slug?.trim() || CommunityCategoryEntity.slugify(name));
+    const draft: CommunityCategory = {
+      id: input.id ?? '',
+      slug,
+      name,
+      description: input.description,
+      icon: input.icon,
+      order: input.order ?? 0,
+      course_track_id: input.course_track_id,
+      course_lesson_id: input.course_lesson_id,
+      is_locked: true,
+      created_at: now,
+      created_by: input.created_by,
+    };
+    const errors = CommunityCategoryEntity.validate(draft);
+    if (errors.length > 0) throw new Error(errors.join(' '));
+    if (input.id) {
+      const updated = await communityCategoryRepository.update(input.id, {
+        slug: draft.slug,
+        name: draft.name,
+        description: draft.description,
+        icon: draft.icon,
+        order: draft.order,
+        course_track_id: draft.course_track_id,
+        course_lesson_id: draft.course_lesson_id,
+      });
+      if (!updated) throw new Error('Categoria não encontrada.');
+      return updated;
+    }
+    const { id: _id, ...payload } = draft;
+    return communityCategoryRepository.create(payload);
+  }
+
+  async deleteCategory(id: string): Promise<void> {
+    return communityCategoryRepository.delete(id);
   }
 
   async reply(

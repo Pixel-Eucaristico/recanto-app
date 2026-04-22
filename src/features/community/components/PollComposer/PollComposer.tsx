@@ -5,11 +5,13 @@ import { Plus, Trash2, Send } from 'lucide-react';
 import { communityService } from '@/application/community/CommunityService';
 import { CommunityPost, CommunityVisibility, PollOption } from '@/domain/community/types';
 import { MarkdownField } from '@/shared/components/MarkdownField';
+import { CategoryPicker } from '@/features/community/components/CategoryPicker';
 
 interface PollComposerProps {
   visibility: CommunityVisibility;
   userId: string;
   userName: string;
+  lockedCategoryId?: string;
   onCreated?: (post: CommunityPost) => void;
 }
 
@@ -17,9 +19,10 @@ function optionId() {
   return `o_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
 }
 
-export function PollComposer({ visibility, userId, userName, onCreated }: PollComposerProps) {
+export function PollComposer({ visibility, userId, userName, lockedCategoryId, onCreated }: PollComposerProps) {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
+  const [categoryId, setCategoryId] = useState<string | undefined>(lockedCategoryId);
   const [options, setOptions] = useState<PollOption[]>([
     { id: optionId(), label: '' },
     { id: optionId(), label: '' },
@@ -52,6 +55,7 @@ export function PollComposer({ visibility, userId, userName, onCreated }: PollCo
         title: title.trim(),
         body: body.trim() || ' ',
         visibility,
+        category_id: categoryId,
         poll_options: cleaned,
         poll_closes_at: closesAt ? new Date(closesAt).toISOString() : undefined,
         created_by: userId,
@@ -81,6 +85,16 @@ export function PollComposer({ visibility, userId, userName, onCreated }: PollCo
             value={title}
             onChange={e => setTitle(e.target.value)}
             placeholder="Ex.: Qual dia prefere pra oração em grupo?"
+          />
+        </label>
+
+        <label className="form-control max-w-sm">
+          <span className="label-text text-xs mb-1">Categoria</span>
+          <CategoryPicker
+            value={categoryId}
+            onChange={setCategoryId}
+            visibility={visibility}
+            lockedTo={lockedCategoryId}
           />
         </label>
 

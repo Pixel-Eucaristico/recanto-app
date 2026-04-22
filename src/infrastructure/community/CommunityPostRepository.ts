@@ -46,6 +46,12 @@ export class CommunityPostRepository extends BaseRepository<CommunityPost> {
     ]);
     return sortByCreatedDesc(list);
   }
+
+  /** Busca TODOS os posts independente do escopo — usado no fórum global pra agregar tudo. */
+  async findAll(): Promise<CommunityPost[]> {
+    const list = await this.list();
+    return sortByCreatedDesc(list);
+  }
 }
 
 export const communityPostRepository = new CommunityPostRepository();

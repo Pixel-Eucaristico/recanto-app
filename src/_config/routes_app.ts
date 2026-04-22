@@ -75,6 +75,13 @@ export const appRoutes: AppRoute[] = [
     requiredFeature: 'read:formation'
   },
   {
+    name: 'Fórum',
+    href: '/app/dashboard/forum',
+    icon: MessageCircle,
+    roles: ['admin', 'missionario', 'recantiano', 'pai', 'colaborador', 'benfeitor'],
+    requiredFeature: 'read:community'
+  },
+  {
     name: 'Minha Jornada',
     href: '/app/dashboard/my-notebook',
     icon: BookHeart,

@@ -532,6 +532,14 @@ service cloud.firestore {
     }
 
     // ===========================
+    // Community Categories (admin gerencia)
+    // ===========================
+    match /community_categories/{categoryId} {
+      allow read: if hasFeature('read:community') || hasFeature('manage:community');
+      allow write: if hasFeature('manage:community') || isAdmin();
+    }
+
+    // ===========================
     // Community Posts (fórum / enquete / mural)
     // ===========================
     match /community_posts/{postId} {
