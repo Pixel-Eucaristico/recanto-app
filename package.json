@@ -40,6 +40,7 @@
     "@radix-ui/react-tabs": "^1.1.12",
     "@radix-ui/react-toast": "^1.2.15",
     "@storybook/react": "^9.0.18",
+    "@t3-oss/env-nextjs": "^0.13.11",
     "@uiw/react-md-editor": "^4.1.0",
     "@vercel/analytics": "^1.6.1",
     "@xyflow/react": "^12.10.2",
