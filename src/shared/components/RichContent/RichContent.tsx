@@ -3,7 +3,7 @@
 import ReactMarkdown, { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
-import { parseVideoSource } from '@/features/video-player/utils/parseVideoSource';
+import { parseVideoSource } from '@/features/lesson/video-player/utils/parseVideoSource';
 
 interface RichContentProps {
   markdown: string;

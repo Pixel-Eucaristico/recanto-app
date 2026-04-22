@@ -407,6 +407,29 @@ service cloud.firestore {
     }
 
     // ===========================
+    // Crosswords Collection
+    // ===========================
+    match /crosswords/{puzzleId} {
+      allow read: if hasFeature('read:formation') || hasFeature('manage:formation');
+      allow create: if hasFeature('manage:formation');
+      allow update: if hasFeature('manage:formation');
+      allow delete: if hasFeature('manage:formation');
+    }
+
+    // ===========================
+    // Crossword Results Collection
+    // ===========================
+    match /crossword_results/{resultId} {
+      allow read: if hasFeature('review:formation') ||
+                    (isAuthenticated() && resource.data.user_id == request.auth.uid);
+      allow create: if isAuthenticated() &&
+                      hasFeature('complete:formation') &&
+                      request.resource.data.user_id == request.auth.uid;
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    // ===========================
     // Word Searches Collection
     // ===========================
     match /word_searches/{puzzleId} {

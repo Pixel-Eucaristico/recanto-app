@@ -156,11 +156,11 @@ export function WordSearchGrid({
         Arraste o mouse (ou o dedo) de uma letra até a outra para marcar a palavra. Linhas retas (horizontal, vertical, diagonal).
       </p>
 
-      <div className="grid gap-4 lg:grid-cols-[auto_1fr]">
-        {/* Grid */}
-        <div className="inline-block">
+      <div className="flex flex-col lg:flex-row lg:items-start gap-4 lg:gap-6 justify-center">
+        {/* Grid — centralizado em mobile, lateral em desktop */}
+        <div className="flex justify-center lg:justify-start">
           <div
-            className="grid gap-0.5 bg-base-300 p-1 rounded-lg select-none touch-none"
+            className="grid gap-0.5 bg-base-300 p-1 rounded-lg select-none touch-none w-fit"
             style={{ gridTemplateColumns: `repeat(${puzzle.size}, minmax(0, 1fr))` }}
             onMouseUp={endSelect}
             onMouseLeave={endSelect}
@@ -207,22 +207,24 @@ export function WordSearchGrid({
         </div>
 
         {/* Lista de palavras */}
-        <div className="card bg-base-100 border border-base-300">
+        <div className="card bg-base-100 border border-base-300 w-full lg:w-64 flex-shrink-0">
           <div className="card-body p-4 gap-2">
             <h4 className="text-sm font-semibold">Palavras</h4>
             <ul className="space-y-1">
-              {puzzle.words.map(w => {
+              {puzzle.words.map((w, i) => {
                 const normalized = WordSearchEntity.normalizeWord(w);
                 const done = found.includes(normalized);
+                const clue = puzzle.clues?.[i]?.trim();
+                const label = clue && clue.length > 0 ? clue : w;
                 return (
                   <li
                     key={w}
-                    className={`text-sm flex items-center gap-1 ${
+                    className={`text-sm flex items-start gap-1 ${
                       done ? 'line-through text-success' : 'text-base-content'
                     }`}
                   >
-                    {done && <CheckCircle2 className="w-3.5 h-3.5" />}
-                    {w}
+                    {done && <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />}
+                    <span>{label}</span>
                   </li>
                 );
               })}

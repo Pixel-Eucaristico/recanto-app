@@ -7,7 +7,7 @@ import {
   CaseStudySummary,
   CaseStudyBuilder,
   useCaseStudy,
-} from '@/features/case-studies';
+} from '@/features/lesson/activities/case-studies';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 
 const DEMO_LESSON_ID = 'playground-lesson-case-studies';

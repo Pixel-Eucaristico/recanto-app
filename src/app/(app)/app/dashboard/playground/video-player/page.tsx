@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { PlayCircle } from 'lucide-react';
-import { LockedVideoPlayer, UnlockCountdown, useVideoSession } from '@/features/video-player';
+import { LockedVideoPlayer, UnlockCountdown, useVideoSession } from '@/features/lesson/video-player';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 
 const DEMO_VIDEOS = [

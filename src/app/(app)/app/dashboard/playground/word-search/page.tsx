@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Search } from 'lucide-react';
-import { WordSearchGrid, WordSearchBuilder, useWordSearch } from '@/features/word-search';
+import { WordSearchGrid, WordSearchBuilder, useWordSearch } from '@/features/lesson/activities/word-search';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 
 const DEMO_LESSON_ID = 'playground-lesson-wordsearch';

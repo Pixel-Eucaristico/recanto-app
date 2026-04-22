@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Award } from 'lucide-react';
-import { QuizPlayer, QuizResult, QuizBuilder, useQuiz } from '@/features/quiz';
+import { QuizPlayer, QuizResult, QuizBuilder, useQuiz } from '@/features/lesson/activities/quiz';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 
 const DEMO_LESSON_ID = 'playground-lesson-quiz';

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Network } from 'lucide-react';
-import { MindMapBuilder, MindMapCanvas, useMindMap } from '@/features/mind-maps';
+import { MindMapBuilder, MindMapCanvas, useMindMap } from '@/features/lesson/activities/mind-maps';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 
 const DEMO_LESSON_ID = 'playground-lesson-mindmap';

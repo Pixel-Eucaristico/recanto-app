@@ -14,8 +14,10 @@ import {
   ClassifyQuestion,
 } from '@/domain/quiz/types';
 import { QuizEntity } from '@/domain/quiz/entities/Quiz';
+import { FillBlankEntity } from '@/domain/quiz/entities/questionTypes/FillBlank';
 import { quizService } from '@/application/quiz/QuizService';
 import { MarkdownField } from '@/shared/components/MarkdownField';
+import { FillBlankField } from '@/shared/components/FillBlankField';
 
 interface QuizBuilderProps {
   lessonId: string;
@@ -351,41 +353,24 @@ function MultipleChoiceEditor({ question, onChange, locked }: { question: Multip
 
 function FillBlankEditor({ question, onChange }: { question: FillBlankQuestion; onChange: (p: Partial<QuizQuestion>) => void }) {
   function setTemplate(template: string) {
-    const count = (template.match(/__+/g) ?? []).length;
-    const blanks = [...(question.blanks ?? [])];
-    while (blanks.length < count) blanks.push({ accepted: [''] });
-    while (blanks.length > count) blanks.pop();
+    const blanks = FillBlankEntity.deriveBlanks(template, question.blanks);
     onChange({ template, blanks } as Partial<QuizQuestion>);
   }
-  function setAccepted(i: number, csv: string) {
-    const blanks = [...question.blanks];
-    blanks[i] = { accepted: csv.split(',').map(s => s.trim()).filter(Boolean) };
-    onChange({ blanks } as Partial<QuizQuestion>);
-  }
   return (
-    <div className="space-y-2">
-      <label className="form-control">
-        <span className="label-text text-xs mb-1">Template (use <code>__</code> para cada lacuna)</span>
-        <textarea
-          className="textarea textarea-bordered textarea-sm font-mono"
-          value={question.template}
-          onChange={e => setTemplate(e.target.value)}
-          placeholder="Ex.: A virtude da __ nos leva a __ os irmãos."
-          rows={3}
-        />
-      </label>
-      {question.blanks.map((slot, i) => (
-        <label key={i} className="form-control">
-          <span className="label-text text-xs mb-1">Lacuna {i + 1} — respostas aceitas (separadas por vírgula)</span>
-          <input
-            className="input input-bordered input-sm"
-            value={slot.accepted.join(', ')}
-            onChange={e => setAccepted(i, e.target.value)}
-            placeholder="ex.: caridade, amor"
-          />
-        </label>
-      ))}
-    </div>
+    <label className="form-control">
+      <span className="label-text text-xs mb-1">
+        Texto com lacunas — selecione uma palavra e clique em{' '}
+        <span className="badge badge-ghost badge-xs">Inserir lacuna</span> na barra (ou posicione o cursor para digitar a resposta).
+        Para aceitar sinônimos separe por vírgula dentro das chaves:{' '}
+        <code className="bg-base-200 px-1 rounded">{'{{caridade,amor}}'}</code>.
+      </span>
+      <FillBlankField
+        value={question.template}
+        onChange={setTemplate}
+        placeholder="Ex.: A virtude da {{caridade,amor}} nos leva a {{amar}} os irmãos."
+        height={180}
+      />
+    </label>
   );
 }
 

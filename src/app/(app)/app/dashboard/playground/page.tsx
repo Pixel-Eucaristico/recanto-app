@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { FlaskConical, PlayCircle, FileEdit, Award, Layers, GitBranch, Network, Search } from 'lucide-react';
+import { FlaskConical, PlayCircle, FileEdit, Award, Layers, GitBranch, Network, Search, Grid3x3 } from 'lucide-react';
 
 export default function PlaygroundIndexPage() {
   const demos = [
@@ -34,6 +34,12 @@ export default function PlaygroundIndexPage() {
       icon: Search,
       title: 'Word Search',
       description: 'Caça-palavras com grid gerado automático (Feature 9).',
+    },
+    {
+      href: '/app/dashboard/playground/crossword',
+      icon: Grid3x3,
+      title: 'Palavras Cruzadas',
+      description: 'Admin digita pergunta+resposta; grid auto-montado cruzando letras.',
     },
     {
       href: '/app/dashboard/playground/mind-maps',

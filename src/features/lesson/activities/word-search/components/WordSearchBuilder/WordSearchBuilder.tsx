@@ -19,19 +19,25 @@ export function WordSearchBuilder({ lessonId, createdBy, initial, onSaved }: Wor
   const [description, setDescription] = useState(initial?.description ?? '');
   const [size, setSize] = useState<number>(initial?.size ?? 12);
   const [words, setWords] = useState<string[]>(initial?.words ?? ['', '']);
+  const [clues, setClues] = useState<string[]>(initial?.clues ?? ['', '']);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
 
   function addWord() {
     setWords(prev => [...prev, '']);
+    setClues(prev => [...prev, '']);
   }
   function removeWord(i: number) {
     if (words.length <= 2) return;
     setWords(prev => prev.filter((_, idx) => idx !== i));
+    setClues(prev => prev.filter((_, idx) => idx !== i));
   }
   function updateWord(i: number, value: string) {
     setWords(prev => prev.map((w, idx) => (idx === i ? value : w)));
+  }
+  function updateClue(i: number, value: string) {
+    setClues(prev => prev.map((c, idx) => (idx === i ? value : c)));
   }
 
   const minSize = WordSearchEntity.minGridSize(words.filter(w => w.trim().length >= 2));
@@ -41,8 +47,12 @@ export function WordSearchBuilder({ lessonId, createdBy, initial, onSaved }: Wor
     setSavedMsg(null);
     setSaving(true);
     try {
-      const cleanWords = words.map(w => w.trim()).filter(w => w.length >= 2);
-      if (cleanWords.length < 2) throw new Error('Ao menos 2 palavras válidas (mín. 2 letras cada).');
+      // Filtra pares words+clues mantendo correspondência por índice
+      const pairs = words.map((w, i) => ({ w: w.trim(), c: (clues[i] ?? '').trim() }))
+        .filter(p => p.w.length >= 2);
+      if (pairs.length < 2) throw new Error('Ao menos 2 palavras válidas (mín. 2 letras cada).');
+      const cleanWords = pairs.map(p => p.w);
+      const cleanClues = pairs.map(p => p.c);
       const saved = await wordSearchService.save({
         id: initial?.id,
         lesson_id: lessonId,
@@ -50,6 +60,7 @@ export function WordSearchBuilder({ lessonId, createdBy, initial, onSaved }: Wor
         description: description.trim() || undefined,
         size,
         words: cleanWords,
+        clues: cleanClues,
         grid: initial?.grid ?? [],
         placements: initial?.placements ?? [],
         created_at: initial?.created_at ?? new Date().toISOString(),
@@ -104,16 +115,27 @@ export function WordSearchBuilder({ lessonId, createdBy, initial, onSaved }: Wor
           <p className="text-xs text-base-content/60">
             Acentos/espaços serão removidos. Mínimo 2 palavras, cada uma com pelo menos 2 letras.
           </p>
+          <p className="text-xs text-base-content/60">
+            Pergunta/dica é opcional. Se vazia, o aluno verá a própria palavra na lista.
+          </p>
           {words.map((w, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <input
-                className="input input-bordered input-sm flex-1 uppercase"
-                value={w}
-                onChange={e => updateWord(i, e.target.value)}
-                placeholder={`Palavra ${i + 1}`}
-              />
+            <div key={i} className="grid grid-cols-[1fr_auto] gap-2">
+              <div className="space-y-2">
+                <input
+                  className="input input-bordered input-sm w-full"
+                  value={clues[i] ?? ''}
+                  onChange={e => updateClue(i, e.target.value)}
+                  placeholder={`Pergunta / dica ${i + 1} (opcional)`}
+                />
+                <input
+                  className="input input-bordered input-sm w-full uppercase"
+                  value={w}
+                  onChange={e => updateWord(i, e.target.value)}
+                  placeholder={`Palavra ${i + 1}`}
+                />
+              </div>
               <button
-                className="btn btn-ghost btn-xs text-error"
+                className="btn btn-ghost btn-xs text-error self-start mt-2"
                 onClick={() => removeWord(i)}
                 disabled={words.length <= 2}
               >

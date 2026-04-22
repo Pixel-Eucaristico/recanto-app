@@ -6,7 +6,7 @@ import {
   FlashcardDeckPlayer,
   FlashcardDeckBuilder,
   useFlashcardDeck,
-} from '@/features/flashcards';
+} from '@/features/lesson/activities/flashcards';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 
 const DEMO_LESSON_ID = 'playground-lesson-flashcards';

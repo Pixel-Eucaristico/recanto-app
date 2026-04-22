@@ -28,6 +28,8 @@ export interface WordSearchPuzzle {
   placements: WordPlacement[];
   /** Lista de palavras exibidas ao aluno. */
   words: string[];
+  /** Pergunta/dica paralela (mesma ordem de `words`). Se item vazio ou ausente, renderiza a palavra. */
+  clues?: string[];
   created_at: string;
   created_by: string;
   updated_at?: string;
