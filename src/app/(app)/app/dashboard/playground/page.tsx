@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { FlaskConical, PlayCircle, FileEdit, Award, Layers, GitBranch, Network, Search, Grid3x3, MessagesSquare } from 'lucide-react';
+import { FlaskConical, PlayCircle, FileEdit, Award, Layers, GitBranch, Network, Search, Grid3x3, MessagesSquare, ListChecks } from 'lucide-react';
 
 export default function PlaygroundIndexPage() {
   const demos = [
@@ -58,6 +58,12 @@ export default function PlaygroundIndexPage() {
       icon: MessagesSquare,
       title: 'Comunidade',
       description: 'Fórum por aula — criar tópico, responder (Feature 10).',
+    },
+    {
+      href: '/app/dashboard/playground/progress-checklist',
+      icon: ListChecks,
+      title: 'Checklist de progresso',
+      description: 'Widget de aula + trilha com % (Feature 11).',
     },
   ];
 
