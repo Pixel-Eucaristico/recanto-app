@@ -532,6 +532,26 @@ service cloud.firestore {
     }
 
     // ===========================
+    // Habits (admin CRUD, todos leem)
+    // ===========================
+    match /habits/{habitId} {
+      allow read: if hasFeature('log:habits') || hasFeature('manage:habits');
+      allow write: if hasFeature('manage:habits') || isAdmin();
+    }
+
+    // ===========================
+    // Habit Logs (id determinístico {habitId}_{userId}_{YYYY-MM-DD})
+    // ===========================
+    match /habit_logs/{logId} {
+      allow read: if hasFeature('manage:habits') ||
+                    (isAuthenticated() && resource.data.user_id == request.auth.uid);
+      allow write: if isAuthenticated() &&
+                     hasFeature('log:habits') &&
+                     request.resource.data.user_id == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.user_id == request.auth.uid;
+    }
+
+    // ===========================
     // Community Categories (admin gerencia)
     // ===========================
     match /community_categories/{categoryId} {

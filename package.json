@@ -20,7 +20,8 @@
     "seed:formation": "node scripts/seed-formation.mjs",
     "seed:notebook": "node scripts/seed-notebook.mjs",
     "seed:permissions": "node scripts/seed-permissions.mjs",
-    "seed:all": "npm run seed:formation && npm run seed:notebook && npm run seed:permissions"
+    "seed:habits": "node scripts/seed-habits.mjs",
+    "seed:all": "npm run seed:formation && npm run seed:notebook && npm run seed:permissions && npm run seed:habits"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.980.0",

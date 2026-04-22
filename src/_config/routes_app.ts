@@ -14,7 +14,8 @@ import {
   Database,
   FileEdit,
   Boxes,
-  ArrowLeft
+  ArrowLeft,
+  HeartHandshake
 } from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
 import { Role } from "@/features/auth/types/user";
@@ -80,6 +81,13 @@ export const appRoutes: AppRoute[] = [
     icon: MessageCircle,
     roles: ['admin', 'missionario', 'recantiano', 'pai', 'colaborador', 'benfeitor'],
     requiredFeature: 'read:community'
+  },
+  {
+    name: 'Hábitos',
+    href: '/app/dashboard/habits',
+    icon: HeartHandshake,
+    roles: ['admin', 'missionario', 'recantiano', 'pai', 'colaborador'],
+    requiredFeature: 'log:habits'
   },
   {
     name: 'Minha Jornada',
