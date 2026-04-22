@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { FlaskConical, PlayCircle, FileEdit, Award, Layers, GitBranch, Network } from 'lucide-react';
+import { FlaskConical, PlayCircle, FileEdit, Award, Layers, GitBranch, Network, Search } from 'lucide-react';
 
 export default function PlaygroundIndexPage() {
   const demos = [
@@ -28,6 +28,12 @@ export default function PlaygroundIndexPage() {
       icon: GitBranch,
       title: 'Case Studies',
       description: 'Estudos de caso com decisões múltiplas (Feature 7).',
+    },
+    {
+      href: '/app/dashboard/playground/word-search',
+      icon: Search,
+      title: 'Word Search',
+      description: 'Caça-palavras com grid gerado automático (Feature 9).',
     },
     {
       href: '/app/dashboard/playground/mind-maps',

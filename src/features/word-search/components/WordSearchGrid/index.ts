@@ -1,0 +1,1 @@
+export { WordSearchGrid } from './WordSearchGrid';
