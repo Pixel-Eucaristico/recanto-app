@@ -2,6 +2,7 @@
 
 import ReactMarkdown, { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 import { parseVideoSource } from '@/features/video-player/utils/parseVideoSource';
 
 interface RichContentProps {
@@ -11,9 +12,10 @@ interface RichContentProps {
 
 /**
  * Renderer de Markdown com extras:
- * - Links para YouTube viram embed iframe inline (sem branding completo).
- * - Imagens via `![alt](url)` renderizam com `max-w-full rounded`.
+ * - Links para YouTube viram embed iframe inline (youtube-nocookie).
+ * - Imagens via `![alt](url)` renderizam com estilo consistente.
  * - Tabelas / strikethrough / checklists via `remark-gfm`.
+ * - HTML inline permitido (`rehype-raw`) — suporta `<video>` e `<audio>`.
  */
 const components: Components = {
   a: ({ href, children, ...props }) => {
@@ -38,20 +40,52 @@ const components: Components = {
       </a>
     );
   },
-  img: ({ src, alt, ...props }) => (
-    <img
-      src={typeof src === 'string' ? src : undefined}
-      alt={alt ?? ''}
-      className="max-w-full rounded-xl my-3"
-      {...props}
-    />
-  ),
+  img: ({ src, alt, ...props }) => {
+    const finalSrc = typeof src === 'string' && src.length > 0 ? src : undefined;
+    if (!finalSrc) return null;
+    return (
+      <img
+        src={finalSrc}
+        alt={alt ?? ''}
+        className="max-w-full rounded-xl my-3"
+        {...props}
+      />
+    );
+  },
+  video: ({ src, title, ...props }) => {
+    const finalSrc = typeof src === 'string' && src.length > 0 ? src : undefined;
+    if (!finalSrc) return null;
+    return (
+      <video
+        src={finalSrc}
+        controls
+        preload="metadata"
+        className="max-w-full rounded-xl my-3"
+        title={title}
+        {...props}
+      />
+    );
+  },
+  audio: ({ src, title, ...props }) => {
+    const finalSrc = typeof src === 'string' && src.length > 0 ? src : undefined;
+    if (!finalSrc) return null;
+    return (
+      <audio
+        src={finalSrc}
+        controls
+        preload="metadata"
+        className="w-full my-3"
+        title={title}
+        {...props}
+      />
+    );
+  },
 };
 
 export function RichContent({ markdown, className = '' }: RichContentProps) {
   return (
     <div className={`prose prose-sm max-w-none text-base-content [&_*]:text-inherit ${className}`}>
-      <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
+      <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]} components={components}>
         {markdown || ''}
       </ReactMarkdown>
     </div>

@@ -407,6 +407,39 @@ service cloud.firestore {
     }
 
     // ===========================
+    // Media Registry Collection (dedupe de arquivos R2)
+    // ===========================
+    match /media_registry/{assetId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.uploaded_by == request.auth.uid;
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    // ===========================
+    // Case Studies Collection
+    // ===========================
+    match /case_studies/{caseId} {
+      allow read: if hasFeature('read:formation') || hasFeature('manage:formation');
+      allow create: if hasFeature('manage:formation');
+      allow update: if hasFeature('manage:formation');
+      allow delete: if hasFeature('manage:formation');
+    }
+
+    // ===========================
+    // Case Runs Collection
+    // ===========================
+    match /case_runs/{runId} {
+      allow read: if hasFeature('review:formation') ||
+                    (isAuthenticated() && resource.data.user_id == request.auth.uid);
+      allow create: if isAuthenticated() &&
+                      hasFeature('complete:formation') &&
+                      request.resource.data.user_id == request.auth.uid;
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    // ===========================
     // Flashcard Decks Collection
     // ===========================
     match /flashcard_decks/{deckId} {

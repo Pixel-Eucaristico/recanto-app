@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { FlaskConical, PlayCircle, FileEdit, Award, Layers } from 'lucide-react';
+import { FlaskConical, PlayCircle, FileEdit, Award, Layers, GitBranch } from 'lucide-react';
 
 export default function PlaygroundIndexPage() {
   const demos = [
@@ -22,6 +22,12 @@ export default function PlaygroundIndexPage() {
       icon: Award,
       title: 'Quiz',
       description: 'QuizBuilder + QuizPlayer + QuizResult com 6 tipos de pergunta (Feature 4+5).',
+    },
+    {
+      href: '/app/dashboard/playground/case-studies',
+      icon: GitBranch,
+      title: 'Case Studies',
+      description: 'Estudos de caso com decisões múltiplas (Feature 7).',
     },
     {
       href: '/app/dashboard/playground/flashcards',

@@ -12,6 +12,7 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_FIREBASE_DATABASE_URL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_R2_PUBLIC_URL: process.env.NEXT_PUBLIC_R2_PUBLIC_URL,
+    NEXT_PUBLIC_MEDIA_MAX_MB: process.env.NEXT_PUBLIC_MEDIA_MAX_MB,
   },
   /* config options here */
   eslint: {
