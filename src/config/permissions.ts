@@ -31,7 +31,10 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Exclude<Role, null>, string[]> = {
     'manage:formation',
     'review:formation',
     'log:habits',
-    'read:prayer'
+    'read:prayer',
+    'read:community',
+    'post:community',
+    'manage:community'
   ],
   recantiano: [
     'read:content',
@@ -41,7 +44,9 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Exclude<Role, null>, string[]> = {
     'read:formation',
     'complete:formation',
     'log:habits',
-    'read:prayer'
+    'read:prayer',
+    'read:community',
+    'post:community'
   ],
   pai: [
     'read:content',
@@ -49,20 +54,25 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Exclude<Role, null>, string[]> = {
     'read:parent_zone',
     'read:formation',
     'log:habits',
-    'read:prayer'
+    'read:prayer',
+    'read:community',
+    'post:community'
   ],
   colaborador: [
     'read:content',
     'read:calendar',
     'read:formation',
     'log:habits',
-    'read:prayer'
+    'read:prayer',
+    'read:community',
+    'post:community'
   ],
   benfeitor: [
     'read:content',
     'read:gratitude_corner',
     'read:formation',
-    'read:prayer'
+    'read:prayer',
+    'read:community'
   ],
   visitante: [
     'read:public_content',
@@ -273,6 +283,26 @@ export const FEATURES_INFO: FeatureInfo[] = [
     id: 'manage:prayer',
     label: 'Gerenciar Textos de Oração',
     description: 'Criar e editar os textos da Central de Oração',
+    category: 'admin'
+  },
+
+  // ===== COMUNIDADE (fórum/enquete/mural) =====
+  {
+    id: 'read:community',
+    label: 'Ver Comunidade',
+    description: 'Ver posts de fórum, enquetes e mural por módulo/aula',
+    category: 'forum'
+  },
+  {
+    id: 'post:community',
+    label: 'Participar da Comunidade',
+    description: 'Criar posts, responder, votar em enquetes',
+    category: 'forum'
+  },
+  {
+    id: 'manage:community',
+    label: 'Moderar Comunidade',
+    description: 'Editar/remover posts e respostas de qualquer usuário',
     category: 'admin'
   },
 

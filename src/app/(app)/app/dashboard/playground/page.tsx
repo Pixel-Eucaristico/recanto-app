@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { FlaskConical, PlayCircle, FileEdit, Award, Layers, GitBranch, Network, Search, Grid3x3 } from 'lucide-react';
+import { FlaskConical, PlayCircle, FileEdit, Award, Layers, GitBranch, Network, Search, Grid3x3, MessagesSquare } from 'lucide-react';
 
 export default function PlaygroundIndexPage() {
   const demos = [
@@ -52,6 +52,12 @@ export default function PlaygroundIndexPage() {
       icon: Layers,
       title: 'Flashcards',
       description: 'Deck com flip 3D + acertei/errei (Feature 6).',
+    },
+    {
+      href: '/app/dashboard/playground/community',
+      icon: MessagesSquare,
+      title: 'Comunidade',
+      description: 'Fórum por aula — criar tópico, responder (Feature 10).',
     },
   ];
 

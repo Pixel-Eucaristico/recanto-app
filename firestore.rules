@@ -532,6 +532,46 @@ service cloud.firestore {
     }
 
     // ===========================
+    // Community Posts (fórum / enquete / mural)
+    // ===========================
+    match /community_posts/{postId} {
+      allow read: if hasFeature('read:community') || hasFeature('manage:community');
+      allow create: if isAuthenticated() &&
+                      hasFeature('post:community') &&
+                      request.resource.data.created_by == request.auth.uid;
+      allow update: if (isAuthenticated() && resource.data.created_by == request.auth.uid) ||
+                      hasFeature('manage:community');
+      allow delete: if (isAuthenticated() && resource.data.created_by == request.auth.uid) ||
+                      hasFeature('manage:community');
+    }
+
+    // ===========================
+    // Community Replies
+    // ===========================
+    match /community_replies/{replyId} {
+      allow read: if hasFeature('read:community') || hasFeature('manage:community');
+      allow create: if isAuthenticated() &&
+                      hasFeature('post:community') &&
+                      request.resource.data.created_by == request.auth.uid;
+      allow update: if isAuthenticated() && resource.data.created_by == request.auth.uid;
+      allow delete: if (isAuthenticated() && resource.data.created_by == request.auth.uid) ||
+                      hasFeature('manage:community');
+    }
+
+    // ===========================
+    // Poll Votes (id determinístico {pollId}_{userId})
+    // ===========================
+    match /community_poll_votes/{voteId} {
+      allow read: if hasFeature('read:community') || hasFeature('manage:community');
+      // Dono pode criar/atualizar — troca o voto via setDoc merge
+      allow write: if isAuthenticated() &&
+                     hasFeature('post:community') &&
+                     request.resource.data.user_id == request.auth.uid &&
+                     voteId == (request.resource.data.poll_id + '_' + request.auth.uid);
+      allow delete: if isAdmin();
+    }
+
+    // ===========================
     // Spiritual Reflections Collection (Caderno Espiritual)
     // ===========================
     match /spiritual_reflections/{reflectionId} {
