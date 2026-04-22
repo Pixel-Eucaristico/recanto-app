@@ -1,7 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import { MessagesSquare } from 'lucide-react';
-import { ForumThread } from '@/features/community';
+import { ForumThread, PollList } from '@/features/community';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 
 const DEMO_SCOPE = {
@@ -12,6 +13,7 @@ const DEMO_SCOPE = {
 
 export default function CommunityPlaygroundPage() {
   const user = useCurrentUser();
+  const [tab, setTab] = useState<'forum' | 'polls'>('forum');
 
   if (!user) return <div className="p-6">Faça login para testar.</div>;
 
@@ -25,18 +27,24 @@ export default function CommunityPlaygroundPage() {
           <div>
             <h1 className="text-2xl font-bold text-base-content">Playground: Comunidade</h1>
             <p className="text-base-content/60 text-sm">
-              Fórum por aula — cria tópico, lê, responde. Escopo de teste: <code>lesson/playground-lesson-community</code>.
+              Fórum + enquetes por aula. Escopo de teste: <code>lesson/playground-lesson-community</code>.
             </p>
           </div>
         </div>
       </header>
 
+      <div className="tabs tabs-boxed bg-base-100 w-fit">
+        <button className={`tab ${tab === 'forum' ? 'tab-active' : ''}`} onClick={() => setTab('forum')}>Fórum</button>
+        <button className={`tab ${tab === 'polls' ? 'tab-active' : ''}`} onClick={() => setTab('polls')}>Enquetes</button>
+      </div>
+
       <div className="bg-base-100 border border-base-300 rounded-2xl shadow-sm p-6">
-        <ForumThread
-          scope={DEMO_SCOPE}
-          userId={user.id}
-          userName={user.name || 'anônimo'}
-        />
+        {tab === 'forum' && (
+          <ForumThread scope={DEMO_SCOPE} userId={user.id} userName={user.name || 'anônimo'} />
+        )}
+        {tab === 'polls' && (
+          <PollList scope={DEMO_SCOPE} userId={user.id} userName={user.name || 'anônimo'} />
+        )}
       </div>
     </div>
   );

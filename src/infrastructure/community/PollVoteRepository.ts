@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc, getDocs, query, where, collection } from 'firebase/firestore';
+import { doc, getDoc, setDoc, getDocs, onSnapshot, query, where, collection } from 'firebase/firestore';
 import { db } from '@/shared/firebase/firebaseClient';
 import { PollVote } from '@/domain/community/types';
 import { PollEntity } from '@/domain/community/entities/Poll';
@@ -37,6 +37,16 @@ export class PollVoteRepository {
       query(collection(db, COLLECTION), where('poll_id', '==', pollId)),
     );
     return snap.docs.map(d => ({ id: d.id, ...(d.data() as Omit<PollVote, 'id'>) }));
+  }
+
+  /** Listener real-time — retorna unsubscribe. */
+  subscribeToPoll(pollId: string, cb: (votes: PollVote[]) => void): () => void {
+    return onSnapshot(
+      query(collection(db, COLLECTION), where('poll_id', '==', pollId)),
+      snap => {
+        cb(snap.docs.map(d => ({ id: d.id, ...(d.data() as Omit<PollVote, 'id'>) })));
+      },
+    );
   }
 }
 

@@ -1,5 +1,9 @@
 export { ForumThread } from './components/ForumThread';
 export { PostComposer } from './components/PostComposer';
 export { ReplyComposer } from './components/ReplyComposer';
+export { PollComposer } from './components/PollComposer';
+export { QuickPoll } from './components/QuickPoll';
+export { PollList } from './components/PollList';
 export { useCommunityFeed } from './hooks/useCommunityFeed';
 export { useCommunityPost } from './hooks/useCommunityPost';
+export { usePoll } from './hooks/usePoll';
