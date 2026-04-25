@@ -7,6 +7,7 @@ import {
   query,
   where,
   getDocs,
+  onSnapshot,
 } from 'firebase/firestore';
 import { db } from '@/shared/firebase/firebaseClient';
 import { LessonProgress } from '@/domain/formation/types';
@@ -18,6 +19,7 @@ export interface IProgressRepository {
   findByUser(userId: string): Promise<LessonProgress[]>;
   upsert(userId: string, lessonId: string, data: Partial<Omit<LessonProgress, 'id' | 'user_id' | 'lesson_id'>>): Promise<LessonProgress>;
   getOrCreate(userId: string, lessonId: string, moduleId: string, trackId: string): Promise<LessonProgress>;
+  subscribe(userId: string, lessonId: string, cb: (p: LessonProgress | null) => void): () => void;
 }
 
 function progressId(userId: string, lessonId: string): string {
@@ -88,6 +90,14 @@ export class FirebaseProgressRepository implements IProgressRepository {
     const ref = this.docRef(userId, lessonId);
     await setDoc(ref, initial);
     return { id: progressId(userId, lessonId), ...initial };
+  }
+
+  /** Listener real-time — notifica sempre que o doc muda. Retorna unsubscribe. */
+  subscribe(userId: string, lessonId: string, cb: (p: LessonProgress | null) => void): () => void {
+    return onSnapshot(this.docRef(userId, lessonId), snap => {
+      if (!snap.exists()) { cb(null); return; }
+      cb({ id: snap.id, ...snap.data() } as LessonProgress);
+    });
   }
 }
 

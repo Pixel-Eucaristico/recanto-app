@@ -26,13 +26,16 @@ export function LessonCard({ lessonWithProgress, trackId, index }: LessonCardPro
   const href = `/app/dashboard/formation/${trackId}/${lesson.id}`;
 
   return (
-    <div className={`flex items-center gap-4 p-3 rounded-xl border transition-all ${
-      status === 'completed'
-        ? 'border-success/30 bg-success/5'
-        : isLocked
-          ? 'border-base-300 bg-base-200/40 opacity-70'
-          : 'border-primary/30 bg-base-100 hover:bg-primary/5'
-    }`}>
+    <Link
+      href={href}
+      className={`flex items-center gap-4 p-3 rounded-xl border transition-all ${
+        status === 'completed'
+          ? 'border-success/30 bg-success/5 hover:bg-success/10'
+          : isLocked
+            ? 'border-base-300 bg-base-200/40 hover:bg-base-200 opacity-80'
+            : 'border-primary/30 bg-base-100 hover:bg-primary/5'
+      }`}
+    >
       <div className="flex-shrink-0 w-8 h-8 rounded-full bg-base-200 flex items-center justify-center text-sm font-medium text-base-content/60">
         {index + 1}
       </div>
@@ -40,12 +43,12 @@ export function LessonCard({ lessonWithProgress, trackId, index }: LessonCardPro
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           {STATUS_ICONS[status]}
-          <span className={`font-medium text-sm truncate ${isLocked ? 'text-base-content/40' : 'text-base-content'}`}>
+          <span className={`font-medium text-sm truncate ${isLocked ? 'text-base-content/60' : 'text-base-content'}`}>
             {lesson.title}
           </span>
         </div>
 
-        <div className="flex items-center gap-3 mt-0.5">
+        <div className="flex items-center gap-3 mt-0.5 flex-wrap">
           <span className="text-xs text-base-content/40 flex items-center gap-1">
             <Clock className="w-3 h-3" />
             {Lesson.durationLabel(lesson.video_duration_seconds)}
@@ -63,11 +66,7 @@ export function LessonCard({ lessonWithProgress, trackId, index }: LessonCardPro
         </div>
       </div>
 
-      {!isLocked && (
-        <Link href={href} className="btn btn-ghost btn-xs btn-circle">
-          <ChevronRight className="w-4 h-4" />
-        </Link>
-      )}
-    </div>
+      <ChevronRight className="w-4 h-4 text-base-content/40" />
+    </Link>
   );
 }

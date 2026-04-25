@@ -67,14 +67,23 @@ export function useVideoSession(input: UseVideoSessionInput) {
   }, [flushSave]);
 
   const tick = useCallback((t: VideoTickInput) => {
+    let justReachedMin = false;
     setSession(prev => {
       if (!prev) return prev;
       const next = VideoSessionEntity.tick(prev, t);
+      const wasMet = VideoSessionEntity.isMinimumReached(prev);
+      const isMet = VideoSessionEntity.isMinimumReached(next);
+      if (!wasMet && isMet) justReachedMin = true;
       latestSession.current = next;
       return next;
     });
-    scheduleSave();
-  }, [scheduleSave]);
+    if (justReachedMin) {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      flushSave();
+    } else {
+      scheduleSave();
+    }
+  }, [scheduleSave, flushSave]);
 
   // flush on unmount
   useEffect(() => () => {

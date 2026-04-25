@@ -9,7 +9,7 @@ interface LessonChecklistProps {
   moduleId: string | null;
   trackId: string | null;
   userHabitsBlocked?: boolean;
-  /** Oculta itens não-obrigatórios dessa aula (default: só mostra obrigatórios). */
+  /** Se false, esconde os itens opcionais. Default mostra todos com badge "opcional". */
   showOptional?: boolean;
 }
 
@@ -26,7 +26,7 @@ export function LessonChecklist({
   moduleId,
   trackId,
   userHabitsBlocked,
-  showOptional = false,
+  showOptional = true,
 }: LessonChecklistProps) {
   const { items, activeItems, completed, total, percent, loading, error } = useLessonChecklist({
     userId, lessonId, moduleId, trackId, userHabitsBlocked,

@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { formationService } from '@/application/formation/FormationService';
+import { progressRepository } from '@/infrastructure/formation/ProgressRepository';
 import { FormationLesson, LessonProgress } from '@/domain/formation/types';
 
 export type ChecklistItemId = 'video' | 'reflection' | 'quiz' | 'forum';
@@ -58,16 +59,15 @@ interface UseLessonChecklistArgs {
 }
 
 export function useLessonChecklist({ userId, lessonId, moduleId, trackId, userHabitsBlocked = false }: UseLessonChecklistArgs) {
-  const [items, setItems] = useState<ChecklistItem[]>([]);
   const [lesson, setLesson] = useState<FormationLesson | null>(null);
   const [progress, setProgress] = useState<LessonProgress | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Carga inicial de lesson + progress
   const reload = useCallback(async () => {
     if (!userId || !lessonId || !moduleId || !trackId) {
       setLoading(false);
-      setItems([]);
       return;
     }
     setLoading(true);
@@ -76,7 +76,6 @@ export function useLessonChecklist({ userId, lessonId, moduleId, trackId, userHa
       const result = await formationService.getLessonWithProgress(userId, lessonId, moduleId, trackId, userHabitsBlocked);
       setLesson(result.lesson);
       setProgress(result.progress);
-      setItems(buildItems(result.lesson, result.progress));
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -88,6 +87,16 @@ export function useLessonChecklist({ userId, lessonId, moduleId, trackId, userHa
     reload();
   }, [reload]);
 
+  // Subscribe real-time no progress — substitui polling/refresh tokens
+  useEffect(() => {
+    if (!userId || !lessonId) return;
+    const unsub = progressRepository.subscribe(userId, lessonId, p => {
+      setProgress(p);
+    });
+    return () => unsub();
+  }, [userId, lessonId]);
+
+  const items = useMemo(() => (lesson ? buildItems(lesson, progress) : []), [lesson, progress]);
   const activeItems = items.filter(i => i.required);
   const completed = activeItems.filter(i => i.done).length;
   const total = activeItems.length;

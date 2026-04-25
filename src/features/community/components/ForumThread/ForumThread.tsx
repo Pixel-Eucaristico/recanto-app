@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ChevronLeft, Pin, Lock, MessageSquare, Heart, MessageCircle, BarChart3 } from 'lucide-react';
 import { CommunityPost, CommunityVisibility } from '@/domain/community/types';
 import { useCommunityFeed } from '@/features/community/hooks/useCommunityFeed';
@@ -16,14 +16,29 @@ interface ForumThreadProps {
   canPost?: boolean;
   canComment?: boolean;
   canVote?: boolean;
+  /** Abre composer (forum/poll) automaticamente quando mudar. */
+  autoOpenComposer?: 'forum' | 'poll';
+  /** Incrementar pra reabrir composer mesmo se autoOpenComposer já tava setado. */
+  autoOpenKey?: number;
 }
 
 type ComposerMode = 'closed' | 'forum' | 'poll';
 
-export function ForumThread({ scope, userId, userName, canPost = true, canComment = true, canVote = true }: ForumThreadProps) {
+export function ForumThread({
+  scope, userId, userName,
+  canPost = true, canComment = true, canVote = true,
+  autoOpenComposer, autoOpenKey,
+}: ForumThreadProps) {
   const [selected, setSelected] = useState<CommunityPost | null>(null);
   const [composer, setComposer] = useState<ComposerMode>('closed');
   const { posts, loading, error, reload } = useCommunityFeed({ scope, kind: ['forum', 'wall', 'poll'] });
+
+  useEffect(() => {
+    if (autoOpenComposer && autoOpenKey !== undefined && autoOpenKey > 0) {
+      setComposer(autoOpenComposer);
+      setSelected(null);
+    }
+  }, [autoOpenComposer, autoOpenKey]);
 
   if (selected) {
     return (
