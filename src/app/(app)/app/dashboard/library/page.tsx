@@ -1,18 +1,45 @@
 'use client';
 
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Library, Plus, FolderOpen } from 'lucide-react';
 import Link from 'next/link';
-import { Library, Settings } from 'lucide-react';
-import { BookCatalogGrid, CategoryFilter, useLibraryCatalog } from '@/features/library';
+import { BookCatalogGrid, CategoryFilter, useLibraryCatalog, useBooksAdmin } from '@/features/library';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
+import { Book } from '@/domain/library/types';
 
 export default function LibraryPage() {
   const user = useCurrentUser();
+  const router = useRouter();
   const isManager = user?.role === 'admin' || user?.features.includes('manage:library') || user?.features.includes('*');
   const { books, categories, loading, error, search, setSearch, activeCategoryId, setActiveCategoryId } = useLibraryCatalog({
-    onlyPublished: !isManager, // Manager vê rascunhos também
+    onlyPublished: !isManager,
   });
+  const { remove } = useBooksAdmin();
+  const [deleteTarget, setDeleteTarget] = useState<Book | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   if (!user) return <div className="p-6">Faça login pra acessar a biblioteca.</div>;
+
+  function goEdit(book: Book) {
+    router.push(`/app/dashboard/admin/library?book=${book.id}&view=form`);
+  }
+  function goChapters(book: Book) {
+    router.push(`/app/dashboard/admin/library?book=${book.id}&view=chapters`);
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await remove(deleteTarget.id);
+      setDeleteTarget(null);
+      // Recarrega o catálogo
+      window.location.reload();
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-base-200 p-4 md:p-6 space-y-4 md:space-y-6">
@@ -30,9 +57,14 @@ export default function LibraryPage() {
             </div>
           </div>
           {isManager && (
-            <Link href="/app/dashboard/admin/library" className="btn btn-primary btn-sm gap-1">
-              <Settings className="w-4 h-4" /> Gerenciar
-            </Link>
+            <div className="flex gap-2 flex-wrap">
+              <Link href="/app/dashboard/admin/library?view=categories" className="btn btn-ghost btn-sm gap-1">
+                <FolderOpen className="w-4 h-4" /> Categorias
+              </Link>
+              <Link href="/app/dashboard/admin/library?view=form" className="btn btn-primary btn-sm gap-1">
+                <Plus className="w-4 h-4" /> Novo livro
+              </Link>
+            </div>
           )}
         </div>
       </header>
@@ -49,8 +81,34 @@ export default function LibraryPage() {
         {loading && <div className="alert alert-info text-sm"><span>Carregando catálogo...</span></div>}
         {error && <div className="alert alert-error text-sm"><span>{error}</span></div>}
 
-        {!loading && !error && <BookCatalogGrid books={books} />}
+        {!loading && !error && (
+          <BookCatalogGrid
+            books={books}
+            manager={isManager}
+            onEdit={goEdit}
+            onEditChapters={goChapters}
+            onDelete={book => setDeleteTarget(book)}
+          />
+        )}
       </div>
+
+      {deleteTarget && (
+        <div className="modal modal-open">
+          <div className="modal-box max-w-sm">
+            <h3 className="font-bold text-lg mb-2">Remover livro</h3>
+            <p className="text-sm text-base-content/70 mb-3">
+              Remover <strong>{deleteTarget.title}</strong>? Capítulos e referências em aulas serão perdidos.
+            </p>
+            <div className="modal-action">
+              <button className="btn btn-ghost btn-sm" onClick={() => setDeleteTarget(null)} disabled={deleting}>Cancelar</button>
+              <button className="btn btn-error btn-sm" onClick={confirmDelete} disabled={deleting}>
+                {deleting ? 'Removendo...' : 'Remover'}
+              </button>
+            </div>
+          </div>
+          <div className="modal-backdrop" onClick={() => setDeleteTarget(null)} />
+        </div>
+      )}
     </div>
   );
 }

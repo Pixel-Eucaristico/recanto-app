@@ -42,8 +42,14 @@ export function LockedYouTubePlayer({ videoId, session, onTick }: LockedYouTubeP
     playerRef.current = e.target;
     const d = e.target.getDuration();
     setDuration(d);
-    if (session.lastPositionSeconds > 0 && session.lastPositionSeconds < d) {
-      e.target.seekTo(session.lastPositionSeconds, true);
+    // Resume cross-device: seekTo na posição salva.
+    // getDuration() pode retornar 0 no onReady — não comparar com d.
+    if (session.lastPositionSeconds > 0) {
+      try {
+        e.target.seekTo(session.lastPositionSeconds, true);
+      } catch {
+        // player ainda não pronto — ignora
+      }
     }
   }
 
