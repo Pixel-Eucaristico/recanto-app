@@ -11,21 +11,33 @@ function chapterId(bookId: string, order: number): string {
   return `${bookId}_${String(order).padStart(4, '0')}`;
 }
 
-function stripUndefined<T extends Record<string, unknown>>(obj: T): Record<string, unknown> {
-  const out: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(obj)) if (v !== undefined) out[k] = v;
-  return out;
+/** Remove undefined recursivamente — Firestore rejeita undefined em qualquer nível (top + nested). */
+function deepStripUndefined(value: unknown): unknown {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  if (Array.isArray(value)) {
+    return value.map(v => deepStripUndefined(v)).filter(v => v !== undefined);
+  }
+  if (typeof value === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      const cleaned = deepStripUndefined(v);
+      if (cleaned !== undefined) out[k] = cleaned;
+    }
+    return out;
+  }
+  return value;
 }
 
 export class BookChapterRepository {
   /** Cria/atualiza capítulo. Sempre re-escreve o doc inteiro (blocks gerais). */
   async upsert(chapter: BookChapter): Promise<BookChapter> {
     const id = chapterId(chapter.book_id, chapter.order);
-    const payload = stripUndefined({
+    const payload = deepStripUndefined({
       ...chapter,
       id,
       updated_at: new Date().toISOString(),
-    });
+    }) as Record<string, unknown>;
     await setDoc(doc(db, COLLECTION, id), payload);
     return { ...chapter, id };
   }

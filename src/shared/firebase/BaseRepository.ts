@@ -21,12 +21,26 @@ export interface WithId {
   id: string;
 }
 
+/** Remove undefined recursivamente — Firestore rejeita undefined em qualquer nível. */
 function stripUndefined(obj: Record<string, unknown>): Record<string, unknown> {
-  const out: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(obj)) {
-    if (v !== undefined) out[k] = v;
+  return deepStrip(obj) as Record<string, unknown>;
+}
+
+function deepStrip(value: unknown): unknown {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  if (Array.isArray(value)) {
+    return value.map(v => deepStrip(v)).filter(v => v !== undefined);
   }
-  return out;
+  if (typeof value === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      const cleaned = deepStrip(v);
+      if (cleaned !== undefined) out[k] = cleaned;
+    }
+    return out;
+  }
+  return value;
 }
 
 export interface QueryFilter {

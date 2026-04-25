@@ -2,7 +2,7 @@
 
 import { Trash2, ChevronUp, ChevronDown, Heading1, Type, Quote, List, Code2, Image as ImageIcon } from 'lucide-react';
 import { BookBlock, BookBlockKind } from '@/domain/library/types';
-import { MarkdownField } from '@/shared/components/MarkdownField';
+import { RichTextEditor } from '@/shared/components/RichTextEditor';
 import { MediaUpload } from '@/shared/components/MediaUpload';
 
 const KIND_LABELS: Record<BookBlockKind, { label: string; icon: React.ComponentType<{ className?: string }> }> = {
@@ -74,11 +74,17 @@ export function BlockEditor({ block, index, total, onChange, onDelete, onMoveUp,
         {isImage ? (
           <ImageBlockField block={block} onChange={onChange} />
         ) : (
-          <MarkdownField
+          <RichTextEditor
             value={block.content}
             onChange={v => onChange({ content: v })}
-            height={block.kind === 'heading' ? 80 : 140}
-            preview="edit"
+            height={block.kind === 'heading' ? 80 : 160}
+            placeholder={
+              block.kind === 'heading' ? 'Título do bloco...' :
+              block.kind === 'quote' ? 'Citação...' :
+              block.kind === 'list' ? 'Use a barra de ferramentas pra criar lista...' :
+              block.kind === 'code' ? 'Bloco de código...' :
+              'Comece a escrever...'
+            }
           />
         )}
       </div>
