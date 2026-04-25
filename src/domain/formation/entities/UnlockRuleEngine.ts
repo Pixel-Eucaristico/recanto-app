@@ -9,57 +9,41 @@ interface UnlockContext {
 }
 
 export class UnlockRuleEngine {
+  /**
+   * "isUnlocked" significa que o aluno PODE ABRIR a aula.
+   * Os requisitos da aula em si (vídeo/reflexão/quiz/fórum) são tracked no checklist
+   * e marcam status='completed' quando cumpridos via reconciler.
+   *
+   * Bloqueios reais pra abrir:
+   *  - aula anterior não concluída
+   *  - hábitos do aluno em atraso
+   *  - tempo de reflexão (time_lock) ainda contando após completar o vídeo
+   */
   static evaluate(ctx: UnlockContext): UnlockResult {
     if (!ctx.previousLessonCompleted) {
       return { isUnlocked: false, blockedBy: ['previous_lesson'] };
     }
 
-    if (!ctx.progress) {
-      return { isUnlocked: false, blockedBy: ['video'] };
+    if (ctx.userHabitsBlocked) {
+      return { isUnlocked: false, blockedBy: ['habits'] };
     }
 
-    const blockers: UnlockBlocker[] = [];
     const { lesson, progress } = ctx;
 
-    if (progress.video_watch_percent < lesson.min_watch_percent) {
-      blockers.push('video');
-    }
-
-    if (
-      lesson.unlock_after_hours > 0 &&
-      progress.video_completed_at
-    ) {
+    // Time-lock só conta após o vídeo ter sido concluído nessa aula.
+    // Se o aluno ainda não terminou o vídeo, ele pode entrar e começar.
+    if (lesson.unlock_after_hours > 0 && progress?.video_completed_at) {
       const elapsed = differenceInHours(new Date(), parseISO(progress.video_completed_at));
       if (elapsed < lesson.unlock_after_hours) {
-        blockers.push('time_lock');
+        return {
+          isUnlocked: false,
+          blockedBy: ['time_lock'],
+          timeRemainingSeconds: this.calcTimeLockRemaining(lesson, progress),
+        };
       }
-    } else if (lesson.unlock_after_hours > 0 && !progress.video_completed_at) {
-      blockers.push('time_lock');
     }
 
-    if (lesson.requires_reflection && !progress.reflection_submitted) {
-      blockers.push('reflection');
-    }
-
-    if (lesson.requires_quiz && !progress.quiz_passed) {
-      blockers.push('quiz');
-    }
-
-    if (lesson.requires_forum_post && !progress.forum_post_made) {
-      blockers.push('forum');
-    }
-
-    if (ctx.userHabitsBlocked) {
-      blockers.push('habits');
-    }
-
-    const timeRemainingSeconds = this.calcTimeLockRemaining(lesson, progress);
-
-    return {
-      isUnlocked: blockers.length === 0,
-      blockedBy: blockers,
-      timeRemainingSeconds,
-    };
+    return { isUnlocked: true, blockedBy: [] };
   }
 
   static calcTimeLockRemaining(lesson: FormationLesson, progress: LessonProgress | null): number | undefined {

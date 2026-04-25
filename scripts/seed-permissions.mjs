@@ -28,6 +28,7 @@ const DEFAULT_ROLE_PERMISSIONS = {
     'read:formation', 'complete:formation', 'manage:formation', 'review:formation',
     'log:habits', 'read:prayer',
     'read:community', 'post:community', 'manage:community',
+    'read:library', 'manage:library',
   ],
   recantiano: [
     'read:content', 'read:calendar',
@@ -35,20 +36,24 @@ const DEFAULT_ROLE_PERMISSIONS = {
     'read:formation', 'complete:formation',
     'log:habits', 'read:prayer',
     'read:community', 'post:community',
+    'read:library',
   ],
   pai: [
     'read:content', 'read:calendar', 'read:parent_zone',
     'read:formation', 'log:habits', 'read:prayer',
     'read:community', 'post:community',
+    'read:library',
   ],
   colaborador: [
     'read:content', 'read:calendar', 'read:formation',
     'log:habits', 'read:prayer',
     'read:community', 'post:community',
+    'read:library',
   ],
   benfeitor: [
     'read:content', 'read:gratitude_corner', 'read:formation', 'read:prayer',
     'read:community',
+    'read:library',
   ],
   visitante: ['read:public_content', 'read:public_calendar'],
 };

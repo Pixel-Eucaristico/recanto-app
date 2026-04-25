@@ -34,7 +34,9 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Exclude<Role, null>, string[]> = {
     'read:prayer',
     'read:community',
     'post:community',
-    'manage:community'
+    'manage:community',
+    'read:library',
+    'manage:library'
   ],
   recantiano: [
     'read:content',
@@ -46,7 +48,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Exclude<Role, null>, string[]> = {
     'log:habits',
     'read:prayer',
     'read:community',
-    'post:community'
+    'post:community',
+    'read:library'
   ],
   pai: [
     'read:content',
@@ -56,7 +59,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Exclude<Role, null>, string[]> = {
     'log:habits',
     'read:prayer',
     'read:community',
-    'post:community'
+    'post:community',
+    'read:library'
   ],
   colaborador: [
     'read:content',
@@ -65,14 +69,16 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Exclude<Role, null>, string[]> = {
     'log:habits',
     'read:prayer',
     'read:community',
-    'post:community'
+    'post:community',
+    'read:library'
   ],
   benfeitor: [
     'read:content',
     'read:gratitude_corner',
     'read:formation',
     'read:prayer',
-    'read:community'
+    'read:community',
+    'read:library'
   ],
   visitante: [
     'read:public_content',
@@ -304,6 +310,20 @@ export const FEATURES_INFO: FeatureInfo[] = [
     label: 'Moderar Comunidade',
     description: 'Editar/remover posts e respostas de qualquer usuário',
     category: 'admin'
+  },
+
+  // ===== BIBLIOTECA (apostilas/livros) =====
+  {
+    id: 'read:library',
+    label: 'Ver Biblioteca',
+    description: 'Ler e baixar livros/apostilas do catálogo',
+    category: 'content'
+  },
+  {
+    id: 'manage:library',
+    label: 'Gerenciar Biblioteca',
+    description: 'Criar e editar livros, capítulos e categorias da biblioteca (concedido a quem tem manage:formation)',
+    category: 'content'
   },
 
   // ===== ÁREAS ESPECIAIS =====

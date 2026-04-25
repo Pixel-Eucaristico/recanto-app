@@ -39,35 +39,43 @@ export class FormationService {
     const trackProgress = await this.progress.findByUserAndTrack(userId, trackId);
     const progressMap = new Map(trackProgress.map(p => [p.lesson_id, p]));
 
+    // Carrega aulas de cada módulo em paralelo
+    const moduleLessons = await Promise.all(
+      moduleList.map(m => this.lessons.findByIds(m.lesson_ids).then(ls => ({ module: m, lessons: ls })))
+    );
+
+    // Sequência global de aulas em ordem de track → módulo → ordem dentro do módulo
+    const flatLessons = moduleLessons.flatMap(ml => ml.lessons);
+
     let totalLessons = 0;
     let completedLessons = 0;
 
-    const modulesWithProgress: ModuleWithProgress[] = await Promise.all(
-      moduleList.map(async (module) => {
-        const lessonList = await this.lessons.findByIds(module.lesson_ids);
-        let completedCount = 0;
+    const modulesWithProgress: ModuleWithProgress[] = moduleLessons.map(({ module, lessons }) => {
+      let completedCount = 0;
 
-        const lessonsWithProgress: LessonWithProgress[] = lessonList.map((lesson, idx) => {
-          const prog = progressMap.get(lesson.id) ?? null;
-          const previousCompleted = idx === 0 || progressMap.get(lessonList[idx - 1].id)?.status === 'completed';
+      const lessonsWithProgress: LessonWithProgress[] = lessons.map(lesson => {
+        const prog = progressMap.get(lesson.id) ?? null;
+        // Busca a aula anterior na sequência GLOBAL (não só dentro do módulo)
+        const globalIdx = flatLessons.findIndex(l => l.id === lesson.id);
+        const previousLesson = globalIdx > 0 ? flatLessons[globalIdx - 1] : null;
+        const previousCompleted = !previousLesson || progressMap.get(previousLesson.id)?.status === 'completed';
 
-          const unlockResult = UnlockRuleEngine.evaluate({
-            lesson,
-            progress: prog,
-            userHabitsBlocked,
-            previousLessonCompleted: previousCompleted,
-          });
-
-          if (prog?.status === 'completed') completedCount++;
-          totalLessons++;
-          if (prog?.status === 'completed') completedLessons++;
-
-          return { lesson, progress: prog, unlockResult };
+        const unlockResult = UnlockRuleEngine.evaluate({
+          lesson,
+          progress: prog,
+          userHabitsBlocked,
+          previousLessonCompleted: previousCompleted,
         });
 
-        return { module, lessons: lessonsWithProgress, completedCount };
-      })
-    );
+        if (prog?.status === 'completed') completedCount++;
+        totalLessons++;
+        if (prog?.status === 'completed') completedLessons++;
+
+        return { lesson, progress: prog, unlockResult };
+      });
+
+      return { module, lessons: lessonsWithProgress, completedCount };
+    });
 
     return { track, modules: modulesWithProgress, completedLessons, totalLessons };
   }

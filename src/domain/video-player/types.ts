@@ -19,3 +19,22 @@ export interface VideoTickInput {
   currentTime: number;
   duration: number;
 }
+
+/** Log append-only — uma entry por aparição/sessão de visualização. Permite reassistir sem perder o registro. */
+export interface VideoWatchSession {
+  id: string;
+  user_id: string;
+  lesson_id: string;
+  module_id: string;
+  track_id: string;
+  /** Início da sessão (mount do player). */
+  started_at: string;
+  /** Fim da sessão (unmount ou flush final). */
+  ended_at?: string;
+  /** Maior posição atingida nessa sessão (segundos). */
+  max_position_seconds: number;
+  /** Total de segundos efetivamente assistidos nessa sessão. */
+  seconds_watched: number;
+  /** True se o vídeo já tinha sido concluído antes (revisita). */
+  is_rewatch: boolean;
+}

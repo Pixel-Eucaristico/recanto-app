@@ -532,6 +532,18 @@ service cloud.firestore {
     }
 
     // ===========================
+    // Video Watch Sessions (log append-only de visualizações)
+    // ===========================
+    match /video_watch_sessions/{sessionId} {
+      allow read: if hasFeature('review:formation') ||
+                    (isAuthenticated() && resource.data.user_id == request.auth.uid);
+      allow create: if isAuthenticated() &&
+                      request.resource.data.user_id == request.auth.uid;
+      allow update: if isAuthenticated() && resource.data.user_id == request.auth.uid;
+      allow delete: if isAdmin();
+    }
+
+    // ===========================
     // Habits (admin CRUD, todos leem)
     // ===========================
     match /habits/{habitId} {
@@ -597,6 +609,25 @@ service cloud.firestore {
                      request.resource.data.user_id == request.auth.uid &&
                      voteId == (request.resource.data.poll_id + '_' + request.auth.uid);
       allow delete: if isAdmin();
+    }
+
+    // ===========================
+    // Library — Books / Chapters / Categories
+    // ===========================
+    match /library_books/{bookId} {
+      allow read: if hasFeature('read:library') || hasFeature('manage:library');
+      allow create: if hasFeature('manage:library') || isAdmin();
+      allow update, delete: if hasFeature('manage:library') || isAdmin();
+    }
+
+    match /library_book_chapters/{chapterId} {
+      allow read: if hasFeature('read:library') || hasFeature('manage:library');
+      allow write: if hasFeature('manage:library') || isAdmin();
+    }
+
+    match /library_book_categories/{catId} {
+      allow read: if hasFeature('read:library') || hasFeature('manage:library');
+      allow write: if hasFeature('manage:library') || isAdmin();
     }
 
     // ===========================

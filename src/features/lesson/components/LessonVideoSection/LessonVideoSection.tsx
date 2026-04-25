@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckCircle2, PlayCircle } from 'lucide-react';
+import { CheckCircle2, PlayCircle, Eye } from 'lucide-react';
 import { FormationLesson } from '@/domain/formation/types';
 import { LockedVideoPlayer, useVideoSession, WatchProgressBar } from '@/features/lesson/video-player';
 
@@ -12,7 +12,7 @@ interface LessonVideoSectionProps {
 }
 
 export function LessonVideoSection({ lesson, moduleId, trackId, userId }: LessonVideoSectionProps) {
-  const { session, tick, loading, error } = useVideoSession({
+  const { session, tick, loading, error, watchCount } = useVideoSession({
     userId,
     lessonId: lesson.id,
     moduleId,
@@ -34,9 +34,15 @@ export function LessonVideoSection({ lesson, moduleId, trackId, userId }: Lesson
   return (
     <div className="card bg-base-100 border border-base-300">
       <div className="card-body p-0 gap-0">
-        <div className="p-4 flex items-center gap-2 border-b border-base-300">
+        <div className="p-4 flex items-center gap-2 border-b border-base-300 flex-wrap">
           <PlayCircle className="w-5 h-5 text-primary" />
           <h3 className="font-semibold text-base-content flex-1">Vídeo</h3>
+          {watchCount > 0 && (
+            <span className="badge badge-ghost gap-1" title="Total de visualizações armazenadas">
+              <Eye className="w-3 h-3" />
+              {watchCount}x
+            </span>
+          )}
           {reachedMin && (
             <span className="badge badge-success gap-1">
               <CheckCircle2 className="w-3 h-3" /> Mínimo atingido
@@ -57,10 +63,9 @@ export function LessonVideoSection({ lesson, moduleId, trackId, userId }: Lesson
             watchPercent={session.watchPercent}
             watchSeconds={session.watchSeconds}
             minWatchPercent={lesson.min_watch_percent}
+            lastPositionSeconds={session.lastPositionSeconds}
+            durationSeconds={session.durationSeconds || lesson.video_duration_seconds}
           />
-          <p className="text-xs text-base-content/60">
-            {session.watchPercent.toFixed(1)}% assistido (mínimo {lesson.min_watch_percent}%)
-          </p>
         </div>
       </div>
     </div>

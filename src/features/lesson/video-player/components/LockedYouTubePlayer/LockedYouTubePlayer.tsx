@@ -62,6 +62,8 @@ export function LockedYouTubePlayer({ videoId, session, onTick }: LockedYouTubeP
 
   const watchedSeconds = session.watchSeconds;
   const safePct = duration > 0 ? Math.min(100, (watchedSeconds / duration) * 100) : 0;
+  const positionPct = duration > 0 ? Math.min(100, Math.max(0, (currentTime / duration) * 100)) : 0;
+  const showRewatchOverlay = !!session.completedAt;
 
   return (
     <div className="space-y-3">
@@ -100,11 +102,25 @@ export function LockedYouTubePlayer({ videoId, session, onTick }: LockedYouTubeP
           >
             {playing ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
           </button>
-          <div className="flex-1 h-1.5 bg-white/30 rounded-full overflow-hidden">
+          <div className="relative flex-1 h-1.5 bg-base-300/30 rounded-full overflow-hidden">
+            {/* Camada base: assistido (success quando concluído) */}
             <div
-              className={`h-full ${VideoSessionEntity.isMinimumReached(session) ? 'bg-success' : 'bg-primary'}`}
+              className={`absolute left-0 top-0 h-full ${VideoSessionEntity.isMinimumReached(session) ? 'bg-success' : 'bg-primary'}`}
               style={{ width: `${safePct}%` }}
             />
+            {/* Sobreposto: barra warning da revisita + linha primary marker */}
+            {showRewatchOverlay && (
+              <>
+                <div
+                  className="absolute left-0 top-0 h-full bg-warning"
+                  style={{ width: `${positionPct}%` }}
+                />
+                <div
+                  className="absolute top-0 h-full w-0.5 bg-primary"
+                  style={{ left: `calc(${positionPct}% - 1px)` }}
+                />
+              </>
+            )}
           </div>
           <div className="text-xs text-white/80 whitespace-nowrap font-mono">
             {formatTime(currentTime)} / {formatTime(duration)}
