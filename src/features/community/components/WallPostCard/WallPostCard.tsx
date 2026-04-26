@@ -1,11 +1,12 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Heart, MessageCircle, CornerDownRight, Reply } from 'lucide-react';
-import { CommunityPost, CommunityReply } from '@/domain/community/types';
+import { Heart, MessageCircle } from 'lucide-react';
+import type { CommunityPost, CommunityReply } from '@/domain/community/types';
 import { RichContent } from '@/shared/components/RichContent';
 import { useCommunityPost } from '@/features/community/hooks/useCommunityPost';
 import { ReplyComposer } from '@/features/community/components/ReplyComposer';
+import { WallCommentItem, type ReplyNode } from './components/WallCommentItem';
 
 interface WallPostCardProps {
   post: CommunityPost;
@@ -14,17 +15,8 @@ interface WallPostCardProps {
   canComment?: boolean;
 }
 
-interface ReplyNode extends CommunityReply {
-  children: ReplyNode[];
-}
-
 function initials(name: string): string {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map(w => w[0]?.toUpperCase() ?? '')
-    .join('') || '?';
+  return name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]?.toUpperCase() ?? '').join('') || '?';
 }
 
 function buildReplyTree(replies: CommunityReply[]): ReplyNode[] {
@@ -33,11 +25,8 @@ function buildReplyTree(replies: CommunityReply[]): ReplyNode[] {
   for (const r of replies) byId.set(r.id, { ...r, children: [] });
   for (const node of byId.values()) {
     const parentId = node.parent_reply_id;
-    if (parentId && byId.has(parentId)) {
-      byId.get(parentId)!.children.push(node);
-    } else {
-      roots.push(node);
-    }
+    if (parentId && byId.has(parentId)) byId.get(parentId)!.children.push(node);
+    else roots.push(node);
   }
   return roots;
 }
@@ -71,7 +60,6 @@ export function WallPostCard({ post, userId, userName, canComment = true }: Wall
         </div>
 
         <RichContent markdown={post.body} />
-
         <div className="divider my-0" />
 
         <div className="flex items-center justify-between">
@@ -80,11 +68,7 @@ export function WallPostCard({ post, userId, userName, canComment = true }: Wall
             {replies.length} {replies.length === 1 ? 'comentário' : 'comentários'}
           </span>
           {canComment && !post.is_locked && (
-            <button
-              type="button"
-              className="btn btn-ghost btn-xs"
-              onClick={() => setComposerOpen(v => !v)}
-            >
+            <button type="button" className="btn btn-ghost btn-xs" onClick={() => setComposerOpen(v => !v)}>
               {composerOpen ? 'Cancelar' : 'Comentar'}
             </button>
           )}
@@ -113,92 +97,11 @@ export function WallPostCard({ post, userId, userName, canComment = true }: Wall
             postId={post.id}
             userId={userId}
             userName={userName}
-            onReplied={() => {
-              setComposerOpen(false);
-              reload();
-            }}
+            onReplied={() => { setComposerOpen(false); reload(); }}
             onCancel={() => setComposerOpen(false)}
           />
         )}
       </div>
     </article>
-  );
-}
-
-function WallCommentItem({
-  node,
-  postId,
-  userId,
-  userName,
-  locked,
-  canComment,
-  depth,
-  onReplied,
-}: {
-  node: ReplyNode;
-  postId: string;
-  userId: string;
-  userName: string;
-  locked: boolean;
-  canComment: boolean;
-  depth: number;
-  onReplied: () => void;
-}) {
-  const [replyOpen, setReplyOpen] = useState(false);
-  const indent = Math.min(depth, 4);
-
-  return (
-    <li style={{ marginLeft: indent * 16 }}>
-      <div className="bg-base-200 rounded-lg p-3 space-y-2">
-        <p className="text-xs text-base-content/60 flex items-center gap-1">
-          {depth > 0 && <CornerDownRight className="w-3.5 h-3.5" />}
-          {node.created_by_name} · {new Date(node.created_at).toLocaleString('pt-BR')}
-        </p>
-        <RichContent markdown={node.body} className="text-sm" />
-        {canComment && !locked && (
-          <div className="flex justify-end">
-            <button
-              type="button"
-              className="btn btn-ghost btn-xs gap-1"
-              onClick={() => setReplyOpen(v => !v)}
-            >
-              <Reply className="w-3.5 h-3.5" />
-              {replyOpen ? 'Cancelar' : 'Responder'}
-            </button>
-          </div>
-        )}
-        {replyOpen && canComment && !locked && (
-          <ReplyComposer
-            postId={postId}
-            parentReplyId={node.id}
-            userId={userId}
-            userName={userName}
-            onReplied={() => {
-              setReplyOpen(false);
-              onReplied();
-            }}
-            onCancel={() => setReplyOpen(false)}
-          />
-        )}
-      </div>
-
-      {node.children.length > 0 && (
-        <ul className="space-y-2 mt-2">
-          {node.children.map(child => (
-            <WallCommentItem
-              key={child.id}
-              node={child}
-              postId={postId}
-              userId={userId}
-              userName={userName}
-              locked={locked}
-              canComment={canComment}
-              depth={depth + 1}
-              onReplied={onReplied}
-            />
-          ))}
-        </ul>
-      )}
-    </li>
   );
 }

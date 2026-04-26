@@ -1,117 +1,31 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 import { ArrowLeft, FolderOpen, Library as LibraryIcon } from 'lucide-react';
-import {
-  BookList,
-  BookForm,
-  LibraryCategoryManager,
-  ChapterListPanel,
-  ChapterEditor,
-  useBooksAdmin,
-  useLibraryCatalog,
-  useBookChapters,
-  type BookFormState,
-} from '@/features/library';
-import { Book, BookChapter } from '@/domain/library/types';
+import { BookList, BookForm, LibraryCategoryManager, ChapterListPanel, ChapterEditor } from '@/features/library';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
-
-type View = 'list' | 'form' | 'categories' | 'chapters' | 'chapter-edit';
+import { useAdminLibraryPage } from './_useAdminLibraryPage';
 
 export default function AdminLibraryPage() {
   const user = useCurrentUser();
-  const searchParams = useSearchParams();
-  const { books, loading, error, saving, save, remove, reload } = useBooksAdmin();
-  const { categories } = useLibraryCatalog({ onlyPublished: false });
-  const [view, setView] = useState<View>('list');
-  const [activeBook, setActiveBook] = useState<Book | null>(null);
-  const [activeChapter, setActiveChapter] = useState<BookChapter | null>(null);
-  const [deleteBookTarget, setDeleteBookTarget] = useState<Book | null>(null);
-  const [deleteChapterTarget, setDeleteChapterTarget] = useState<BookChapter | null>(null);
-
-  // Lê query string ?book=ID&view=form|chapters|categories e pré-seleciona
-  useEffect(() => {
-    const queryView = searchParams.get('view');
-    const queryBook = searchParams.get('book');
-
-    if (queryBook && books.length > 0) {
-      const book = books.find(b => b.id === queryBook);
-      if (book) setActiveBook(book);
-    }
-
-    if (queryView === 'form') setView('form');
-    else if (queryView === 'chapters' && queryBook) setView('chapters');
-    else if (queryView === 'categories') setView('categories');
-  }, [searchParams, books]);
-
   const {
-    chapters,
-    loading: loadingChapters,
-    saving: savingChapter,
-    saveChapter,
-    deleteChapter,
-  } = useBookChapters(activeBook?.id ?? null);
+    view, setView,
+    activeBook, setActiveBook,
+    activeChapter, setActiveChapter,
+    deleteBookTarget, setDeleteBookTarget,
+    deleteChapterTarget, setDeleteChapterTarget,
+    books, loading, error, saving, categories, reload,
+    chapters, loadingChapters, savingChapter,
+    handleSaveBook, confirmDeleteBook,
+    handleSaveChapter, confirmDeleteChapter,
+    backToList,
+  } = useAdminLibraryPage();
 
   if (!user) return <div className="p-6">Faça login.</div>;
 
   const canManage = user.role === 'admin' || user.features.includes('manage:library') || user.features.includes('*');
   if (!canManage) {
-    return (
-      <div className="p-6">
-        <div className="alert alert-error"><span>Sem permissão pra gerenciar a biblioteca.</span></div>
-      </div>
-    );
-  }
-
-  async function handleSaveBook(form: BookFormState) {
-    const tags = form.tags.split(',').map(t => t.trim()).filter(Boolean);
-    const year = form.year ? Number(form.year) : undefined;
-    await save({
-      id: form.id,
-      title: form.title,
-      subtitle: form.subtitle || undefined,
-      author: form.author || undefined,
-      language: form.language,
-      description: form.description || undefined,
-      cover_url: form.cover_url || undefined,
-      back_cover_url: form.back_cover_url || undefined,
-      category_ids: form.category_ids,
-      tags,
-      isbn: form.isbn || undefined,
-      edition: form.edition || undefined,
-      year,
-      is_published: form.is_published,
-      spoiler_mode: form.spoiler_mode,
-      created_by: form.created_by,
-    });
-    setView('list');
-    setActiveBook(null);
-  }
-
-  async function confirmDeleteBook() {
-    if (!deleteBookTarget) return;
-    await remove(deleteBookTarget.id);
-    setDeleteBookTarget(null);
-  }
-
-  async function handleSaveChapter(input: { book_id: string; order: number; title: string; subtitle?: string; blocks: BookChapter['blocks'] }) {
-    await saveChapter(input);
-    setView('chapters');
-    setActiveChapter(null);
-  }
-
-  async function confirmDeleteChapter() {
-    if (!deleteChapterTarget) return;
-    await deleteChapter(deleteChapterTarget.order);
-    setDeleteChapterTarget(null);
-  }
-
-  function backToList() {
-    setView('list');
-    setActiveBook(null);
-    setActiveChapter(null);
+    return <div className="p-6"><div className="alert alert-error"><span>Sem permissão pra gerenciar a biblioteca.</span></div></div>;
   }
 
   return (
@@ -126,11 +40,7 @@ export default function AdminLibraryPage() {
             <h1 className="text-lg md:text-xl font-bold">Gerenciar biblioteca</h1>
           </div>
           {view === 'list' && (
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm gap-1"
-              onClick={() => setView('categories')}
-            >
+            <button type="button" className="btn btn-ghost btn-sm gap-1" onClick={() => setView('categories')}>
               <FolderOpen className="w-4 h-4" /> Categorias
             </button>
           )}
@@ -152,14 +62,7 @@ export default function AdminLibraryPage() {
         )}
 
         {view === 'form' && (
-          <BookForm
-            book={activeBook}
-            categories={categories}
-            saving={saving}
-            userId={user.id}
-            onSave={handleSaveBook}
-            onCancel={backToList}
-          />
+          <BookForm book={activeBook} categories={categories} saving={saving} userId={user.id} onSave={handleSaveBook} onCancel={backToList} />
         )}
 
         {view === 'categories' && (
@@ -192,11 +95,7 @@ export default function AdminLibraryPage() {
 
         {view === 'chapter-edit' && activeBook && (
           <div className="space-y-4">
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm gap-1"
-              onClick={() => { setView('chapters'); setActiveChapter(null); }}
-            >
+            <button type="button" className="btn btn-ghost btn-sm gap-1" onClick={() => { setView('chapters'); setActiveChapter(null); }}>
               <ArrowLeft className="w-4 h-4" /> Capítulos de {activeBook.title}
             </button>
             <ChapterEditor
@@ -215,9 +114,7 @@ export default function AdminLibraryPage() {
         <div className="modal modal-open">
           <div className="modal-box max-w-sm">
             <h3 className="font-bold text-lg mb-2">Remover livro</h3>
-            <p className="text-sm text-base-content/70 mb-3">
-              Remover <strong>{deleteBookTarget.title}</strong>? Capítulos e referências em aulas serão perdidos.
-            </p>
+            <p className="text-sm text-base-content/70 mb-3">Remover <strong>{deleteBookTarget.title}</strong>? Capítulos e referências em aulas serão perdidos.</p>
             <div className="modal-action">
               <button className="btn btn-ghost btn-sm" onClick={() => setDeleteBookTarget(null)}>Cancelar</button>
               <button className="btn btn-error btn-sm" onClick={confirmDeleteBook}>Remover</button>
@@ -231,10 +128,7 @@ export default function AdminLibraryPage() {
         <div className="modal modal-open">
           <div className="modal-box max-w-sm">
             <h3 className="font-bold text-lg mb-2">Remover capítulo</h3>
-            <p className="text-sm text-base-content/70 mb-3">
-              Remover capítulo <strong>{deleteChapterTarget.order} — {deleteChapterTarget.title}</strong>?
-              Os blocos e referências canônicas desse capítulo serão perdidos.
-            </p>
+            <p className="text-sm text-base-content/70 mb-3">Remover capítulo <strong>{deleteChapterTarget.order} — {deleteChapterTarget.title}</strong>? Os blocos e referências canônicas serão perdidos.</p>
             <div className="modal-action">
               <button className="btn btn-ghost btn-sm" onClick={() => setDeleteChapterTarget(null)}>Cancelar</button>
               <button className="btn btn-error btn-sm" onClick={confirmDeleteChapter}>Remover</button>
