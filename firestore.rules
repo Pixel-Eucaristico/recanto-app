@@ -630,6 +630,36 @@ service cloud.firestore {
       allow write: if hasFeature('manage:library') || isAdmin();
     }
 
+    match /book_reading_progress/{progressId} {
+      allow read: if isAuthenticated() && (
+        resource.data.user_id == request.auth.uid || isAdmin()
+      );
+      allow create, update: if isAuthenticated() &&
+        request.resource.data.user_id == request.auth.uid &&
+        hasFeature('read:library');
+    }
+
+    match /book_highlights/{highlightId} {
+      allow read, delete: if isAuthenticated() && resource.data.user_id == request.auth.uid;
+      allow create, update: if isAuthenticated() &&
+        request.resource.data.user_id == request.auth.uid &&
+        hasFeature('read:library');
+    }
+
+    match /book_comments/{commentId} {
+      allow read, delete: if isAuthenticated() && resource.data.user_id == request.auth.uid;
+      allow create, update: if isAuthenticated() &&
+        request.resource.data.user_id == request.auth.uid &&
+        hasFeature('read:library');
+    }
+
+    match /book_tags/{tagId} {
+      allow read, delete: if isAuthenticated() && resource.data.user_id == request.auth.uid;
+      allow create, update: if isAuthenticated() &&
+        request.resource.data.user_id == request.auth.uid &&
+        hasFeature('read:library');
+    }
+
     // ===========================
     // Spiritual Reflections Collection (Caderno Espiritual)
     // ===========================

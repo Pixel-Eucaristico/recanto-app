@@ -75,6 +75,77 @@ export interface BookCategory {
   created_at: string;
 }
 
+/** Progresso de leitura de um usuário num livro. */
+export interface BookReadingProgress {
+  /** ID composto `${userId}_${bookId}`. */
+  id: string;
+  user_id: string;
+  book_id: string;
+  /** Última ordem de capítulo visível. */
+  last_chapter_order: number;
+  /** Última ref canônica visível (ex: '3:7'), se disponível. */
+  last_ref?: string;
+  /** 0-100 — percentual de capítulos lidos. */
+  percent: number;
+  updated_at: string;
+  /** Set once on first read — nunca sobrescrito. */
+  started_at?: string;
+  /** Set when percent === 100. */
+  completed_at?: string;
+  /** Denormalizado para zero N+1 na history page. */
+  book_title?: string;
+  book_cover_url?: string;
+  /** Counters atualizados a cada highlight/comment add/remove. */
+  highlights_count?: number;
+  notes_count?: number;
+}
+
+// ─── Annotations ──────────────────────────────────────────────────────────────
+
+export type HighlightColor = 'yellow' | 'green' | 'blue' | 'pink';
+
+export interface BookHighlight {
+  /** Firestore auto-ID — múltiplos highlights por ref (textos diferentes). */
+  id: string;
+  user_id: string;
+  book_id: string;
+  /** Ref canônica ex: '1:7'. */
+  ref: string;
+  /** Texto selecionado. Se ausente = highlight de parágrafo inteiro (legado). */
+  selected_text?: string;
+  color: HighlightColor;
+  created_at: string;
+}
+
+export interface BookComment {
+  /** Firestore auto-ID — múltiplos comentários por ref permitidos. */
+  id: string;
+  user_id: string;
+  book_id: string;
+  ref: string;
+  /** Conteúdo da nota (max 1000 chars, enforced no service layer). */
+  text: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+export type TagColor = 'yellow' | 'green' | 'blue' | 'pink';
+
+export interface BookTag {
+  /** Firestore auto-ID. */
+  id: string;
+  user_id: string;
+  book_id: string;
+  /** Capítulo onde a tag está. */
+  chapter_order: number;
+  /** Ref canônica do parágrafo (opcional — tag pode ser de capítulo inteiro). */
+  ref?: string;
+  /** Texto curto da tag (max 80 chars). */
+  text: string;
+  color: TagColor;
+  created_at: string;
+}
+
 /** Referência canônica usada por outras features (ex: aula). */
 export interface BookCitation {
   book_id: string;

@@ -16,7 +16,8 @@ import {
   Boxes,
   ArrowLeft,
   HeartHandshake,
-  Library
+  Library,
+  History
 } from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
 import { Role } from "@/features/auth/types/user";
@@ -94,6 +95,13 @@ export const appRoutes: AppRoute[] = [
     name: 'Biblioteca',
     href: '/app/dashboard/library',
     icon: Library,
+    roles: ['admin', 'missionario', 'recantiano', 'pai', 'colaborador', 'benfeitor'],
+    requiredFeature: 'read:library'
+  },
+  {
+    name: 'Meu Histórico',
+    href: '/app/dashboard/library/history',
+    icon: History,
     roles: ['admin', 'missionario', 'recantiano', 'pai', 'colaborador', 'benfeitor'],
     requiredFeature: 'read:library'
   },

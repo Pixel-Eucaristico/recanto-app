@@ -1,95 +1,22 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { Plus, Trash2, Save, X } from 'lucide-react';
-import { libraryService } from '@/application/library/LibraryService';
-import { BookCategory } from '@/domain/library/types';
+import { useLibraryCategoryManager } from './hooks/useLibraryCategoryManager';
 
 interface LibraryCategoryManagerProps {
   onClose: () => void;
 }
 
-function slugify(name: string): string {
-  return name
-    .normalize('NFD').replace(/[̀-ͯ]/g, '')
-    .toLowerCase().trim()
-    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-}
-
 export function LibraryCategoryManager({ onClose }: LibraryCategoryManagerProps) {
-  const [categories, setCategories] = useState<BookCategory[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [creating, setCreating] = useState(false);
-  const [editing, setEditing] = useState<BookCategory | null>(null);
-  const [form, setForm] = useState({ name: '', slug: '', description: '', order: 0 });
-  const [saving, setSaving] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<BookCategory | null>(null);
-
-  async function reload() {
-    setLoading(true);
-    try {
-      setCategories(await libraryService.listCategories());
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => { reload(); }, []);
-
-  function openCreate() {
-    setForm({ name: '', slug: '', description: '', order: categories.length });
-    setEditing(null);
-    setCreating(true);
-    setError(null);
-  }
-
-  function openEdit(c: BookCategory) {
-    setForm({ name: c.name, slug: c.slug, description: c.description ?? '', order: c.order });
-    setEditing(c);
-    setCreating(false);
-    setError(null);
-  }
-
-  function close() {
-    setCreating(false);
-    setEditing(null);
-    setError(null);
-  }
-
-  async function save() {
-    setSaving(true);
-    setError(null);
-    try {
-      const slug = form.slug || slugify(form.name);
-      await libraryService.saveCategory({
-        id: editing?.id,
-        name: form.name,
-        slug,
-        description: form.description || undefined,
-        order: Number(form.order) || 0,
-      });
-      close();
-      await reload();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function confirmRemove() {
-    if (!deleteTarget) return;
-    try {
-      await libraryService.deleteCategory(deleteTarget.id);
-      setDeleteTarget(null);
-      await reload();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    }
-  }
+  const {
+    categories, loading, error,
+    creating, editing,
+    form, saving,
+    deleteTarget, setDeleteTarget,
+    openCreate, openEdit, closeForm,
+    patchForm, save, confirmRemove,
+    slugify,
+  } = useLibraryCategoryManager();
 
   const showForm = creating || !!editing;
 
@@ -113,51 +40,27 @@ export function LibraryCategoryManager({ onClose }: LibraryCategoryManagerProps)
           <div className="card-body p-4 gap-2">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-semibold">{editing ? 'Editar' : 'Nova'} categoria</h4>
-              <button type="button" className="btn btn-ghost btn-xs" onClick={close}>
-                <X className="w-4 h-4" />
-              </button>
+              <button type="button" className="btn btn-ghost btn-xs" onClick={closeForm}><X className="w-4 h-4" /></button>
             </div>
             <label className="form-control">
               <span className="label-text text-xs mb-1">Nome</span>
-              <input
-                className="input input-bordered input-sm"
-                value={form.name}
-                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-              />
+              <input className="input input-bordered input-sm" value={form.name} onChange={e => patchForm({ name: e.target.value })} />
             </label>
             <label className="form-control">
               <span className="label-text text-xs mb-1">Slug (vazio gera automático)</span>
-              <input
-                className="input input-bordered input-sm"
-                value={form.slug}
-                onChange={e => setForm(f => ({ ...f, slug: e.target.value }))}
-                placeholder={slugify(form.name)}
-              />
+              <input className="input input-bordered input-sm" value={form.slug} onChange={e => patchForm({ slug: e.target.value })} placeholder={slugify(form.name)} />
             </label>
             <label className="form-control">
               <span className="label-text text-xs mb-1">Descrição</span>
-              <input
-                className="input input-bordered input-sm"
-                value={form.description}
-                onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-              />
+              <input className="input input-bordered input-sm" value={form.description} onChange={e => patchForm({ description: e.target.value })} />
             </label>
             <label className="form-control max-w-xs">
               <span className="label-text text-xs mb-1">Ordem</span>
-              <input
-                type="number"
-                className="input input-bordered input-sm"
-                value={form.order}
-                onChange={e => setForm(f => ({ ...f, order: Number(e.target.value) }))}
-              />
+              <input type="number" className="input input-bordered input-sm" value={form.order} onChange={e => patchForm({ order: Number(e.target.value) })} />
             </label>
             <div className="flex justify-end gap-2">
-              <button className="btn btn-ghost btn-sm" onClick={close}>Cancelar</button>
-              <button
-                className="btn btn-primary btn-sm gap-1"
-                onClick={save}
-                disabled={saving || form.name.trim().length === 0}
-              >
+              <button className="btn btn-ghost btn-sm" onClick={closeForm}>Cancelar</button>
+              <button className="btn btn-primary btn-sm gap-1" onClick={save} disabled={saving || form.name.trim().length === 0}>
                 <Save className="w-4 h-4" /> {saving ? 'Salvando...' : 'Salvar'}
               </button>
             </div>
@@ -191,9 +94,7 @@ export function LibraryCategoryManager({ onClose }: LibraryCategoryManagerProps)
         <div className="modal modal-open">
           <div className="modal-box max-w-sm">
             <h3 className="font-bold text-lg mb-2">Remover categoria</h3>
-            <p className="text-sm text-base-content/70 mb-3">
-              Remover <strong>{deleteTarget.name}</strong>? Livros com essa categoria não são afetados.
-            </p>
+            <p className="text-sm text-base-content/70 mb-3">Remover <strong>{deleteTarget.name}</strong>? Livros não são afetados.</p>
             <div className="modal-action">
               <button className="btn btn-ghost btn-sm" onClick={() => setDeleteTarget(null)}>Cancelar</button>
               <button className="btn btn-error btn-sm" onClick={confirmRemove}>Remover</button>
