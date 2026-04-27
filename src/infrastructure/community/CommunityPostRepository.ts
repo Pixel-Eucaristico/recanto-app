@@ -1,5 +1,13 @@
+import { collection, getDocs, limit, orderBy, query, where } from 'firebase/firestore';
+import { db } from '@/shared/firebase/firebaseClient';
 import { BaseRepository } from '@/shared/firebase/BaseRepository';
 import { CommunityPost } from '@/domain/community/types';
+
+export interface PageResult<T> {
+  items: T[];
+  /** Cursor pra próxima página — null = fim. */
+  nextCursor: string | null;
+}
 
 /**
  * Ordena client-side por created_at desc — evita composite indexes (where+where+orderBy)
@@ -51,6 +59,35 @@ export class CommunityPostRepository extends BaseRepository<CommunityPost> {
   async findAll(): Promise<CommunityPost[]> {
     const list = await this.list();
     return sortByCreatedDesc(list);
+  }
+
+  async findByUser(userId: string, limitCount = 20): Promise<CommunityPost[]> {
+    const list = await this.queryByFilters(
+      [{ field: 'created_by', operator: '==', value: userId }],
+      { orderByField: 'created_at', direction: 'desc', limitCount },
+    );
+    return list;
+  }
+
+  /**
+   * Paginação cursor-based por created_at. Cursor = último created_at retornado.
+   * Mantém custo constante: nunca lê tudo, só `pageSize` docs por chamada.
+   */
+  async findByUserPaginated(
+    userId: string,
+    pageSize: number,
+    cursor: string | null,
+  ): Promise<PageResult<CommunityPost>> {
+    const constraints = [
+      where('created_by', '==', userId),
+      orderBy('created_at', 'desc'),
+    ];
+    if (cursor) constraints.push(where('created_at', '<', cursor));
+    constraints.push(limit(pageSize));
+    const snap = await getDocs(query(collection(db, 'community_posts'), ...constraints));
+    const items = snap.docs.map(d => ({ id: d.id, ...d.data() }) as CommunityPost);
+    const nextCursor = items.length === pageSize ? items[items.length - 1].created_at : null;
+    return { items, nextCursor };
   }
 }
 

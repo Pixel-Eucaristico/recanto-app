@@ -8,6 +8,8 @@ import type { SaveTrackInput } from '@/application/formation/FormationAdminServi
 import { formationAdminService } from '@/application/formation/FormationAdminService';
 import { RichTextEditor } from '@/shared/components/RichTextEditor';
 import { ImagePicker } from '@/shared/components/ImagePicker';
+import { userService } from '@/services/firebase';
+import type { FirebaseUser } from '@/types/firebase-entities';
 
 const ROLES: { value: Role; label: string }[] = [
   { value: 'recantiano', label: 'Recantiano' },
@@ -36,7 +38,9 @@ export function TrackForm({ track, allTracks, saving, onSave, onCancel }: TrackF
   const [thumbnailUrl, setThumbnailUrl] = useState(track?.thumbnail_url ?? '');
   const [requiresTrackIds, setRequiresTrackIds] = useState<string[]>(track?.requires_track_ids ?? []);
   const [requiresApproval, setRequiresApproval] = useState(track?.requires_formator_approval ?? false);
+  const [formatorIds, setFormatorIds] = useState<string[]>(track?.formator_ids ?? []);
   const [trackTypes, setTrackTypes] = useState<FormationTrackType[]>([]);
+  const [eligibleFormators, setEligibleFormators] = useState<FirebaseUser[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -49,10 +53,19 @@ export function TrackForm({ track, allTracks, saving, onSave, onCancel }: TrackF
     setThumbnailUrl(track?.thumbnail_url ?? '');
     setRequiresTrackIds(track?.requires_track_ids ?? []);
     setRequiresApproval(track?.requires_formator_approval ?? false);
+    setFormatorIds(track?.formator_ids ?? []);
   }, [track]);
 
   useEffect(() => {
     formationAdminService.listTrackTypes().then(setTrackTypes).catch(() => setTrackTypes([]));
+    // Carrega missionários + admins (candidatos a formador)
+    Promise.all([
+      userService.getUsersByRole('missionario'),
+      userService.getUsersByRole('admin'),
+    ]).then(([missio, admins]) => {
+      const merged = [...missio, ...admins].filter((u, i, arr) => arr.findIndex(x => x.id === u.id) === i);
+      setEligibleFormators(merged);
+    }).catch(() => setEligibleFormators([]));
   }, []);
 
   function toggleRole(role: Role) {
@@ -65,6 +78,10 @@ export function TrackForm({ track, allTracks, saving, onSave, onCancel }: TrackF
     setRequiresTrackIds(prev =>
       prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id],
     );
+  }
+
+  function toggleFormator(id: string) {
+    setFormatorIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   }
 
   async function handleSubmit() {
@@ -82,6 +99,7 @@ export function TrackForm({ track, allTracks, saving, onSave, onCancel }: TrackF
         thumbnail_url: thumbnailUrl || undefined,
         requires_track_ids: requiresTrackIds.length ? requiresTrackIds : undefined,
         requires_formator_approval: requiresApproval || undefined,
+        formator_ids: formatorIds.length ? formatorIds : undefined,
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -216,6 +234,32 @@ export function TrackForm({ track, allTracks, saving, onSave, onCancel }: TrackF
               </p>
             </div>
           </label>
+
+          {/* Formadores responsáveis */}
+          {eligibleFormators.length > 0 && (
+            <div>
+              <span className="label-text text-xs font-medium block mb-1">
+                Formadores responsáveis (podem ver progresso dos alunos)
+              </span>
+              <div className="flex flex-wrap gap-1">
+                {eligibleFormators.map(u => (
+                  <button
+                    key={u.id}
+                    type="button"
+                    className={`badge badge-sm cursor-pointer ${formatorIds.includes(u.id) ? 'badge-accent' : 'badge-outline'}`}
+                    onClick={() => toggleFormator(u.id)}
+                  >
+                    {u.name || u.email}
+                  </button>
+                ))}
+              </div>
+              {formatorIds.length === 0 && (
+                <p className="text-[11px] text-base-content/50 mt-1">
+                  Sem formador atribuído — apenas admins veem o progresso dos alunos.
+                </p>
+              )}
+            </div>
+          )}
 
           <label className="cursor-pointer flex items-center gap-2">
             <input

@@ -4,4 +4,7 @@ export { TracksInProgress } from './components/TracksInProgress/TracksInProgress
 export { BookShelf } from './components/BookShelf/BookShelf';
 export { RecentAnnotations } from './components/RecentAnnotations/RecentAnnotations';
 export { CreatorView } from './components/CreatorView/CreatorView';
+export { QuickAccess } from './components/QuickAccess/QuickAccess';
+export { ForumActivity } from './components/ForumActivity/ForumActivity';
+export { ActivityHistory } from './components/ActivityHistory/ActivityHistory';
 export { useJourneyData } from './hooks/useJourneyData';

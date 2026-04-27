@@ -4,7 +4,8 @@ import { Sparkles } from 'lucide-react';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 import {
   JourneyHero, ContinueCard, TracksInProgress, BookShelf,
-  RecentAnnotations, CreatorView, useJourneyData,
+  RecentAnnotations, CreatorView, QuickAccess, ForumActivity, ActivityHistory,
+  useJourneyData,
 } from '@/features/journey';
 
 export default function JourneyPage() {
@@ -16,6 +17,9 @@ export default function JourneyPage() {
   const isCreator = user.role === 'admin'
     || user.features.includes('manage:formation')
     || user.features.includes('*');
+  const canHabits = user.features.includes('log:habits') || user.features.includes('*') || user.role === 'admin';
+  const canNotebook = user.features.includes('complete:formation') || user.features.includes('*') || user.role === 'admin';
+  const canChallenges = user.features.includes('manage:challenges') || user.role === 'admin' || user.features.includes('*') || user.role === 'recantiano';
 
   return (
     <div className="min-h-screen bg-base-200 p-3 sm:p-6">
@@ -42,6 +46,8 @@ export default function JourneyPage() {
           <>
             {journey.lastActivity && <ContinueCard lastActivity={journey.lastActivity} />}
 
+            <QuickAccess canHabits={canHabits} canNotebook={canNotebook} canChallenges={canChallenges} />
+
             {!journey.lastActivity && (
               <div className="card bg-base-100 border border-dashed border-base-300">
                 <div className="card-body p-6 items-center text-center gap-2">
@@ -59,6 +65,10 @@ export default function JourneyPage() {
             <BookShelf books={journey.books} />
 
             <RecentAnnotations userId={user.id} />
+
+            <ForumActivity userId={user.id} />
+
+            <ActivityHistory data={journey} />
 
             {isCreator && <CreatorView />}
           </>

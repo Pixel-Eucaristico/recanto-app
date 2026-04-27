@@ -637,8 +637,11 @@ service cloud.firestore {
     }
 
     match /book_reading_progress/{progressId} {
+      // Leitura: dono, admin ou quem tem review:formation (formadores/missionários acompanhando alunos).
       allow read: if isAuthenticated() && (
-        resource.data.user_id == request.auth.uid || isAdmin()
+        resource.data.user_id == request.auth.uid ||
+        isAdmin() ||
+        hasFeature('review:formation')
       );
       allow create, update: if isAuthenticated() &&
         request.resource.data.user_id == request.auth.uid &&

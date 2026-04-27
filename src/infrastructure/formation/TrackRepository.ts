@@ -7,6 +7,7 @@ export interface ITrackRepository {
   findById(id: string): Promise<FormationTrack | null>;
   findPublished(): Promise<FormationTrack[]>;
   findByRole(role: Role): Promise<FormationTrack[]>;
+  findByFormator(userId: string): Promise<FormationTrack[]>;
   create(data: Omit<FormationTrack, 'id'>): Promise<FormationTrack>;
   update(id: string, data: Partial<Omit<FormationTrack, 'id'>>): Promise<FormationTrack | null>;
   remove(id: string): Promise<void>;
@@ -41,6 +42,12 @@ export class FirebaseTrackRepository
     return published.filter(
       t => t.required_roles.length === 0 || t.required_roles.includes(role)
     );
+  }
+
+  async findByFormator(userId: string): Promise<FormationTrack[]> {
+    return this.queryByFilters([
+      { field: 'formator_ids', operator: 'array-contains', value: userId },
+    ]);
   }
 
   async create(data: Omit<FormationTrack, 'id'>): Promise<FormationTrack> {

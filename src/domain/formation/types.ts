@@ -53,6 +53,12 @@ export interface FormationTrack {
   requires_track_ids?: string[];
   /** Quando true, exige aprovação manual do formador após cumprir pré-requisitos. */
   requires_formator_approval?: boolean;
+  /**
+   * IDs dos formadores responsáveis por essa trilha.
+   * Esses usuários podem ver o progresso de todos os alunos dessa trilha.
+   * Admin sempre tem acesso.
+   */
+  formator_ids?: string[];
   created_at: string;
   updated_at?: string;
 }

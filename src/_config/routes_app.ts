@@ -93,32 +93,11 @@ export const appRoutes: AppRoute[] = [
     requiredFeature: 'read:community'
   },
   {
-    name: 'Hábitos',
-    href: '/app/dashboard/habits',
-    icon: HeartHandshake,
-    roles: ['admin', 'missionario', 'recantiano', 'pai', 'colaborador'],
-    requiredFeature: 'log:habits'
-  },
-  {
     name: 'Biblioteca',
     href: '/app/dashboard/library',
     icon: Library,
     roles: ['admin', 'missionario', 'recantiano', 'pai', 'colaborador', 'benfeitor'],
     requiredFeature: 'read:library'
-  },
-  {
-    name: 'Meu Histórico',
-    href: '/app/dashboard/library/history',
-    icon: History,
-    roles: ['admin', 'missionario', 'recantiano', 'pai', 'colaborador', 'benfeitor'],
-    requiredFeature: 'read:library'
-  },
-  {
-    name: 'Minha Jornada',
-    href: '/app/dashboard/my-notebook',
-    icon: BookHeart,
-    roles: ['admin', 'missionario', 'recantiano', 'pai', 'colaborador'],
-    requiredFeature: 'complete:formation'
   },
   {
     name: 'Meus Desafios',

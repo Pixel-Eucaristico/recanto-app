@@ -63,6 +63,28 @@ export class FirebaseProgressRepository implements IProgressRepository {
     return snap.docs.map(d => ({ id: d.id, ...d.data() } as LessonProgress));
   }
 
+  /** Lista progresses de uma trilha (todos alunos). Usado por formador. */
+  async findByTrack(trackId: string): Promise<LessonProgress[]> {
+    const q = query(collection(db, this.collectionName), where('track_id', '==', trackId));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() } as LessonProgress));
+  }
+
+  /** Lista progresses de várias trilhas (todos alunos). Usado por formador. */
+  async findByTracks(trackIds: string[]): Promise<LessonProgress[]> {
+    if (trackIds.length === 0) return [];
+    // Firestore in-array max 30 — se ultrapassar, faz batches
+    const batches: string[][] = [];
+    for (let i = 0; i < trackIds.length; i += 30) batches.push(trackIds.slice(i, i + 30));
+    const results: LessonProgress[] = [];
+    for (const batch of batches) {
+      const q = query(collection(db, this.collectionName), where('track_id', 'in', batch));
+      const snap = await getDocs(q);
+      results.push(...snap.docs.map(d => ({ id: d.id, ...d.data() } as LessonProgress)));
+    }
+    return results;
+  }
+
   async upsert(
     userId: string,
     lessonId: string,

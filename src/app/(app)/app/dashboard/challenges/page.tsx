@@ -74,22 +74,22 @@ export default function ChallengesPage() {
     };
 
     if (isLoading) {
-        return <div className="flex justify-center mt-10"><Loader2 className="w-8 h-8 text-sky-600 animate-spin" /></div>;
+        return <div className="flex justify-center mt-10"><Loader2 className="w-8 h-8 text-info animate-spin" /></div>;
     }
 
     return (
         <div className="space-y-8">
             <header className="text-center">
-                <h1 className="text-3xl font-bold text-slate-800 mb-2">Desafios da Compaixão</h1>
-                <p className="text-slate-500">Pequenos gestos, grandes transformações no coração</p>
+                <h1 className="text-3xl font-bold text-base-content mb-2">Desafios da Compaixão</h1>
+                <p className="text-base-content/60">Pequenos gestos, grandes transformações no coração</p>
                 
-                <Card className="mt-6 bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200 max-w-md mx-auto">
+                <Card className="mt-6 bg-gradient-to-r from-warning/10 to-warning/5 border-warning/30 max-w-md mx-auto">
                     <CardContent className="pt-6">
                         <div className="flex items-center justify-center gap-4">
-                            <Trophy className="w-8 h-8 text-amber-600" />
+                            <Trophy className="w-8 h-8 text-warning" />
                             <div>
-                                <p className="text-2xl font-bold text-amber-800">{meusPontos}</p>
-                                <p className="text-sm text-amber-600">Pontos de Compaixão</p>
+                                <p className="text-2xl font-bold text-warning">{meusPontos}</p>
+                                <p className="text-sm text-warning">Pontos de Compaixão</p>
                             </div>
                         </div>
                     </CardContent>
@@ -100,11 +100,11 @@ export default function ChallengesPage() {
                 {desafios.map(desafio => {
                     const concluido = jaFizDesafio(desafio.id);
                     return (
-                        <Card key={desafio.id} className={`transition-all duration-300 ${concluido ? 'bg-green-50 border-green-200' : 'hover:shadow-lg'}`}>
+                        <Card key={desafio.id} className={`transition-all duration-300 ${concluido ? 'bg-success/10 border-success/30' : 'hover:shadow-lg'}`}>
                             <CardHeader>
                                 <div className="flex items-start justify-between">
                                     <CardTitle className="flex items-center gap-2">
-                                        {concluido ? <CheckCircle2 className="w-5 h-5 text-green-600" /> : <Heart className="w-5 h-5 text-rose-500" />}
+                                        {concluido ? <CheckCircle2 className="w-5 h-5 text-success" /> : <Heart className="w-5 h-5 text-error" />}
                                         {desafio.title}
                                     </CardTitle>
                                     <Badge variant="outline" className="ml-2">
@@ -114,11 +114,11 @@ export default function ChallengesPage() {
                                 </div>
                             </CardHeader>
                             <CardContent>
-                                <p className="text-slate-600 leading-relaxed mb-4">{desafio.description}</p>
+                                <p className="text-base-content/70 leading-relaxed mb-4">{desafio.description}</p>
                                 
                                 {concluido ? (
                                     <div className="text-center">
-                                        <Badge className="bg-green-100 text-green-800">
+                                        <Badge className="bg-success/20 text-success">
                                             ✓ Desafio Concluído!
                                         </Badge>
                                     </div>
@@ -126,7 +126,7 @@ export default function ChallengesPage() {
                                     <Dialog>
                                         <DialogTrigger asChild>
                                             <Button 
-                                                className="w-full bg-rose-500 hover:bg-rose-600" 
+                                                className="w-full btn-error" 
                                                 onClick={() => setSelectedDesafio(desafio)}
                                             >
                                                 <Heart className="w-4 h-4 mr-2" />
@@ -138,9 +138,9 @@ export default function ChallengesPage() {
                                                 <DialogTitle>{desafio.title}</DialogTitle>
                                             </DialogHeader>
                                             <div className="space-y-4">
-                                                <p className="text-slate-600">{desafio.description}</p>
-                                                <div className="bg-sky-50 p-4 rounded-lg">
-                                                    <p className="text-sm font-medium text-sky-800 mb-2">
+                                                <p className="text-base-content/70">{desafio.description}</p>
+                                                <div className="bg-info/10 p-4 rounded-lg">
+                                                    <p className="text-sm font-medium text-info mb-2">
                                                         💫 Reflexão: Como este desafio tocou seu coração?
                                                     </p>
                                                     <Textarea 
@@ -152,7 +152,7 @@ export default function ChallengesPage() {
                                                 </div>
                                                 <Button 
                                                     onClick={handleRegistrarDesafio} 
-                                                    className="w-full bg-rose-500 hover:bg-rose-600"
+                                                    className="w-full btn-error"
                                                     disabled={!diario.trim()}
                                                 >
                                                     Completar Desafio (+{desafio.pontos} pontos)
@@ -172,7 +172,7 @@ export default function ChallengesPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                            <BookOpen className="w-5 h-5 text-sky-600" />
+                            <BookOpen className="w-5 h-5 text-info" />
                             Meu Diário de Desafios
                         </CardTitle>
                         <CardDescription>Suas reflexões e experiências guardadas com carinho</CardDescription>
@@ -182,14 +182,14 @@ export default function ChallengesPage() {
                             {meusRegistros.map(registro => {
                                 const desafio = desafios.find(d => d.id === registro.desafio_id);
                                 return (
-                                    <div key={registro.id} className="border-l-4 border-sky-300 pl-4 py-2">
+                                    <div key={registro.id} className="border-l-4 border-info/30 pl-4 py-2">
                                         <div className="flex items-center gap-2 mb-2">
-                                            <h4 className="font-semibold text-slate-700">{desafio?.title}</h4>
+                                            <h4 className="font-semibold text-base-content">{desafio?.title}</h4>
                                             <Badge variant="outline" className="text-xs">
                                                 {format(new Date(registro.created_date), 'dd/MM/yyyy', { locale: ptBR })}
                                             </Badge>
                                         </div>
-                                        <p className="text-sm text-slate-600 italic leading-relaxed">
+                                        <p className="text-sm text-base-content/70 italic leading-relaxed">
                                             "{registro.diario}"
                                         </p>
                                     </div>
@@ -201,11 +201,11 @@ export default function ChallengesPage() {
             )}
 
             {/* Motivação */}
-            <Card className="bg-gradient-to-br from-sky-50 to-indigo-50 border-sky-200">
+            <Card className="bg-gradient-to-br from-info/10 to-primary/10 border-info/30">
                 <CardContent className="pt-6">
                     <div className="text-center">
-                        <Heart className="w-8 h-8 text-sky-600 mx-auto mb-3" />
-                        <p className="text-sky-800 font-medium italic">
+                        <Heart className="w-8 h-8 text-info mx-auto mb-3" />
+                        <p className="text-info font-medium italic">
                             "Cada pequeno gesto de amor planta uma semente de esperança no mundo. 
                             Continue crescendo em compaixão!"
                         </p>

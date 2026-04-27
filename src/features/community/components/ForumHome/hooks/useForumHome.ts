@@ -1,9 +1,11 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import type { CommunityPost, CommunityVisibility } from '@/domain/community/types';
 import { useCommunityFeed } from '@/features/community/hooks/useCommunityFeed';
 import { useCategories } from '@/features/community/hooks/useCategories';
+import { communityPostRepository } from '@/infrastructure/community/CommunityPostRepository';
 import type { ComposerMode, View, CategoryView } from '../types';
 
 interface UseForumHomeOptions {
@@ -77,6 +79,28 @@ export function useForumHome({ scope }: UseForumHomeOptions) {
     setComposer('closed');
     reload();
   }
+
+  // Deep-link: abre post diretamente quando vem com ?post=ID
+  const searchParams = useSearchParams();
+  const postParam = searchParams?.get('post') ?? null;
+  useEffect(() => {
+    if (!postParam) return;
+    if (selectedPost?.id === postParam) return;
+    // Tenta achar no feed atual; se não, busca direto
+    const found = posts.find(p => p.id === postParam);
+    if (found) {
+      setSelectedPost(found);
+      setView('post');
+      return;
+    }
+    let cancelled = false;
+    communityPostRepository.get(postParam).then(p => {
+      if (cancelled || !p) return;
+      setSelectedPost(p);
+      setView('post');
+    }).catch(() => {/* ignora — post pode ter sumido */});
+    return () => { cancelled = true; };
+  }, [postParam, posts, selectedPost?.id]);
 
   return {
     view, setView,

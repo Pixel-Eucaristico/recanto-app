@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Library, Plus, FolderOpen } from 'lucide-react';
+import { Library, Plus, FolderOpen, History } from 'lucide-react';
 import Link from 'next/link';
 import { BookCatalogGrid, CategoryFilter, useLibraryCatalog, useBooksAdmin } from '@/features/library';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
@@ -76,16 +76,21 @@ export default function LibraryPage() {
               </p>
             </div>
           </div>
-          {isManager && (
-            <div className="flex gap-2 flex-wrap">
-              <Link href="/app/dashboard/admin/library?view=categories" className="btn btn-ghost btn-sm gap-1">
-                <FolderOpen className="w-4 h-4" /> Categorias
-              </Link>
-              <Link href="/app/dashboard/admin/library?view=form" className="btn btn-primary btn-sm gap-1">
-                <Plus className="w-4 h-4" /> Novo livro
-              </Link>
-            </div>
-          )}
+          <div className="flex gap-2 flex-wrap">
+            <Link href="/app/dashboard/library/history" className="btn btn-ghost btn-sm gap-1">
+              <History className="w-4 h-4" /> Histórico
+            </Link>
+            {isManager && (
+              <>
+                <Link href="/app/dashboard/admin/library?view=categories" className="btn btn-ghost btn-sm gap-1">
+                  <FolderOpen className="w-4 h-4" /> Categorias
+                </Link>
+                <Link href="/app/dashboard/admin/library?view=form" className="btn btn-primary btn-sm gap-1">
+                  <Plus className="w-4 h-4" /> Novo livro
+                </Link>
+              </>
+            )}
+          </div>
         </div>
       </header>
 

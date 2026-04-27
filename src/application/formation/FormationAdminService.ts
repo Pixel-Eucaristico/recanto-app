@@ -25,6 +25,7 @@ export interface SaveTrackInput {
   gallery_images?: string[];
   requires_track_ids?: string[];
   requires_formator_approval?: boolean;
+  formator_ids?: string[];
 }
 
 export class FormationAdminService {
@@ -51,6 +52,7 @@ export class FormationAdminService {
         gallery_images: input.gallery_images,
         requires_track_ids: input.requires_track_ids,
         requires_formator_approval: input.requires_formator_approval,
+        formator_ids: input.formator_ids,
         updated_at: new Date().toISOString(),
       });
       if (!updated) throw new Error('Trilha não encontrada.');
@@ -68,6 +70,7 @@ export class FormationAdminService {
       gallery_images: input.gallery_images,
       requires_track_ids: input.requires_track_ids,
       requires_formator_approval: input.requires_formator_approval,
+      formator_ids: input.formator_ids,
       created_at: new Date().toISOString(),
     });
   }
