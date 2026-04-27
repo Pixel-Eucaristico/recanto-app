@@ -54,10 +54,20 @@ export interface FormationLesson {
   requires_reflection: boolean;
   requires_quiz: boolean;
   requires_forum_post: boolean;
+  /** Flags pra novas atividades — todas opcionais, default false. */
+  requires_flashcards?: boolean;
+  requires_case_study?: boolean;
+  requires_word_search?: boolean;
+  requires_crossword?: boolean;
+  requires_mind_map?: boolean;
+  /** Ordem de exibição das atividades pra o aluno. */
+  activity_order?: Array<'quiz' | 'flashcards' | 'case_study' | 'word_search' | 'crossword' | 'mind_map'>;
   apostila_content?: string;
   material_ids: string[];
   quiz_id?: string;
   highlight_quotes: HighlightQuote[];
+  /** Imagem ilustrativa da aula (capa). */
+  thumbnail_url?: string;
   /** Citações de livros embutidas na aula. Cada uma renderiza o trecho do livro inline. */
   book_citations?: LessonBookCitation[];
   /** Pergunta/mural exibida no topo do tab Fórum quando requires_forum_post é true. */

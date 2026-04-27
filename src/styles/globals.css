@@ -331,6 +331,63 @@
   background-color: var(--color-base-300) !important;
 }
 
+/* Mobile-first overrides — < 768px */
+@media (max-width: 767px) {
+  .markdown-field .w-md-editor-toolbar {
+    flex-wrap: wrap !important;
+    padding: 4px !important;
+    gap: 2px !important;
+  }
+  .markdown-field .w-md-editor-toolbar li {
+    flex: 0 0 auto;
+  }
+  .markdown-field .w-md-editor-toolbar li > button {
+    min-width: 32px !important;
+    min-height: 32px !important;
+    padding: 4px !important;
+  }
+  .markdown-field .w-md-editor-toolbar-divider {
+    display: none !important;
+  }
+  .markdown-field .w-md-editor-text,
+  .markdown-field .w-md-editor-text-pre,
+  .markdown-field .w-md-editor-input,
+  .markdown-field textarea {
+    font-size: 16px !important;
+    line-height: 1.6 !important;
+  }
+  .markdown-field .w-md-editor {
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+  .markdown-field .w-md-editor-content {
+    max-width: 100% !important;
+  }
+}
+
+/* MarkdownField auto-grow — cresce com o conteúdo, sem scroll interno.
+   Usa scroll da página/modal pra navegação. */
+.markdown-field-autogrow .w-md-editor {
+  height: auto !important;
+  min-height: 220px;
+}
+.markdown-field-autogrow .w-md-editor-content {
+  height: auto !important;
+  min-height: 220px;
+}
+.markdown-field-autogrow .w-md-editor-area,
+.markdown-field-autogrow .w-md-editor-text {
+  height: auto !important;
+  min-height: 220px;
+  overflow: visible !important;
+}
+.markdown-field-autogrow .w-md-editor-text-input,
+.markdown-field-autogrow .w-md-editor-text-pre,
+.markdown-field-autogrow textarea {
+  overflow: hidden !important;
+  resize: none !important;
+}
+
 /* MarkdownField — MDEditor fullscreen respeita tema DaisyUI */
 .w-md-editor.w-md-editor-fullscreen {
   position: fixed !important;

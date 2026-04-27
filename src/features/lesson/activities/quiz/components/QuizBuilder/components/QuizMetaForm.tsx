@@ -1,6 +1,8 @@
 'use client';
 
 import { MarkdownField } from '@/shared/components/MarkdownField';
+import { RichContent } from '@/shared/components/RichContent';
+import { EditableCard } from '@/shared/components/EditableCard';
 
 interface QuizMetaFormProps {
   title: string;
@@ -16,39 +18,60 @@ export function QuizMetaForm({
   onTitleChange, onDescriptionChange, onPassingScoreChange,
 }: QuizMetaFormProps) {
   return (
-    <div className="card bg-base-100 border border-base-300">
-      <div className="card-body gap-3">
-        <label className="form-control">
-          <span className="label-text text-xs mb-1">Título</span>
-          <input
-            className="input input-bordered input-sm"
-            value={title}
-            onChange={e => onTitleChange(e.target.value)}
-            placeholder="Ex.: Avaliação — O despertar do sentido"
-          />
-        </label>
-        <label className="form-control">
-          <span className="label-text text-xs mb-1">Descrição (Markdown + imagens + YouTube)</span>
-          <MarkdownField
-            value={description}
-            onChange={onDescriptionChange}
-            placeholder="Contexto / orientação..."
-            height={160}
-            preview="live"
-          />
-        </label>
-        <label className="form-control max-w-xs">
-          <span className="label-text text-xs mb-1">Pontuação mínima (%)</span>
-          <input
-            type="number"
-            className="input input-bordered input-sm"
-            value={passingScore}
-            min={0}
-            max={100}
-            onChange={e => onPassingScoreChange(Number(e.target.value))}
-          />
-        </label>
-      </div>
-    </div>
+    <EditableCard
+      badge={
+        <>
+          <span className="badge badge-secondary badge-sm">Quiz</span>
+          {title.trim() && <span className="font-semibold text-sm truncate">{title}</span>}
+          <span className="badge badge-outline badge-xs">≥ {passingScore}%</span>
+        </>
+      }
+      preview={
+        <div className="space-y-1">
+          {!title.trim() && (
+            <p className="text-sm italic text-base-content/40">(sem título — clique no lápis)</p>
+          )}
+          {description.trim() ? (
+            <RichContent markdown={description} className="text-sm" />
+          ) : (
+            <p className="text-xs italic text-base-content/40">(sem descrição)</p>
+          )}
+        </div>
+      }
+      editor={
+        <div className="space-y-3">
+          <div>
+            <span className="label-text text-xs mb-1 block">Título</span>
+            <input
+              className="input input-bordered input-sm w-full"
+              value={title}
+              onChange={e => onTitleChange(e.target.value)}
+              placeholder="Ex.: Avaliação — O despertar do sentido"
+            />
+          </div>
+          <div>
+            <span className="label-text text-xs mb-1 block">Descrição (Markdown + imagens + YouTube)</span>
+            <MarkdownField
+              value={description}
+              onChange={onDescriptionChange}
+              placeholder="Contexto / orientação..."
+              height={160}
+              preview="edit"
+            />
+          </div>
+          <div>
+            <span className="label-text text-xs mb-1 block">Pontuação mínima (%)</span>
+            <input
+              type="number"
+              className="input input-bordered input-sm w-32"
+              value={passingScore}
+              min={0}
+              max={100}
+              onChange={e => onPassingScoreChange(Number(e.target.value))}
+            />
+          </div>
+        </div>
+      }
+    />
   );
 }

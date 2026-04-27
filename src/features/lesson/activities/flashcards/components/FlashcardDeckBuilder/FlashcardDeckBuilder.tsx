@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Trash2, Save, GripVertical } from 'lucide-react';
+import { Plus, Save } from 'lucide-react';
 import { FlashcardDeck, Flashcard } from '@/domain/flashcards/types';
 import { FlashcardEntity } from '@/domain/flashcards/entities/Flashcard';
 import { flashcardService } from '@/application/flashcards/FlashcardService';
 import { MarkdownField } from '@/shared/components/MarkdownField';
+import { RichContent } from '@/shared/components/RichContent';
+import { EditableCard, EditableGroup } from '@/shared/components/EditableCard';
 import ImageUpload from '@/components/cms-editor/ImageUpload';
 
 interface FlashcardDeckBuilderProps {
@@ -74,84 +76,114 @@ export function FlashcardDeckBuilder({ lessonId, createdBy, initial, onSaved }: 
   }
 
   return (
-    <div className="space-y-5">
-      <div className="card bg-base-100 border border-base-300">
-        <div className="card-body gap-3">
-          <label className="form-control">
-            <span className="label-text text-xs mb-1">Título</span>
-            <input
-              className="input input-bordered input-sm"
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              placeholder="Ex.: Terminologia vocacional"
-            />
-          </label>
-          <label className="form-control">
-            <span className="label-text text-xs mb-1">Descrição (Markdown)</span>
-            <MarkdownField
-              value={description}
-              onChange={setDescription}
-              placeholder="Contexto do deck..."
-              height={140}
-              preview="live"
-            />
-          </label>
-        </div>
-      </div>
+    <EditableGroup>
+      <div className="space-y-5">
+      <EditableCard
+        badge={
+          <>
+            <span className="badge badge-secondary badge-sm">Deck</span>
+            {title.trim() && <span className="font-semibold text-sm truncate">{title}</span>}
+            <span className="badge badge-outline badge-xs">{cards.length} cartões</span>
+          </>
+        }
+        preview={
+          <div className="space-y-1">
+            {!title.trim() && (
+              <p className="text-sm italic text-base-content/40">(sem título — clique no lápis)</p>
+            )}
+            {description.trim() ? (
+              <RichContent markdown={description} className="text-sm" />
+            ) : (
+              <p className="text-xs italic text-base-content/40">(sem descrição)</p>
+            )}
+          </div>
+        }
+        editor={
+          <div className="space-y-3">
+            <div>
+              <span className="label-text text-xs mb-1 block">Título</span>
+              <input
+                className="input input-bordered input-sm w-full"
+                value={title}
+                onChange={e => setTitle(e.target.value)}
+                placeholder="Ex.: Terminologia vocacional"
+              />
+            </div>
+            <div>
+              <span className="label-text text-xs mb-1 block">Descrição (Markdown)</span>
+              <MarkdownField
+                value={description}
+                onChange={setDescription}
+                placeholder="Contexto do deck..."
+                height={140}
+                preview="edit"
+              />
+            </div>
+          </div>
+        }
+      />
 
       <div className="space-y-3">
         {cards.map((card, cIdx) => (
-          <div key={card.id} className="card bg-base-100 border border-base-300">
-            <div className="card-body gap-3">
-              <div className="flex items-start gap-2">
-                <GripVertical className="w-5 h-5 text-base-content/30 mt-1" />
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="badge badge-primary badge-sm">Card {cIdx + 1}</span>
-                    <button
-                      className="btn btn-ghost btn-xs text-error ml-auto"
-                      onClick={() => removeCard(cIdx)}
-                      disabled={cards.length <= 1}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                  <ImageUpload
-                    label='Imagem da FRENTE (opcional — ativa modo "carta colecionável")'
-                    folder="flashcards"
-                    value={card.image_url ?? ''}
-                    onChange={url => updateCard(cIdx, { image_url: url || undefined })}
-                  />
-                  <label className="form-control">
-                    <span className="label-text text-xs mb-1">Frente (pergunta/conceito)</span>
-                    <MarkdownField
-                      value={card.front}
-                      onChange={v => updateCard(cIdx, { front: v })}
-                      placeholder="Frente do card"
-                      height={120}
-                      preview="edit"
-                    />
-                  </label>
-                  <ImageUpload
-                    label="Imagem do VERSO (opcional)"
-                    folder="flashcards"
-                    value={card.image_url_back ?? ''}
-                    onChange={url => updateCard(cIdx, { image_url_back: url || undefined })}
-                  />
-                  <label className="form-control">
-                    <span className="label-text text-xs mb-1">Verso (resposta/definição)</span>
-                    <MarkdownField
-                      value={card.back}
-                      onChange={v => updateCard(cIdx, { back: v })}
-                      placeholder="Verso do card"
-                      height={120}
-                      preview="edit"
-                    />
-                  </label>
+          <EditableCard
+            key={card.id}
+            canRemove={cards.length > 1}
+            onRemove={() => removeCard(cIdx)}
+            dragHandle
+            badge={<span className="badge badge-primary badge-sm">Card {cIdx + 1}</span>}
+            preview={
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                <div className="border border-base-300 rounded-lg p-2 bg-base-200/40">
+                  <p className="text-[10px] uppercase font-semibold text-base-content/50 mb-1">Frente</p>
+                  {card.front?.trim() ? (
+                    <RichContent markdown={card.front} className="text-sm" />
+                  ) : <span className="italic text-base-content/40">(vazia)</span>}
+                </div>
+                <div className="border border-base-300 rounded-lg p-2 bg-base-200/40">
+                  <p className="text-[10px] uppercase font-semibold text-base-content/50 mb-1">Verso</p>
+                  {card.back?.trim() ? (
+                    <RichContent markdown={card.back} className="text-sm" />
+                  ) : <span className="italic text-base-content/40">(vazio)</span>}
                 </div>
               </div>
-            </div>
-          </div>
+            }
+            editor={
+              <div className="space-y-3">
+                <ImageUpload
+                  label='Imagem da FRENTE (opcional — modo "carta colecionável")'
+                  folder="flashcards"
+                  value={card.image_url ?? ''}
+                  onChange={url => updateCard(cIdx, { image_url: url || undefined })}
+                />
+                <div>
+                  <span className="label-text text-xs mb-1 block">Frente (pergunta/conceito)</span>
+                  <MarkdownField
+                    value={card.front}
+                    onChange={v => updateCard(cIdx, { front: v })}
+                    placeholder="Frente do card"
+                    height={120}
+                    preview="edit"
+                  />
+                </div>
+                <ImageUpload
+                  label="Imagem do VERSO (opcional)"
+                  folder="flashcards"
+                  value={card.image_url_back ?? ''}
+                  onChange={url => updateCard(cIdx, { image_url_back: url || undefined })}
+                />
+                <div>
+                  <span className="label-text text-xs mb-1 block">Verso (resposta/definição)</span>
+                  <MarkdownField
+                    value={card.back}
+                    onChange={v => updateCard(cIdx, { back: v })}
+                    placeholder="Verso do card"
+                    height={120}
+                    preview="edit"
+                  />
+                </div>
+              </div>
+            }
+          />
         ))}
 
         <button className="btn btn-ghost btn-sm gap-1" onClick={addCard}>
@@ -169,6 +201,7 @@ export function FlashcardDeckBuilder({ lessonId, createdBy, initial, onSaved }: 
           {saving ? 'Salvando...' : 'Salvar deck'}
         </button>
       </div>
-    </div>
+      </div>
+    </EditableGroup>
   );
 }

@@ -6,6 +6,8 @@ import { WordSearchPuzzle } from '@/domain/word-search/types';
 import { WordSearchEntity } from '@/domain/word-search/entities/WordSearch';
 import { wordSearchService } from '@/application/word-search/WordSearchService';
 import { MarkdownField } from '@/shared/components/MarkdownField';
+import { RichContent } from '@/shared/components/RichContent';
+import { EditableCard, EditableGroup } from '@/shared/components/EditableCard';
 
 interface WordSearchBuilderProps {
   lessonId: string;
@@ -76,38 +78,60 @@ export function WordSearchBuilder({ lessonId, createdBy, initial, onSaved }: Wor
   }
 
   return (
+    <EditableGroup>
     <div className="space-y-4">
-      <div className="card bg-base-100 border border-base-300">
-        <div className="card-body gap-3">
-          <label className="form-control">
-            <span className="label-text text-xs mb-1">Título</span>
-            <input
-              className="input input-bordered input-sm"
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              placeholder="Ex.: Virtudes teologais"
-            />
-          </label>
-          <label className="form-control">
-            <span className="label-text text-xs mb-1">Descrição (Markdown)</span>
-            <MarkdownField value={description} onChange={setDescription} height={120} preview="live" />
-          </label>
-          <label className="form-control max-w-xs">
-            <span className="label-text text-xs mb-1">Tamanho do grid (8–20)</span>
-            <input
-              type="number"
-              className="input input-bordered input-sm"
-              min={Math.max(8, minSize)}
-              max={20}
-              value={size}
-              onChange={e => setSize(Number(e.target.value))}
-            />
-            <span className="text-xs text-base-content/60 mt-1">
-              Mínimo sugerido pelas suas palavras: {minSize}
-            </span>
-          </label>
-        </div>
-      </div>
+      <EditableCard
+        badge={
+          <>
+            <span className="badge badge-secondary badge-sm">Caça-palavras</span>
+            {title.trim() && <span className="font-semibold text-sm truncate">{title}</span>}
+            <span className="badge badge-outline badge-xs">grid {size}×{size}</span>
+          </>
+        }
+        preview={
+          <div className="space-y-1">
+            {!title.trim() && (
+              <p className="text-sm italic text-base-content/40">(sem título — clique no lápis)</p>
+            )}
+            {description.trim() ? (
+              <RichContent markdown={description} className="text-sm" />
+            ) : (
+              <p className="text-xs italic text-base-content/40">(sem descrição)</p>
+            )}
+          </div>
+        }
+        editor={
+          <div className="space-y-3">
+            <div>
+              <span className="label-text text-xs mb-1 block">Título</span>
+              <input
+                className="input input-bordered input-sm w-full"
+                value={title}
+                onChange={e => setTitle(e.target.value)}
+                placeholder="Ex.: Virtudes teologais"
+              />
+            </div>
+            <div>
+              <span className="label-text text-xs mb-1 block">Descrição (Markdown)</span>
+              <MarkdownField value={description} onChange={setDescription} height={120} preview="edit" />
+            </div>
+            <div>
+              <span className="label-text text-xs mb-1 block">Tamanho do grid (8–20)</span>
+              <input
+                type="number"
+                className="input input-bordered input-sm w-32"
+                min={Math.max(8, minSize)}
+                max={20}
+                value={size}
+                onChange={e => setSize(Number(e.target.value))}
+              />
+              <span className="text-xs text-base-content/60 mt-1 block">
+                Mínimo sugerido pelas suas palavras: {minSize}
+              </span>
+            </div>
+          </div>
+        }
+      />
 
       <div className="card bg-base-100 border border-base-300">
         <div className="card-body gap-2">
@@ -159,5 +183,6 @@ export function WordSearchBuilder({ lessonId, createdBy, initial, onSaved }: Wor
         </button>
       </div>
     </div>
+    </EditableGroup>
   );
 }

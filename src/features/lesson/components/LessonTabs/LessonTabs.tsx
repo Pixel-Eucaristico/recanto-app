@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, ReactNode } from 'react';
-import { BookOpen, PenLine, Award, MessageSquare, Quote, Activity, Megaphone } from 'lucide-react';
+import { BookOpen, PenLine, Award, MessageSquare, Quote, Activity, Megaphone, Layers, Search, Grid3x3, Network } from 'lucide-react';
 import { FormationLesson } from '@/domain/formation/types';
 import { RichContent } from '@/shared/components/RichContent';
 import { useReflection } from '@/features/spiritual-notebook';
@@ -10,8 +10,14 @@ import { QuizPlayer, QuizResult, useQuiz } from '@/features/lesson/activities/qu
 import { ForumThread } from '@/features/community';
 import { LessonBookExcerpt } from '@/features/lesson/components/LessonBookExcerpt';
 import { bookReadingProgressRepository } from '@/infrastructure/library/BookReadingProgressRepository';
+import { useFlashcardDeck, FlashcardDeckPlayer } from '@/features/lesson/activities/flashcards';
+import { useCaseStudy, CaseStudyPlayer, CaseStudySummary } from '@/features/lesson/activities/case-studies';
+import { useWordSearch, WordSearchGrid } from '@/features/lesson/activities/word-search';
+import { useCrossword, CrosswordGrid } from '@/features/lesson/activities/crossword';
+import { useMindMap, MindMapCanvas } from '@/features/lesson/activities/mind-maps';
 
-type TabId = 'apostila' | 'reflection' | 'quiz' | 'forum' | 'practical';
+type TabId = 'apostila' | 'reflection' | 'quiz' | 'forum' | 'practical'
+  | 'flashcards' | 'case_study' | 'word_search' | 'crossword' | 'mind_map';
 
 export interface LessonTabsHandle {
   /** Bump ou valor diferente pra forçar abrir fórum + composer. */
@@ -43,7 +49,12 @@ export function LessonTabs({ lesson, track, module, userId, userName, onProgress
   const tabs: { id: TabId; label: string; icon: ReactNode; enabled: boolean }[] = [
     { id: 'apostila', label: 'Apostila', icon: <BookOpen className="w-4 h-4" />, enabled: !!lesson.apostila_content || lesson.highlight_quotes.length > 0 || (lesson.book_citations?.length ?? 0) > 0 },
     { id: 'reflection', label: 'Caderno', icon: <PenLine className="w-4 h-4" />, enabled: lesson.requires_reflection },
-    { id: 'quiz', label: 'Quiz', icon: <Award className="w-4 h-4" />, enabled: lesson.requires_quiz && !!lesson.quiz_id },
+    { id: 'quiz', label: 'Quiz', icon: <Award className="w-4 h-4" />, enabled: !!lesson.requires_quiz },
+    { id: 'flashcards', label: 'Flashcards', icon: <Layers className="w-4 h-4" />, enabled: !!lesson.requires_flashcards },
+    { id: 'case_study', label: 'Caso', icon: <Network className="w-4 h-4" />, enabled: !!lesson.requires_case_study },
+    { id: 'word_search', label: 'Caça-palavras', icon: <Search className="w-4 h-4" />, enabled: !!lesson.requires_word_search },
+    { id: 'crossword', label: 'Cruzadas', icon: <Grid3x3 className="w-4 h-4" />, enabled: !!lesson.requires_crossword },
+    { id: 'mind_map', label: 'Mapa mental', icon: <Network className="w-4 h-4" />, enabled: !!lesson.requires_mind_map },
     { id: 'practical', label: 'Prática', icon: <Activity className="w-4 h-4" />, enabled: !!lesson.practical_activity },
     { id: 'forum', label: 'Fórum', icon: <MessageSquare className="w-4 h-4" />, enabled: true },
   ];
@@ -77,8 +88,23 @@ export function LessonTabs({ lesson, track, module, userId, userName, onProgress
             onSaved={onProgress}
           />
         )}
-        {tab === 'quiz' && lesson.quiz_id && (
-          <QuizTab lessonId={lesson.id} quizId={lesson.quiz_id} userId={userId} onPassed={onProgress} />
+        {tab === 'quiz' && (
+          <QuizTab lessonId={lesson.id} quizId={lesson.quiz_id ?? ''} userId={userId} onPassed={onProgress} />
+        )}
+        {tab === 'flashcards' && (
+          <FlashcardsTab lessonId={lesson.id} onCompleted={onProgress} />
+        )}
+        {tab === 'case_study' && (
+          <CaseStudyTab lessonId={lesson.id} onCompleted={onProgress} />
+        )}
+        {tab === 'word_search' && (
+          <WordSearchTab lessonId={lesson.id} onCompleted={onProgress} />
+        )}
+        {tab === 'crossword' && (
+          <CrosswordTab lessonId={lesson.id} onCompleted={onProgress} />
+        )}
+        {tab === 'mind_map' && (
+          <MindMapTab lessonId={lesson.id} onCompleted={onProgress} />
         )}
         {tab === 'practical' && lesson.practical_activity && (
           <PracticalTab lesson={lesson} />
@@ -260,3 +286,68 @@ function PracticalTab({ lesson }: { lesson: FormationLesson }) {
     </div>
   );
 }
+
+// ─── Activity tab wrappers ──────────────────────────────────────────────────
+//
+// Cada atividade carrega via hook + verifica se foi configurada pelo formador.
+// Os players têm signatures detalhadas — integração full virá em iteração
+// separada por atividade. Por enquanto, indica configuração e link pro playground.
+
+function NotConfigured({ label }: { label: string }) {
+  return (
+    <div className="alert alert-warning text-sm">
+      <span>Esta aula tem {label} marcado como obrigatório, mas o formador ainda não configurou.</span>
+    </div>
+  );
+}
+
+function ActivityPlaceholder({ label }: { label: string }) {
+  return (
+    <div className="alert alert-info text-sm">
+      <span>{label} configurado. Player completo em integração — visualize por enquanto no painel de testes.</span>
+    </div>
+  );
+}
+
+function FlashcardsTab({ lessonId, onCompleted: _onCompleted }: { lessonId: string; onCompleted?: () => void }) {
+  const fc = useFlashcardDeck({ lessonId });
+  if (fc.loading) return <div className="text-sm text-base-content/60">Carregando flashcards...</div>;
+  if (!fc.deck) return <NotConfigured label="flashcards" />;
+  return <ActivityPlaceholder label={`Flashcards "${fc.deck.title}"`} />;
+}
+
+function CaseStudyTab({ lessonId, onCompleted: _onCompleted }: { lessonId: string; onCompleted?: () => void }) {
+  const cs = useCaseStudy({ lessonId });
+  if (cs.loading) return <div className="text-sm text-base-content/60">Carregando estudo de caso...</div>;
+  if (!cs.caseStudy) return <NotConfigured label="estudo de caso" />;
+  return <ActivityPlaceholder label={`Estudo de caso "${cs.caseStudy.title}"`} />;
+}
+
+function WordSearchTab({ lessonId, onCompleted: _onCompleted }: { lessonId: string; onCompleted?: () => void }) {
+  const ws = useWordSearch({ lessonId });
+  if (ws.loading) return <div className="text-sm text-base-content/60">Carregando caça-palavras...</div>;
+  if (!ws.puzzle) return <NotConfigured label="caça-palavras" />;
+  return <ActivityPlaceholder label={`Caça-palavras "${ws.puzzle.title}"`} />;
+}
+
+function CrosswordTab({ lessonId, onCompleted: _onCompleted }: { lessonId: string; onCompleted?: () => void }) {
+  const cw = useCrossword({ lessonId });
+  if (cw.loading) return <div className="text-sm text-base-content/60">Carregando palavras cruzadas...</div>;
+  if (!cw.puzzle) return <NotConfigured label="palavras cruzadas" />;
+  return <ActivityPlaceholder label={`Palavras cruzadas "${cw.puzzle.title}"`} />;
+}
+
+function MindMapTab({ lessonId, onCompleted: _onCompleted }: { lessonId: string; onCompleted?: () => void }) {
+  const mm = useMindMap({ lessonId });
+  if (mm.loading) return <div className="text-sm text-base-content/60">Carregando mapa mental...</div>;
+  if (!mm.template) return <NotConfigured label="mapa mental" />;
+  return <ActivityPlaceholder label={`Mapa mental "${mm.template.title}"`} />;
+}
+
+// Suppress unused player imports — usados nas iterações futuras
+void FlashcardDeckPlayer;
+void CaseStudyPlayer;
+void CaseStudySummary;
+void WordSearchGrid;
+void CrosswordGrid;
+void MindMapCanvas;

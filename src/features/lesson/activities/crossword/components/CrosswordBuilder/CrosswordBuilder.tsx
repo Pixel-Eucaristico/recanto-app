@@ -5,6 +5,8 @@ import { Plus, Trash2, Save } from 'lucide-react';
 import { CrosswordPuzzle, CrosswordClue } from '@/domain/crossword/types';
 import { crosswordService } from '@/application/crossword/CrosswordService';
 import { MarkdownField } from '@/shared/components/MarkdownField';
+import { RichContent } from '@/shared/components/RichContent';
+import { EditableCard, EditableGroup } from '@/shared/components/EditableCard';
 
 interface CrosswordBuilderProps {
   lessonId: string;
@@ -70,24 +72,45 @@ export function CrosswordBuilder({ lessonId, createdBy, initial, onSaved }: Cros
   }
 
   return (
+    <EditableGroup>
     <div className="space-y-4">
-      <div className="card bg-base-100 border border-base-300">
-        <div className="card-body gap-3">
-          <label className="form-control">
-            <span className="label-text text-xs mb-1">Título</span>
-            <input
-              className="input input-bordered input-sm"
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              placeholder="Ex.: Virtudes cardeais"
-            />
-          </label>
-          <label className="form-control">
-            <span className="label-text text-xs mb-1">Descrição (Markdown)</span>
-            <MarkdownField value={description} onChange={setDescription} height={120} preview="live" />
-          </label>
-        </div>
-      </div>
+      <EditableCard
+        badge={
+          <>
+            <span className="badge badge-secondary badge-sm">Cruzadas</span>
+            {title.trim() && <span className="font-semibold text-sm truncate">{title}</span>}
+          </>
+        }
+        preview={
+          <div className="space-y-1">
+            {!title.trim() && (
+              <p className="text-sm italic text-base-content/40">(sem título — clique no lápis)</p>
+            )}
+            {description.trim() ? (
+              <RichContent markdown={description} className="text-sm" />
+            ) : (
+              <p className="text-xs italic text-base-content/40">(sem descrição)</p>
+            )}
+          </div>
+        }
+        editor={
+          <div className="space-y-3">
+            <div>
+              <span className="label-text text-xs mb-1 block">Título</span>
+              <input
+                className="input input-bordered input-sm w-full"
+                value={title}
+                onChange={e => setTitle(e.target.value)}
+                placeholder="Ex.: Virtudes cardeais"
+              />
+            </div>
+            <div>
+              <span className="label-text text-xs mb-1 block">Descrição (Markdown)</span>
+              <MarkdownField value={description} onChange={setDescription} height={120} preview="edit" />
+            </div>
+          </div>
+        }
+      />
 
       <div className="card bg-base-100 border border-base-300">
         <div className="card-body gap-3">
@@ -136,5 +159,6 @@ export function CrosswordBuilder({ lessonId, createdBy, initial, onSaved }: Cros
         </button>
       </div>
     </div>
+    </EditableGroup>
   );
 }

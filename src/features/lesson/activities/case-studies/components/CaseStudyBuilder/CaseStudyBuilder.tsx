@@ -7,6 +7,7 @@ import { CaseFlowCanvas } from './components/CaseFlowCanvas';
 import { NodeEditModal } from './components/NodeEditModal';
 import { EdgeEditModal } from './components/EdgeEditModal';
 import { useCaseStudyBuilder } from './hooks/useCaseStudyBuilder';
+import { EditableGroup } from '@/shared/components/EditableCard';
 
 interface CaseStudyBuilderProps {
   lessonId: string;
@@ -38,6 +39,7 @@ export function CaseStudyBuilder({ lessonId, createdBy, initial, onSaved }: Case
   const editingNode = editingId ? caseNodes[editingId] : null;
 
   return (
+    <EditableGroup>
     <div className="space-y-5">
       <CaseMetaForm
         title={title}
@@ -114,5 +116,6 @@ export function CaseStudyBuilder({ lessonId, createdBy, initial, onSaved }: Case
         </button>
       </div>
     </div>
+    </EditableGroup>
   );
 }

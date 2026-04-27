@@ -5,6 +5,8 @@ import { Save } from 'lucide-react';
 import { MindMapTemplate, MindMapState, MindMapNode } from '@/domain/mind-maps/types';
 import { mindMapService } from '@/application/mind-maps/MindMapService';
 import { MarkdownField } from '@/shared/components/MarkdownField';
+import { RichContent } from '@/shared/components/RichContent';
+import { EditableCard, EditableGroup } from '@/shared/components/EditableCard';
 import { MindMapCanvas } from '../MindMapCanvas';
 
 interface MindMapBuilderProps {
@@ -75,24 +77,45 @@ export function MindMapBuilder({ lessonId, createdBy, initial, onSaved }: MindMa
   }
 
   return (
+    <EditableGroup>
     <div className="space-y-4">
-      <div className="card bg-base-100 border border-base-300">
-        <div className="card-body gap-3">
-          <label className="form-control">
-            <span className="label-text text-xs mb-1">Título</span>
-            <input
-              className="input input-bordered input-sm"
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              placeholder="Ex.: Mapa da Teologia da Graça"
-            />
-          </label>
-          <label className="form-control">
-            <span className="label-text text-xs mb-1">Descrição (Markdown)</span>
-            <MarkdownField value={description} onChange={setDescription} height={120} preview="live" />
-          </label>
-        </div>
-      </div>
+      <EditableCard
+        badge={
+          <>
+            <span className="badge badge-secondary badge-sm">Mapa mental</span>
+            {title.trim() && <span className="font-semibold text-sm truncate">{title}</span>}
+          </>
+        }
+        preview={
+          <div className="space-y-1">
+            {!title.trim() && (
+              <p className="text-sm italic text-base-content/40">(sem título — clique no lápis)</p>
+            )}
+            {description.trim() ? (
+              <RichContent markdown={description} className="text-sm" />
+            ) : (
+              <p className="text-xs italic text-base-content/40">(sem descrição)</p>
+            )}
+          </div>
+        }
+        editor={
+          <div className="space-y-3">
+            <div>
+              <span className="label-text text-xs mb-1 block">Título</span>
+              <input
+                className="input input-bordered input-sm w-full"
+                value={title}
+                onChange={e => setTitle(e.target.value)}
+                placeholder="Ex.: Mapa da Teologia da Graça"
+              />
+            </div>
+            <div>
+              <span className="label-text text-xs mb-1 block">Descrição (Markdown)</span>
+              <MarkdownField value={description} onChange={setDescription} height={120} preview="edit" />
+            </div>
+          </div>
+        }
+      />
 
       <MindMapCanvas state={state} onChange={setState} allowRootToggle />
 
@@ -106,5 +129,6 @@ export function MindMapBuilder({ lessonId, createdBy, initial, onSaved }: MindMa
         </button>
       </div>
     </div>
+    </EditableGroup>
   );
 }

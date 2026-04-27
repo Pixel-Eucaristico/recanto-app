@@ -10,6 +10,9 @@ import { RichTextEditor } from '@/shared/components/RichTextEditor';
 import { CanonicalRefPicker } from '@/features/library/components/CanonicalRefPicker';
 import { detectVideoDuration, formatDuration, parseDurationString, parseVideoSource } from '@/features/lesson/video-player';
 import { VideoPickerModal } from '../VideoPicker';
+import { ActivityManager } from '../ActivityManager';
+import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
+import ImageUpload from '@/components/cms-editor/ImageUpload';
 
 interface LessonFormProps {
   lesson: FormationLesson | null;
@@ -21,6 +24,7 @@ interface LessonFormProps {
 }
 
 export function LessonForm({ lesson, moduleId, defaultOrder, saving, onSave, onCancel }: LessonFormProps) {
+  const user = useCurrentUser();
   // Meta
   const [title, setTitle] = useState(lesson?.title ?? '');
   const [description, setDescription] = useState(lesson?.description ?? '');
@@ -42,9 +46,16 @@ export function LessonForm({ lesson, moduleId, defaultOrder, saving, onSave, onC
   // Activities
   const [requiresReflection, setRequiresReflection] = useState(lesson?.requires_reflection ?? false);
   const [requiresQuiz, setRequiresQuiz] = useState(lesson?.requires_quiz ?? false);
-  const [quizId, setQuizId] = useState(lesson?.quiz_id ?? '');
   const [requiresForumPost, setRequiresForumPost] = useState(lesson?.requires_forum_post ?? false);
   const [forumPrompt, setForumPrompt] = useState(lesson?.forum_prompt ?? '');
+  // Activity flags (gerenciadas via ActivityManager)
+  const [requiresFlashcards, setRequiresFlashcards] = useState(lesson?.requires_flashcards ?? false);
+  const [requiresCaseStudy, setRequiresCaseStudy] = useState(lesson?.requires_case_study ?? false);
+  const [requiresWordSearch, setRequiresWordSearch] = useState(lesson?.requires_word_search ?? false);
+  const [requiresCrossword, setRequiresCrossword] = useState(lesson?.requires_crossword ?? false);
+  const [requiresMindMap, setRequiresMindMap] = useState(lesson?.requires_mind_map ?? false);
+  const [activityOrder, setActivityOrder] = useState<NonNullable<FormationLesson['activity_order']>>(lesson?.activity_order ?? []);
+  const [thumbnailUrl, setThumbnailUrl] = useState(lesson?.thumbnail_url ?? '');
 
   // Practical
   const [practical, setPractical] = useState(lesson?.practical_activity ?? '');
@@ -71,9 +82,15 @@ export function LessonForm({ lesson, moduleId, defaultOrder, saving, onSave, onC
     setApostila(lesson?.apostila_content ?? '');
     setRequiresReflection(lesson?.requires_reflection ?? false);
     setRequiresQuiz(lesson?.requires_quiz ?? false);
-    setQuizId(lesson?.quiz_id ?? '');
     setRequiresForumPost(lesson?.requires_forum_post ?? false);
     setForumPrompt(lesson?.forum_prompt ?? '');
+    setRequiresFlashcards(lesson?.requires_flashcards ?? false);
+    setRequiresCaseStudy(lesson?.requires_case_study ?? false);
+    setRequiresWordSearch(lesson?.requires_word_search ?? false);
+    setRequiresCrossword(lesson?.requires_crossword ?? false);
+    setRequiresMindMap(lesson?.requires_mind_map ?? false);
+    setActivityOrder(lesson?.activity_order ?? []);
+    setThumbnailUrl(lesson?.thumbnail_url ?? '');
     setPractical(lesson?.practical_activity ?? '');
     setPracticalRequired(lesson?.practical_required ?? false);
     setPracticalPermanent(lesson?.practical_permanent ?? false);
@@ -133,9 +150,15 @@ export function LessonForm({ lesson, moduleId, defaultOrder, saving, onSave, onC
         apostila_content: apostila || undefined,
         requires_reflection: requiresReflection,
         requires_quiz: requiresQuiz,
-        quiz_id: requiresQuiz ? (quizId || undefined) : undefined,
         requires_forum_post: requiresForumPost,
         forum_prompt: requiresForumPost ? (forumPrompt || undefined) : undefined,
+        requires_flashcards: requiresFlashcards,
+        requires_case_study: requiresCaseStudy,
+        requires_word_search: requiresWordSearch,
+        requires_crossword: requiresCrossword,
+        requires_mind_map: requiresMindMap,
+        activity_order: activityOrder.length ? activityOrder : undefined,
+        thumbnail_url: thumbnailUrl || undefined,
         book_citations: bookCitations.length ? bookCitations : undefined,
         highlight_quotes: highlightQuotes.filter(q => q.text.trim()),
         practical_activity: practical || undefined,
@@ -176,6 +199,15 @@ export function LessonForm({ lesson, moduleId, defaultOrder, saving, onSave, onC
 
         <Field label="Ordem">
           <input type="number" className="input input-bordered input-sm w-32" value={order} min={1} onChange={e => setOrder(Number(e.target.value) || 1)} />
+        </Field>
+
+        <Field label="Imagem ilustrativa (capa da aula)">
+          <ImageUpload
+            label=""
+            folder="formation/lesson-covers"
+            value={thumbnailUrl}
+            onChange={url => setThumbnailUrl(url || '')}
+          />
         </Field>
       </Section>
 
@@ -338,19 +370,6 @@ export function LessonForm({ lesson, moduleId, defaultOrder, saving, onSave, onC
         />
 
         <ActivityToggle
-          icon={<Award className="w-4 h-4" />}
-          label="Quiz"
-          description="Aluno precisa passar no quiz pra avançar"
-          checked={requiresQuiz}
-          onChange={setRequiresQuiz}
-        />
-        {requiresQuiz && (
-          <Field label="Quiz ID" extraClass="ml-6 mt-2">
-            <input className="input input-bordered input-sm w-full" value={quizId} onChange={e => setQuizId(e.target.value)} placeholder="Cole o ID do quiz cadastrado (ex: quiz_abc123)" />
-          </Field>
-        )}
-
-        <ActivityToggle
           icon={<MessageSquare className="w-4 h-4" />}
           label="Postar no fórum"
           description="Aluno precisa criar pelo menos um post no fórum da aula"
@@ -369,6 +388,35 @@ export function LessonForm({ lesson, moduleId, defaultOrder, saving, onSave, onC
             </Field>
           </div>
         )}
+      </Section>
+
+      {/* Atividades interativas — Quiz, Flashcards, Case Study, Word Search, Crossword, Mind Map */}
+      <Section title="Atividades interativas" icon={<Award className="w-4 h-4" />}>
+        <p className="text-xs text-base-content/60">
+          Marque obrigatórias e clique em &quot;Editar&quot; pra criar/editar a atividade.
+        </p>
+        <ActivityManager
+          lessonId={lesson?.id ?? null}
+          createdBy={user?.id ?? ''}
+          flags={{
+            requires_quiz: requiresQuiz,
+            requires_flashcards: requiresFlashcards,
+            requires_case_study: requiresCaseStudy,
+            requires_word_search: requiresWordSearch,
+            requires_crossword: requiresCrossword,
+            requires_mind_map: requiresMindMap,
+          }}
+          order={activityOrder}
+          onChange={patch => {
+            if (patch.requires_quiz !== undefined) setRequiresQuiz(patch.requires_quiz);
+            if (patch.requires_flashcards !== undefined) setRequiresFlashcards(patch.requires_flashcards);
+            if (patch.requires_case_study !== undefined) setRequiresCaseStudy(patch.requires_case_study);
+            if (patch.requires_word_search !== undefined) setRequiresWordSearch(patch.requires_word_search);
+            if (patch.requires_crossword !== undefined) setRequiresCrossword(patch.requires_crossword);
+            if (patch.requires_mind_map !== undefined) setRequiresMindMap(patch.requires_mind_map);
+          }}
+          onOrderChange={setActivityOrder}
+        />
       </Section>
 
       {/* Atividade prática */}

@@ -153,8 +153,15 @@ export class FormationAdminService {
     requires_reflection?: boolean;
     requires_quiz?: boolean;
     requires_forum_post?: boolean;
+    requires_flashcards?: boolean;
+    requires_case_study?: boolean;
+    requires_word_search?: boolean;
+    requires_crossword?: boolean;
+    requires_mind_map?: boolean;
+    activity_order?: FormationLesson['activity_order'];
     apostila_content?: string;
     quiz_id?: string;
+    thumbnail_url?: string;
     book_citations?: FormationLesson['book_citations'];
     forum_prompt?: string;
     practical_activity?: string;
@@ -178,8 +185,15 @@ export class FormationAdminService {
       requires_reflection: input.requires_reflection ?? false,
       requires_quiz: input.requires_quiz ?? false,
       requires_forum_post: input.requires_forum_post ?? false,
+      requires_flashcards: input.requires_flashcards ?? false,
+      requires_case_study: input.requires_case_study ?? false,
+      requires_word_search: input.requires_word_search ?? false,
+      requires_crossword: input.requires_crossword ?? false,
+      requires_mind_map: input.requires_mind_map ?? false,
+      activity_order: input.activity_order,
       apostila_content: input.apostila_content,
       quiz_id: input.quiz_id,
+      thumbnail_url: input.thumbnail_url,
       book_citations: input.book_citations,
       forum_prompt: input.forum_prompt,
       practical_activity: input.practical_activity,
