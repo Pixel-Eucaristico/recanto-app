@@ -1,6 +1,26 @@
 import { Role } from '@/shared/types/role';
 
-export type TrackType = 'pre-vocacional' | 'vocacional' | 'etapas' | 'continua';
+/**
+ * Tipo da trilha — agora é referência a `formation_track_types/{id}`.
+ * Mantenho string pra compat: pode ser ID custom OU label legado
+ * (pre-vocacional, vocacional, etapas, continua).
+ */
+export type TrackType = string;
+
+/** Categoria/tipo de trilha definida pelo admin (sem hard-code). */
+export interface FormationTrackType {
+  id: string;
+  /** Nome curto (slug) — ex: "pre-vocacional". */
+  slug: string;
+  /** Nome exibido — ex: "Pré-vocacional". */
+  label: string;
+  /** Descrição opcional. */
+  description?: string;
+  /** Ordem de exibição. */
+  order: number;
+  created_at: string;
+  updated_at?: string;
+}
 
 export type ProgressStatus = 'locked' | 'unlocked' | 'in_progress' | 'completed';
 
@@ -26,6 +46,13 @@ export interface FormationTrack {
   module_ids: string[];
   thumbnail_url?: string;
   gallery_images?: string[];
+  /**
+   * IDs de trilhas que precisam ser concluídas antes desta liberar.
+   * Aluno só vê esta trilha após concluir TODAS as listadas + aprovação do formador.
+   */
+  requires_track_ids?: string[];
+  /** Quando true, exige aprovação manual do formador após cumprir pré-requisitos. */
+  requires_formator_approval?: boolean;
   created_at: string;
   updated_at?: string;
 }
@@ -37,6 +64,8 @@ export interface FormationModule {
   track_id: string;
   order: number;
   lesson_ids: string[];
+  /** Imagem ilustrativa do módulo. */
+  thumbnail_url?: string;
   created_at: string;
   updated_at?: string;
 }

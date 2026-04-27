@@ -2,17 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { Save, ArrowLeft } from 'lucide-react';
-import type { FormationTrack, TrackType } from '@/domain/formation/types';
+import type { FormationTrack, TrackType, FormationTrackType } from '@/domain/formation/types';
 import type { Role } from '@/shared/types/role';
 import type { SaveTrackInput } from '@/application/formation/FormationAdminService';
+import { formationAdminService } from '@/application/formation/FormationAdminService';
 import { RichTextEditor } from '@/shared/components/RichTextEditor';
-
-const TRACK_TYPES: { value: TrackType; label: string; description: string }[] = [
-  { value: 'pre-vocacional', label: 'Pré-vocacional', description: 'Conhecendo a vocação' },
-  { value: 'vocacional', label: 'Vocacional', description: 'Aprofundamento vocacional' },
-  { value: 'etapas', label: 'Etapas', description: 'Trilha em etapas progressivas' },
-  { value: 'continua', label: 'Contínua', description: 'Formação permanente' },
-];
+import { ImagePicker } from '@/shared/components/ImagePicker';
 
 const ROLES: { value: Role; label: string }[] = [
   { value: 'recantiano', label: 'Recantiano' },
@@ -24,34 +19,51 @@ const ROLES: { value: Role; label: string }[] = [
 
 interface TrackFormProps {
   track: FormationTrack | null;
+  /** Lista de outras trilhas pra picker de pré-requisitos. */
+  allTracks: FormationTrack[];
   saving: boolean;
   onSave: (input: SaveTrackInput) => Promise<void>;
   onCancel: () => void;
 }
 
-export function TrackForm({ track, saving, onSave, onCancel }: TrackFormProps) {
+export function TrackForm({ track, allTracks, saving, onSave, onCancel }: TrackFormProps) {
   const [title, setTitle] = useState(track?.title ?? '');
   const [description, setDescription] = useState(track?.description ?? '');
-  const [type, setType] = useState<TrackType>(track?.type ?? 'continua');
+  const [type, setType] = useState<TrackType>(track?.type ?? '');
   const [order, setOrder] = useState(track?.order ?? 1);
   const [isPublished, setIsPublished] = useState(track?.is_published ?? false);
   const [requiredRoles, setRequiredRoles] = useState<Role[]>(track?.required_roles ?? []);
   const [thumbnailUrl, setThumbnailUrl] = useState(track?.thumbnail_url ?? '');
+  const [requiresTrackIds, setRequiresTrackIds] = useState<string[]>(track?.requires_track_ids ?? []);
+  const [requiresApproval, setRequiresApproval] = useState(track?.requires_formator_approval ?? false);
+  const [trackTypes, setTrackTypes] = useState<FormationTrackType[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setTitle(track?.title ?? '');
     setDescription(track?.description ?? '');
-    setType(track?.type ?? 'continua');
+    setType(track?.type ?? '');
     setOrder(track?.order ?? 1);
     setIsPublished(track?.is_published ?? false);
     setRequiredRoles(track?.required_roles ?? []);
     setThumbnailUrl(track?.thumbnail_url ?? '');
+    setRequiresTrackIds(track?.requires_track_ids ?? []);
+    setRequiresApproval(track?.requires_formator_approval ?? false);
   }, [track]);
+
+  useEffect(() => {
+    formationAdminService.listTrackTypes().then(setTrackTypes).catch(() => setTrackTypes([]));
+  }, []);
 
   function toggleRole(role: Role) {
     setRequiredRoles(prev =>
       prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role],
+    );
+  }
+
+  function toggleRequiredTrack(id: string) {
+    setRequiresTrackIds(prev =>
+      prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id],
     );
   }
 
@@ -68,11 +80,16 @@ export function TrackForm({ track, saving, onSave, onCancel }: TrackFormProps) {
         is_published: isPublished,
         required_roles: requiredRoles,
         thumbnail_url: thumbnailUrl || undefined,
+        requires_track_ids: requiresTrackIds.length ? requiresTrackIds : undefined,
+        requires_formator_approval: requiresApproval || undefined,
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
   }
+
+  // Outras trilhas pro picker de pré-requisito (exclui a própria)
+  const candidateTracks = allTracks.filter(t => t.id !== track?.id);
 
   return (
     <div className="space-y-3">
@@ -115,10 +132,16 @@ export function TrackForm({ track, saving, onSave, onCancel }: TrackFormProps) {
                 value={type}
                 onChange={e => setType(e.target.value as TrackType)}
               >
-                {TRACK_TYPES.map(t => (
-                  <option key={t.value} value={t.value}>{t.label} — {t.description}</option>
+                <option value="">— escolha um tipo —</option>
+                {trackTypes.map(t => (
+                  <option key={t.id} value={t.slug}>{t.label}{t.description ? ` — ${t.description}` : ''}</option>
                 ))}
               </select>
+              {trackTypes.length === 0 && (
+                <span className="text-[11px] text-warning mt-1">
+                  Nenhum tipo cadastrado. Crie em &quot;Gerenciar tipos de trilha&quot;.
+                </span>
+              )}
             </label>
 
             <label className="form-control">
@@ -133,16 +156,14 @@ export function TrackForm({ track, saving, onSave, onCancel }: TrackFormProps) {
             </label>
           </div>
 
-          <label className="form-control">
-            <span className="label-text text-xs mb-1">Imagem de capa (URL)</span>
-            <input
-              type="url"
-              className="input input-bordered input-sm"
+          <div>
+            <span className="label-text text-xs font-medium block mb-1">Imagem de capa</span>
+            <ImagePicker
+              folder="formation/track-covers"
               value={thumbnailUrl}
-              placeholder="https://..."
-              onChange={e => setThumbnailUrl(e.target.value)}
+              onChange={setThumbnailUrl}
             />
-          </label>
+          </div>
 
           <div>
             <span className="label-text text-xs mb-1 block">Quem pode acessar (vazio = todos)</span>
@@ -160,6 +181,42 @@ export function TrackForm({ track, saving, onSave, onCancel }: TrackFormProps) {
             </div>
           </div>
 
+          {/* Pré-requisitos */}
+          {candidateTracks.length > 0 && (
+            <div>
+              <span className="label-text text-xs font-medium block mb-1">
+                Pré-requisitos (concluir antes de liberar esta)
+              </span>
+              <div className="flex flex-wrap gap-1">
+                {candidateTracks.map(t => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    className={`badge badge-sm cursor-pointer ${requiresTrackIds.includes(t.id) ? 'badge-secondary' : 'badge-outline'}`}
+                    onClick={() => toggleRequiredTrack(t.id)}
+                  >
+                    {t.title}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <label className="cursor-pointer flex items-start gap-2 p-2 rounded hover:bg-base-200">
+            <input
+              type="checkbox"
+              className="checkbox checkbox-sm checkbox-secondary mt-0.5"
+              checked={requiresApproval}
+              onChange={e => setRequiresApproval(e.target.checked)}
+            />
+            <div className="flex-1">
+              <span className="text-sm font-medium">Exigir aprovação do formador</span>
+              <p className="text-xs text-base-content/60 mt-0.5">
+                Aluno só vê esta trilha após cumprir pré-requisitos E ser aprovado manualmente.
+              </p>
+            </div>
+          </label>
+
           <label className="cursor-pointer flex items-center gap-2">
             <input
               type="checkbox"
@@ -167,7 +224,7 @@ export function TrackForm({ track, saving, onSave, onCancel }: TrackFormProps) {
               checked={isPublished}
               onChange={e => setIsPublished(e.target.checked)}
             />
-            <span className="text-sm">Publicado (visível para alunos)</span>
+            <span className="text-sm">Publicada (visível para alunos)</span>
           </label>
         </div>
       </div>

@@ -6,7 +6,10 @@
 import { trackRepository } from '@/infrastructure/formation/TrackRepository';
 import { moduleRepository } from '@/infrastructure/formation/ModuleRepository';
 import { lessonRepository } from '@/infrastructure/formation/LessonRepository';
-import type { FormationTrack, FormationModule, FormationLesson } from '@/domain/formation/types';
+import { trackTypeRepository } from '@/infrastructure/formation/TrackTypeRepository';
+import type {
+  FormationTrack, FormationModule, FormationLesson, FormationTrackType,
+} from '@/domain/formation/types';
 
 // ─── Track ────────────────────────────────────────────────────────────────────
 
@@ -20,6 +23,8 @@ export interface SaveTrackInput {
   is_published: boolean;
   thumbnail_url?: string;
   gallery_images?: string[];
+  requires_track_ids?: string[];
+  requires_formator_approval?: boolean;
 }
 
 export class FormationAdminService {
@@ -44,6 +49,8 @@ export class FormationAdminService {
         is_published: input.is_published,
         thumbnail_url: input.thumbnail_url,
         gallery_images: input.gallery_images,
+        requires_track_ids: input.requires_track_ids,
+        requires_formator_approval: input.requires_formator_approval,
         updated_at: new Date().toISOString(),
       });
       if (!updated) throw new Error('Trilha não encontrada.');
@@ -59,8 +66,48 @@ export class FormationAdminService {
       module_ids: [],
       thumbnail_url: input.thumbnail_url,
       gallery_images: input.gallery_images,
+      requires_track_ids: input.requires_track_ids,
+      requires_formator_approval: input.requires_formator_approval,
       created_at: new Date().toISOString(),
     });
+  }
+
+  // ─── Track Types ─────────────────────────────────────────────────────────
+  async listTrackTypes(): Promise<FormationTrackType[]> {
+    return trackTypeRepository.findAll();
+  }
+
+  async saveTrackType(input: {
+    id?: string;
+    slug: string;
+    label: string;
+    description?: string;
+    order: number;
+  }): Promise<FormationTrackType> {
+    if (!input.label.trim()) throw new Error('Nome do tipo vazio.');
+    if (!input.slug.trim()) throw new Error('Slug do tipo vazio.');
+    if (input.id) {
+      const updated = await trackTypeRepository.update(input.id, {
+        slug: input.slug.trim(),
+        label: input.label.trim(),
+        description: input.description,
+        order: input.order,
+        updated_at: new Date().toISOString(),
+      });
+      if (!updated) throw new Error('Tipo não encontrado.');
+      return updated;
+    }
+    return trackTypeRepository.create({
+      slug: input.slug.trim(),
+      label: input.label.trim(),
+      description: input.description,
+      order: input.order,
+      created_at: new Date().toISOString(),
+    });
+  }
+
+  async deleteTrackType(id: string): Promise<void> {
+    return trackTypeRepository.remove(id);
   }
 
   async deleteTrack(trackId: string): Promise<void> {
@@ -87,6 +134,7 @@ export class FormationAdminService {
     title: string;
     description: string;
     order: number;
+    thumbnail_url?: string;
   }): Promise<FormationModule> {
     if (!input.title.trim()) throw new Error('Título do módulo vazio.');
     if (input.id) {
@@ -94,6 +142,7 @@ export class FormationAdminService {
         title: input.title.trim(),
         description: input.description,
         order: input.order,
+        thumbnail_url: input.thumbnail_url,
         updated_at: new Date().toISOString(),
       });
       if (!updated) throw new Error('Módulo não encontrado.');
@@ -105,6 +154,7 @@ export class FormationAdminService {
       track_id: input.track_id,
       order: input.order,
       lesson_ids: [],
+      thumbnail_url: input.thumbnail_url,
       created_at: new Date().toISOString(),
     });
     // Add to track.module_ids

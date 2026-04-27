@@ -4,13 +4,14 @@ import { useState, useEffect } from 'react';
 import { Save, X } from 'lucide-react';
 import type { FormationModule } from '@/domain/formation/types';
 import { RichTextEditor } from '@/shared/components/RichTextEditor';
+import { ImagePicker } from '@/shared/components/ImagePicker';
 
 interface ModuleFormProps {
   module: FormationModule | null;
   trackId: string;
   defaultOrder: number;
   saving: boolean;
-  onSave: (input: { id?: string; track_id: string; title: string; description: string; order: number }) => Promise<void>;
+  onSave: (input: { id?: string; track_id: string; title: string; description: string; order: number; thumbnail_url?: string }) => Promise<void>;
   onClose: () => void;
 }
 
@@ -18,19 +19,28 @@ export function ModuleForm({ module, trackId, defaultOrder, saving, onSave, onCl
   const [title, setTitle] = useState(module?.title ?? '');
   const [description, setDescription] = useState(module?.description ?? '');
   const [order, setOrder] = useState(module?.order ?? defaultOrder);
+  const [thumbnailUrl, setThumbnailUrl] = useState(module?.thumbnail_url ?? '');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setTitle(module?.title ?? '');
     setDescription(module?.description ?? '');
     setOrder(module?.order ?? defaultOrder);
+    setThumbnailUrl(module?.thumbnail_url ?? '');
   }, [module, defaultOrder]);
 
   async function handleSubmit() {
     setError(null);
     if (!title.trim()) { setError('Título obrigatório.'); return; }
     try {
-      await onSave({ id: module?.id, track_id: trackId, title, description, order });
+      await onSave({
+        id: module?.id,
+        track_id: trackId,
+        title,
+        description,
+        order,
+        thumbnail_url: thumbnailUrl || undefined,
+      });
       onClose();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -80,6 +90,15 @@ export function ModuleForm({ module, trackId, defaultOrder, saving, onSave, onCl
               onChange={e => setOrder(Number(e.target.value) || 1)}
             />
           </label>
+
+          <div>
+            <span className="label-text text-xs font-medium block mb-1">Imagem do módulo</span>
+            <ImagePicker
+              folder="formation/module-covers"
+              value={thumbnailUrl}
+              onChange={setThumbnailUrl}
+            />
+          </div>
         </div>
 
         <div className="modal-action">

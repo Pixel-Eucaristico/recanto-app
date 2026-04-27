@@ -12,7 +12,7 @@ import { detectVideoDuration, formatDuration, parseDurationString, parseVideoSou
 import { VideoPickerModal } from '../VideoPicker';
 import { ActivityManager } from '../ActivityManager';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
-import ImageUpload from '@/components/cms-editor/ImageUpload';
+import { ImagePicker } from '@/shared/components/ImagePicker';
 
 interface LessonFormProps {
   lesson: FormationLesson | null;
@@ -202,11 +202,10 @@ export function LessonForm({ lesson, moduleId, defaultOrder, saving, onSave, onC
         </Field>
 
         <Field label="Imagem ilustrativa (capa da aula)">
-          <ImageUpload
-            label=""
+          <ImagePicker
             folder="formation/lesson-covers"
             value={thumbnailUrl}
-            onChange={url => setThumbnailUrl(url || '')}
+            onChange={setThumbnailUrl}
           />
         </Field>
       </Section>

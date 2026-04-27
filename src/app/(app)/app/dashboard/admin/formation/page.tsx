@@ -113,6 +113,7 @@ export default function AdminFormationPage() {
         {view === 'track-form' && (
           <TrackForm
             track={editingTrack}
+            allTracks={tracksAdmin.tracks}
             saving={tracksAdmin.saving}
             onSave={async input => {
               await tracksAdmin.save(input);
