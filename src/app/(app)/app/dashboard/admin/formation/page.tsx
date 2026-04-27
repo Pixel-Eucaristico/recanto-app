@@ -2,15 +2,16 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, GraduationCap, Plus, X } from 'lucide-react';
+import { ArrowLeft, GraduationCap, Plus, X, Tag } from 'lucide-react';
 import {
   TrackList, TrackForm, ModuleList, ModuleForm, LessonList, LessonForm,
+  TrackTypeManager,
   useTracksAdmin, useModulesAdmin, useLessonsAdmin,
 } from '@/features/formation-admin';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 import type { FormationTrack, FormationModule, FormationLesson } from '@/domain/formation/types';
 
-type View = 'tracks' | 'track-form' | 'modules' | 'lessons' | 'lesson-form';
+type View = 'tracks' | 'track-form' | 'modules' | 'lessons' | 'lesson-form' | 'track-types';
 
 export default function AdminFormationPage() {
   const user = useCurrentUser();
@@ -52,13 +53,22 @@ export default function AdminFormationPage() {
             <h1 className="text-base md:text-lg font-bold">Gerenciar formação</h1>
           </div>
           {view === 'tracks' && (
-            <button
-              type="button"
-              className="btn btn-primary btn-sm gap-1"
-              onClick={() => { setEditingTrack(null); setView('track-form'); }}
-            >
-              <Plus className="w-4 h-4" /> Nova trilha
-            </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm gap-1"
+                onClick={() => setView('track-types')}
+              >
+                <Tag className="w-4 h-4" /> Tipos
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary btn-sm gap-1"
+                onClick={() => { setEditingTrack(null); setView('track-form'); }}
+              >
+                <Plus className="w-4 h-4" /> Nova trilha
+              </button>
+            </div>
           )}
         </div>
 
@@ -108,6 +118,19 @@ export default function AdminFormationPage() {
                 onOpenModules={t => { setActiveTrack(t); setView('modules'); }}
                 onDelete={t => setDeleteTrackTarget(t)}
               />
+        )}
+
+        {view === 'track-types' && (
+          <div className="space-y-3">
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm gap-1"
+              onClick={() => setView('tracks')}
+            >
+              <ArrowLeft className="w-4 h-4" /> Voltar para trilhas
+            </button>
+            <TrackTypeManager />
+          </div>
         )}
 
         {view === 'track-form' && (

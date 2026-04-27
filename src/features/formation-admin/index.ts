@@ -5,6 +5,8 @@ export { ModuleForm } from './components/ModuleForm';
 export { LessonList } from './components/LessonList';
 export { LessonForm } from './components/LessonForm';
 export { VideoPickerModal } from './components/VideoPicker';
+export { TrackTypeManager } from './components/TrackTypeManager';
 export { useTracksAdmin } from './hooks/useTracksAdmin';
 export { useModulesAdmin } from './hooks/useModulesAdmin';
 export { useLessonsAdmin } from './hooks/useLessonsAdmin';
+export { useTrackTypesAdmin } from './hooks/useTrackTypesAdmin';

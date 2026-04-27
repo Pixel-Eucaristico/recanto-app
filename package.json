@@ -10,18 +10,19 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "postinstall": "node scripts/seed-permissions.mjs",
-    "setup": "npm run firebase:rules && npm run firebase:indexes && npm run seed:permissions",
+    "postinstall": "node scripts/seed-permissions.mjs && node scripts/seed-track-types.mjs",
+    "setup": "npm run firebase:rules && npm run firebase:indexes && npm run seed:permissions && npm run seed:track-types",
     "firebase:rules": "npx --yes firebase-tools deploy --only firestore:rules --project recanto-app-dev",
     "firebase:indexes": "npx --yes firebase-tools deploy --only firestore:indexes --project recanto-app-dev",
     "firebase:deploy": "npx --yes firebase-tools deploy --project recanto-app-dev",
-    "firebase:ci": "node scripts/deploy-firebase.mjs && npm run seed:permissions",
+    "firebase:ci": "node scripts/deploy-firebase.mjs && npm run seed:permissions && npm run seed:track-types",
     "vercel-build": "npm run firebase:ci && next build",
     "seed:formation": "node scripts/seed-formation.mjs",
     "seed:notebook": "node scripts/seed-notebook.mjs",
     "seed:permissions": "node scripts/seed-permissions.mjs",
     "seed:habits": "node scripts/seed-habits.mjs",
-    "seed:all": "npm run seed:formation && npm run seed:notebook && npm run seed:permissions && npm run seed:habits"
+    "seed:track-types": "node scripts/seed-track-types.mjs",
+    "seed:all": "npm run seed:formation && npm run seed:notebook && npm run seed:permissions && npm run seed:habits && npm run seed:track-types"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.980.0",

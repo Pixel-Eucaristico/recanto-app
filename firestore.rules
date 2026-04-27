@@ -333,15 +333,21 @@ service cloud.firestore {
     }
 
     // ===========================
+    // Formation Track Types Collection
+    // ===========================
+    match /formation_track_types/{typeId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if hasFeature('manage:formation');
+    }
+
+    // ===========================
     // Formation Tracks Collection
     // ===========================
     match /formation_tracks/{trackId} {
       allow read: if hasFeature('read:formation') || hasFeature('manage:formation');
       allow create: if hasFeature('manage:formation');
-      allow update: if hasFeature('manage:formation') &&
-                      (isAdmin() || resource.data.created_by == request.auth.uid);
-      allow delete: if hasFeature('manage:formation') &&
-                      (isAdmin() || resource.data.created_by == request.auth.uid);
+      allow update: if hasFeature('manage:formation');
+      allow delete: if hasFeature('manage:formation');
     }
 
     // ===========================
