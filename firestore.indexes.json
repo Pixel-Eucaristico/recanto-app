@@ -356,7 +356,7 @@
         { "fieldPath": "poll_id", "order": "ASCENDING" },
         { "fieldPath": "voted_at", "order": "ASCENDING" }
       ]
-    }
+    },
   ],
   "fieldOverrides": []
 }

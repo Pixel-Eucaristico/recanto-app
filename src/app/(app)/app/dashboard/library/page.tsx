@@ -12,14 +12,34 @@ export default function LibraryPage() {
   const user = useCurrentUser();
   const router = useRouter();
   const isManager = user?.role === 'admin' || user?.features.includes('manage:library') || user?.features.includes('*');
-  const { books, categories, loading, error, search, setSearch, activeCategoryId, setActiveCategoryId } = useLibraryCatalog({
+  const hasReadLibrary = isManager || (user?.features.includes('read:library') ?? false);
+  const hasDownloadLibrary = isManager || (user?.features.includes('download:library') ?? false);
+
+  // Progress gate: when user lacks `read:library`, show only books unlocked via courses
+  const { books, categories, loading, error, search, setSearch, activeCategoryId, setActiveCategoryId, progressGated, unlockedCount } = useLibraryCatalog({
     onlyPublished: !isManager,
+    userId: user?.id,
+    bypassProgressGate: hasReadLibrary,
   });
   const { remove } = useBooksAdmin();
   const [deleteTarget, setDeleteTarget] = useState<Book | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   if (!user) return <div className="p-6">Faça login pra acessar a biblioteca.</div>;
+
+  // No read:library AND no books unlocked via course progress → access denied
+  if (!hasReadLibrary && !loading && progressGated && unlockedCount === 0) {
+    return (
+      <div className="p-6">
+        <div className="alert alert-warning">
+          <span>
+            Sem acesso à biblioteca. Comece um curso que use livros para liberar acesso aos respectivos títulos,
+            ou solicite a permissão <code>read:library</code>.
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   function goEdit(book: Book) {
     router.push(`/app/dashboard/admin/library?book=${book.id}&view=form`);
@@ -69,6 +89,15 @@ export default function LibraryPage() {
         </div>
       </header>
 
+      {progressGated && (
+        <div className="alert alert-info text-sm">
+          <span>
+            Você está vendo apenas livros liberados pelos cursos que iniciou ({unlockedCount} {unlockedCount === 1 ? 'liberado' : 'liberados'}).
+            Avance nas aulas para liberar mais.
+          </span>
+        </div>
+      )}
+
       <div className="bg-base-100 border border-base-300 rounded-2xl shadow-sm p-4 md:p-6 space-y-4">
         <CategoryFilter
           categories={categories}
@@ -85,6 +114,7 @@ export default function LibraryPage() {
           <BookCatalogGrid
             books={books}
             manager={isManager}
+            canDownload={hasDownloadLibrary}
             onEdit={goEdit}
             onEditChapters={goChapters}
             onDelete={book => setDeleteTarget(book)}

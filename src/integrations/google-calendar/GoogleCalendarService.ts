@@ -12,10 +12,19 @@ import {
   SyncResult,
 } from '@/types/google-calendar';
 import type { Event } from '@/types/firebase-entities';
+import { encodeState } from '@/integrations/google/oauthState';
+import { env } from '@/config/env';
 
 // Helper to clean environment variables (removes newlines, carriage returns, and trims)
 const cleanEnvVar = (value: string | undefined): string =>
   (value || '').replace(/[\r\n]/g, '').trim();
+
+/** Callback unificado já validado pelo zod schema (env.ts). */
+function resolveCallbackUri(): string {
+  if (env.GOOGLE_OAUTH_CALLBACK_URL) return env.GOOGLE_OAUTH_CALLBACK_URL;
+  if (env.NEXT_PUBLIC_APP_URL) return `${env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')}/api/google/callback`;
+  return 'http://localhost:3000/api/google/callback';
+}
 
 /**
  * Google Calendar Service for OAuth and sync operations
@@ -28,16 +37,17 @@ export class GoogleCalendarService {
     this.oauth2Client = new google.auth.OAuth2(
       cleanEnvVar(process.env.GOOGLE_CLIENT_ID),
       cleanEnvVar(process.env.GOOGLE_CLIENT_SECRET),
-      cleanEnvVar(process.env.GOOGLE_REDIRECT_URI)
+      resolveCallbackUri(),
     );
 
     this.calendar = google.calendar({ version: 'v3', auth: this.oauth2Client });
   }
 
   /**
-   * Get OAuth authorization URL with userId as state
+   * Get OAuth authorization URL.
+   * @param returnTo Caminho relativo pra redirecionar após callback (default: /app/dashboard/schedule?step=select_calendar)
    */
-  getAuthUrl(userId: string): string {
+  getAuthUrl(userId: string, returnTo: string = '/app/dashboard/schedule?step=select_calendar'): string {
     const scopes = [
       'https://www.googleapis.com/auth/calendar',
       'https://www.googleapis.com/auth/calendar.events',
@@ -46,8 +56,8 @@ export class GoogleCalendarService {
     return this.oauth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: scopes,
-      prompt: 'consent', // Force to get refresh token
-      state: userId, // Pass userId to recover in callback
+      prompt: 'consent',
+      state: encodeState({ integration: 'calendar', uid: userId, returnTo }),
     });
   }
 

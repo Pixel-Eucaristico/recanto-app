@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import {
   Bold, Italic, Strikethrough, Heading1, Heading2, Heading3,
-  List, ListOrdered, Quote, Code, Undo, Redo, ImagePlus,
+  List, ListOrdered, Quote, Code, Undo, Redo, ImagePlus, Asterisk, BookMarked,
 } from 'lucide-react';
 import {
   $getSelection, $isRangeSelection, $insertNodes, $createParagraphNode,
@@ -24,7 +24,17 @@ function ToolbarButton({ children, title, onClick }: { children: React.ReactNode
   );
 }
 
-export function Toolbar() {
+interface ToolbarProps {
+  /** When provided, shows a footnote button. Returns the next [^N] number to insert. */
+  onRequestFootnote?: () => number;
+  /**
+   * When provided, shows a citation button. Opens picker; receives a callback
+   * to insert citation text at the cursor when user picks one.
+   */
+  onRequestCitation?: (insertAtCursor: (text: string) => void) => void;
+}
+
+export function Toolbar({ onRequestFootnote, onRequestCitation }: ToolbarProps = {}) {
   const [editor] = useLexicalComposerContext();
   const [imageOpen, setImageOpen] = useState(false);
 
@@ -40,6 +50,26 @@ export function Toolbar() {
       const sel = $getSelection();
       if ($isRangeSelection(sel)) $setBlocksType(sel, () => $createQuoteNode());
     });
+  }
+
+  function insertTextAtCursor(text: string) {
+    editor.update(() => {
+      const sel = $getSelection();
+      if ($isRangeSelection(sel)) {
+        sel.insertText(text);
+      }
+    });
+  }
+
+  function insertFootnoteAtCursor() {
+    if (!onRequestFootnote) return;
+    const num = onRequestFootnote();
+    insertTextAtCursor(`[^${num}]`);
+  }
+
+  function openCitationPicker() {
+    if (!onRequestCitation) return;
+    onRequestCitation(insertTextAtCursor);
   }
 
   function insertImageMarkdown(url: string, alt: string) {
@@ -67,6 +97,16 @@ export function Toolbar() {
       <ToolbarButton title="Citação" onClick={applyQuote}><Quote className="w-3.5 h-3.5" /></ToolbarButton>
       <ToolbarButton title="Código" onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'code')}><Code className="w-3.5 h-3.5" /></ToolbarButton>
       <ToolbarButton title="Inserir imagem" onClick={() => setImageOpen(true)}><ImagePlus className="w-3.5 h-3.5" /></ToolbarButton>
+      {onRequestFootnote && (
+        <ToolbarButton title="Inserir nota de rodapé" onClick={insertFootnoteAtCursor}>
+          <Asterisk className="w-3.5 h-3.5" />
+        </ToolbarButton>
+      )}
+      {onRequestCitation && (
+        <ToolbarButton title="Citar referência da bibliografia" onClick={openCitationPicker}>
+          <BookMarked className="w-3.5 h-3.5" />
+        </ToolbarButton>
+      )}
       <span className="border-r border-base-300 mx-1" />
       <ToolbarButton title="Desfazer" onClick={() => editor.dispatchCommand(UNDO_COMMAND, undefined)}><Undo className="w-3.5 h-3.5" /></ToolbarButton>
       <ToolbarButton title="Refazer" onClick={() => editor.dispatchCommand(REDO_COMMAND, undefined)}><Redo className="w-3.5 h-3.5" /></ToolbarButton>

@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import type { Book, BookChapter } from '@/domain/library/types';
+import type { Book, BookChapter, BookReference } from '@/domain/library/types';
+import type { SaveChapterPayload } from '@/features/library/components/ChapterEditor/hooks/useChapterEditor';
 import type { BookFormState } from '@/features/library';
 import { useBooksAdmin, useLibraryCatalog, useBookChapters } from '@/features/library';
 
@@ -47,7 +48,7 @@ export function useAdminLibraryPage() {
     setDeleteBookTarget(null);
   }
 
-  async function handleSaveChapter(input: { book_id: string; order: number; title: string; subtitle?: string; blocks: BookChapter['blocks'] }) {
+  async function handleSaveChapter(input: SaveChapterPayload) {
     await saveChapter(input);
     setView('chapters');
     setActiveChapter(null);
@@ -61,6 +62,40 @@ export function useAdminLibraryPage() {
 
   function backToList() { setView('list'); setActiveBook(null); setActiveChapter(null); }
 
+  // Find bibliography section in this book (for citation picker integration)
+  const bibliographyChapter = chapters.find(c => c.kind === 'bibliography');
+  const bookReferences: BookReference[] = bibliographyChapter?.references ?? [];
+  const bookCitationStyle = bibliographyChapter?.citation_style ?? 'abnt';
+
+  /** Update the bibliography chapter's references list (called from CitationPickerModal). */
+  async function handleUpdateBookReferences(refs: BookReference[]) {
+    if (!activeBook) return;
+    if (bibliographyChapter) {
+      await saveChapter({
+        book_id: activeBook.id,
+        order: bibliographyChapter.order,
+        title: bibliographyChapter.title,
+        subtitle: bibliographyChapter.subtitle,
+        kind: 'bibliography',
+        blocks: [],
+        references: refs,
+        citation_style: bibliographyChapter.citation_style ?? 'abnt',
+      });
+    } else {
+      // Auto-create bibliography chapter on first reference add
+      const nextOrder = chapters.length > 0 ? Math.max(...chapters.map(c => c.order)) + 1 : 1;
+      await saveChapter({
+        book_id: activeBook.id,
+        order: nextOrder,
+        title: 'Bibliografia',
+        kind: 'bibliography',
+        blocks: [],
+        references: refs,
+        citation_style: 'abnt',
+      });
+    }
+  }
+
   return {
     view, setView,
     activeBook, setActiveBook,
@@ -72,5 +107,6 @@ export function useAdminLibraryPage() {
     handleSaveBook, confirmDeleteBook,
     handleSaveChapter, confirmDeleteChapter,
     backToList,
+    bookReferences, bookCitationStyle, handleUpdateBookReferences,
   };
 }

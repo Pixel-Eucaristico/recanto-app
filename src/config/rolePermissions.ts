@@ -11,20 +11,20 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Exclude<Role, null>, string[]> = {
     'log:habits',
     'read:prayer',
     'read:community', 'post:community', 'manage:community',
-    'read:library', 'manage:library',
+    'read:library', 'manage:library', 'download:library',
   ],
   recantiano: [
     'read:content', 'read:calendar', 'read:forum', 'create:forum_post',
     'read:formation', 'complete:formation',
     'log:habits', 'read:prayer',
     'read:community', 'post:community',
-    'read:library',
+    'read:library', 'download:library',
   ],
   pai: [
     'read:content', 'read:calendar', 'read:parent_zone',
     'read:formation', 'log:habits', 'read:prayer',
     'read:community', 'post:community',
-    'read:library',
+    'read:library', 'download:library',
   ],
   colaborador: [
     'read:content', 'read:calendar',

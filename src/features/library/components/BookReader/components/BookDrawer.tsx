@@ -3,6 +3,7 @@
 import { X } from 'lucide-react';
 import type { Book, BookChapter, BookTag, BookReadingProgress } from '@/domain/library/types';
 import { BookTOC } from './BookTOC';
+import { BookExportButtons } from '@/features/library/components/BookExportButtons';
 
 interface BookDrawerProps {
   open: boolean;
@@ -11,6 +12,7 @@ interface BookDrawerProps {
   chapters: BookChapter[];
   activeChapter: number | null;
   visibleUntil: string | null;
+  truncated: boolean;
   readPercent: number;
   progress: BookReadingProgress | null;
   tags: BookTag[];
@@ -20,7 +22,7 @@ interface BookDrawerProps {
 }
 
 export function BookDrawer({
-  open, onClose, book, chapters, activeChapter, visibleUntil,
+  open, onClose, book, chapters, activeChapter, visibleUntil, truncated,
   readPercent, progress, tags, tagsForChapter, onJump, onJumpToRef,
 }: BookDrawerProps) {
   if (!open) return null;
@@ -30,14 +32,22 @@ export function BookDrawer({
       <div className="bg-base-100 w-72 max-w-[85vw] h-full overflow-y-auto shadow-xl">
         <div className="flex items-center justify-between px-3 py-2 border-b border-base-300 sticky top-0 bg-base-100 z-10">
           <span className="text-sm font-semibold">Sumário</span>
-          <button
-            type="button"
-            className="btn btn-ghost btn-xs btn-circle"
-            onClick={onClose}
-            aria-label="Fechar sumário"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-1">
+            <BookExportButtons
+              bookId={book.id}
+              bookTitle={book.title}
+              truncated={truncated}
+              visibleUntil={visibleUntil}
+            />
+            <button
+              type="button"
+              className="btn btn-ghost btn-xs btn-circle"
+              onClick={onClose}
+              aria-label="Fechar sumário"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
         <BookTOC
           book={book}

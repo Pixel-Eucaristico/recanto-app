@@ -1,6 +1,9 @@
 import { bookRepository } from '@/infrastructure/library/BookRepository';
 import { bookChapterRepository } from '@/infrastructure/library/BookChapterRepository';
-import type { Book, BookChapter, BookCategory, BookSpoilerMode } from '@/domain/library/types';
+import type {
+  Book, BookChapter, BookCategory, BookSpoilerMode,
+  BookFootnote, BookReference, BookGlossaryTerm, BookCredits, CitationStyle,
+} from '@/domain/library/types';
 import { BookEntity } from '@/domain/library/entities/Book';
 import { CanonicalRefEntity } from '@/domain/library/entities/CanonicalRef';
 import { BookSpoilerEngine, type SpoilerLessonInput } from '@/application/library/BookSpoilerEngine';
@@ -32,7 +35,13 @@ export interface SaveChapterInput {
   order: number;
   title: string;
   subtitle?: string;
+  kind?: BookChapter['kind'];
   blocks: BookChapter['blocks'];
+  footnotes?: BookFootnote[];
+  references?: BookReference[];
+  citation_style?: CitationStyle;
+  glossary_terms?: BookGlossaryTerm[];
+  credits?: BookCredits;
 }
 
 export class LibraryService {
@@ -95,7 +104,14 @@ export class LibraryService {
     const draft: BookChapter = {
       id: '', book_id: input.book_id, order: input.order,
       title: input.title.trim(), subtitle: input.subtitle,
-      blocks: input.blocks, created_at: new Date().toISOString(),
+      kind: input.kind ?? 'chapter',
+      blocks: input.blocks,
+      footnotes: input.footnotes,
+      references: input.references,
+      citation_style: input.citation_style,
+      glossary_terms: input.glossary_terms,
+      credits: input.credits,
+      created_at: new Date().toISOString(),
     };
     const errors = BookEntity.validateChapter(draft);
     if (errors.length > 0) throw new Error(errors.join(' '));

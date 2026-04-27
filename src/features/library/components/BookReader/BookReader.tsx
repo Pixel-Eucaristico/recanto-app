@@ -57,6 +57,8 @@ export function BookReader({ book, chapters, visibleUntil, truncated, initialRef
         fontLevel={fontLevel}
         fontPx={fontPx}
         readPercent={readPercent}
+        truncated={truncated}
+        visibleUntil={visibleUntil}
         changeFontLevel={changeFontLevel}
         onBack={handleBack}
         onOpenDrawer={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); setDrawerOpen(true); }}
@@ -94,6 +96,7 @@ export function BookReader({ book, chapters, visibleUntil, truncated, initialRef
           chapters={chapters}
           activeChapter={activeChapter}
           visibleUntil={visibleUntil}
+          truncated={truncated}
           readPercent={readPercent}
           progress={progress}
           tags={tags}

@@ -59,8 +59,9 @@ export const FEATURES_INFO: FeatureInfo[] = [
   { id: 'post:community',    category: 'forum', label: 'Participar da Comunidade', description: 'Criar posts, responder, votar em enquetes' },
   { id: 'manage:community',  category: 'admin', label: 'Moderar Comunidade',       description: 'Editar/remover posts e respostas de qualquer usuário' },
   // Biblioteca
-  { id: 'read:library',    category: 'content', label: 'Ver Biblioteca',          description: 'Ler e baixar livros/apostilas do catálogo' },
-  { id: 'manage:library',  category: 'content', label: 'Gerenciar Biblioteca',    description: 'Criar e editar livros, capítulos e categorias' },
+  { id: 'read:library',     category: 'content', label: 'Ver Biblioteca',          description: 'Acessar o catálogo e ler livros online' },
+  { id: 'download:library', category: 'content', label: 'Baixar Livros',           description: 'Baixar livros em EPUB e PDF' },
+  { id: 'manage:library',   category: 'content', label: 'Gerenciar Biblioteca',    description: 'Criar, editar e excluir livros, capítulos e categorias' },
   // Áreas especiais
   { id: 'read:parent_zone',     category: 'special', label: 'Área dos Pais',          description: 'Acesso à área exclusiva para pais e responsáveis' },
   { id: 'read:gratitude_corner',category: 'special', label: 'Cantinho da Gratidão',   description: 'Acesso às mensagens de agradecimento dos benfeitores' },

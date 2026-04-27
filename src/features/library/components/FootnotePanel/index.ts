@@ -1,0 +1,1 @@
+export { FootnotePanel } from './FootnotePanel';

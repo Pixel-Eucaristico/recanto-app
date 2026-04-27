@@ -45,4 +45,32 @@ export class BookEntity {
       .sort((a, b) => a.order - b.order)
       .flatMap(ch => ch.blocks.map(b => ({ ...b, chapter_order: ch.order })));
   }
+
+  /**
+   * Slice por range canônico [startRef, endRef]. Inclusivo nas duas pontas.
+   * Vazio = início/fim do livro.
+   * Mantém apenas blocos numerados (paragraph/quote) e headings dentro do range.
+   */
+  static sliceByRange(
+    chapters: BookChapter[],
+    startRef: string | undefined,
+    endRef: string | undefined,
+  ): Array<BookBlock & { chapter_order: number }> {
+    const start = CanonicalRefEntity.tryParse(startRef);
+    const end = CanonicalRefEntity.tryParse(endRef);
+    const flat = BookEntity.flattenBlocks(chapters);
+
+    return flat.filter(b => {
+      const ref = CanonicalRefEntity.tryParse(b.ref);
+      if (!ref) {
+        // Heading/list/code/image — include if inside chapter range
+        if (start && b.chapter_order < start.chapter) return false;
+        if (end && b.chapter_order > end.chapter) return false;
+        return true;
+      }
+      if (start && CanonicalRefEntity.compare(ref, start) < 0) return false;
+      if (end && CanonicalRefEntity.compare(ref, end) > 0) return false;
+      return true;
+    });
+  }
 }

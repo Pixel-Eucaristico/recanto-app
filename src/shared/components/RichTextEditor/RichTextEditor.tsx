@@ -20,9 +20,15 @@ interface RichTextEditorProps {
   placeholder?: string;
   height?: number;
   disabled?: boolean;
+  /** When provided, shows footnote button in toolbar. Returns next [^N] number. */
+  onRequestFootnote?: () => number;
+  /** When provided, shows citation button. Receives `insertAtCursor` callback. */
+  onRequestCitation?: (insertAtCursor: (text: string) => void) => void;
 }
 
-export function RichTextEditor({ value, onChange, placeholder, height = 200, disabled }: RichTextEditorProps) {
+export function RichTextEditor({
+  value, onChange, placeholder, height = 200, disabled, onRequestFootnote, onRequestCitation,
+}: RichTextEditorProps) {
   const initialConfig = {
     namespace: 'RichTextEditor',
     theme: editorTheme,
@@ -34,7 +40,7 @@ export function RichTextEditor({ value, onChange, placeholder, height = 200, dis
   return (
     <div className="rounded-lg border border-base-300 overflow-hidden bg-base-100">
       <LexicalComposer initialConfig={initialConfig}>
-        <Toolbar />
+        <Toolbar onRequestFootnote={onRequestFootnote} onRequestCitation={onRequestCitation} />
         <div className="relative" style={{ height }}>
           <RichTextPlugin
             contentEditable={

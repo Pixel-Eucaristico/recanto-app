@@ -11,10 +11,14 @@ interface ChapterEditPanelProps {
   onChange: (v: string) => void;
   onPreview: () => void;
   onSave: () => void;
+  /** Returns next footnote number when toolbar button is clicked */
+  onRequestFootnote?: () => number;
+  /** Opens citation picker; receives `insertAtCursor` callback */
+  onRequestCitation?: (insertAtCursor: (text: string) => void) => void;
 }
 
 export function ChapterEditPanel({
-  order, markdown, saving, titleEmpty, onChange, onPreview, onSave,
+  order, markdown, saving, titleEmpty, onChange, onPreview, onSave, onRequestFootnote, onRequestCitation,
 }: ChapterEditPanelProps) {
   return (
     <div className="card bg-base-100 border border-primary">
@@ -44,6 +48,8 @@ export function ChapterEditPanel({
           onChange={onChange}
           height={420}
           placeholder="Comece a escrever o capítulo. # título, > citação, - lista..."
+          onRequestFootnote={onRequestFootnote}
+          onRequestCitation={onRequestCitation}
         />
 
         <p className="text-[10px] text-base-content/50">

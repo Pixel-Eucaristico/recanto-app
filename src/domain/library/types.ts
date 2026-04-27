@@ -25,6 +25,21 @@ export interface BookBlock {
   heading_level?: number;
 }
 
+/**
+ * Tipo semântico da seção — determina epub:type e posição no spine.
+ * Front matter ordena ANTES dos capítulos; back matter DEPOIS.
+ */
+export type BookSectionKind =
+  | 'chapter'       // body matter (padrão)
+  | 'preface'       // front — Prefácio
+  | 'introduction'  // front — Introdução
+  | 'credits'       // front — Créditos / Folha de Rosto
+  | 'appendix'      // back  — Apêndice
+  | 'notes'         // back  — Notas de Estudo
+  | 'glossary'      // back  — Glossário
+  | 'bibliography'  // back  — Bibliografia
+  | 'about';        // back  — Sobre o Projeto
+
 export interface BookChapter {
   id: string;
   book_id: string;
@@ -33,7 +48,18 @@ export interface BookChapter {
   title: string;
   /** Subtítulo opcional do capítulo. */
   subtitle?: string;
+  /** Tipo semântico da seção. Default: 'chapter'. */
+  kind?: BookSectionKind;
   blocks: BookBlock[];
+  /** Footnotes for this section (any kind). Rendered at section bottom. */
+  footnotes?: BookFootnote[];
+  /** Structured data for kind='bibliography' */
+  references?: BookReference[];
+  citation_style?: CitationStyle;
+  /** Structured data for kind='glossary' */
+  glossary_terms?: BookGlossaryTerm[];
+  /** Structured data for kind='credits' */
+  credits?: BookCredits;
   created_at: string;
   updated_at?: string;
 }
@@ -145,6 +171,74 @@ export interface BookTag {
   color: TagColor;
   created_at: string;
 }
+
+// ─── Editorial entities ────────────────────────────────────────────────────────
+
+export type CitationStyle = 'abnt' | 'apa' | 'chicago';
+
+export type ReferenceType = 'book' | 'article' | 'website' | 'chapter_in_book' | 'thesis';
+
+export interface BookReference {
+  id: string;
+  type: ReferenceType;
+  /** SOBRENOME, Nome format for ABNT; First Last for APA */
+  authors: string[];
+  title: string;
+  subtitle?: string;
+  publisher?: string;
+  city?: string;
+  year?: number;
+  edition?: string;
+  /** For articles: page range e.g. '45-67' */
+  pages?: string;
+  journal?: string;
+  volume?: string;
+  issue?: string;
+  url?: string;
+  access_date?: string;
+  doi?: string;
+  isbn?: string;
+}
+
+export interface BookGlossaryTerm {
+  id: string;
+  /** The defined term */
+  term: string;
+  /** Definition in markdown */
+  definition: string;
+  /** IDs of related terms */
+  related_terms?: string[];
+}
+
+export interface BookCredits {
+  title?: string;
+  subtitle?: string;
+  authors?: string[];
+  translators?: string[];
+  illustrators?: string[];
+  editors?: string[];
+  edition?: string;
+  publisher?: string;
+  city?: string;
+  year?: number;
+  isbn?: string;
+  copyright?: string;
+  license?: string;
+  /** Extra notes in markdown */
+  notes?: string;
+}
+
+export interface BookFootnote {
+  id: string;
+  /** Sequential number within chapter, auto-assigned */
+  number: number;
+  /** block.id where [^N] marker appears */
+  anchor_block_id: string;
+  /** Footnote content in markdown */
+  content: string;
+}
+
+// ─── Canonical ref (used by lesson feature) ────────────────────────────────────
 
 /** Referência canônica usada por outras features (ex: aula). */
 export interface BookCitation {

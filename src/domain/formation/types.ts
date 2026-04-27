@@ -58,7 +58,21 @@ export interface FormationLesson {
   material_ids: string[];
   quiz_id?: string;
   highlight_quotes: HighlightQuote[];
+  /** Citações de livros embutidas na aula. Cada uma renderiza o trecho do livro inline. */
+  book_citations?: LessonBookCitation[];
+  /** Pergunta/mural exibida no topo do tab Fórum quando requires_forum_post é true. */
+  forum_prompt?: string;
+  /** Conteúdo da atividade prática (markdown). */
   practical_activity?: string;
+  /** Quando true, aluno precisa marcar a atividade prática como feita pra concluir a aula. */
+  practical_required?: boolean;
+  /**
+   * Quando true, a prática é permanente — aparece em "Minha Jornada" como hábito
+   * recorrente. Default false (atividade única).
+   */
+  practical_permanent?: boolean;
+  /** Limite em dias após desbloqueio pra completar a prática. Vazio = sem limite. */
+  practical_deadline_days?: number;
   created_at: string;
   updated_at?: string;
 }
@@ -66,6 +80,25 @@ export interface FormationLesson {
 export interface HighlightQuote {
   text: string;
   source: string;
+}
+
+/**
+ * Cita um trecho de livro da biblioteca dentro da aula.
+ * Aluno vê o trecho renderizado inline + link pra ler o livro completo.
+ * Quando ativa `apply_spoiler`, o livro fica cortado em `until_ref` no leitor.
+ */
+export interface LessonBookCitation {
+  book_id: string;
+  /** Ex: '1:7'. Vazio = início do livro. */
+  start_ref?: string;
+  /** Ex: '3:18'. Vazio = fim do livro. */
+  end_ref?: string;
+  /** Quando true, BookSpoilerEngine usa essa aula como gate de spoiler. */
+  apply_spoiler?: boolean;
+  /** Limite máximo liberado se `apply_spoiler=true`. Default: end_ref. */
+  until_ref?: string;
+  /** Anotação opcional do formador exibida acima do trecho. */
+  note?: string;
 }
 
 export interface LessonProgress {

@@ -1,0 +1,1 @@
+export { GlossaryEditor } from './GlossaryEditor';

@@ -3,19 +3,22 @@
 import { ArrowLeft, Menu, Type } from 'lucide-react';
 import type { Book } from '@/domain/library/types';
 import { Tooltip } from '@/shared/components/Tooltip';
+import { BookExportButtons } from '@/features/library/components/BookExportButtons';
 
 interface BookReaderHeaderProps {
   book: Book;
   fontLevel: number;
   fontPx: number;
   readPercent: number;
+  truncated: boolean;
+  visibleUntil: string | null;
   changeFontLevel: (v: number) => void;
   onBack: () => void;
   onOpenDrawer: () => void;
 }
 
 export function BookReaderHeader({
-  book, fontLevel, fontPx, readPercent, changeFontLevel, onBack, onOpenDrawer,
+  book, fontLevel, fontPx, readPercent, truncated, visibleUntil, changeFontLevel, onBack, onOpenDrawer,
 }: BookReaderHeaderProps) {
   return (
     <header className="sticky top-0 z-30 bg-base-100/95 backdrop-blur border-b border-base-300">
@@ -76,6 +79,15 @@ export function BookReaderHeader({
               <Type className="w-4 h-4" />
             </button>
           </Tooltip>
+        </div>
+
+        <div className="hidden md:flex shrink-0">
+          <BookExportButtons
+            bookId={book.id}
+            bookTitle={book.title}
+            truncated={truncated}
+            visibleUntil={visibleUntil}
+          />
         </div>
 
         {readPercent > 0 && (

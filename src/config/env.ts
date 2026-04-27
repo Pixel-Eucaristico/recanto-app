@@ -25,12 +25,31 @@ export const env = createEnv({
     R2_SECRET_ACCESS_KEY: z.string().min(1, 'R2_SECRET_ACCESS_KEY ausente'),
     R2_BUCKET_NAME: z.string().min(1, 'R2_BUCKET_NAME ausente'),
 
-    // Google OAuth (Calendar) — opcional
+    // Google OAuth — opcional (Calendar/Gmail/YouTube unificados)
     GOOGLE_CLIENT_ID: z
       .string()
       .endsWith('.apps.googleusercontent.com', 'GOOGLE_CLIENT_ID deve terminar com .apps.googleusercontent.com')
       .optional(),
     GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
+    /** Callback unificado registrado no Google Cloud Console. */
+    GOOGLE_OAUTH_CALLBACK_URL: z
+      .string()
+      .url('GOOGLE_OAUTH_CALLBACK_URL deve ser URL completa')
+      .refine(uri => {
+        try {
+          const u = new URL(uri);
+          // Google OAuth rejeita https em localhost (sem cert válido)
+          if (u.hostname === 'localhost' && u.protocol === 'https:') return false;
+          return true;
+        } catch { return false; }
+      }, 'Use http://localhost:* (não https) para callback em localhost')
+      .refine(uri => {
+        try {
+          return new URL(uri).pathname === '/api/google/callback';
+        } catch { return false; }
+      }, 'Path deve ser exatamente "/api/google/callback"')
+      .optional(),
+    /** Legacy — callback do Calendar. Deprecado, use GOOGLE_OAUTH_CALLBACK_URL. */
     GOOGLE_REDIRECT_URI: z.string().url().optional(),
   },
 
@@ -53,7 +72,18 @@ export const env = createEnv({
     NEXT_PUBLIC_R2_PUBLIC_URL: z.string().url('NEXT_PUBLIC_R2_PUBLIC_URL deve ser URL válida'),
 
     // App
-    NEXT_PUBLIC_APP_URL: z.string().url().optional(),
+    NEXT_PUBLIC_APP_URL: z
+      .string()
+      .url()
+      .refine(uri => {
+        try {
+          const u = new URL(uri);
+          // localhost com https quebra OAuth do Google
+          if (u.hostname === 'localhost' && u.protocol === 'https:') return false;
+          return true;
+        } catch { return false; }
+      }, 'NEXT_PUBLIC_APP_URL deve ser http (não https) em localhost')
+      .optional(),
     NEXT_PUBLIC_MEDIA_MAX_MB: z.coerce.number().int().positive().default(10),
     NEXT_PUBLIC_ACL_DEBUG: z.enum(['true', 'false']).optional(),
   },
@@ -73,6 +103,7 @@ export const env = createEnv({
     R2_BUCKET_NAME: process.env.R2_BUCKET_NAME,
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
+    GOOGLE_OAUTH_CALLBACK_URL: process.env.GOOGLE_OAUTH_CALLBACK_URL,
     GOOGLE_REDIRECT_URI: process.env.GOOGLE_REDIRECT_URI,
     NEXT_PUBLIC_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
     NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,

@@ -19,6 +19,7 @@ export default function AdminLibraryPage() {
     handleSaveBook, confirmDeleteBook,
     handleSaveChapter, confirmDeleteChapter,
     backToList,
+    bookReferences, bookCitationStyle, handleUpdateBookReferences,
   } = useAdminLibraryPage();
 
   if (!user) return <div className="p-6">Faça login.</div>;
@@ -105,6 +106,9 @@ export default function AdminLibraryPage() {
               saving={savingChapter}
               onSave={handleSaveChapter}
               onCancel={() => { setView('chapters'); setActiveChapter(null); }}
+              bookReferences={bookReferences}
+              bookCitationStyle={bookCitationStyle}
+              onUpdateBookReferences={handleUpdateBookReferences}
             />
           </div>
         )}
