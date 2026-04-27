@@ -17,7 +17,8 @@ import {
   ArrowLeft,
   HeartHandshake,
   Library,
-  History
+  History,
+  Sparkles,
 } from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
 import { Role } from "@/features/auth/types/user";
@@ -38,6 +39,13 @@ export const appRoutes: AppRoute[] = [
     href: '/',
     icon: ArrowLeft,
     roles: ['admin', 'missionario', 'recantiano', 'pai', 'colaborador', 'benfeitor']
+  },
+  {
+    name: 'Minha Jornada',
+    href: '/app/dashboard/journey',
+    description: 'Seu progresso, livros e cursos',
+    icon: Sparkles,
+    roles: ['admin', 'missionario', 'recantiano', 'pai', 'colaborador', 'benfeitor'],
   },
   /*
   {
