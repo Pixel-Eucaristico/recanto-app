@@ -41,14 +41,14 @@ export async function verifySession() {
 
     if (userDoc.exists) {
       const userData = userDoc.data();
-      // Adicionar role ao decoded token
       return {
         ...decoded,
-        role: userData?.role || null
+        role: userData?.role || null,
+        features: (userData?.features as string[] | undefined) ?? [],
       };
     }
 
-    return decoded;
+    return { ...decoded, role: null, features: [] as string[] };
   } catch (error) {
     console.error("Session verification failed:", error);
     return null;

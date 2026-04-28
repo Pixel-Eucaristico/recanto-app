@@ -59,7 +59,9 @@ export default async function Home() {
               return null;
             }
 
-            return <ModComponent key={block.id} {...block.props} />;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const Comp = ModComponent as React.ComponentType<any>;
+            return <Comp key={block.id} {...block.props} />;
           })}
       </>
     );

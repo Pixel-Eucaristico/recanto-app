@@ -1,0 +1,1 @@
+export { BookSpoilerVeil } from './BookSpoilerVeil';

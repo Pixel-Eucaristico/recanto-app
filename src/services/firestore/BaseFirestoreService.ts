@@ -56,7 +56,7 @@ export class BaseFirestoreService<T extends DocumentData> {
         ...data,
         id: docRef.id,
         created_at: new Date().toISOString(),
-      } as T & { id: string };
+      } as unknown as T & { id: string };
     } catch (error) {
       console.error(`Error creating ${this.collectionName}:`, error);
       throw error;
@@ -82,7 +82,7 @@ export class BaseFirestoreService<T extends DocumentData> {
         ...data,
         id,
         created_at: new Date().toISOString(),
-      } as T & { id: string };
+      } as unknown as T & { id: string };
     } catch (error) {
       console.error(`Error creating ${this.collectionName} with ID:`, error);
       throw error;

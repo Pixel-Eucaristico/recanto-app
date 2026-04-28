@@ -202,3 +202,225 @@
 .boundary-reset .sticky {
   position: relative !important;
 }
+
+/* React Flow (editor visual de case-studies) segue tema DaisyUI */
+.react-flow {
+  --xy-background-color: var(--color-base-200) !important;
+  --xy-background-pattern-color: var(--color-base-300) !important;
+  --xy-edge-stroke-default: var(--color-primary) !important;
+  --xy-edge-stroke-selected: var(--color-accent) !important;
+  --xy-edge-label-color-default: var(--color-base-content) !important;
+  --xy-edge-label-background-color-default: var(--color-base-100) !important;
+  --xy-minimap-background-color-default: var(--color-base-200) !important;
+  --xy-minimap-mask-background-color-default: color-mix(in oklch, var(--color-base-300) 60%, transparent) !important;
+  --xy-minimap-node-background-color-default: var(--color-primary) !important;
+  --xy-controls-button-background-color-default: var(--color-base-100) !important;
+  --xy-controls-button-background-color-hover-default: var(--color-base-200) !important;
+  --xy-controls-button-color-default: var(--color-base-content) !important;
+  --xy-controls-button-color-hover-default: var(--color-base-content) !important;
+  --xy-controls-button-border-color-default: var(--color-base-300) !important;
+  --xy-handle-background-color-default: var(--color-primary) !important;
+  --xy-handle-border-color-default: var(--color-primary) !important;
+  --xy-selection-background-color-default: color-mix(in oklch, var(--color-primary) 15%, transparent) !important;
+  --xy-selection-border-default: 1px dashed var(--color-primary) !important;
+  --xy-attribution-background-color-default: var(--color-base-100) !important;
+  --xy-node-background-color-default: var(--color-base-100) !important;
+  --xy-node-border-default: 1px solid var(--color-base-300) !important;
+  --xy-node-color-default: var(--color-base-content) !important;
+  --xy-node-boxshadow-hover-default: 0 1px 4px 1px color-mix(in oklch, var(--color-base-content) 10%, transparent) !important;
+  --xy-node-boxshadow-selected-default: 0 0 0 2px var(--color-primary) !important;
+  --xy-resize-background-color-default: var(--color-primary) !important;
+}
+.react-flow__background {
+  background-color: var(--color-base-200) !important;
+}
+.react-flow__edge-text {
+  fill: var(--color-base-content) !important;
+}
+.react-flow__edge-textbg {
+  fill: var(--color-base-100) !important;
+  stroke: var(--color-base-300) !important;
+  stroke-width: 1 !important;
+}
+.react-flow__edge-path {
+  stroke: var(--color-primary) !important;
+}
+.react-flow__edge.selected .react-flow__edge-path,
+.react-flow__edge:focus .react-flow__edge-path,
+.react-flow__edge:focus-visible .react-flow__edge-path {
+  stroke: var(--color-accent) !important;
+}
+.react-flow__handle {
+  background: var(--color-primary) !important;
+  border: 2px solid var(--color-base-100) !important;
+}
+.react-flow__controls-button {
+  background-color: var(--color-base-100) !important;
+  border-bottom: 1px solid var(--color-base-300) !important;
+  color: var(--color-base-content) !important;
+}
+.react-flow__controls-button:hover {
+  background-color: var(--color-base-200) !important;
+}
+.react-flow__controls-button svg {
+  fill: var(--color-base-content) !important;
+}
+.react-flow__minimap {
+  background-color: var(--color-base-200) !important;
+  border: 1px solid var(--color-base-300) !important;
+}
+.react-flow__minimap-mask {
+  fill: color-mix(in oklch, var(--color-base-300) 60%, transparent) !important;
+}
+.react-flow__attribution {
+  background: transparent !important;
+  color: var(--color-base-content) !important;
+  opacity: 0.5;
+}
+.react-flow__arrowhead {
+  fill: var(--color-primary) !important;
+}
+
+/* MarkdownField — map MDEditor internal CSS vars to DaisyUI vars (both modes) */
+:root,
+[data-color-mode="light"],
+[data-color-mode="dark"] {
+  --color-canvas-default: var(--color-base-100);
+  --color-canvas-subtle: var(--color-base-200);
+  --color-canvas-inset: var(--color-base-200);
+  --color-border-default: var(--color-base-300);
+  --color-border-muted: var(--color-base-300);
+  --color-fg-default: var(--color-base-content);
+  --color-fg-muted: var(--color-base-content);
+  --color-neutral-muted: var(--color-base-200);
+}
+
+/* MarkdownField — modo normal (não fullscreen) */
+.markdown-field .w-md-editor {
+  background-color: var(--color-base-100) !important;
+  color: var(--color-base-content) !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.markdown-field .w-md-editor-toolbar {
+  background-color: var(--color-base-200) !important;
+  border-bottom: 1px solid var(--color-base-300) !important;
+}
+.markdown-field .w-md-editor-toolbar li > button {
+  color: color-mix(in oklch, var(--color-base-content) 70%, transparent) !important;
+}
+.markdown-field .w-md-editor-toolbar li > button:hover {
+  color: var(--color-primary) !important;
+  background-color: var(--color-base-300) !important;
+}
+.markdown-field .w-md-editor-text,
+.markdown-field .w-md-editor-text-pre,
+.markdown-field .w-md-editor-input,
+.markdown-field textarea {
+  background-color: var(--color-base-100) !important;
+  color: var(--color-base-content) !important;
+  -webkit-text-fill-color: var(--color-base-content) !important;
+}
+.markdown-field .w-md-editor-preview,
+.markdown-field .wmde-markdown,
+.markdown-field .wmde-markdown-color {
+  background-color: var(--color-base-100) !important;
+  color: var(--color-base-content) !important;
+}
+.markdown-field .w-md-editor-bar {
+  background-color: var(--color-base-300) !important;
+}
+
+/* Mobile-first overrides — < 768px */
+@media (max-width: 767px) {
+  .markdown-field .w-md-editor-toolbar {
+    flex-wrap: wrap !important;
+    padding: 4px !important;
+    gap: 2px !important;
+  }
+  .markdown-field .w-md-editor-toolbar li {
+    flex: 0 0 auto;
+  }
+  .markdown-field .w-md-editor-toolbar li > button {
+    min-width: 32px !important;
+    min-height: 32px !important;
+    padding: 4px !important;
+  }
+  .markdown-field .w-md-editor-toolbar-divider {
+    display: none !important;
+  }
+  .markdown-field .w-md-editor-text,
+  .markdown-field .w-md-editor-text-pre,
+  .markdown-field .w-md-editor-input,
+  .markdown-field textarea {
+    font-size: 16px !important;
+    line-height: 1.6 !important;
+  }
+  .markdown-field .w-md-editor {
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+  .markdown-field .w-md-editor-content {
+    max-width: 100% !important;
+  }
+}
+
+/* MarkdownField auto-grow — cresce com o conteúdo, sem scroll interno.
+   Usa scroll da página/modal pra navegação. */
+.markdown-field-autogrow .w-md-editor {
+  height: auto !important;
+  min-height: 220px;
+}
+.markdown-field-autogrow .w-md-editor-content {
+  height: auto !important;
+  min-height: 220px;
+}
+.markdown-field-autogrow .w-md-editor-area,
+.markdown-field-autogrow .w-md-editor-text {
+  height: auto !important;
+  min-height: 220px;
+  overflow: visible !important;
+}
+.markdown-field-autogrow .w-md-editor-text-input,
+.markdown-field-autogrow .w-md-editor-text-pre,
+.markdown-field-autogrow textarea {
+  overflow: hidden !important;
+  resize: none !important;
+}
+
+/* MarkdownField — MDEditor fullscreen respeita tema DaisyUI */
+.w-md-editor.w-md-editor-fullscreen {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 9999 !important;
+  background-color: var(--color-base-100) !important;
+  color: var(--color-base-content) !important;
+}
+.w-md-editor-fullscreen .w-md-editor-toolbar {
+  background-color: var(--color-base-200) !important;
+  border-bottom: 1px solid var(--color-base-300) !important;
+}
+.w-md-editor-fullscreen .w-md-editor-toolbar li > button {
+  color: color-mix(in oklch, var(--color-base-content) 70%, transparent) !important;
+}
+.w-md-editor-fullscreen .w-md-editor-toolbar li > button:hover {
+  color: var(--color-primary) !important;
+  background-color: var(--color-base-300) !important;
+}
+.w-md-editor-fullscreen .w-md-editor-content,
+.w-md-editor-fullscreen .w-md-editor-text,
+.w-md-editor-fullscreen .w-md-editor-text-pre,
+.w-md-editor-fullscreen .w-md-editor-input,
+.w-md-editor-fullscreen .w-md-editor-preview,
+.w-md-editor-fullscreen .wmde-markdown,
+.w-md-editor-fullscreen .wmde-markdown-color,
+.w-md-editor-fullscreen textarea {
+  background-color: var(--color-base-100) !important;
+  color: var(--color-base-content) !important;
+  -webkit-text-fill-color: var(--color-base-content) !important;
+}
+.w-md-editor-fullscreen .w-md-editor-bar {
+  background-color: var(--color-base-300) !important;
+}

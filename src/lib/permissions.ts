@@ -19,8 +19,11 @@ interface PermissibleUser {
  * @param dynamicPermissions Mapa de permissões de grupo carregado do Firestore (opcional)
  * @returns boolean
  */
+const ACL_DEBUG = process.env.NODE_ENV !== 'production' && process.env.NEXT_PUBLIC_ACL_DEBUG === 'true';
+const aclLog = (...args: unknown[]) => { if (ACL_DEBUG) console.log('[ACL Debug]', ...args); };
+
 export function hasFeature(
-  user: PermissibleUser | null | undefined, 
+  user: PermissibleUser | null | undefined,
   feature: string,
   dynamicPermissions?: Record<string, string[]>
 ): boolean {
@@ -28,19 +31,18 @@ export function hasFeature(
 
   const userFeatures = user.features || [];
   const userRole = user.role;
-  
-  // LOG PARA DEBUG EM PRODUÇÃO
-  console.log(`[ACL Debug] Checking feature '${feature}' for user role '${userRole}'`);
+
+  aclLog(`Checking feature '${feature}' for user role '${userRole}'`);
 
   // 1. Acesso total (Super Admin ou Power User)
   if (userRole === 'admin' || userFeatures.includes('*')) {
-    console.log(`[ACL Debug] -> Granted via Admin/*`);
+    aclLog(`-> Granted via Admin/*`);
     return true;
   }
 
   // 2. Verifica nas permissões individuais (Override)
   if (userFeatures.includes(feature)) {
-    console.log(`[ACL Debug] -> Granted via individual user feature`);
+    aclLog(`-> Granted via individual user feature`);
     return true;
   }
 
@@ -48,26 +50,26 @@ export function hasFeature(
   if (userRole) {
     // Tenta primeiro o dinâmico (Firestore), depois o padrão (Código)
     const rolePermissions = dynamicPermissions?.[userRole] || DEFAULT_ROLE_PERMISSIONS[userRole];
-    
-    console.log(`[ACL Debug] Dynamic Permissions Loaded for '${userRole}':`, dynamicPermissions?.[userRole] ? 'YES' : 'NO (Using Default)');
-    console.log(`[ACL Debug] Final Role Permissions for '${userRole}':`, rolePermissions);
+
+    aclLog(`Dynamic Permissions for '${userRole}':`, dynamicPermissions?.[userRole] ? 'YES' : 'NO (Default)');
+    aclLog(`Final Role Permissions for '${userRole}':`, rolePermissions);
 
     if (rolePermissions) {
       // O grupo tem acesso total?
       if (rolePermissions.includes('*')) {
-        console.log(`[ACL Debug] -> Granted via group wildcard *`);
+        aclLog(`-> Granted via group wildcard *`);
         return true;
       }
 
       // O grupo tem essa permissão específica?
       if (rolePermissions.includes(feature)) {
-        console.log(`[ACL Debug] -> Granted via group feature match`);
+        aclLog(`-> Granted via group feature match`);
         return true;
       }
     }
   }
 
-  console.log(`[ACL Debug] -> Denied`);
+  aclLog(`-> Denied`);
   return false;
 }
 

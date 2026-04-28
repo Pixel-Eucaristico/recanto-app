@@ -2,6 +2,7 @@ import {
   Home,
   Users,
   BookOpen,
+  BookHeart,
   MessageCircle,
   Calendar,
   DollarSign,
@@ -13,7 +14,11 @@ import {
   Database,
   FileEdit,
   Boxes,
-  ArrowLeft
+  ArrowLeft,
+  HeartHandshake,
+  Library,
+  History,
+  Sparkles,
 } from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
 import { Role } from "@/features/auth/types/user";
@@ -34,6 +39,13 @@ export const appRoutes: AppRoute[] = [
     href: '/',
     icon: ArrowLeft,
     roles: ['admin', 'missionario', 'recantiano', 'pai', 'colaborador', 'benfeitor']
+  },
+  {
+    name: 'Minha Jornada',
+    href: '/app/dashboard/journey',
+    description: 'Seu progresso, livros e cursos',
+    icon: Sparkles,
+    roles: ['admin', 'missionario', 'recantiano', 'pai', 'colaborador', 'benfeitor'],
   },
   /*
   {
@@ -66,6 +78,35 @@ export const appRoutes: AppRoute[] = [
     requiredFeature: 'manage:followup'
   },
   */
+  {
+    name: 'Trilhas',
+    href: '/app/dashboard/formation',
+    icon: BookOpen,
+    roles: ['admin', 'missionario', 'recantiano', 'pai', 'colaborador', 'benfeitor'],
+    requiredFeature: 'read:formation'
+  },
+  {
+    name: 'Fórum',
+    href: '/app/dashboard/forum',
+    icon: MessageCircle,
+    roles: ['admin', 'missionario', 'recantiano', 'pai', 'colaborador', 'benfeitor'],
+    requiredFeature: 'read:community'
+  },
+  {
+    name: 'Biblioteca',
+    href: '/app/dashboard/library',
+    icon: Library,
+    roles: ['admin', 'missionario', 'recantiano', 'pai', 'colaborador', 'benfeitor'],
+    requiredFeature: 'read:library'
+  },
+  {
+    name: 'Hábitos',
+    href: '/app/dashboard/habits',
+    description: 'Hábitos diários — comunidade, curso e seus',
+    icon: HeartHandshake,
+    roles: ['admin', 'missionario', 'recantiano', 'pai', 'colaborador'],
+    requiredFeature: 'log:habits'
+  },
   {
     name: 'Meus Desafios',
     href: '/app/dashboard/challenges',

@@ -11,13 +11,13 @@ import { useToast } from "@/components/ui/use-toast";
 
 export default function DonatePage() {
     const { toast } = useToast();
-    const [amount, setAmount] = useState(50);
+    const [amount, setAmount] = useState<number | string>(50);
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [step, setStep] = useState(1);
     const [isProcessing, setIsProcessing] = useState(false);
 
-    const handleDonationSubmit = async (e) => {
+    const handleDonationSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsProcessing(true);
         try {

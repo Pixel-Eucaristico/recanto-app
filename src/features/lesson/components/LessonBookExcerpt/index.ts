@@ -1,0 +1,1 @@
+export { LessonBookExcerpt } from './LessonBookExcerpt';

@@ -4,7 +4,7 @@ export const ProjectsShowcaseConfig: ModConfig = {
   id: 'ProjectsShowcase',
   name: 'Vitrine de Projetos',
   description: 'Grid de projetos com cards categorizados, imagem, descrição e botão "Saiba Mais"',
-  category: 'Conteúdo',
+  category: 'content',
   icon: 'LayoutGrid',
   defaultProps: {
     title: "",

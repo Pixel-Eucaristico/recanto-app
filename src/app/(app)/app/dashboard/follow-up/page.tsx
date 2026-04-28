@@ -95,7 +95,8 @@ export default function FollowUpPage() {
                 date: new Date().toISOString(),
                 tipo: 'conversa',
                 observacoes: newRegistro,
-                progresso: 'intermediario'
+                progresso: 'intermediario',
+                created_at: new Date().toISOString(),
             });
 
             setRegistros([newEntry, ...registros]);

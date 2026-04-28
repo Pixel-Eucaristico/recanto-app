@@ -1,0 +1,1 @@
+export { WordSearchBuilder } from './WordSearchBuilder';

@@ -1,0 +1,1 @@
+export { QuickPoll } from './QuickPoll';

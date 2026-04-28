@@ -3,8 +3,13 @@ import { MessageCircle, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-export default function WhatsAppContact({ missionarioPhone, missionarioName }) {
-    const createWhatsAppLink = (message) => {
+interface WhatsAppContactProps {
+  missionarioPhone?: string;
+  missionarioName?: string;
+}
+
+export default function WhatsAppContact({ missionarioPhone, missionarioName }: WhatsAppContactProps) {
+    const createWhatsAppLink = (message: string) => {
         const phone = missionarioPhone?.replace(/\D/g, '') || '5511999999999'; // Número padrão se não tiver
         const encodedMessage = encodeURIComponent(message);
         return `https://wa.me/${phone}?text=${encodedMessage}`;

@@ -1,0 +1,1 @@
+export { BibliographyEditor } from './BibliographyEditor';

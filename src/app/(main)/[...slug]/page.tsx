@@ -135,8 +135,10 @@ export default async function DynamicPage({ params }: PageProps) {
           console.log('🧹 Props limpas:', JSON.stringify(cleanProps, null, 2));
 
           // Renderiza o Mod com suas props corretas
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const Comp = Component as React.ComponentType<any>;
           return (
-            <Component
+            <Comp
               key={block.id}
               {...cleanProps}
             />

@@ -38,7 +38,7 @@ export default function RoleProtectedRoute({
         userHasPermission = true;
       } else {
         // Verificar se o cargo do usuário está na lista de permitidos
-        userHasPermission = allowedRoles.includes(user.role);
+        userHasPermission = allowedRoles.includes(user.role ?? null);
       }
 
       if (!userHasPermission) {

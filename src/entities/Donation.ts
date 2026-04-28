@@ -14,6 +14,10 @@ export class Donation {
     return []
   }
 
+  static async filter(query: Partial<Donation>): Promise<Donation[]> {
+    return []
+  }
+
   static async create(data: Partial<Donation>): Promise<Donation> {
     return { ...data, id: Date.now().toString() } as Donation
   }
