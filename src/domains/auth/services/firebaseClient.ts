@@ -55,7 +55,7 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
 // Serviços Firebase
 // ----------------------------------------------------
 export const auth = getAuth(app);
-export const database = getDatabase(app); // Realtime Database (legacy)
+export const database = firebaseConfig.databaseURL ? getDatabase(app) : null; // Realtime Database (legacy)
 export const firestore = getFirestore(app); // Firestore (novo!)
 export const analytics = typeof window !== "undefined" ? getAnalytics(app) : null;
 
