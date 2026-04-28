@@ -7,7 +7,8 @@ import {
   type OnNodesChange, type OnEdgesChange,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { nodeTypes, type NodeData } from './CaseFlowNode';
+import { nodeTypes } from './CaseFlowNode';
+import type { NodeData } from '../utils/caseStudyFlowUtils';
 
 interface CaseFlowCanvasProps {
   nodes: Node<NodeData>[];

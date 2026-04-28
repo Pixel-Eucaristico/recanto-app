@@ -39,6 +39,7 @@ export function TrackForm({ track, allTracks, saving, onSave, onCancel }: TrackF
   const [requiresTrackIds, setRequiresTrackIds] = useState<string[]>(track?.requires_track_ids ?? []);
   const [requiresApproval, setRequiresApproval] = useState(track?.requires_formator_approval ?? false);
   const [formatorIds, setFormatorIds] = useState<string[]>(track?.formator_ids ?? []);
+  const [lessonVisibility, setLessonVisibility] = useState<FormationTrack['lesson_visibility']>(track?.lesson_visibility ?? 'all');
   const [trackTypes, setTrackTypes] = useState<FormationTrackType[]>([]);
   const [eligibleFormators, setEligibleFormators] = useState<FirebaseUser[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -54,6 +55,7 @@ export function TrackForm({ track, allTracks, saving, onSave, onCancel }: TrackF
     setRequiresTrackIds(track?.requires_track_ids ?? []);
     setRequiresApproval(track?.requires_formator_approval ?? false);
     setFormatorIds(track?.formator_ids ?? []);
+    setLessonVisibility(track?.lesson_visibility ?? 'all');
   }, [track]);
 
   useEffect(() => {
@@ -100,6 +102,7 @@ export function TrackForm({ track, allTracks, saving, onSave, onCancel }: TrackF
         requires_track_ids: requiresTrackIds.length ? requiresTrackIds : undefined,
         requires_formator_approval: requiresApproval || undefined,
         formator_ids: formatorIds.length ? formatorIds : undefined,
+        lesson_visibility: lessonVisibility !== 'all' ? lessonVisibility : undefined,
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -182,6 +185,20 @@ export function TrackForm({ track, allTracks, saving, onSave, onCancel }: TrackF
               onChange={setThumbnailUrl}
             />
           </div>
+
+          <label className="form-control">
+            <span className="label-text text-xs mb-1">Visibilidade das aulas (pro aluno)</span>
+            <select
+              className="select select-bordered select-sm"
+              value={lessonVisibility ?? 'all'}
+              onChange={e => setLessonVisibility(e.target.value as FormationTrack['lesson_visibility'])}
+            >
+              <option value="all">Todas as aulas (default)</option>
+              <option value="current_only">Só a aula atual</option>
+              <option value="current_and_next">Atual + próxima</option>
+            </select>
+            <span className="text-[11px] text-base-content/50 mt-1">Admin sempre vê tudo.</span>
+          </label>
 
           <div>
             <span className="label-text text-xs mb-1 block">Quem pode acessar (vazio = todos)</span>

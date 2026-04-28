@@ -5,7 +5,11 @@ import { Button } from '@/components/ui/button';
 // import { createPageUrl } from '@/utils';
 import { Heart, BookOpen, Users, ArrowRight } from 'lucide-react';
 
-export default function ParentZone({ filho }) {
+interface ParentZoneProps {
+  filho?: { full_name?: string };
+}
+
+export default function ParentZone({ filho }: ParentZoneProps) {
     return (
         <Card className="bg-gradient-to-br from-sky-50 to-indigo-50 border-sky-200">
             <CardHeader>

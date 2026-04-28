@@ -11,10 +11,12 @@ import { HabitTableRow } from './components/HabitTableRow';
 interface HabitChecklistProps {
   userId: string | null;
   role: Role;
+  scope?: 'all' | 'community' | 'course' | 'mine';
+  courseId?: string;
 }
 
-export function HabitChecklist({ userId, role }: HabitChecklistProps) {
-  const { entries, loading, error, toggling, toggleDate, totalToday, totalHabits } = useHabits({ userId, role });
+export function HabitChecklist({ userId, role, scope = 'all', courseId }: HabitChecklistProps) {
+  const { entries, loading, error, toggling, toggleDate, totalToday, totalHabits } = useHabits({ userId, role, scope, courseId });
   const now = new Date();
   const days = buildDays(now);
   const monthLabel = now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });

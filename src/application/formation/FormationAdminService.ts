@@ -26,6 +26,7 @@ export interface SaveTrackInput {
   requires_track_ids?: string[];
   requires_formator_approval?: boolean;
   formator_ids?: string[];
+  lesson_visibility?: FormationTrack['lesson_visibility'];
 }
 
 export class FormationAdminService {
@@ -53,6 +54,7 @@ export class FormationAdminService {
         requires_track_ids: input.requires_track_ids,
         requires_formator_approval: input.requires_formator_approval,
         formator_ids: input.formator_ids,
+        lesson_visibility: input.lesson_visibility,
         updated_at: new Date().toISOString(),
       });
       if (!updated) throw new Error('Trilha não encontrada.');
@@ -223,6 +225,8 @@ export class FormationAdminService {
     practical_deadline_days?: number;
     highlight_quotes?: FormationLesson['highlight_quotes'];
     material_ids?: string[];
+    habit_ids?: string[];
+    components?: FormationLesson['components'];
   }): Promise<FormationLesson> {
     if (!input.title.trim()) throw new Error('Título da aula vazio.');
 
@@ -255,6 +259,8 @@ export class FormationAdminService {
       practical_deadline_days: input.practical_deadline_days,
       highlight_quotes: input.highlight_quotes ?? [],
       material_ids: input.material_ids ?? [],
+      habit_ids: input.habit_ids,
+      components: input.components,
       updated_at: new Date().toISOString(),
     };
 

@@ -2,16 +2,21 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Users, Search, ChevronRight, BookOpen } from 'lucide-react';
+import { ArrowLeft, Users, Search, ChevronRight, Activity, AlertTriangle, TrendingUp, Download } from 'lucide-react';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
-import { formatorService, type StudentSummary } from '@/application/formation/FormatorService';
+import { formatorService, type StudentSummary, type FormatorStats } from '@/application/formation/FormatorService';
 import type { FormationTrack } from '@/domain/formation/types';
+import { toCsv, downloadCsv } from '@/shared/utils/csv';
+
+type ActivityFilter = 'all' | 'active' | 'stale' | 'never';
 
 export default function FormatorStudentsPage() {
   const user = useCurrentUser();
   const [tracks, setTracks] = useState<FormationTrack[]>([]);
   const [students, setStudents] = useState<StudentSummary[]>([]);
+  const [stats, setStats] = useState<FormatorStats | null>(null);
   const [trackFilter, setTrackFilter] = useState<string>('all');
+  const [activityFilter, setActivityFilter] = useState<ActivityFilter>('all');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,9 +29,10 @@ export default function FormatorStudentsPage() {
   useEffect(() => {
     if (!user || !isFormator) { setLoading(false); return; }
     formatorService.getMyStudents(user.id, isAdmin)
-      .then(({ tracks, students }) => {
+      .then(({ tracks, students, stats }) => {
         setTracks(tracks);
         setStudents(students);
+        setStats(stats);
       })
       .catch(e => setError(e instanceof Error ? e.message : String(e)))
       .finally(() => setLoading(false));
@@ -37,6 +43,17 @@ export default function FormatorStudentsPage() {
     if (trackFilter !== 'all') {
       list = list.filter(s => s.trackIds.includes(trackFilter));
     }
+    if (activityFilter !== 'all') {
+      const now = Date.now();
+      const day = 86400000;
+      list = list.filter(s => {
+        if (!s.lastActivityAt) return activityFilter === 'never';
+        const ageDays = (now - new Date(s.lastActivityAt).getTime()) / day;
+        if (activityFilter === 'active') return ageDays <= 7;
+        if (activityFilter === 'stale') return ageDays > 14;
+        return false;
+      });
+    }
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(s =>
@@ -45,7 +62,31 @@ export default function FormatorStudentsPage() {
       );
     }
     return list;
-  }, [students, trackFilter, search]);
+  }, [students, trackFilter, activityFilter, search]);
+
+  function exportCsv() {
+    const trackById = new Map(tracks.map(t => [t.id, t.title] as const));
+    const rows = filtered.map(s => ({
+      nome: s.user.name ?? '',
+      email: s.user.email ?? '',
+      trilhas: s.trackIds.map(id => trackById.get(id) ?? id).join(' | '),
+      aulas_iniciadas: s.totalLessonsTouched,
+      aulas_concluidas: s.totalLessonsCompleted,
+      percentual: s.totalLessonsTouched > 0
+        ? Math.round((s.totalLessonsCompleted / s.totalLessonsTouched) * 100)
+        : 0,
+      ultima_atividade: s.lastActivityAt
+        ? new Date(s.lastActivityAt).toLocaleString('pt-BR')
+        : '',
+    }));
+    const csv = toCsv(rows, [
+      'nome', 'email', 'trilhas',
+      'aulas_iniciadas', 'aulas_concluidas', 'percentual',
+      'ultima_atividade',
+    ]);
+    const date = new Date().toISOString().slice(0, 10);
+    downloadCsv(`alunos_${date}.csv`, csv);
+  }
 
   if (!user) return <div className="p-6">Faça login.</div>;
   if (!isFormator) {
@@ -68,6 +109,16 @@ export default function FormatorStudentsPage() {
           <h1 className="text-base sm:text-lg font-bold flex items-center gap-1">
             <Users className="w-5 h-5 text-accent" /> Meus alunos
           </h1>
+          {students.length > 0 && (
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm gap-1 ml-auto"
+              onClick={exportCsv}
+              title="Exportar lista filtrada em CSV"
+            >
+              <Download className="w-4 h-4" /> CSV
+            </button>
+          )}
         </div>
 
         {error && <div className="alert alert-error text-sm"><span>{error}</span></div>}
@@ -87,7 +138,62 @@ export default function FormatorStudentsPage() {
           </div>
         )}
 
-        {tracks.length > 0 && (
+        {tracks.length > 0 && stats && (
+          <>
+            {/* Stats cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <StatCard
+                label="Total de alunos"
+                value={stats.totalStudents}
+                icon={<Users className="w-4 h-4" />}
+                color="text-primary"
+              />
+              <StatCard
+                label="Ativos (7d)"
+                value={stats.activeLast7d}
+                icon={<Activity className="w-4 h-4" />}
+                color="text-success"
+                onClick={() => setActivityFilter(prev => prev === 'active' ? 'all' : 'active')}
+                active={activityFilter === 'active'}
+              />
+              <StatCard
+                label="Parados (>14d)"
+                value={stats.staleOver14d}
+                icon={<AlertTriangle className="w-4 h-4" />}
+                color="text-warning"
+                onClick={() => setActivityFilter(prev => prev === 'stale' ? 'all' : 'stale')}
+                active={activityFilter === 'stale'}
+              />
+              <StatCard
+                label="Taxa de conclusão"
+                value={`${stats.completionRate}%`}
+                icon={<TrendingUp className="w-4 h-4" />}
+                color="text-info"
+              />
+            </div>
+
+            {/* Por trilha */}
+            {stats.byTrack.length > 0 && (
+              <div className="card bg-base-100 border border-base-300">
+                <div className="card-body p-3 gap-2">
+                  <h2 className="font-semibold text-sm">Conclusão por trilha</h2>
+                  <ul className="space-y-1">
+                    {stats.byTrack.map(b => (
+                      <li key={b.track.id} className="flex items-center gap-2 text-xs">
+                        <span className="flex-1 min-w-0 truncate">{b.track.title}</span>
+                        <span className="text-base-content/60">
+                          {b.studentCount} aluno{b.studentCount !== 1 ? 's' : ''} · {b.completedLessons}/{b.touchedLessons}
+                        </span>
+                        <span className={`badge badge-sm ${b.rate >= 70 ? 'badge-success' : b.rate >= 30 ? 'badge-info' : 'badge-ghost'}`}>
+                          {b.rate}%
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+
           <div className="card bg-base-100 border border-base-300">
             <div className="card-body p-3 gap-2">
               <div className="flex items-center gap-2">
@@ -110,8 +216,15 @@ export default function FormatorStudentsPage() {
                   <option key={t.id} value={t.id}>{t.title}</option>
                 ))}
               </select>
+              <div role="tablist" className="tabs tabs-bordered">
+                <button role="tab" className={`tab tab-sm ${activityFilter === 'all' ? 'tab-active' : ''}`} onClick={() => setActivityFilter('all')}>Todos</button>
+                <button role="tab" className={`tab tab-sm ${activityFilter === 'active' ? 'tab-active' : ''}`} onClick={() => setActivityFilter('active')}>Ativos</button>
+                <button role="tab" className={`tab tab-sm ${activityFilter === 'stale' ? 'tab-active' : ''}`} onClick={() => setActivityFilter('stale')}>Parados</button>
+                <button role="tab" className={`tab tab-sm ${activityFilter === 'never' ? 'tab-active' : ''}`} onClick={() => setActivityFilter('never')}>Não iniciaram</button>
+              </div>
             </div>
           </div>
+          </>
         )}
 
         {loading && (
@@ -189,4 +302,35 @@ function formatRelative(iso: string): string {
   if (days === 1) return 'ontem';
   if (days < 7) return `${days} dias atrás`;
   return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+}
+
+interface StatCardProps {
+  label: string;
+  value: number | string;
+  icon: React.ReactNode;
+  color: string;
+  onClick?: () => void;
+  active?: boolean;
+}
+
+function StatCard({ label, value, icon, color, onClick, active }: StatCardProps) {
+  const content = (
+    <div className={`card bg-base-100 border ${active ? 'border-primary' : 'border-base-300'} h-full`}>
+      <div className="card-body p-3 gap-1">
+        <div className={`flex items-center gap-1 ${color}`}>
+          {icon}
+          <span className="text-[11px] text-base-content/60 truncate">{label}</span>
+        </div>
+        <span className="text-lg font-bold">{value}</span>
+      </div>
+    </div>
+  );
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className="text-left hover:opacity-80 transition-opacity">
+        {content}
+      </button>
+    );
+  }
+  return content;
 }

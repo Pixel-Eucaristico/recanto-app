@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { habitService } from '@/application/habits/HabitService';
+import { habitLogRepository } from '@/infrastructure/habits/HabitLogRepository';
 import { Habit, HabitStreakInfo } from '@/domain/habits/types';
 import { HabitStreakEntity } from '@/domain/habits/entities/HabitStreak';
 import { Role } from '@/shared/types/role';
@@ -13,12 +14,18 @@ export interface HabitEntry {
   loggedDays: Set<string>;
 }
 
+type HabitScope = 'all' | 'community' | 'course' | 'mine';
+
 interface UseHabitsArgs {
   userId: string | null;
   role: Role;
+  /** Filtro de escopo. Default: 'all'. */
+  scope?: HabitScope;
+  /** Quando scope='course', filtra por trilha. */
+  courseId?: string;
 }
 
-export function useHabits({ userId, role }: UseHabitsArgs) {
+export function useHabits({ userId, role, scope = 'all', courseId }: UseHabitsArgs) {
   const [entries, setEntries] = useState<HabitEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,14 +39,21 @@ export function useHabits({ userId, role }: UseHabitsArgs) {
     setLoading(true);
     setError(null);
     try {
-      const streaks = await habitService.getStreaksForUser(userId, role);
-      setEntries(streaks);
+      // Lista habits no escopo + monta entries com logs/streak
+      const habits = await habitService.listForUserScoped(userId, role, scope, courseId);
+      const result = await Promise.all(habits.map(async h => {
+        const logs = await habitLogRepository.findByUserAndHabit(userId, h.id);
+        const streak = HabitStreakEntity.compute(h.id, logs);
+        const loggedDays = new Set(logs.map(l => l.log_date));
+        return { habit: h, streak, loggedDays };
+      }));
+      setEntries(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
-  }, [userId, role]);
+  }, [userId, role, scope, courseId]);
 
   useEffect(() => {
     reload();

@@ -288,10 +288,6 @@ function PracticalTab({ lesson }: { lesson: FormationLesson }) {
 }
 
 // ─── Activity tab wrappers ──────────────────────────────────────────────────
-//
-// Cada atividade carrega via hook + verifica se foi configurada pelo formador.
-// Os players têm signatures detalhadas — integração full virá em iteração
-// separada por atividade. Por enquanto, indica configuração e link pro playground.
 
 function NotConfigured({ label }: { label: string }) {
   return (
@@ -301,53 +297,111 @@ function NotConfigured({ label }: { label: string }) {
   );
 }
 
-function ActivityPlaceholder({ label }: { label: string }) {
+function FlashcardsTab({ lessonId, onCompleted }: { lessonId: string; onCompleted?: () => void }) {
+  const fc = useFlashcardDeck({ lessonId });
+  useEffect(() => {
+    if (fc.result?.persisted) onCompleted?.();
+  }, [fc.result?.persisted]);
+  if (fc.loading) return <div className="text-sm text-base-content/60">Carregando flashcards...</div>;
+  if (fc.error) return <div className="alert alert-error text-sm"><span>{fc.error}</span></div>;
+  if (!fc.deck) return <NotConfigured label="flashcards" />;
   return (
-    <div className="alert alert-info text-sm">
-      <span>{label} configurado. Player completo em integração — visualize por enquanto no painel de testes.</span>
-    </div>
+    <FlashcardDeckPlayer
+      deck={fc.deck}
+      submitting={fc.submitting}
+      result={fc.result}
+      onSubmit={fc.submit}
+      onRestart={fc.restart}
+    />
   );
 }
 
-function FlashcardsTab({ lessonId, onCompleted: _onCompleted }: { lessonId: string; onCompleted?: () => void }) {
-  const fc = useFlashcardDeck({ lessonId });
-  if (fc.loading) return <div className="text-sm text-base-content/60">Carregando flashcards...</div>;
-  if (!fc.deck) return <NotConfigured label="flashcards" />;
-  return <ActivityPlaceholder label={`Flashcards "${fc.deck.title}"`} />;
-}
-
-function CaseStudyTab({ lessonId, onCompleted: _onCompleted }: { lessonId: string; onCompleted?: () => void }) {
+function CaseStudyTab({ lessonId, onCompleted }: { lessonId: string; onCompleted?: () => void }) {
   const cs = useCaseStudy({ lessonId });
+  useEffect(() => {
+    if (cs.result?.persisted) onCompleted?.();
+  }, [cs.result?.persisted]);
   if (cs.loading) return <div className="text-sm text-base-content/60">Carregando estudo de caso...</div>;
+  if (cs.error) return <div className="alert alert-error text-sm"><span>{cs.error}</span></div>;
   if (!cs.caseStudy) return <NotConfigured label="estudo de caso" />;
-  return <ActivityPlaceholder label={`Estudo de caso "${cs.caseStudy.title}"`} />;
+  if (cs.result && cs.currentNode) {
+    return (
+      <CaseStudySummary
+        caseStudy={cs.caseStudy}
+        path={cs.path}
+        persisted={cs.result.persisted}
+        onRestart={cs.restart}
+      />
+    );
+  }
+  if (!cs.currentNode) return <div className="text-sm text-base-content/60">Nó inicial não encontrado.</div>;
+  return (
+    <CaseStudyPlayer
+      caseStudy={cs.caseStudy}
+      currentNode={cs.currentNode}
+      isEnd={cs.isEnd}
+      submitting={cs.submitting}
+      onChoose={cs.choose}
+      onFinish={cs.finish}
+    />
+  );
 }
 
-function WordSearchTab({ lessonId, onCompleted: _onCompleted }: { lessonId: string; onCompleted?: () => void }) {
+function WordSearchTab({ lessonId, onCompleted }: { lessonId: string; onCompleted?: () => void }) {
   const ws = useWordSearch({ lessonId });
+  useEffect(() => {
+    if (ws.result?.persisted && ws.result.score >= 100) onCompleted?.();
+  }, [ws.result?.persisted, ws.result?.score]);
   if (ws.loading) return <div className="text-sm text-base-content/60">Carregando caça-palavras...</div>;
+  if (ws.error) return <div className="alert alert-error text-sm"><span>{ws.error}</span></div>;
   if (!ws.puzzle) return <NotConfigured label="caça-palavras" />;
-  return <ActivityPlaceholder label={`Caça-palavras "${ws.puzzle.title}"`} />;
+  return (
+    <WordSearchGrid
+      puzzle={ws.puzzle}
+      found={ws.found}
+      onFound={ws.markFound}
+      onSubmit={ws.submit}
+      onRestart={ws.restart}
+      submitting={ws.submitting}
+      result={ws.result}
+    />
+  );
 }
 
-function CrosswordTab({ lessonId, onCompleted: _onCompleted }: { lessonId: string; onCompleted?: () => void }) {
+function CrosswordTab({ lessonId, onCompleted }: { lessonId: string; onCompleted?: () => void }) {
   const cw = useCrossword({ lessonId });
+  useEffect(() => {
+    if (cw.result?.persisted && cw.result.correct === cw.result.total) onCompleted?.();
+  }, [cw.result?.persisted, cw.result?.correct, cw.result?.total]);
   if (cw.loading) return <div className="text-sm text-base-content/60">Carregando palavras cruzadas...</div>;
+  if (cw.error) return <div className="alert alert-error text-sm"><span>{cw.error}</span></div>;
   if (!cw.puzzle) return <NotConfigured label="palavras cruzadas" />;
-  return <ActivityPlaceholder label={`Palavras cruzadas "${cw.puzzle.title}"`} />;
+  return (
+    <CrosswordGrid
+      puzzle={cw.puzzle}
+      onSubmit={cw.submit}
+      onRestart={cw.reload}
+      submitting={cw.submitting}
+      result={cw.result}
+    />
+  );
 }
 
-function MindMapTab({ lessonId, onCompleted: _onCompleted }: { lessonId: string; onCompleted?: () => void }) {
+function MindMapTab({ lessonId, onCompleted }: { lessonId: string; onCompleted?: () => void }) {
   const mm = useMindMap({ lessonId });
   if (mm.loading) return <div className="text-sm text-base-content/60">Carregando mapa mental...</div>;
-  if (!mm.template) return <NotConfigured label="mapa mental" />;
-  return <ActivityPlaceholder label={`Mapa mental "${mm.template.title}"`} />;
+  if (mm.error) return <div className="alert alert-error text-sm"><span>{mm.error}</span></div>;
+  if (!mm.template || !mm.state) return <NotConfigured label="mapa mental" />;
+  return (
+    <MindMapCanvas
+      state={mm.state}
+      onChange={mm.setState}
+      onSave={async () => {
+        if (!mm.state) return;
+        await mm.save(mm.state);
+        onCompleted?.();
+      }}
+      saving={mm.saving}
+    />
+  );
 }
-
-// Suppress unused player imports — usados nas iterações futuras
-void FlashcardDeckPlayer;
-void CaseStudyPlayer;
-void CaseStudySummary;
-void WordSearchGrid;
-void CrosswordGrid;
-void MindMapCanvas;

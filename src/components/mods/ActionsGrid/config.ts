@@ -4,7 +4,7 @@ export const actionsGridConfig: ModConfig = {
   id: 'ActionsGrid',
   name: 'Grade de Ações',
   description: 'Grid de cards com imagem, título e descrição. Ideal para mostrar ações, serviços ou projetos.',
-  category: 'Conteúdo',
+  category: 'content',
   icon: 'Grid3x3',
   defaultProps: {
     title: "",

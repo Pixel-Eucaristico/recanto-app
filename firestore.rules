@@ -686,5 +686,114 @@ service cloud.firestore {
       // Deleção: só admin
       allow delete: if isAdmin();
     }
+
+    // ===========================
+    // Content Versions (histórico append-only de edições)
+    // ===========================
+    match /content_versions/{versionId} {
+      // Leitura: dono OU quem revisa (formador)
+      allow read: if isAuthenticated() && (
+        resource.data.user_id == request.auth.uid ||
+        hasFeature('review:formation') ||
+        isAdmin()
+      );
+      // Criação: próprio usuário (plugin grava no save)
+      allow create: if isAuthenticated() &&
+                      request.resource.data.user_id == request.auth.uid;
+      // Imutável após criação
+      allow update, delete: if false;
+    }
+
+    // ===========================
+    // Prayer Intentions + Logs
+    // ===========================
+    match /prayer_intentions/{intentionId} {
+      allow read: if isAuthenticated() && (
+        hasFeature('read:prayer') || hasFeature('manage:prayer') || isAdmin()
+      );
+      allow create: if isAuthenticated() &&
+                      hasFeature('read:prayer') &&
+                      request.resource.data.created_by == request.auth.uid;
+      // Update: dono (marcar respondida) OU sistema incrementa contador via log
+      // Permissão simples: dono OU autenticado (pra incrementar prayed_count após log)
+      allow update: if isAuthenticated() && (
+        resource.data.created_by == request.auth.uid ||
+        hasFeature('read:prayer')
+      );
+      allow delete: if isAuthenticated() && (
+        resource.data.created_by == request.auth.uid || isAdmin() || hasFeature('manage:prayer')
+      );
+    }
+
+    match /prayer_logs/{logId} {
+      allow read: if isAuthenticated() && (
+        resource.data.user_id == request.auth.uid ||
+        hasFeature('manage:prayer') ||
+        isAdmin()
+      );
+      allow create: if isAuthenticated() &&
+                      hasFeature('read:prayer') &&
+                      request.resource.data.user_id == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // ===========================
+    // Notifications (in-app, fan-out por destinatário)
+    // ===========================
+    match /notifications/{notificationId} {
+      // Leitura: dono OU admin
+      allow read: if isAuthenticated() && (
+        resource.data.user_id == request.auth.uid || isAdmin()
+      );
+      // Criação: qualquer autenticado pode criar (service grava em nome de outros via fan-out client)
+      // Trade-off: simplicidade > segurança rígida. Pra prod considerar Cloud Function.
+      allow create: if isAuthenticated() && request.resource.data.read == false;
+      // Update: só dono (marcar como lida)
+      allow update: if isAuthenticated() && resource.data.user_id == request.auth.uid;
+      allow delete: if isAuthenticated() && (
+        resource.data.user_id == request.auth.uid || isAdmin()
+      );
+    }
+
+    // ===========================
+    // Track Enrollment Requests (aprovação manual do formador)
+    // ===========================
+    match /track_enrollment_requests/{requestId} {
+      // Leitura: dono OU formador/admin (formador filtra client-side por trilhas que gerencia)
+      allow read: if isAuthenticated() && (
+        resource.data.user_id == request.auth.uid ||
+        hasFeature('manage:formation') ||
+        hasFeature('review:formation') ||
+        isAdmin()
+      );
+      // Criação: aluno cria seu próprio pedido
+      allow create: if isAuthenticated() &&
+                      request.resource.data.user_id == request.auth.uid &&
+                      request.resource.data.status == 'pending';
+      // Atualização: dono pode atualizar (cancel/edit), OU formador/admin (decisão)
+      allow update: if isAuthenticated() && (
+        resource.data.user_id == request.auth.uid ||
+        hasFeature('manage:formation') ||
+        hasFeature('review:formation') ||
+        isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+
+    // ===========================
+    // Video Watch Sessions (log de visualizações + rewatch)
+    // ===========================
+    match /video_watch_sessions/{sessionId} {
+      allow read: if isAuthenticated() && (
+        resource.data.user_id == request.auth.uid ||
+        hasFeature('review:formation') ||
+        isAdmin()
+      );
+      allow create: if isAuthenticated() &&
+                      request.resource.data.user_id == request.auth.uid;
+      // Sessão pode ser atualizada pelo dono (preencher ended_at após terminar)
+      allow update: if isAuthenticated() && resource.data.user_id == request.auth.uid;
+      allow delete: if isAdmin();
+    }
   }
 }

@@ -48,7 +48,18 @@ export function useHabitConfig(userId: string) {
   function openEdit(h: Habit) {
     setEditing(h);
     setCreating(false);
-    setForm({ title: h.title, description: h.description ?? '', category: h.category, required_for_roles: h.required_for_roles ?? [], order: h.order, grace_days: h.grace_days ?? 3 });
+    setForm({
+      title: h.title,
+      description: h.description ?? '',
+      category: h.category,
+      required_for_roles: h.required_for_roles ?? [],
+      order: h.order,
+      grace_days: h.grace_days ?? 3,
+      source: h.source,
+      course_id: h.course_id,
+      duration_days: h.duration_days,
+      required_completion_percent: h.required_completion_percent,
+    });
     setError(null);
   }
 
@@ -78,6 +89,10 @@ export function useHabitConfig(userId: string) {
         order: Number(form.order) || 0,
         grace_days: Number(form.grace_days),
         created_by: userId,
+        source: form.source,
+        course_id: form.course_id || undefined,
+        duration_days: form.duration_days,
+        required_completion_percent: form.required_completion_percent,
       });
       closeForm();
       await reload();

@@ -30,8 +30,8 @@ export function useAdminMaterials() {
 
     const filteredMaterials = useMemo(() => {
         return materials.filter(mat => {
-            const matchesSearch = mat.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                                mat.category.toLowerCase().includes(searchQuery.toLowerCase());
+            const matchesSearch = mat.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                (mat.category ?? '').toLowerCase().includes(searchQuery.toLowerCase());
             const matchesCategory = categoryFilter === 'all' || mat.category === categoryFilter;
             return matchesSearch && matchesCategory;
         });

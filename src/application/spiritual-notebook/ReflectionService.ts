@@ -1,6 +1,7 @@
 import { reflectionRepository, IReflectionRepository } from '@/infrastructure/spiritual-notebook/ReflectionRepository';
 import { ReflectionEntity } from '@/domain/spiritual-notebook/entities/Reflection';
 import { Reflection } from '@/domain/spiritual-notebook/types';
+import { contentVersionService } from '@/application/content-versions/ContentVersionService';
 
 export interface SaveDraftInput {
   userId: string;
@@ -26,6 +27,18 @@ export class ReflectionService {
     if (existing) {
       if (existing.status === 'reviewed') {
         throw new Error('Reflexão já revisada — edição bloqueada.');
+      }
+      // Snapshot da versão anterior antes de sobrescrever (se conteúdo mudou)
+      if (existing.content !== input.content) {
+        contentVersionService.record({
+          target_collection: 'spiritual_reflections',
+          target_id: existing.id,
+          plugin_kind: 'reflection',
+          user_id: input.userId,
+          lesson_id: input.lessonId,
+          payload: { content: existing.content, status: existing.status },
+          label: 'Rascunho anterior',
+        }).catch(() => {});
       }
       const updated = await this.repo.update(existing.id, { content: input.content });
       if (!updated) throw new Error('Falha ao atualizar rascunho.');
@@ -56,6 +69,16 @@ export class ReflectionService {
       submitted_at: new Date().toISOString(),
     });
     if (!updated) throw new Error('Falha ao enviar reflexão.');
+    // Marca submissão como versão (snapshot do que foi enviado)
+    contentVersionService.record({
+      target_collection: 'spiritual_reflections',
+      target_id: reflectionId,
+      plugin_kind: 'reflection',
+      user_id: existing.user_id,
+      lesson_id: existing.lesson_id,
+      payload: { content: updated.content, status: 'submitted' },
+      label: 'Submissão',
+    }).catch(() => {});
     return updated;
   }
 

@@ -2,6 +2,7 @@ import { mindMapTemplateRepository, IMindMapTemplateRepository } from '@/infrast
 import { studentMindMapRepository, IStudentMindMapRepository } from '@/infrastructure/mind-maps/StudentMindMapRepository';
 import { MindMapEntity } from '@/domain/mind-maps/entities/MindMap';
 import { MindMapTemplate, MindMapState, StudentMindMap } from '@/domain/mind-maps/types';
+import { contentVersionService } from '@/application/content-versions/ContentVersionService';
 
 export class MindMapService {
   constructor(
@@ -51,6 +52,24 @@ export class MindMapService {
   ): Promise<StudentMindMap> {
     const existing = await this.students.findByUserAndTemplate(userId, template.id);
     const createdAt = existing?.created_at ?? new Date().toISOString();
+
+    // Snapshot da versão anterior se já existia
+    if (existing) {
+      contentVersionService.record({
+        target_collection: 'student_mind_maps',
+        target_id: existing.id,
+        plugin_kind: 'mind_map',
+        user_id: userId,
+        lesson_id: template.lesson_id,
+        payload: {
+          nodes: existing.nodes,
+          edges: existing.edges,
+          positions: existing.positions,
+        },
+        label: 'Versão anterior do mapa',
+      }).catch(() => {});
+    }
+
     return this.students.upsert({
       user_id: userId,
       template_id: template.id,

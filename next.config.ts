@@ -17,13 +17,12 @@ const nextConfig: NextConfig = {
   },
   /* config options here */
   eslint: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has ESLint errors.
+    // ESLint warnings ainda permitidos no build — fix incremental
     ignoreDuringBuilds: true,
   },
   typescript: {
-    // Temporarily ignore TypeScript errors during builds
-    ignoreBuildErrors: true,
+    // TypeScript strict — typecheck deve passar
+    ignoreBuildErrors: false,
   },
   images: {
     remotePatterns: [

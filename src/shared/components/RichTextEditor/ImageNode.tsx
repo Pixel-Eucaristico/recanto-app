@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import {
   DecoratorNode,
   $getNodeByKey,
@@ -23,7 +24,7 @@ type SerializedImageNode = Spread<
   SerializedLexicalNode
 >;
 
-export class ImageNode extends DecoratorNode<JSX.Element> {
+export class ImageNode extends DecoratorNode<React.JSX.Element> {
   __src: string;
   __alt: string;
 
@@ -69,7 +70,7 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
     return false;
   }
 
-  decorate(): JSX.Element {
+  decorate(): React.JSX.Element {
     return <ImageRenderer nodeKey={this.__key} src={this.__src} alt={this.__alt} />;
   }
 

@@ -3,9 +3,15 @@
 import { useState, useEffect } from 'react';
 import {
   Save, ArrowLeft, Plus, Trash2, Video, FileText, BookMarked, Quote, Award,
-  MessageSquare, PenLine, Activity, Loader2, Info, Youtube,
+  MessageSquare, PenLine, Activity, Loader2, Info, Youtube, HeartHandshake, Boxes,
 } from 'lucide-react';
 import type { FormationLesson, LessonBookCitation, HighlightQuote } from '@/domain/formation/types';
+import type { LessonComponentInstance } from '@/domain/lesson-components/types';
+import type { Habit } from '@/domain/habits/types';
+import { habitRepository } from '@/infrastructure/habits/HabitRepository';
+import { moduleRepository } from '@/infrastructure/formation/ModuleRepository';
+import { LessonComponentsEditor } from '../LessonComponentsEditor';
+import { LessonStepsPreview } from '../LessonStepsPreview';
 import { RichTextEditor } from '@/shared/components/RichTextEditor';
 import { CanonicalRefPicker } from '@/features/library/components/CanonicalRefPicker';
 import { detectVideoDuration, formatDuration, parseDurationString, parseVideoSource } from '@/features/lesson/video-player';
@@ -67,6 +73,13 @@ export function LessonForm({ lesson, moduleId, defaultOrder, saving, onSave, onC
   const [bookCitations, setBookCitations] = useState<LessonBookCitation[]>(lesson?.book_citations ?? []);
   const [highlightQuotes, setHighlightQuotes] = useState<HighlightQuote[]>(lesson?.highlight_quotes ?? []);
 
+  // Habits
+  const [habitIds, setHabitIds] = useState<string[]>(lesson?.habit_ids ?? []);
+  const [availableHabits, setAvailableHabits] = useState<Habit[]>([]);
+
+  // Plugin components (Fase A.1)
+  const [components, setComponents] = useState<LessonComponentInstance[]>(lesson?.components ?? []);
+
   const [videoPickerOpen, setVideoPickerOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -97,7 +110,31 @@ export function LessonForm({ lesson, moduleId, defaultOrder, saving, onSave, onC
     setPracticalDeadline(lesson?.practical_deadline_days ?? 0);
     setBookCitations(lesson?.book_citations ?? []);
     setHighlightQuotes(lesson?.highlight_quotes ?? []);
+    setHabitIds(lesson?.habit_ids ?? []);
+    setComponents(lesson?.components ?? []);
   }, [lesson, defaultOrder]);
+
+  // Carrega hábitos da comunidade + da trilha pai (resolve track_id via module)
+  useEffect(() => {
+    (async () => {
+      try {
+        const mod = await moduleRepository.findById(moduleId);
+        const trackId = mod?.track_id;
+        const community = await habitRepository.findCommunity();
+        const courseHabits = trackId ? await habitRepository.findByCourse(trackId) : [];
+        const merged = [...community, ...courseHabits];
+        const map = new Map<string, Habit>();
+        for (const h of merged) map.set(h.id, h);
+        setAvailableHabits(Array.from(map.values()));
+      } catch {
+        setAvailableHabits([]);
+      }
+    })();
+  }, [moduleId]);
+
+  function toggleHabit(id: string) {
+    setHabitIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  }
 
   // Auto-detect duration when MP4 URL changes
   async function handleAutoDetect() {
@@ -165,6 +202,8 @@ export function LessonForm({ lesson, moduleId, defaultOrder, saving, onSave, onC
         practical_required: practical ? practicalRequired : undefined,
         practical_permanent: practical ? practicalPermanent : undefined,
         practical_deadline_days: practical && practicalDeadline > 0 ? practicalDeadline : undefined,
+        habit_ids: habitIds.length ? habitIds : undefined,
+        components: components.length ? components : undefined,
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -459,6 +498,80 @@ export function LessonForm({ lesson, moduleId, defaultOrder, saving, onSave, onC
               </Field>
             )}
           </>
+        )}
+      </Section>
+
+      {/* Componentes-plugin (Fase A.1) */}
+      <Section title="Componentes da aula (sistema novo)" icon={<Boxes className="w-4 h-4" />}>
+        <LessonComponentsEditor value={components} onChange={setComponents} />
+      </Section>
+
+      {/* Preview do checklist como aluno veria */}
+      <Section title="Preview do checklist (aluno)" icon={<Boxes className="w-4 h-4" />}>
+        <LessonStepsPreview
+          lesson={{
+            ...(lesson ?? {} as FormationLesson),
+            id: lesson?.id ?? 'preview',
+            module_id: moduleId,
+            title,
+            description,
+            order,
+            video_url: videoUrl,
+            video_duration_seconds: videoDuration,
+            min_watch_percent: minWatchPercent,
+            unlock_after_hours: unlockHours,
+            requires_reflection: requiresReflection,
+            requires_quiz: requiresQuiz,
+            requires_forum_post: requiresForumPost,
+            requires_flashcards: requiresFlashcards,
+            requires_case_study: requiresCaseStudy,
+            requires_word_search: requiresWordSearch,
+            requires_crossword: requiresCrossword,
+            requires_mind_map: requiresMindMap,
+            forum_prompt: forumPrompt,
+            apostila_content: apostila,
+            book_citations: bookCitations,
+            highlight_quotes: highlightQuotes,
+            material_ids: lesson?.material_ids ?? [],
+            quiz_id: lesson?.quiz_id,
+            habit_ids: habitIds,
+            components,
+            created_at: lesson?.created_at ?? new Date().toISOString(),
+          }}
+        />
+      </Section>
+
+      {/* Hábitos vinculados */}
+      <Section title="Hábitos vinculados" icon={<HeartHandshake className="w-4 h-4" />}>
+        {availableHabits.length === 0 ? (
+          <p className="text-xs text-base-content/60">
+            Sem hábitos disponíveis. Crie hábitos da comunidade ou do curso em <code className="text-[11px]">/dashboard/habits</code>.
+          </p>
+        ) : (
+          <div className="space-y-1">
+            <p className="text-xs text-base-content/60">
+              Selecione os hábitos que aparecerão pra o aluno nesta aula.
+              Hábitos com <em>completion gate</em> bloqueiam a próxima aula até a meta cumprida.
+            </p>
+            <div className="flex flex-wrap gap-1">
+              {availableHabits.map(h => (
+                <button
+                  key={h.id}
+                  type="button"
+                  className={`badge badge-sm cursor-pointer ${habitIds.includes(h.id) ? 'badge-primary' : 'badge-outline'}`}
+                  onClick={() => toggleHabit(h.id)}
+                  title={
+                    h.duration_days
+                      ? `${h.duration_days} dias${h.required_completion_percent ? ` · gate ${h.required_completion_percent}%` : ''}`
+                      : 'permanente'
+                  }
+                >
+                  {h.title}
+                  {h.required_completion_percent ? ` · ${h.required_completion_percent}%` : ''}
+                </button>
+              ))}
+            </div>
+          </div>
         )}
       </Section>
 

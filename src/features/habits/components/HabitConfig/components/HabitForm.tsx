@@ -1,7 +1,7 @@
 'use client';
 
 import { Save, X } from 'lucide-react';
-import type { HabitCategory } from '@/domain/habits/types';
+import type { HabitCategory, HabitSource } from '@/domain/habits/types';
 import type { Role } from '@/shared/types/role';
 
 const CATEGORIES: { value: HabitCategory; label: string }[] = [
@@ -21,6 +21,10 @@ export interface HabitFormState {
   required_for_roles: Role[];
   order: number;
   grace_days: number;
+  source?: HabitSource;
+  course_id?: string;
+  duration_days?: number;
+  required_completion_percent?: number;
 }
 
 interface HabitFormProps {
@@ -83,6 +87,58 @@ export function HabitForm({ isEditing, form, saving, onPatch, onToggleRole, onSa
           <input type="number" min={0} max={30} className="input input-bordered input-sm" value={form.grace_days} onChange={e => onPatch({ grace_days: Number(e.target.value) })} />
           <span className="text-[10px] text-base-content/50 mt-1">Quantos dias atrás o usuário pode registrar. Default 3.</span>
         </label>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <label className="form-control">
+            <span className="label-text text-xs mb-1">Origem</span>
+            <select
+              className="select select-bordered select-sm"
+              value={form.source ?? 'community'}
+              onChange={e => onPatch({ source: e.target.value as HabitSource })}
+            >
+              <option value="community">Comunidade (permanente)</option>
+              <option value="course">Curso (temporário)</option>
+              <option value="user">Pessoal</option>
+            </select>
+          </label>
+
+          {form.source === 'course' && (
+            <label className="form-control">
+              <span className="label-text text-xs mb-1">ID da trilha (curso)</span>
+              <input
+                className="input input-bordered input-sm"
+                value={form.course_id ?? ''}
+                onChange={e => onPatch({ course_id: e.target.value })}
+                placeholder="track_id"
+              />
+            </label>
+          )}
+
+          <label className="form-control">
+            <span className="label-text text-xs mb-1">Duração (dias) — vazio = permanente</span>
+            <input
+              type="number"
+              min={0}
+              className="input input-bordered input-sm"
+              value={form.duration_days ?? ''}
+              onChange={e => onPatch({ duration_days: e.target.value ? Number(e.target.value) : undefined })}
+              placeholder="ex: 7"
+            />
+          </label>
+
+          <label className="form-control">
+            <span className="label-text text-xs mb-1">Gate % conclusão (libera próxima aula)</span>
+            <input
+              type="number"
+              min={0}
+              max={100}
+              className="input input-bordered input-sm"
+              value={form.required_completion_percent ?? ''}
+              onChange={e => onPatch({ required_completion_percent: e.target.value ? Number(e.target.value) : undefined })}
+              placeholder="ex: 80"
+            />
+          </label>
+        </div>
 
         <div className="flex justify-end gap-2 mt-2">
           <button className="btn btn-ghost btn-sm" onClick={onClose}>Cancelar</button>

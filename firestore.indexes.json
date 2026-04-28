@@ -366,6 +366,83 @@
       ]
     },
     {
+      "collectionGroup": "content_versions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "target_collection", "order": "ASCENDING" },
+        { "fieldPath": "target_id", "order": "ASCENDING" },
+        { "fieldPath": "created_at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "content_versions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "user_id", "order": "ASCENDING" },
+        { "fieldPath": "lesson_id", "order": "ASCENDING" },
+        { "fieldPath": "created_at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "video_watch_sessions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "user_id", "order": "ASCENDING" },
+        { "fieldPath": "lesson_id", "order": "ASCENDING" },
+        { "fieldPath": "started_at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "track_enrollment_requests",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "user_id", "order": "ASCENDING" },
+        { "fieldPath": "track_id", "order": "ASCENDING" },
+        { "fieldPath": "requested_at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "track_enrollment_requests",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "track_id", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "notifications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "user_id", "order": "ASCENDING" },
+        { "fieldPath": "created_at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "notifications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "user_id", "order": "ASCENDING" },
+        { "fieldPath": "read", "order": "ASCENDING" },
+        { "fieldPath": "created_at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "prayer_intentions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "created_by", "order": "ASCENDING" },
+        { "fieldPath": "created_at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "prayer_logs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "user_id", "order": "ASCENDING" },
+        { "fieldPath": "intention_id", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "community_poll_votes",
       "queryScope": "COLLECTION",
       "fields": [

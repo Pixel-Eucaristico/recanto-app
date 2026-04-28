@@ -13,6 +13,7 @@ import {
 import { CommunityPostEntity } from '@/domain/community/entities/CommunityPost';
 import { CommunityCategoryEntity } from '@/domain/community/entities/CommunityCategory';
 import { PollEntity } from '@/domain/community/entities/Poll';
+import { contentVersionService } from '@/application/content-versions/ContentVersionService';
 
 export interface CreatePostInput {
   kind: CommunityPost['kind'];
@@ -138,6 +139,58 @@ export class CommunityService {
       created_at: new Date().toISOString(),
     } as CommunityReply;
     return communityReplyRepository.create(payload);
+  }
+
+  /**
+   * Edita post + grava versão anterior em content_versions.
+   * Apenas autor pode editar (regra firestore + validação aqui).
+   */
+  async updatePost(postId: string, userId: string, patch: { title?: string; body?: string }): Promise<CommunityPost | null> {
+    const existing = await communityPostRepository.get(postId);
+    if (!existing) throw new Error('Post não encontrado.');
+    if (existing.created_by !== userId) throw new Error('Apenas o autor pode editar.');
+
+    const titleChanged = patch.title !== undefined && patch.title !== existing.title;
+    const bodyChanged = patch.body !== undefined && patch.body !== existing.body;
+    if (!titleChanged && !bodyChanged) return existing;
+
+    contentVersionService.record({
+      target_collection: 'community_posts',
+      target_id: postId,
+      plugin_kind: 'forum_ask',
+      user_id: userId,
+      lesson_id: existing.visibility?.scope === 'lesson' ? (existing.visibility as { lesson_id: string }).lesson_id : undefined,
+      payload: { title: existing.title, body: existing.body },
+      label: 'Versão anterior do post',
+    }).catch(() => {});
+
+    return communityPostRepository.update(postId, {
+      ...(patch.title !== undefined ? { title: patch.title.trim() } : {}),
+      ...(patch.body !== undefined ? { body: patch.body.trim() } : {}),
+    });
+  }
+
+  /**
+   * Edita reply + grava versão anterior em content_versions.
+   */
+  async updateReply(replyId: string, userId: string, body: string): Promise<CommunityReply | null> {
+    const existing = await communityReplyRepository.get(replyId);
+    if (!existing) throw new Error('Resposta não encontrada.');
+    if (existing.created_by !== userId) throw new Error('Apenas o autor pode editar.');
+
+    const trimmed = body.trim();
+    if (trimmed === existing.body) return existing;
+
+    contentVersionService.record({
+      target_collection: 'community_replies',
+      target_id: replyId,
+      plugin_kind: 'forum_reply',
+      user_id: userId,
+      payload: { body: existing.body },
+      label: 'Versão anterior da resposta',
+    }).catch(() => {});
+
+    return communityReplyRepository.update(replyId, { body: trimmed });
   }
 
   async listReplies(postId: string): Promise<CommunityReply[]> {

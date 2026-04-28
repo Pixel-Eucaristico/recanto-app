@@ -100,6 +100,14 @@ export const appRoutes: AppRoute[] = [
     requiredFeature: 'read:library'
   },
   {
+    name: 'Hábitos',
+    href: '/app/dashboard/habits',
+    description: 'Hábitos diários — comunidade, curso e seus',
+    icon: HeartHandshake,
+    roles: ['admin', 'missionario', 'recantiano', 'pai', 'colaborador'],
+    requiredFeature: 'log:habits'
+  },
+  {
     name: 'Meus Desafios',
     href: '/app/dashboard/challenges',
     icon: Award,

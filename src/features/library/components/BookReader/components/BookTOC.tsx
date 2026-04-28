@@ -91,7 +91,9 @@ export function BookTOC({
                   {ch.title}
                 </span>
                 {isLast && !isActive && (
-                  <Bookmark className="w-3 h-3 text-info shrink-0" title="Última posição salva" />
+                  <span title="Última posição salva">
+                    <Bookmark className="w-3 h-3 text-info shrink-0" />
+                  </span>
                 )}
                 {chTags.length > 0 && (
                   <span className="text-[9px] bg-secondary text-secondary-content rounded-full px-1 shrink-0">

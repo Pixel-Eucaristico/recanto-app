@@ -22,6 +22,31 @@ export interface StudentSummary {
 export interface FormatorScope {
   tracks: FormationTrack[];
   students: StudentSummary[];
+  stats: FormatorStats;
+}
+
+export interface FormatorStats {
+  totalStudents: number;
+  /** Atividade nos últimos 7 dias. */
+  activeLast7d: number;
+  /** Sem atividade há mais de 14 dias. */
+  staleOver14d: number;
+  /** Sem atividade nenhuma registrada. */
+  neverStarted: number;
+  /** Total agregado de aulas concluídas (pra todas trilhas + alunos). */
+  totalLessonsCompleted: number;
+  /** Total agregado de aulas iniciadas. */
+  totalLessonsTouched: number;
+  /** Taxa de conclusão = completed / touched. */
+  completionRate: number;
+  /** Por trilha: completion rate. */
+  byTrack: Array<{
+    track: FormationTrack;
+    studentCount: number;
+    completedLessons: number;
+    touchedLessons: number;
+    rate: number;
+  }>;
 }
 
 export class FormatorService {
@@ -40,7 +65,17 @@ export class FormatorService {
    */
   async getMyStudents(userId: string, isAdmin: boolean): Promise<FormatorScope> {
     const tracks = await this.getMyTracks(userId, isAdmin);
-    if (tracks.length === 0) return { tracks: [], students: [] };
+    if (tracks.length === 0) {
+      return {
+        tracks: [],
+        students: [],
+        stats: {
+          totalStudents: 0, activeLast7d: 0, staleOver14d: 0, neverStarted: 0,
+          totalLessonsCompleted: 0, totalLessonsTouched: 0, completionRate: 0,
+          byTrack: [],
+        },
+      };
+    }
 
     const trackIds = tracks.map(t => t.id);
     const progresses = await progressRepository.findByTracks(trackIds);
@@ -71,7 +106,52 @@ export class FormatorService {
       });
     }
     students.sort((a, b) => (b.lastActivityAt ?? '').localeCompare(a.lastActivityAt ?? ''));
-    return { tracks, students };
+
+    // Stats agregados
+    const now = Date.now();
+    const day = 86400000;
+    let activeLast7d = 0, staleOver14d = 0, neverStarted = 0;
+    for (const s of students) {
+      if (!s.lastActivityAt) { neverStarted++; continue; }
+      const ageDays = (now - new Date(s.lastActivityAt).getTime()) / day;
+      if (ageDays <= 7) activeLast7d++;
+      else if (ageDays > 14) staleOver14d++;
+    }
+    const totalLessonsCompleted = students.reduce((acc, s) => acc + s.totalLessonsCompleted, 0);
+    const totalLessonsTouched = students.reduce((acc, s) => acc + s.totalLessonsTouched, 0);
+    const completionRate = totalLessonsTouched > 0
+      ? Math.round((totalLessonsCompleted / totalLessonsTouched) * 100)
+      : 0;
+
+    // Por trilha
+    const byTrack = tracks.map(t => {
+      const trackProgresses = progresses.filter(p => p.track_id === t.id);
+      const studentCount = new Set(trackProgresses.map(p => p.user_id)).size;
+      const completed = trackProgresses.filter(p => p.status === 'completed').length;
+      const touched = trackProgresses.length;
+      return {
+        track: t,
+        studentCount,
+        completedLessons: completed,
+        touchedLessons: touched,
+        rate: touched > 0 ? Math.round((completed / touched) * 100) : 0,
+      };
+    });
+
+    return {
+      tracks,
+      students,
+      stats: {
+        totalStudents: students.length,
+        activeLast7d,
+        staleOver14d,
+        neverStarted,
+        totalLessonsCompleted,
+        totalLessonsTouched,
+        completionRate,
+        byTrack,
+      },
+    };
   }
 
   /**

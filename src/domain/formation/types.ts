@@ -59,6 +59,14 @@ export interface FormationTrack {
    * Admin sempre tem acesso.
    */
   formator_ids?: string[];
+  /**
+   * Visibilidade das aulas pra o aluno:
+   * - 'all' (default): mostra todas
+   * - 'current_only': só a aula atual
+   * - 'current_and_next': atual + próxima
+   * Admin sempre vê tudo.
+   */
+  lesson_visibility?: 'all' | 'current_only' | 'current_and_next';
   created_at: string;
   updated_at?: string;
 }
@@ -118,6 +126,18 @@ export interface FormationLesson {
   practical_permanent?: boolean;
   /** Limite em dias após desbloqueio pra completar a prática. Vazio = sem limite. */
   practical_deadline_days?: number;
+  /**
+   * IDs de hábitos vinculados à aula. Aluno vê esses hábitos no tab Prática
+   * e/ou no /habits filtrado por curso. Quando algum tem `required_completion_percent`,
+   * libera próxima aula só após meta cumprida.
+   */
+  habit_ids?: string[];
+  /**
+   * Plugin architecture (Fase A.1). Quando preenchido, sobrepõe os flags `requires_*`
+   * e o reconciler legado. Cada instance referencia um plugin do LessonComponentRegistry.
+   * Ver: project_lesson_component_plugin_architecture.md
+   */
+  components?: import('@/domain/lesson-components/types').LessonComponentInstance[];
   created_at: string;
   updated_at?: string;
 }

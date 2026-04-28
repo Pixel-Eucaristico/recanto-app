@@ -76,9 +76,10 @@ export default function NewCMSPagePage() {
       const newPage = await contentPageService.create({
         title: formData.title,
         slug: finalSlug,
-        description: formData.description || null,
+        description: formData.description || undefined,
         blocks: [],
-        is_published: false
+        is_published: false,
+        created_at: new Date().toISOString(),
       });
 
       // Redirect to edit page

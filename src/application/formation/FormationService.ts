@@ -14,6 +14,46 @@ import { ITrackRepository } from '@/infrastructure/formation/TrackRepository';
 import { IModuleRepository } from '@/infrastructure/formation/ModuleRepository';
 import { ILessonRepository } from '@/infrastructure/formation/LessonRepository';
 import { IProgressRepository } from '@/infrastructure/formation/ProgressRepository';
+import { habitService } from '@/application/habits/HabitService';
+import type { LessonComponentRuntimeContext } from '@/domain/lesson-components/types';
+
+/**
+ * Aula anterior considerada concluída quando:
+ * - components definidos: todos `required` passam em `evaluateComponents`
+ * - components ausentes: status === 'completed' (via reconciler tradicional)
+ */
+async function isPreviousLessonComplete(
+  prevLesson: FormationLesson | null,
+  prevProgress: LessonProgress | null,
+  ctxBase: Omit<LessonComponentRuntimeContext, 'lessonId'>,
+): Promise<boolean> {
+  if (!prevLesson) return true;
+  if (prevLesson.components && prevLesson.components.length > 0) {
+    const blocked = await UnlockRuleEngine.evaluateComponents(prevLesson, {
+      ...ctxBase,
+      lessonId: prevLesson.id,
+    });
+    return blocked.length === 0;
+  }
+  return prevProgress?.status === 'completed';
+}
+
+/**
+ * Avalia se gate de hábitos da aula anterior está cumprido.
+ * Retorna false só se algum habit_id da aula anterior tem `required_completion_percent`
+ * e o aluno ainda não cumpriu.
+ */
+async function evaluatePrevHabitGate(
+  prevLesson: FormationLesson | null,
+  userId: string,
+): Promise<boolean> {
+  if (!prevLesson || !prevLesson.habit_ids?.length) return true;
+  for (const habitId of prevLesson.habit_ids) {
+    const ok = await habitService.meetsCompletionGate(habitId, userId);
+    if (!ok) return false;
+  }
+  return true;
+}
 
 export class FormationService {
   constructor(
@@ -50,21 +90,40 @@ export class FormationService {
     let totalLessons = 0;
     let completedLessons = 0;
 
+    // Pré-calcula gate de hábitos pra cada aula (uma única vez)
+    const prevHabitGateMap = new Map<string, boolean>();
+    for (let i = 0; i < flatLessons.length; i++) {
+      const prev = i > 0 ? flatLessons[i - 1] : null;
+      prevHabitGateMap.set(flatLessons[i].id, await evaluatePrevHabitGate(prev, userId));
+    }
+
+    // Pré-calcula completude da aula anterior (components OU flags legados)
+    const prevCompletedMap = new Map<string, boolean>();
+    for (let i = 0; i < flatLessons.length; i++) {
+      const prev = i > 0 ? flatLessons[i - 1] : null;
+      const prevProg = prev ? progressMap.get(prev.id) ?? null : null;
+      prevCompletedMap.set(
+        flatLessons[i].id,
+        await isPreviousLessonComplete(prev, prevProg, {
+          userId,
+          trackId,
+          moduleId: prev?.module_id ?? '',
+        }),
+      );
+    }
+
     const modulesWithProgress: ModuleWithProgress[] = moduleLessons.map(({ module, lessons }) => {
       let completedCount = 0;
 
       const lessonsWithProgress: LessonWithProgress[] = lessons.map(lesson => {
         const prog = progressMap.get(lesson.id) ?? null;
-        // Busca a aula anterior na sequência GLOBAL (não só dentro do módulo)
-        const globalIdx = flatLessons.findIndex(l => l.id === lesson.id);
-        const previousLesson = globalIdx > 0 ? flatLessons[globalIdx - 1] : null;
-        const previousCompleted = !previousLesson || progressMap.get(previousLesson.id)?.status === 'completed';
 
         const unlockResult = UnlockRuleEngine.evaluate({
           lesson,
           progress: prog,
           userHabitsBlocked,
-          previousLessonCompleted: previousCompleted,
+          previousLessonCompleted: prevCompletedMap.get(lesson.id) ?? true,
+          previousLessonHabitGateMet: prevHabitGateMap.get(lesson.id) ?? true,
         });
 
         if (prog?.status === 'completed') completedCount++;
@@ -98,16 +157,24 @@ export class FormationService {
     const prog = await this.progress.getOrCreate(userId, lessonId, moduleId, trackId);
 
     let previousLessonCompleted = true;
+    let previousLesson: FormationLesson | null = null;
     if (previousLessonId) {
       const prevProg = await this.progress.findByUserAndLesson(userId, previousLessonId);
-      previousLessonCompleted = prevProg?.status === 'completed';
+      previousLesson = await this.lessons.findById(previousLessonId);
+      previousLessonCompleted = await isPreviousLessonComplete(previousLesson, prevProg, {
+        userId,
+        trackId,
+        moduleId: previousLesson?.module_id ?? '',
+      });
     }
+    const previousLessonHabitGateMet = await evaluatePrevHabitGate(previousLesson, userId);
 
     const unlockResult = UnlockRuleEngine.evaluate({
       lesson,
       progress: prog,
       userHabitsBlocked,
       previousLessonCompleted,
+      previousLessonHabitGateMet,
     });
 
     return { lesson, progress: prog, unlockResult };

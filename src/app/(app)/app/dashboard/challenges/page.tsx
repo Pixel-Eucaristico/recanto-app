@@ -15,11 +15,11 @@ import { ptBR } from 'date-fns/locale';
 
 export default function ChallengesPage() {
     const { user } = useAuth();
-    const [desafios, setDesafios] = useState([]);
+    const [desafios, setDesafios] = useState<Desafio[]>([]);
     const [meusPontos, setMeusPontos] = useState(0);
-    const [meusRegistros, setMeusRegistros] = useState([]);
+    const [meusRegistros, setMeusRegistros] = useState<DesafioRegistro[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [selectedDesafio, setSelectedDesafio] = useState(null);
+    const [selectedDesafio, setSelectedDesafio] = useState<Desafio | null>(null);
     const [diario, setDiario] = useState('');
 
     useEffect(() => {
@@ -51,17 +51,17 @@ export default function ChallengesPage() {
     }, [user]);
 
     const handleRegistrarDesafio = async () => {
-        if (!diario.trim() || !selectedDesafio) return;
-        
+        if (!diario.trim() || !selectedDesafio || !user) return;
+
         try {
             const novoRegistro = await DesafioRegistro.create({
                 recantiano_id: user.id,
-                desafio_id: selectedDesafio.id,
+                desafio_id: selectedDesafio.id ?? '',
                 diario: diario
             });
-            
+
             setMeusRegistros([...meusRegistros, novoRegistro]);
-            setMeusPontos(meusPontos + selectedDesafio.pontos);
+            setMeusPontos(meusPontos + (selectedDesafio.pontos ?? 0));
             setDiario('');
             setSelectedDesafio(null);
         } catch (error) {
@@ -69,7 +69,8 @@ export default function ChallengesPage() {
         }
     };
 
-    const jaFizDesafio = (desafioId) => {
+    const jaFizDesafio = (desafioId?: string): boolean => {
+        if (!desafioId) return false;
         return meusRegistros.some(r => r.desafio_id === desafioId);
     };
 
@@ -109,7 +110,7 @@ export default function ChallengesPage() {
                                     </CardTitle>
                                     <Badge variant="outline" className="ml-2">
                                         <Star className="w-3 h-3 mr-1" />
-                                        {desafio.pontos}
+                                        {desafio.pontos ?? 0}
                                     </Badge>
                                 </div>
                             </CardHeader>
@@ -155,7 +156,7 @@ export default function ChallengesPage() {
                                                     className="w-full btn-error"
                                                     disabled={!diario.trim()}
                                                 >
-                                                    Completar Desafio (+{desafio.pontos} pontos)
+                                                    Completar Desafio (+{desafio.pontos ?? 0} pontos)
                                                 </Button>
                                             </div>
                                         </DialogContent>
@@ -185,9 +186,11 @@ export default function ChallengesPage() {
                                     <div key={registro.id} className="border-l-4 border-info/30 pl-4 py-2">
                                         <div className="flex items-center gap-2 mb-2">
                                             <h4 className="font-semibold text-base-content">{desafio?.title}</h4>
-                                            <Badge variant="outline" className="text-xs">
-                                                {format(new Date(registro.created_date), 'dd/MM/yyyy', { locale: ptBR })}
-                                            </Badge>
+                                            {registro.created_date && (
+                                                <Badge variant="outline" className="text-xs">
+                                                    {format(new Date(registro.created_date), 'dd/MM/yyyy', { locale: ptBR })}
+                                                </Badge>
+                                            )}
                                         </div>
                                         <p className="text-sm text-base-content/70 italic leading-relaxed">
                                             "{registro.diario}"

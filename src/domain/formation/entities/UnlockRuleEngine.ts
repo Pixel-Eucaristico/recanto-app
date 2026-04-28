@@ -1,11 +1,18 @@
 import { differenceInHours, parseISO } from 'date-fns';
 import { FormationLesson, LessonProgress, UnlockBlocker, UnlockResult } from '@/domain/formation/types';
+import type { LessonComponentRuntimeContext } from '@/domain/lesson-components/types';
+import { getLessonComponent } from '@/application/lesson/LessonComponentRegistry';
 
 interface UnlockContext {
   lesson: FormationLesson;
   progress: LessonProgress | null;
   userHabitsBlocked: boolean;
   previousLessonCompleted: boolean;
+  /**
+   * Quando false, gate de % de conclusão dos hábitos da aula anterior não foi cumprido.
+   * Default true (sem gate ou gate cumprido).
+   */
+  previousLessonHabitGateMet?: boolean;
 }
 
 export class UnlockRuleEngine {
@@ -25,6 +32,10 @@ export class UnlockRuleEngine {
     }
 
     if (ctx.userHabitsBlocked) {
+      return { isUnlocked: false, blockedBy: ['habits'] };
+    }
+
+    if (ctx.previousLessonHabitGateMet === false) {
       return { isUnlocked: false, blockedBy: ['habits'] };
     }
 
@@ -52,6 +63,28 @@ export class UnlockRuleEngine {
     const remaining = lesson.unlock_after_hours - elapsed;
     if (remaining <= 0) return 0;
     return remaining * 3600;
+  }
+
+  /**
+   * Avalia componentes-plugin da aula. Retorna ids dos componentes obrigatórios
+   * que ainda não foram concluídos. Quando vazio, aluno passou.
+   *
+   * Quando lesson.components for undefined, retorna [] (caller usa fallback nos flags).
+   */
+  static async evaluateComponents(
+    lesson: FormationLesson,
+    ctx: LessonComponentRuntimeContext,
+  ): Promise<string[]> {
+    const components = lesson.components ?? [];
+    if (components.length === 0) return [];
+    const required = components.filter(c => c.required);
+    const checks = await Promise.all(required.map(async c => {
+      const plugin = getLessonComponent(c.kind);
+      if (!plugin) return { id: c.id, ok: true }; // sem plugin = não bloqueia
+      const ok = await plugin.isCompleted(c.config, ctx).catch(() => false);
+      return { id: c.id, ok };
+    }));
+    return checks.filter(r => !r.ok).map(r => r.id);
   }
 
   static blockerLabel(blocker: UnlockBlocker): string {

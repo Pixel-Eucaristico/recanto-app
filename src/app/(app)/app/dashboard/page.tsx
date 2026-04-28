@@ -9,11 +9,12 @@ import DailyReflection from '@/components/dashboard/DailyReflection';
 import WhatsAppContact from '@/components/dashboard/WhatsAppContact';
 import QuickNavigation from '@/components/dashboard/QuickNavigation';
 import { useAuth } from '@/features/dashboard/contexts/AuthContext';
+import type { FirebaseUser } from '@/types/firebase-entities';
 
 export default function DashboardPage() {
     const { user } = useAuth();
-    const [missionary, setMissionary] = useState(null);
-    const [filhoRecantiano, setFilhoRecantiano] = useState(null);
+    const [missionary, setMissionary] = useState<FirebaseUser | null>(null);
+    const [filhoRecantiano, setFilhoRecantiano] = useState<FirebaseUser | null>(null);
 
     useEffect(() => {
         const fetchRelatedData = async () => {
@@ -71,7 +72,7 @@ export default function DashboardPage() {
             </header>
 
             {user.role === 'pai' ? (
-                <ParentZone filho={filhoRecantiano} />
+                <ParentZone filho={filhoRecantiano ? { full_name: filhoRecantiano.name } : undefined} />
             ) : user.role === 'benfeitor' ? (
                 <GratitudeCorner />
             ) : user.role === 'recantiano' ? (
@@ -80,8 +81,8 @@ export default function DashboardPage() {
                         <DailyReflection />
                     </div>
                     <div className="lg:col-span-1 space-y-8">
-                        <WhatsAppContact 
-                            missionarioName={missionary?.full_name}
+                        <WhatsAppContact
+                            missionarioName={missionary?.name}
                             missionarioPhone={missionary?.phone}
                         />
                     </div>
@@ -101,7 +102,7 @@ export default function DashboardPage() {
                 </div>
             )}
             
-            {['recantiano', 'colaborador'].includes(user.role) && (
+            {user.role && ['recantiano', 'colaborador'].includes(user.role) && (
                  <div className="text-center py-8">
                     <p className="text-slate-600">
                        Bem-vindo(a)! Explore os recursos disponíveis para você no menu ao lado.

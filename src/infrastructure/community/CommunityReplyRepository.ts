@@ -1,4 +1,4 @@
-import { collection, getDocs, limit, orderBy, query, where } from 'firebase/firestore';
+import { collection, getDocs, limit, orderBy, query, where, type QueryConstraint } from 'firebase/firestore';
 import { db } from '@/shared/firebase/firebaseClient';
 import { BaseRepository } from '@/shared/firebase/BaseRepository';
 import { CommunityReply } from '@/domain/community/types';
@@ -28,7 +28,7 @@ export class CommunityReplyRepository extends BaseRepository<CommunityReply> {
     pageSize: number,
     cursor: string | null,
   ): Promise<PageResult<CommunityReply>> {
-    const constraints = [
+    const constraints: QueryConstraint[] = [
       where('created_by', '==', userId),
       orderBy('created_at', 'desc'),
     ];
