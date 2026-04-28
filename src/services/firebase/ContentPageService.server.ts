@@ -1,16 +1,4 @@
-// WORKAROUND: Usando Client SDK até resolver credenciais Admin
-// import { firestore } from '@/domains/auth/services/firebaseAdmin';
-import { firestore } from '@/domains/auth/services/firebaseClient';
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  orderBy,
-  limit,
-  getDoc,
-  doc,
-} from 'firebase/firestore';
+import { firestore } from '@/domains/auth/services/firebaseAdmin';
 import { CMSPage } from '@/types/cms-types';
 
 /**
@@ -28,40 +16,20 @@ class ContentPageServerService {
    */
   async getBySlug(slug: string): Promise<CMSPage | null> {
     try {
-      console.log(`🔥 [SERVER] Buscando página com slug: "${slug}"`);
-
-      const q = query(
-        collection(firestore, this.collectionName),
-        where('slug', '==', slug),
-        limit(1)
-      );
-
-      const snapshot = await getDocs(q);
+      const snapshot = await firestore
+        .collection(this.collectionName)
+        .where('slug', '==', slug)
+        .limit(1)
+        .get();
 
       if (snapshot.empty) {
-        console.log(`❌ [SERVER] Nenhuma página encontrada com slug: "${slug}"`);
         return null;
       }
 
       const docSnap = snapshot.docs[0];
-      const data = docSnap.data() as Omit<CMSPage, 'id'>;
-
-      const page: CMSPage = {
-        id: docSnap.id,
-        ...data,
-      };
-
-      console.log(`✅ [SERVER] Página encontrada:`, {
-        id: page.id,
-        slug: page.slug,
-        title: page.title,
-        is_published: page.is_published,
-        blocks: page.blocks?.length || 0,
-      });
-
-      return page;
+      return { id: docSnap.id, ...docSnap.data() } as CMSPage;
     } catch (error) {
-      console.error(`❌ [SERVER] Erro ao buscar página:`, error);
+      console.error(`Erro ao buscar página com slug "${slug}":`, error);
       return null;
     }
   }
@@ -72,13 +40,11 @@ class ContentPageServerService {
    */
   async listPublished(): Promise<CMSPage[]> {
     try {
-      const q = query(
-        collection(firestore, this.collectionName),
-        where('is_published', '==', true),
-        orderBy('created_at', 'desc')
-      );
-
-      const snapshot = await getDocs(q);
+      const snapshot = await firestore
+        .collection(this.collectionName)
+        .where('is_published', '==', true)
+        .orderBy('created_at', 'desc')
+        .get();
 
       return snapshot.docs.map(docSnap => ({
         id: docSnap.id,
@@ -97,17 +63,16 @@ class ContentPageServerService {
    */
   async getById(pageId: string): Promise<CMSPage | null> {
     try {
-      const docRef = doc(firestore, this.collectionName, pageId);
-      const docSnap = await getDoc(docRef);
+      const docSnap = await firestore
+        .collection(this.collectionName)
+        .doc(pageId)
+        .get();
 
-      if (!docSnap.exists()) {
+      if (!docSnap.exists) {
         return null;
       }
 
-      return {
-        id: docSnap.id,
-        ...docSnap.data(),
-      } as CMSPage;
+      return { id: docSnap.id, ...docSnap.data() } as CMSPage;
     } catch (error) {
       console.error('Erro ao buscar página por ID:', error);
       return null;
