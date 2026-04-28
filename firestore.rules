@@ -766,13 +766,18 @@ service cloud.firestore {
         hasFeature('review:formation') ||
         isAdmin()
       );
-      // Criação: aluno cria seu próprio pedido
+      // Criação: aluno cria seu próprio pedido em status pending
       allow create: if isAuthenticated() &&
                       request.resource.data.user_id == request.auth.uid &&
                       request.resource.data.status == 'pending';
-      // Atualização: dono pode atualizar (cancel/edit), OU formador/admin (decisão)
+      // Update do dono: só pra alterar request_note, status SEMPRE pending
+      // Update de formador/admin: pode mudar pra approved/rejected
       allow update: if isAuthenticated() && (
-        resource.data.user_id == request.auth.uid ||
+        (
+          resource.data.user_id == request.auth.uid &&
+          request.resource.data.status == 'pending' &&
+          request.resource.data.user_id == resource.data.user_id
+        ) ||
         hasFeature('manage:formation') ||
         hasFeature('review:formation') ||
         isAdmin()
