@@ -92,14 +92,27 @@ export function ReflectionEditor({ reflection, saving, error, onSaveDraft, onSub
               <Save className="w-4 h-4" />
               Salvar rascunho
             </button>
-            <button
-              className="btn btn-primary btn-sm gap-1"
-              onClick={() => onSubmit()}
-              disabled={!canSubmit}
+            <div
+              className="tooltip tooltip-top"
+              data-tip={
+                submitted
+                  ? 'Já foi enviada — aguarde revisão do formador'
+                  : !validation.valid
+                  ? `Mínimo ${REFLECTION_MIN_LENGTH} caracteres (atual: ${charCount})`
+                  : saving
+                  ? 'Salvando...'
+                  : 'Enviar para revisão'
+              }
             >
-              <Send className="w-4 h-4" />
-              {submitted ? 'Enviada' : 'Enviar para formador'}
-            </button>
+              <button
+                className="btn btn-primary btn-sm gap-1"
+                onClick={() => onSubmit()}
+                disabled={!canSubmit}
+              >
+                <Send className="w-4 h-4" />
+                {submitted ? 'Enviada' : 'Enviar para formador'}
+              </button>
+            </div>
           </>
         )}
       </div>

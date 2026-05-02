@@ -15,9 +15,7 @@ import {
   FileEdit,
   Boxes,
   ArrowLeft,
-  HeartHandshake,
   Library,
-  History,
   Sparkles,
 } from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
@@ -98,14 +96,6 @@ export const appRoutes: AppRoute[] = [
     icon: Library,
     roles: ['admin', 'missionario', 'recantiano', 'pai', 'colaborador', 'benfeitor'],
     requiredFeature: 'read:library'
-  },
-  {
-    name: 'Hábitos',
-    href: '/app/dashboard/habits',
-    description: 'Hábitos diários — comunidade, curso e seus',
-    icon: HeartHandshake,
-    roles: ['admin', 'missionario', 'recantiano', 'pai', 'colaborador'],
-    requiredFeature: 'log:habits'
   },
   {
     name: 'Meus Desafios',

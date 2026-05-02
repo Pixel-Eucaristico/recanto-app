@@ -9,6 +9,8 @@ import { BookEntity } from '@/domain/library/entities/Book';
 import { BlockMarkdownEntity } from '@/domain/library/entities/BlockMarkdown';
 
 export interface SaveChapterPayload {
+  /** ID do capítulo (preserva doc existente ao editar). */
+  id?: string;
   book_id: string;
   order: number;
   title: string;
@@ -78,6 +80,7 @@ export function useChapterEditor({ bookId, chapter, defaultOrder, saving, onSave
   const [error, setError] = useState<string | null>(null);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
 
+  // Depende de chapter?.id (ID estável) — evita reset de form quando pai re-renderiza
   useEffect(() => {
     const snap = snapshotFromChapter(chapter, defaultOrder);
     setTitle(snap.title);
@@ -92,7 +95,8 @@ export function useChapterEditor({ bookId, chapter, defaultOrder, saving, onSave
     setCredits(snap.credits);
     setBaseline(snap);
     setMode(chapter ? 'view' : 'edit');
-  }, [chapter, defaultOrder]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chapter?.id, defaultOrder]);
 
   const isDirty =
     title !== baseline.title ||
@@ -156,6 +160,8 @@ export function useChapterEditor({ bookId, chapter, defaultOrder, saving, onSave
         : BlockMarkdownEntity.parse(markdown);
 
       await onSave({
+        // Passa id quando editando — service preserva ID e evita criar duplicado
+        id: chapter?.id,
         book_id: bookId, order, title,
         subtitle: subtitle || undefined,
         kind, blocks,

@@ -8,6 +8,7 @@ import type {
   BookCredits, BookFootnote, CitationStyle,
 } from '@/domain/library/types';
 import { CitationFormatter } from '@/domain/library/entities/CitationFormatter';
+import { BookEntity } from '@/domain/library/entities/Book';
 
 const EPUB_TYPE: Record<BookSectionKind, string> = {
   chapter:      'chapter',
@@ -21,23 +22,9 @@ const EPUB_TYPE: Record<BookSectionKind, string> = {
   about:        'colophon',
 };
 
-const FRONT_MATTER: BookSectionKind[] = ['preface', 'introduction', 'credits'];
-const BACK_MATTER: BookSectionKind[] = ['appendix', 'notes', 'glossary', 'bibliography', 'about'];
-
-function sectionGroup(kind: BookSectionKind): 0 | 1 | 2 {
-  if (FRONT_MATTER.includes(kind)) return 0;
-  if (BACK_MATTER.includes(kind)) return 2;
-  return 1; // body matter
-}
-
-/** Sort chapters: front matter → body → back matter, then by order within each group. */
+/** Sort chapters: ABNT order (front → body → back). Delega para BookEntity. */
 function sortSections(chapters: BookChapter[]): BookChapter[] {
-  return [...chapters].sort((a, b) => {
-    const ga = sectionGroup(a.kind ?? 'chapter');
-    const gb = sectionGroup(b.kind ?? 'chapter');
-    if (ga !== gb) return ga - gb;
-    return a.order - b.order;
-  });
+  return BookEntity.sortChapters(chapters);
 }
 
 function escapeXml(s: string): string {
@@ -150,7 +137,9 @@ function renderBlock(block: BookBlock, chapterOrder: number, footnotes?: BookFoo
 // ─── Section-specific renderers ────────────────────────────────────────────
 
 function renderBibliography(refs: BookReference[], style: CitationStyle): string {
-  const sorted = [...refs].sort((a, b) => (a.authors[0] ?? '').localeCompare(b.authors[0] ?? ''));
+  const sorted = [...refs].sort((a, b) =>
+    (a.authors[0]?.surname ?? '').localeCompare(b.authors[0]?.surname ?? ''),
+  );
   return `    <ol class="bibliography">
 ${sorted.map(r => `      <li id="ref-${r.id}">${renderInline(CitationFormatter.format(r, style))}</li>`).join('\n')}
     </ol>`;

@@ -112,7 +112,9 @@ export function LessonForm({ lesson, moduleId, defaultOrder, saving, onSave, onC
     setHighlightQuotes(lesson?.highlight_quotes ?? []);
     setHabitIds(lesson?.habit_ids ?? []);
     setComponents(lesson?.components ?? []);
-  }, [lesson, defaultOrder]);
+    // Depende de lesson?.id (estável) — evita reset ao re-render do pai
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lesson?.id, defaultOrder]);
 
   // Carrega hábitos da comunidade + da trilha pai (resolve track_id via module)
   useEffect(() => {

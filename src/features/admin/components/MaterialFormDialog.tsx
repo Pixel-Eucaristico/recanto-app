@@ -25,7 +25,8 @@ export default function MaterialFormDialog({ isOpen, setIsOpen, material, onFini
         } else {
             setFormState({ title: '', description: '', category: '', type: 'text', authorized_roles: ['missionario'] });
         }
-    }, [material, isOpen]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [material?.id, isOpen]);
     
     const handleChange = (field: string, value: any) => setFormState((prev: any) => ({...prev, [field]: value}));
 

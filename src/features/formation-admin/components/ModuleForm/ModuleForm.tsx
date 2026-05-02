@@ -27,7 +27,9 @@ export function ModuleForm({ module, trackId, defaultOrder, saving, onSave, onCl
     setDescription(module?.description ?? '');
     setOrder(module?.order ?? defaultOrder);
     setThumbnailUrl(module?.thumbnail_url ?? '');
-  }, [module, defaultOrder]);
+    // Depende de module?.id (estável) — evita reset ao re-render do pai
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [module?.id, defaultOrder]);
 
   async function handleSubmit() {
     setError(null);

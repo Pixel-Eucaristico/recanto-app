@@ -1,10 +1,12 @@
 import JSZip from 'jszip';
 import type { Book, BookChapter } from '@/domain/library/types';
 import { BookExportEntity } from '@/domain/library/entities/BookExport';
+import { BookEntity } from '@/domain/library/entities/Book';
 
 export class BookEpubGenerator {
   async generate(book: Book, chapters: BookChapter[], coverImageBuffer?: Buffer): Promise<Buffer> {
-    const sorted = [...chapters].sort((a, b) => a.order - b.order);
+    // Ordena por grupo (front → body → back) + order dentro do grupo
+    const sorted = BookEntity.sortChapters(chapters);
     const bookId = `urn:uuid:${book.id}`;
     const hasCover = !!coverImageBuffer;
 

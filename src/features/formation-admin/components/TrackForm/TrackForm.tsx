@@ -44,6 +44,7 @@ export function TrackForm({ track, allTracks, saving, onSave, onCancel }: TrackF
   const [eligibleFormators, setEligibleFormators] = useState<FirebaseUser[]>([]);
   const [error, setError] = useState<string | null>(null);
 
+  // Depende de track?.id (ID estável) — evita reset ao re-render do pai
   useEffect(() => {
     setTitle(track?.title ?? '');
     setDescription(track?.description ?? '');
@@ -56,7 +57,8 @@ export function TrackForm({ track, allTracks, saving, onSave, onCancel }: TrackF
     setRequiresApproval(track?.requires_formator_approval ?? false);
     setFormatorIds(track?.formator_ids ?? []);
     setLessonVisibility(track?.lesson_visibility ?? 'all');
-  }, [track]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [track?.id]);
 
   useEffect(() => {
     formationAdminService.listTrackTypes().then(setTrackTypes).catch(() => setTrackTypes([]));

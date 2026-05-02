@@ -7,6 +7,7 @@ import type {
   BookFootnote, CitationStyle,
 } from '@/domain/library/types';
 import { CitationFormatter } from '@/domain/library/entities/CitationFormatter';
+import { BookEntity } from '@/domain/library/entities/Book';
 
 // ─── Inline markdown parser for PDF ──────────────────────────────────────────
 
@@ -293,7 +294,8 @@ function buildDocument(
   coverImageBuffer?: Buffer,
   truncatedAt?: string,
 ) {
-  const sorted = [...chapters].sort((a, b) => a.order - b.order);
+  // Ordena por grupo (front → body → back) + order dentro do grupo
+  const sorted = BookEntity.sortChapters(chapters);
 
   // Cover page — simple stacked layout, no flex centering
   const coverPage = ce(Page, { key: 'cover', size: 'A5', style: styles.page },
@@ -366,7 +368,9 @@ function buildDocument(
 // ─── Section-specific renderers for PDF ────────────────────────────────────
 
 function renderBibliographyPdf(refs: BookReference[], style: CitationStyle): React.ReactNode[] {
-  const sorted = [...refs].sort((a, b) => (a.authors[0] ?? '').localeCompare(b.authors[0] ?? ''));
+  const sorted = [...refs].sort((a, b) =>
+    (a.authors[0]?.surname ?? '').localeCompare(b.authors[0]?.surname ?? ''),
+  );
   return sorted.map(r =>
     ce(View, { key: r.id, style: { marginBottom: 8, paddingLeft: 16, textIndent: -16 } },
       inlineText(CitationFormatter.format(r, style), { fontSize: 10, lineHeight: 1.4 }),

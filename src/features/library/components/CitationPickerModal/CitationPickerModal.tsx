@@ -50,7 +50,7 @@ export function CitationPickerModal({
     if (!search.trim()) return true;
     const q = search.toLowerCase();
     return r.title.toLowerCase().includes(q)
-      || r.authors.some(a => a.toLowerCase().includes(q))
+      || r.authors.some(a => `${a.surname} ${a.given_name}`.toLowerCase().includes(q))
       || (r.year ? String(r.year).includes(q) : false);
   });
 

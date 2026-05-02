@@ -31,6 +31,8 @@ export interface SaveBookInput {
 }
 
 export interface SaveChapterInput {
+  /** ID do capítulo (passar quando estiver editando — preserva doc existente). */
+  id?: string;
   book_id: string;
   order: number;
   title: string;
@@ -101,10 +103,39 @@ export class LibraryService {
   // ─── Chapters ─────────────────────────────────────────────────────────────
 
   async saveChapter(input: SaveChapterInput): Promise<BookChapter> {
+    const kind = input.kind ?? 'chapter';
+    const isCreating = !input.id;
+
+    // Carrega capítulos existentes pra resolver ID (singleton) e order correto
+    const existingChapters = isCreating
+      ? await bookChapterRepository.findByBook(input.book_id)
+      : [];
+
+    // Singletons: bibliography, credits, preface, introduction, glossary, about.
+    // Se já existe um capítulo com mesmo kind, REUTILIZA o ID dele.
+    let resolvedId = input.id ?? '';
+    if (isCreating && !BookEntity.allowsMultiple(kind)) {
+      const dup = existingChapters.find(c => BookEntity.kindOf(c) === kind);
+      if (dup) resolvedId = dup.id;
+    }
+
+    // Calcula order correto baseado no kind (não no total de capítulos)
+    // Só faz isso na criação — edição preserva order escolhido pelo user
+    let resolvedOrder = input.order;
+    if (isCreating && !resolvedId) {
+      const sameKindOrders = existingChapters
+        .filter(c => BookEntity.kindOf(c) === kind)
+        .map(c => c.order);
+      resolvedOrder = sameKindOrders.length > 0 ? Math.max(...sameKindOrders) + 1 : 1;
+    }
+
     const draft: BookChapter = {
-      id: '', book_id: input.book_id, order: input.order,
-      title: input.title.trim(), subtitle: input.subtitle,
-      kind: input.kind ?? 'chapter',
+      id: resolvedId,
+      book_id: input.book_id,
+      order: resolvedOrder,
+      title: input.title.trim(),
+      subtitle: input.subtitle,
+      kind,
       blocks: input.blocks,
       footnotes: input.footnotes,
       references: input.references,
@@ -123,7 +154,8 @@ export class LibraryService {
   }
 
   async listChapters(bookId: string): Promise<BookChapter[]> {
-    return bookChapterRepository.findByBook(bookId);
+    const chapters = await bookChapterRepository.findByBook(bookId);
+    return BookEntity.sortChapters(chapters);
   }
 
   async deleteChapter(bookId: string, order: number): Promise<void> {

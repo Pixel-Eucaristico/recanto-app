@@ -178,17 +178,28 @@ export type CitationStyle = 'abnt' | 'apa' | 'chicago';
 
 export type ReferenceType = 'book' | 'article' | 'website' | 'chapter_in_book' | 'thesis';
 
+/** Autor estruturado — sobrenome separado pra formatação ABNT correta. */
+export interface BookAuthor {
+  /** Nome de família (último sobrenome) — usado em UPPERCASE no ABNT. */
+  surname: string;
+  /** Nome próprio + nomes do meio. */
+  given_name: string;
+}
+
 export interface BookReference {
   id: string;
   type: ReferenceType;
-  /** SOBRENOME, Nome format for ABNT; First Last for APA */
-  authors: string[];
+  authors: BookAuthor[];
   title: string;
   subtitle?: string;
+  /** Editora (publisher comercial). */
   publisher?: string;
+  /** Instituição (universidade, organização — separado de publisher). */
+  institution?: string;
   city?: string;
   year?: number;
-  edition?: string;
+  /** Número da edição (1, 2, 3...). Numérico. */
+  edition?: number;
   /** For articles: page range e.g. '45-67' */
   pages?: string;
   journal?: string;

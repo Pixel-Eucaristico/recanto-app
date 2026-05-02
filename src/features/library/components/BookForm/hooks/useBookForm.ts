@@ -46,9 +46,11 @@ function buildState(book: Book | null, userId: string): BookFormState {
 export function useBookForm(book: Book | null, userId: string) {
   const [form, setForm] = useState<BookFormState>(() => buildState(book, userId));
 
+  // Depende de book?.id (ID estável) em vez de book (ref) — evita reset ao re-render do pai
   useEffect(() => {
     setForm(buildState(book, userId));
-  }, [book, userId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [book?.id, userId]);
 
   function patch(p: Partial<BookFormState>) {
     setForm(f => ({ ...f, ...p }));

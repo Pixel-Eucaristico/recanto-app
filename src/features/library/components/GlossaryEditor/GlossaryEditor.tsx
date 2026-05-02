@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { Plus, Trash2, Search, ChevronDown, ChevronUp } from 'lucide-react';
 import type { BookGlossaryTerm } from '@/domain/library/types';
 import { RichTextEditor } from '@/shared/components/RichTextEditor';
+import { RichContent } from '@/shared/components/RichContent';
 
 function termId(term: string): string {
   // Stable, slug-based ID for cross-linking from text
@@ -98,9 +99,10 @@ export function GlossaryEditor({ terms, onChange }: GlossaryEditorProps) {
               <div className="flex items-start gap-2">
                 <div className="flex-1 min-w-0">
                   <h5 className="font-semibold text-sm">{term.term}</h5>
-                  <p className="text-xs text-base-content/70 mt-1 line-clamp-3 whitespace-pre-wrap">
-                    {term.definition}
-                  </p>
+                  <RichContent
+                    markdown={term.definition}
+                    className="text-xs text-base-content/70 mt-1 [&>div]:p-0 [&_p]:my-0 [&_p]:line-clamp-3"
+                  />
                   <code className="text-[10px] text-base-content/40">#{term.id}</code>
                 </div>
                 <div className="flex gap-1 shrink-0">

@@ -55,7 +55,8 @@ export default function UserFormDialog({ isOpen, setIsOpen, user, onSave, availa
         } else {
             setFormData({ name: '', email: '', phone: '', role: 'recantiano', features: [] });
         }
-    }, [user, isOpen]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user?.id, isOpen]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

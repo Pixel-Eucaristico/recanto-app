@@ -24,7 +24,9 @@
     "seed:track-types": "node scripts/seed-track-types.mjs",
     "seed:all": "npm run seed:formation && npm run seed:notebook && npm run seed:permissions && npm run seed:habits && npm run seed:track-types",
     "migrate:lessons-to-components": "node scripts/migrate-lessons-to-components.mjs",
-    "migrate:lessons-to-components:dry": "node scripts/migrate-lessons-to-components.mjs --dry-run"
+    "migrate:lessons-to-components:dry": "node scripts/migrate-lessons-to-components.mjs --dry-run",
+    "migrate:library:audit": "node scripts/migrate-library-fix.mjs --dry",
+    "migrate:library:fix": "node scripts/migrate-library-fix.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.980.0",

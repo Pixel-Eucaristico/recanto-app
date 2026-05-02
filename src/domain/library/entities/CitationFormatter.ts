@@ -3,7 +3,7 @@
  * Implements StyleStrategy pattern: one method per citation style.
  */
 
-import type { BookReference, CitationStyle } from '@/domain/library/types';
+import type { BookReference, BookAuthor, CitationStyle } from '@/domain/library/types';
 
 export class CitationFormatter {
   static format(ref: BookReference, style: CitationStyle): string {
@@ -21,13 +21,13 @@ export class CitationFormatter {
     const year = ref.year ? `${ref.year}` : 's.d.';
     const title = ref.title.toUpperCase();
     const subtitle = ref.subtitle ? `: ${ref.subtitle}` : '';
+    const orgPart = CitationFormatter.publisherOrInstitution(ref);
 
     if (ref.type === 'book') {
-      const edition = ref.edition ? ` ${ref.edition} ed.` : '';
+      const edition = ref.edition ? ` ${ref.edition}. ed.` : '';
       const city = ref.city ?? 'S.l.';
-      const publisher = ref.publisher ?? 's.n.';
       const isbn = ref.isbn ? ` ISBN ${ref.isbn}.` : '';
-      return `${authors}. **${title}${subtitle}**.${edition} ${city}: ${publisher}, ${year}.${isbn}`;
+      return `${authors}. **${title}${subtitle}**.${edition} ${city}: ${orgPart || 's.n.'}, ${year}.${isbn}`;
     }
 
     if (ref.type === 'article') {
@@ -47,15 +47,14 @@ export class CitationFormatter {
 
     if (ref.type === 'chapter_in_book') {
       const city = ref.city ?? 'S.l.';
-      const publisher = ref.publisher ?? 's.n.';
       const pages = ref.pages ? `, p. ${ref.pages}` : '';
-      return `${authors}. ${ref.title}${subtitle}. In: ${journal(ref)}. **${ref.journal ?? ''}**. ${city}: ${publisher}, ${year}${pages}.`;
+      return `${authors}. ${ref.title}${subtitle}. In: **${ref.journal ?? ''}**. ${city}: ${orgPart || 's.n.'}, ${year}${pages}.`;
     }
 
     if (ref.type === 'thesis') {
       const city = ref.city ?? 'S.l.';
-      const publisher = ref.publisher ?? 'Instituição';
-      return `${authors}. **${title}${subtitle}**. ${year}. ${ref.pages ? ref.pages + ' f.' : ''} ${ref.edition ?? 'Dissertação (Mestrado)'} — ${publisher}, ${city}, ${year}.`;
+      const inst = ref.institution ?? ref.publisher ?? 'Instituição';
+      return `${authors}. **${title}${subtitle}**. ${year}. ${ref.pages ? ref.pages + ' f. ' : ''}Dissertação — ${inst}, ${city}, ${year}.`;
     }
 
     return `${authors}. **${title}${subtitle}**. ${year}.`;
@@ -69,12 +68,12 @@ export class CitationFormatter {
     const title = ref.type === 'book' || ref.type === 'thesis'
       ? `*${ref.title}${ref.subtitle ? ': ' + ref.subtitle : ''}*`
       : `${ref.title}${ref.subtitle ? ': ' + ref.subtitle : ''}`;
+    const orgPart = CitationFormatter.publisherOrInstitution(ref);
 
     if (ref.type === 'book') {
-      const edition = ref.edition ? ` (${ref.edition} ed.)` : '';
-      const publisher = ref.publisher ?? '';
+      const edition = ref.edition ? ` (${ref.edition}th ed.)` : '';
       const doi = ref.doi ? ` https://doi.org/${ref.doi}` : ref.url ? ` ${ref.url}` : '';
-      return `${authors} ${year}. ${title}${edition}. ${publisher}.${doi}`;
+      return `${authors} ${year}. ${title}${edition}. ${orgPart}.${doi}`;
     }
 
     if (ref.type === 'article') {
@@ -95,13 +94,12 @@ export class CitationFormatter {
     if (ref.type === 'chapter_in_book') {
       const editor = ref.journal ? `In ${ref.journal} (Ed.)` : 'In';
       const pages = ref.pages ? ` (pp. ${ref.pages})` : '';
-      const publisher = ref.publisher ?? '';
-      return `${authors} ${year}. ${ref.title}. ${editor}, *${ref.subtitle ?? ''}*${pages}. ${publisher}.`;
+      return `${authors} ${year}. ${ref.title}. ${editor}, *${ref.subtitle ?? ''}*${pages}. ${orgPart}.`;
     }
 
     if (ref.type === 'thesis') {
-      const institution = ref.publisher ?? '';
-      return `${authors} ${year}. ${title} [${ref.edition ?? 'Dissertação de Mestrado'}, ${institution}].`;
+      const inst = ref.institution ?? ref.publisher ?? '';
+      return `${authors} ${year}. ${title} [Dissertação de Mestrado, ${inst}].`;
     }
 
     return `${authors} ${year}. ${title}.`;
@@ -115,12 +113,12 @@ export class CitationFormatter {
     const title = ref.type === 'book' || ref.type === 'thesis'
       ? `*${ref.title}${ref.subtitle ? ': ' + ref.subtitle : ''}*`
       : `"${ref.title}${ref.subtitle ? ': ' + ref.subtitle : ''}"`;
+    const orgPart = CitationFormatter.publisherOrInstitution(ref);
 
     if (ref.type === 'book') {
-      const edition = ref.edition ? ` ${ref.edition} ed.` : '';
+      const edition = ref.edition ? ` ${ref.edition}th ed.` : '';
       const city = ref.city ?? '';
-      const publisher = ref.publisher ?? '';
-      return `${authors}. ${year}. ${title}.${edition} ${city}: ${publisher}.`;
+      return `${authors}. ${year}. ${title}.${edition} ${city}: ${orgPart}.`;
     }
 
     if (ref.type === 'article') {
@@ -141,47 +139,90 @@ export class CitationFormatter {
     return `${authors}. ${year}. ${title}.`;
   }
 
-  // ─── Author formatters ─────────────────────────────────────────────────────
+  // ─── Helpers ───────────────────────────────────────────────────────────────
 
-  /** ABNT: SOBRENOME, Nome; SOBRENOME2, Nome2 */
-  private static abntAuthors(authors: string[]): string {
-    if (authors.length === 0) return '';
-    if (authors.length > 3) return `${authors[0]} et al.`;
-    return authors.join('; ');
+  /** Editora ou instituição — instituição tem prioridade pra theses, publisher pra books. */
+  private static publisherOrInstitution(ref: BookReference): string {
+    if (ref.type === 'thesis') return ref.institution ?? ref.publisher ?? '';
+    return ref.publisher ?? ref.institution ?? '';
+  }
+
+  /** Normaliza autor — aceita string (legado) ou objeto. Sempre retorna BookAuthor. */
+  private static normalizeAuthor(a: unknown): BookAuthor {
+    if (!a) return { surname: '', given_name: '' };
+    if (typeof a === 'string') {
+      const trimmed = a.trim();
+      if (!trimmed) return { surname: '', given_name: '' };
+      if (trimmed.includes(',')) {
+        const [surname, ...rest] = trimmed.split(',');
+        return { surname: surname.trim(), given_name: rest.join(',').trim() };
+      }
+      const parts = trimmed.split(/\s+/);
+      if (parts.length === 1) return { surname: parts[0], given_name: '' };
+      return { surname: parts[parts.length - 1], given_name: parts.slice(0, -1).join(' ') };
+    }
+    const obj = a as Partial<BookAuthor>;
+    return { surname: obj.surname ?? '', given_name: obj.given_name ?? '' };
+  }
+
+  /** Formato ABNT: SOBRENOME, Nome */
+  static abntAuthorString(a: BookAuthor | string): string {
+    const n = CitationFormatter.normalizeAuthor(a);
+    return `${(n.surname || '').toUpperCase()}, ${n.given_name}`.trim().replace(/,\s*$/, '');
+  }
+
+  /** Formato APA: Surname, F. M. */
+  static apaAuthorString(a: BookAuthor | string): string {
+    const n = CitationFormatter.normalizeAuthor(a);
+    const initials = (n.given_name || '').split(/\s+/).filter(Boolean).map(p => p[0]?.toUpperCase() + '.').join(' ');
+    return initials ? `${n.surname}, ${initials}` : n.surname;
+  }
+
+  /** Formato Chicago: First Last */
+  static chicagoAuthorString(a: BookAuthor | string): string {
+    const n = CitationFormatter.normalizeAuthor(a);
+    return `${n.given_name} ${n.surname}`.trim();
+  }
+
+  // ─── Author lists per style ────────────────────────────────────────────────
+
+  /** ABNT: SOBRENOME, Nome; SOBRENOME2, Nome2; et al. (4+) */
+  private static abntAuthors(authors: Array<BookAuthor | string>): string {
+    if (!authors || authors.length === 0) return '';
+    if (authors.length > 3) return `${CitationFormatter.abntAuthorString(authors[0])} et al.`;
+    return authors.map(CitationFormatter.abntAuthorString).join('; ');
   }
 
   /** APA: Surname, F.; Surname2, F2. */
-  private static apaAuthors(authors: string[]): string {
-    if (authors.length === 0) return '';
-    if (authors.length > 7) {
-      return authors.slice(0, 6).join(', ') + ', . . . ' + authors[authors.length - 1];
+  private static apaAuthors(authors: Array<BookAuthor | string>): string {
+    if (!authors || authors.length === 0) return '';
+    const formatted = authors.map(CitationFormatter.apaAuthorString);
+    if (formatted.length === 1) return formatted[0];
+    if (formatted.length > 7) {
+      return formatted.slice(0, 6).join(', ') + ', . . . ' + formatted[formatted.length - 1];
     }
-    if (authors.length === 1) return authors[0];
-    const last = authors[authors.length - 1];
-    return authors.slice(0, -1).join(', ') + ', & ' + last;
+    const last = formatted[formatted.length - 1];
+    return formatted.slice(0, -1).join(', ') + ', & ' + last;
   }
 
   /** Chicago: First Last, First2 Last2, and First3 Last3 */
-  private static chicagoAuthors(authors: string[]): string {
-    if (authors.length === 0) return '';
-    if (authors.length === 1) return authors[0];
-    if (authors.length === 2) return `${authors[0]} and ${authors[1]}`;
-    return authors.slice(0, -1).join(', ') + ', and ' + authors[authors.length - 1];
+  private static chicagoAuthors(authors: Array<BookAuthor | string>): string {
+    if (!authors || authors.length === 0) return '';
+    const formatted = authors.map(CitationFormatter.chicagoAuthorString);
+    if (formatted.length === 1) return formatted[0];
+    if (formatted.length === 2) return `${formatted[0]} and ${formatted[1]}`;
+    return formatted.slice(0, -1).join(', ') + ', and ' + formatted[formatted.length - 1];
   }
 
   /** Short in-text citation for ABNT: (SOBRENOME, year) */
   static inTextAbnt(ref: BookReference): string {
-    const surname = ref.authors[0]?.split(',')[0] ?? ref.authors[0] ?? '';
-    return `(${surname.toUpperCase()}, ${ref.year ?? 's.d.'})`;
+    const a = CitationFormatter.normalizeAuthor(ref.authors[0]);
+    return `(${(a.surname || '').toUpperCase()}, ${ref.year ?? 's.d.'})`;
   }
 
   /** Short in-text citation for APA: (Surname, year) */
   static inTextApa(ref: BookReference): string {
-    const surname = ref.authors[0]?.split(',')[0] ?? ref.authors[0] ?? '';
-    return `(${surname}, ${ref.year ?? 'n.d.'})`;
+    const a = CitationFormatter.normalizeAuthor(ref.authors[0]);
+    return `(${a.surname}, ${ref.year ?? 'n.d.'})`;
   }
-}
-
-function journal(ref: BookReference): string {
-  return ref.journal ?? '';
 }

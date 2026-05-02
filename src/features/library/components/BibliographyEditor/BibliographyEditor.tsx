@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Trash2, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
-import type { BookReference, CitationStyle, ReferenceType } from '@/domain/library/types';
+import { Plus, Trash2, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
+import type { BookReference, BookAuthor, CitationStyle, ReferenceType } from '@/domain/library/types';
 import { CitationFormatter } from '@/domain/library/entities/CitationFormatter';
+import { bookReferenceSchema, validateBookReference } from '@/domain/library/entities/bookReferenceSchema';
+import { RichContent } from '@/shared/components/RichContent';
 
 const STYLE_LABELS: Record<CitationStyle, string> = {
   abnt: 'ABNT NBR 6023:2018',
@@ -19,11 +21,15 @@ const TYPE_LABELS: Record<ReferenceType, string> = {
   thesis: 'Dissertação / Tese',
 };
 
+function emptyAuthor(): BookAuthor {
+  return { surname: '', given_name: '' };
+}
+
 function emptyRef(): BookReference {
   return {
     id: `ref_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
     type: 'book',
-    authors: [''],
+    authors: [emptyAuthor()],
     title: '',
   };
 }
@@ -37,25 +43,34 @@ interface BibliographyEditorProps {
 export function BibliographyEditor({ references, citationStyle, onChange }: BibliographyEditorProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<BookReference | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   function startNew() {
     const r = emptyRef();
     setDraft(r);
     setEditingId(r.id);
+    setErrors({});
   }
 
   function startEdit(ref: BookReference) {
     setDraft({ ...ref });
     setEditingId(ref.id);
+    setErrors({});
   }
 
   function cancelEdit() {
     setDraft(null);
     setEditingId(null);
+    setErrors({});
   }
 
   function saveRef() {
     if (!draft) return;
+    const validation = bookReferenceSchema.safeParse(draft);
+    if (!validation.success) {
+      setErrors(validateBookReference(draft));
+      return;
+    }
     const exists = references.some(r => r.id === draft.id);
     const updated = exists
       ? references.map(r => r.id === draft.id ? draft : r)
@@ -72,16 +87,16 @@ export function BibliographyEditor({ references, citationStyle, onChange }: Bibl
     setDraft(prev => prev ? { ...prev, ...patch } : prev);
   }
 
-  function updateAuthor(i: number, value: string) {
+  function updateAuthor(i: number, field: keyof BookAuthor, value: string) {
     if (!draft) return;
     const authors = [...draft.authors];
-    authors[i] = value;
+    authors[i] = { ...authors[i], [field]: value };
     updateDraft({ authors });
   }
 
   function addAuthor() {
     if (!draft) return;
-    updateDraft({ authors: [...draft.authors, ''] });
+    updateDraft({ authors: [...draft.authors, emptyAuthor()] });
   }
 
   function removeAuthor(i: number) {
@@ -89,9 +104,9 @@ export function BibliographyEditor({ references, citationStyle, onChange }: Bibl
     updateDraft({ authors: draft.authors.filter((_, idx) => idx !== i) });
   }
 
-  // Sort alphabetically by first author
+  // Sort por sobrenome do primeiro autor
   const sorted = [...references].sort((a, b) =>
-    (a.authors[0] ?? '').localeCompare(b.authors[0] ?? ''),
+    (a.authors[0]?.surname ?? '').localeCompare(b.authors[0]?.surname ?? ''),
   );
 
   return (
@@ -121,28 +136,31 @@ export function BibliographyEditor({ references, citationStyle, onChange }: Bibl
         <div className="space-y-2">
           {sorted.map(ref => (
             <div key={ref.id} className="card bg-base-100 border border-base-300">
-              <div className="card-body p-3 gap-2">
+              <div className="card-body p-4 gap-3">
                 <div className="flex items-start gap-2">
                   <div className="flex-1 min-w-0">
-                    <span className="badge badge-outline badge-xs mb-1">{TYPE_LABELS[ref.type]}</span>
-                    <p className="text-xs text-base-content/80 font-mono leading-relaxed">
-                      {CitationFormatter.format(ref, citationStyle)}
-                    </p>
+                    <span className="badge badge-outline badge-xs mb-2">{TYPE_LABELS[ref.type]}</span>
+                    <RichContent
+                      markdown={CitationFormatter.format(ref, citationStyle)}
+                      className="text-sm leading-relaxed [&>div]:p-0 [&_p]:my-0"
+                    />
                   </div>
                   <div className="flex gap-1 shrink-0">
                     <button
                       type="button"
-                      className="btn btn-ghost btn-xs"
+                      className="btn btn-ghost btn-sm"
                       onClick={() => editingId === ref.id ? cancelEdit() : startEdit(ref)}
+                      title={editingId === ref.id ? 'Fechar' : 'Editar'}
                     >
-                      {editingId === ref.id ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                      {editingId === ref.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                     </button>
                     <button
                       type="button"
-                      className="btn btn-ghost btn-xs text-error"
+                      className="btn btn-ghost btn-sm text-error"
                       onClick={() => deleteRef(ref.id)}
+                      title="Remover"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -150,6 +168,7 @@ export function BibliographyEditor({ references, citationStyle, onChange }: Bibl
                 {editingId === ref.id && draft && (
                   <RefForm
                     draft={draft}
+                    errors={errors}
                     onUpdate={updateDraft}
                     onAuthorChange={updateAuthor}
                     onAddAuthor={addAuthor}
@@ -167,10 +186,11 @@ export function BibliographyEditor({ references, citationStyle, onChange }: Bibl
       {/* New reference form */}
       {editingId && !references.some(r => r.id === editingId) && draft ? (
         <div className="card bg-base-100 border border-primary">
-          <div className="card-body p-4 gap-3">
+          <div className="card-body p-4 md:p-6 gap-4">
             <h4 className="font-semibold text-sm">Nova referência</h4>
             <RefForm
               draft={draft}
+              errors={errors}
               onUpdate={updateDraft}
               onAuthorChange={updateAuthor}
               onAddAuthor={addAuthor}
@@ -183,7 +203,7 @@ export function BibliographyEditor({ references, citationStyle, onChange }: Bibl
       ) : (
         <button
           type="button"
-          className="btn btn-outline btn-sm gap-1 w-full"
+          className="btn btn-outline btn-md gap-1 w-full"
           onClick={startNew}
         >
           <Plus className="w-4 h-4" /> Adicionar referência
@@ -197,25 +217,36 @@ export function BibliographyEditor({ references, citationStyle, onChange }: Bibl
 
 interface RefFormProps {
   draft: BookReference;
+  errors: Record<string, string>;
   onUpdate: (patch: Partial<BookReference>) => void;
-  onAuthorChange: (i: number, v: string) => void;
+  onAuthorChange: (i: number, field: keyof BookAuthor, value: string) => void;
   onAddAuthor: () => void;
   onRemoveAuthor: (i: number) => void;
   onSave: () => void;
   onCancel: () => void;
 }
 
-function RefForm({ draft, onUpdate, onAuthorChange, onAddAuthor, onRemoveAuthor, onSave, onCancel }: RefFormProps) {
+function FieldError({ name, errors }: { name: string; errors: Record<string, string> }) {
+  if (!errors[name]) return null;
+  return (
+    <p className="text-xs text-error mt-1 flex items-center gap-1">
+      <AlertCircle className="w-3 h-3" /> {errors[name]}
+    </p>
+  );
+}
+
+function RefForm({ draft, errors, onUpdate, onAuthorChange, onAddAuthor, onRemoveAuthor, onSave, onCancel }: RefFormProps) {
   const showJournal = draft.type === 'article' || draft.type === 'chapter_in_book';
   const showPublisher = draft.type !== 'website';
+  const showInstitution = draft.type === 'thesis';
 
   return (
-    <div className="space-y-3 border-t border-base-300 pt-3">
+    <div className="space-y-4 border-t border-base-300 pt-4">
       {/* Type */}
       <label className="form-control">
-        <span className="label-text text-xs mb-1">Tipo</span>
+        <span className="label-text text-sm font-medium mb-1.5">Tipo de referência</span>
         <select
-          className="select select-bordered select-sm"
+          className="select select-bordered select-md"
           value={draft.type}
           onChange={e => onUpdate({ type: e.target.value as ReferenceType })}
         >
@@ -225,164 +256,248 @@ function RefForm({ draft, onUpdate, onAuthorChange, onAddAuthor, onRemoveAuthor,
         </select>
       </label>
 
-      {/* Authors */}
-      <div>
-        <span className="label-text text-xs mb-1 block">Autores (SOBRENOME, Nome para ABNT)</span>
-        <div className="space-y-1">
+      {/* Authors — sobrenome + nome separados */}
+      <div className="space-y-2">
+        <span className="label-text text-sm font-medium block">Autores</span>
+        <FieldError name="authors" errors={errors} />
+        <div className="space-y-2">
           {draft.authors.map((a, i) => (
-            <div key={i} className="flex gap-1">
-              <input
-                className="input input-bordered input-sm flex-1"
-                value={a}
-                placeholder={i === 0 ? 'SILVA, João' : 'SOUZA, Maria (opcional)'}
-                onChange={e => onAuthorChange(i, e.target.value)}
-              />
+            <div key={i} className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-2 items-start">
+              <div>
+                <input
+                  className="input input-bordered input-md w-full"
+                  value={a.surname}
+                  placeholder="SOBRENOME"
+                  onChange={e => onAuthorChange(i, 'surname', e.target.value)}
+                />
+                <FieldError name={`authors.${i}.surname`} errors={errors} />
+              </div>
+              <div>
+                <input
+                  className="input input-bordered input-md w-full"
+                  value={a.given_name}
+                  placeholder="Nome próprio + nomes do meio"
+                  onChange={e => onAuthorChange(i, 'given_name', e.target.value)}
+                />
+                <FieldError name={`authors.${i}.given_name`} errors={errors} />
+              </div>
               {draft.authors.length > 1 && (
-                <button type="button" className="btn btn-ghost btn-sm" onClick={() => onRemoveAuthor(i)}>
-                  <Trash2 className="w-3.5 h-3.5" />
+                <button type="button" className="btn btn-ghost btn-md" onClick={() => onRemoveAuthor(i)} title="Remover autor">
+                  <Trash2 className="w-4 h-4" />
                 </button>
               )}
             </div>
           ))}
-          <button type="button" className="btn btn-ghost btn-xs gap-1" onClick={onAddAuthor}>
-            <Plus className="w-3 h-3" /> Adicionar autor
+          <button type="button" className="btn btn-ghost btn-sm gap-1" onClick={onAddAuthor}>
+            <Plus className="w-3.5 h-3.5" /> Adicionar autor
           </button>
         </div>
+        <p className="text-[10px] text-base-content/50">
+          ABNT exibe SOBRENOME em maiúsculas. Ex: SILVA, João Pedro.
+        </p>
       </div>
 
       {/* Title / Subtitle */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <label className="form-control">
-          <span className="label-text text-xs mb-1">Título *</span>
+          <span className="label-text text-sm font-medium mb-1.5">Título *</span>
           <input
-            className="input input-bordered input-sm"
+            className="input input-bordered input-md"
             value={draft.title}
             onChange={e => onUpdate({ title: e.target.value })}
           />
+          <FieldError name="title" errors={errors} />
         </label>
         <label className="form-control">
-          <span className="label-text text-xs mb-1">Subtítulo</span>
+          <span className="label-text text-sm font-medium mb-1.5">Subtítulo</span>
           <input
-            className="input input-bordered input-sm"
+            className="input input-bordered input-md"
             value={draft.subtitle ?? ''}
             onChange={e => onUpdate({ subtitle: e.target.value || undefined })}
           />
+          <FieldError name="subtitle" errors={errors} />
         </label>
       </div>
 
       {/* Journal (for articles/chapters) */}
       {showJournal && (
         <label className="form-control">
-          <span className="label-text text-xs mb-1">
+          <span className="label-text text-sm font-medium mb-1.5">
             {draft.type === 'article' ? 'Periódico / Revista' : 'Livro que contém o capítulo'}
           </span>
           <input
-            className="input input-bordered input-sm"
+            className="input input-bordered input-md"
             value={draft.journal ?? ''}
             onChange={e => onUpdate({ journal: e.target.value || undefined })}
           />
+          <FieldError name="journal" errors={errors} />
         </label>
       )}
 
-      {/* Publisher / City / Year / Edition */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+      {/* Publisher / Institution / City / Year */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {showPublisher && (
-          <label className="form-control col-span-2">
-            <span className="label-text text-xs mb-1">Editora / Instituição</span>
+          <label className="form-control">
+            <span className="label-text text-sm font-medium mb-1.5">Editora</span>
             <input
-              className="input input-bordered input-sm"
+              className="input input-bordered input-md"
               value={draft.publisher ?? ''}
+              placeholder="ex: Editora Vozes"
               onChange={e => onUpdate({ publisher: e.target.value || undefined })}
             />
+            <FieldError name="publisher" errors={errors} />
+          </label>
+        )}
+        {(showInstitution || showPublisher) && (
+          <label className="form-control">
+            <span className="label-text text-sm font-medium mb-1.5">
+              {showInstitution ? 'Instituição *' : 'Instituição (opcional)'}
+            </span>
+            <input
+              className="input input-bordered input-md"
+              value={draft.institution ?? ''}
+              placeholder="ex: PUC-SP, UFRJ"
+              onChange={e => onUpdate({ institution: e.target.value || undefined })}
+            />
+            <FieldError name="institution" errors={errors} />
           </label>
         )}
         <label className="form-control">
-          <span className="label-text text-xs mb-1">Cidade</span>
+          <span className="label-text text-sm font-medium mb-1.5">Cidade</span>
           <input
-            className="input input-bordered input-sm"
+            className="input input-bordered input-md"
             value={draft.city ?? ''}
+            placeholder="ex: São Paulo"
             onChange={e => onUpdate({ city: e.target.value || undefined })}
           />
+          <FieldError name="city" errors={errors} />
         </label>
         <label className="form-control">
-          <span className="label-text text-xs mb-1">Ano</span>
+          <span className="label-text text-sm font-medium mb-1.5">Ano</span>
           <input
             type="number"
-            className="input input-bordered input-sm"
+            className="input input-bordered input-md"
             value={draft.year ?? ''}
-            onChange={e => onUpdate({ year: Number(e.target.value) || undefined })}
-            min={1000}
+            placeholder="2024"
+            onChange={e => onUpdate({ year: e.target.value ? Number(e.target.value) : undefined })}
+            min={0}
             max={2099}
           />
+          <FieldError name="year" errors={errors} />
         </label>
       </div>
 
-      {/* Volume / Issue / Pages / Edition */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-        {draft.type === 'article' && (
-          <>
-            <label className="form-control">
-              <span className="label-text text-xs mb-1">Volume</span>
-              <input className="input input-bordered input-sm" value={draft.volume ?? ''} onChange={e => onUpdate({ volume: e.target.value || undefined })} />
-            </label>
-            <label className="form-control">
-              <span className="label-text text-xs mb-1">Número</span>
-              <input className="input input-bordered input-sm" value={draft.issue ?? ''} onChange={e => onUpdate({ issue: e.target.value || undefined })} />
-            </label>
-          </>
-        )}
-        <label className="form-control">
-          <span className="label-text text-xs mb-1">Páginas</span>
+      {/* Edition (book only) — numérico */}
+      {draft.type === 'book' && (
+        <label className="form-control md:max-w-[200px]">
+          <span className="label-text text-sm font-medium mb-1.5">Número da edição</span>
           <input
-            className="input input-bordered input-sm"
+            type="number"
+            className="input input-bordered input-md"
+            value={draft.edition ?? ''}
+            placeholder="1, 2, 3..."
+            onChange={e => onUpdate({ edition: e.target.value ? Number(e.target.value) : undefined })}
+            min={1}
+            max={99}
+          />
+          <FieldError name="edition" errors={errors} />
+        </label>
+      )}
+
+      {/* Volume / Issue / Pages (article only) */}
+      {draft.type === 'article' && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <label className="form-control">
+            <span className="label-text text-sm font-medium mb-1.5">Volume</span>
+            <input className="input input-bordered input-md" value={draft.volume ?? ''} onChange={e => onUpdate({ volume: e.target.value || undefined })} />
+            <FieldError name="volume" errors={errors} />
+          </label>
+          <label className="form-control">
+            <span className="label-text text-sm font-medium mb-1.5">Número</span>
+            <input className="input input-bordered input-md" value={draft.issue ?? ''} onChange={e => onUpdate({ issue: e.target.value || undefined })} />
+            <FieldError name="issue" errors={errors} />
+          </label>
+          <label className="form-control">
+            <span className="label-text text-sm font-medium mb-1.5">Páginas</span>
+            <input
+              className="input input-bordered input-md"
+              value={draft.pages ?? ''}
+              placeholder="ex: 45-67"
+              onChange={e => onUpdate({ pages: e.target.value || undefined })}
+            />
+            <FieldError name="pages" errors={errors} />
+          </label>
+        </div>
+      )}
+
+      {/* Pages (book chapter / thesis) */}
+      {(draft.type === 'chapter_in_book' || draft.type === 'thesis') && (
+        <label className="form-control md:max-w-[200px]">
+          <span className="label-text text-sm font-medium mb-1.5">Páginas</span>
+          <input
+            className="input input-bordered input-md"
             value={draft.pages ?? ''}
             placeholder="ex: 45-67"
             onChange={e => onUpdate({ pages: e.target.value || undefined })}
           />
+          <FieldError name="pages" errors={errors} />
         </label>
-        {draft.type === 'book' && (
-          <label className="form-control">
-            <span className="label-text text-xs mb-1">Edição</span>
-            <input className="input input-bordered input-sm" value={draft.edition ?? ''} placeholder="ex: 3" onChange={e => onUpdate({ edition: e.target.value || undefined })} />
-          </label>
-        )}
-      </div>
+      )}
 
-      {/* URL / DOI / ISBN */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+      {/* URL / DOI / ISBN — apenas onde aplicável */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <label className="form-control">
-          <span className="label-text text-xs mb-1">URL</span>
-          <input className="input input-bordered input-sm" type="url" value={draft.url ?? ''} onChange={e => onUpdate({ url: e.target.value || undefined })} />
+          <span className="label-text text-sm font-medium mb-1.5">URL</span>
+          <input
+            className="input input-bordered input-md"
+            type="url"
+            value={draft.url ?? ''}
+            placeholder="https://..."
+            onChange={e => onUpdate({ url: e.target.value || undefined })}
+          />
+          <FieldError name="url" errors={errors} />
         </label>
         <label className="form-control">
-          <span className="label-text text-xs mb-1">DOI</span>
-          <input className="input input-bordered input-sm" value={draft.doi ?? ''} onChange={e => onUpdate({ doi: e.target.value || undefined })} />
+          <span className="label-text text-sm font-medium mb-1.5">DOI</span>
+          <input
+            className="input input-bordered input-md"
+            value={draft.doi ?? ''}
+            placeholder="10.1000/xyz"
+            onChange={e => onUpdate({ doi: e.target.value || undefined })}
+          />
+          <FieldError name="doi" errors={errors} />
         </label>
         <label className="form-control">
-          <span className="label-text text-xs mb-1">ISBN</span>
-          <input className="input input-bordered input-sm" value={draft.isbn ?? ''} onChange={e => onUpdate({ isbn: e.target.value || undefined })} />
+          <span className="label-text text-sm font-medium mb-1.5">ISBN</span>
+          <input
+            className="input input-bordered input-md"
+            value={draft.isbn ?? ''}
+            placeholder="978-85-..."
+            onChange={e => onUpdate({ isbn: e.target.value || undefined })}
+          />
+          <FieldError name="isbn" errors={errors} />
         </label>
       </div>
 
       {draft.type === 'website' && (
-        <label className="form-control">
-          <span className="label-text text-xs mb-1">Data de acesso</span>
+        <label className="form-control md:max-w-[300px]">
+          <span className="label-text text-sm font-medium mb-1.5">Data de acesso</span>
           <input
             type="date"
-            className="input input-bordered input-sm"
+            className="input input-bordered input-md"
             value={draft.access_date ?? ''}
             onChange={e => onUpdate({ access_date: e.target.value || undefined })}
           />
+          <FieldError name="access_date" errors={errors} />
         </label>
       )}
 
-      <div className="flex gap-2 justify-end">
-        <button type="button" className="btn btn-ghost btn-sm" onClick={onCancel}>Cancelar</button>
+      <div className="flex gap-2 justify-end pt-2 border-t border-base-300">
+        <button type="button" className="btn btn-ghost btn-md" onClick={onCancel}>Cancelar</button>
         <button
           type="button"
-          className="btn btn-primary btn-sm"
+          className="btn btn-primary btn-md"
           onClick={onSave}
-          disabled={!draft.title.trim() || draft.authors.every(a => !a.trim())}
         >
           Salvar referência
         </button>
