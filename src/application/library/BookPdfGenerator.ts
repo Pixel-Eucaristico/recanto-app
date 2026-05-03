@@ -15,6 +15,7 @@ const INLINE_PATTERNS: Array<{ re: RegExp; type: string }> = [
   { re: /\[([^\]]*)\]\(([^)]+)\)/, type: 'link' },   // [text](url)
   { re: /\*\*\*(.+?)\*\*\*/, type: 'bolditalic' },    // ***text***
   { re: /\*\*(.+?)\*\*/, type: 'bold' },              // **text**
+  { re: /~~(.+?)~~/, type: 'strikethrough' },         // ~~text~~
   { re: /\*(.+?)\*/, type: 'italic' },                // *text*
   { re: /_(.+?)_/, type: 'italic' },                  // _text_
   { re: /`(.+?)`/, type: 'code' },                    // `code`
@@ -65,6 +66,12 @@ function parseInlinePdf(raw: string): React.ReactNode[] {
     } else if (earliestType === 'bold') {
       nodes.push(
         React.createElement(Text, { key: k, style: { fontFamily: 'Times-Bold' } },
+          earliest[1],
+        ),
+      );
+    } else if (earliestType === 'strikethrough') {
+      nodes.push(
+        React.createElement(Text, { key: k, style: { textDecoration: 'line-through' } },
           earliest[1],
         ),
       );
@@ -220,22 +227,20 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
   },
-  inlineFootnotes: {
-    marginTop: 8,
-    marginBottom: 8,
+  footnoteFooter: {
+    marginTop: 18,
     paddingTop: 5,
     borderTopWidth: 0.5,
     borderTopColor: '#888888',
-    width: '70%',
   },
   inlineFnRow: {
     flexDirection: 'row',
     marginBottom: 2,
   },
   inlineFnNum: {
-    fontSize: 7,
-    width: 12,
-    color: '#444444',
+    fontSize: 8,
+    width: 14,
+    color: '#333333',
   },
 });
 
@@ -249,8 +254,8 @@ function toSuperscript(n: number): string {
   return String(n).split('').map(d => SUPERSCRIPTS[d] ?? d).join('');
 }
 
-/** Aceita [^N] e \[\^N\] (Lexical escapa brackets/circumflex no markdown). */
-const FOOTNOTE_MARKER_RE = /\\?\[\\?\^(\d+)\\?\]/g;
+/** Aceita [^N] com qualquer escape de Lexical/markdown (0+ backslashes em cada bracket/circumflex). */
+const FOOTNOTE_MARKER_RE = /\\*\[\\*\^(\d+)\\*\]/g;
 
 /** Substitui [^N] por superscript ¹²³. Markers órfãos somem. */
 function withFootnoteMarkers(content: string, footnotes?: BookFootnote[]): string {
@@ -280,51 +285,54 @@ function extractCitedFootnotes(content: string, footnotes?: BookFootnote[]): Boo
   return result;
 }
 
-function renderInlineFootnotes(cited: BookFootnote[]): React.ReactElement | null {
+function renderFootnoteFooter(cited: BookFootnote[]): React.ReactElement | null {
   if (cited.length === 0) return null;
-  // Inline-after-paragraph com wrap=false no wrapper → garante mesma página.
-  // Estilo book-footer: top rule curta (70%), small italic, indent.
-  return ce(View, { style: styles.inlineFootnotes },
+  // Inline footer styled como rodapé de livro: separator full width + small italic.
+  // Wrap=false no wrapper externo garante mesma página que parágrafo.
+  return ce(View, { style: styles.footnoteFooter },
     ...cited.map(f =>
       ce(View, { key: f.id, style: styles.inlineFnRow },
         ce(Text, { style: styles.inlineFnNum }, toSuperscript(f.number)),
-        ce(View, { style: { flex: 1 } }, inlineText(f.content, { fontSize: 8, color: '#444444', lineHeight: 1.35, fontFamily: 'Times-Italic' } as object)),
+        ce(View, { style: { flex: 1 } }, inlineText(f.content, { fontSize: 8, color: '#333333', lineHeight: 1.35 })),
       ),
     ),
   );
 }
 
-function renderBlock(block: BookBlock, footnotes?: BookFootnote[]): React.ReactElement | null {
+function renderBlock(block: BookBlock, footnotes?: BookFootnote[]): React.ReactElement | React.ReactElement[] | null {
   switch (block.kind) {
     case 'paragraph': {
       const cited = extractCitedFootnotes(block.content, footnotes);
-      const inlineFn = renderInlineFootnotes(cited);
-      // wrap=false só quando tem footnote — força parágrafo+footnote ficarem juntos na mesma página.
-      // Sem footnote, parágrafo wrappa normal.
-      return ce(View, { key: block.id, wrap: cited.length === 0 },
-        ce(View, { style: styles.paragraph },
-          block.ref ? ce(Text, { style: styles.ref }, `[${block.ref}]  `) : null,
-          inlineText(withFootnoteMarkers(block.content, footnotes)),
-        ),
-        inlineFn,
+      const footnoteFooter = renderFootnoteFooter(cited);
+      const paragraphInner = ce(View, { style: styles.paragraph },
+        block.ref ? ce(Text, { style: styles.ref }, `[${block.ref}]  `) : null,
+        inlineText(withFootnoteMarkers(block.content, footnotes)),
       );
+      // Sem footnote: parágrafo wrappa natural mid-text (wrap default true).
+      // Com footnote: wrap=false força parágrafo+footnote ficarem juntos na mesma página.
+      if (footnoteFooter) {
+        return ce(View, { key: block.id, wrap: false }, paragraphInner, footnoteFooter);
+      }
+      return ce(View, { key: block.id }, paragraphInner);
     }
 
     case 'quote': {
       const cited = extractCitedFootnotes(block.content, footnotes);
-      const inlineFn = renderInlineFootnotes(cited);
-      return ce(View, { key: block.id, wrap: cited.length === 0 },
-        ce(View, { style: styles.quote },
-          block.ref ? ce(Text, { style: styles.ref }, `[${block.ref}]`) : null,
-          inlineText(withFootnoteMarkers(block.content, footnotes), { fontFamily: 'Times-Italic' }),
-        ),
-        inlineFn,
+      const footnoteFooter = renderFootnoteFooter(cited);
+      const quoteInner = ce(View, { style: styles.quote },
+        block.ref ? ce(Text, { style: styles.ref }, `[${block.ref}]`) : null,
+        inlineText(withFootnoteMarkers(block.content, footnotes), { fontFamily: 'Times-Italic' }),
       );
+      if (footnoteFooter) {
+        return ce(View, { key: block.id, wrap: false }, quoteInner, footnoteFooter);
+      }
+      return ce(View, { key: block.id }, quoteInner);
     }
 
     case 'heading': {
       const lvl = block.heading_level ?? 2;
-      return ce(Text, { key: block.id, style: lvl <= 2 ? styles.heading2 : styles.heading3 }, block.content);
+      const cleanContent = withFootnoteMarkers(block.content, footnotes);
+      return ce(Text, { key: block.id, style: lvl <= 2 ? styles.heading2 : styles.heading3 }, cleanContent);
     }
 
     case 'list': {
@@ -335,7 +343,7 @@ function renderBlock(block: BookBlock, footnotes?: BookFootnote[]): React.ReactE
           const bullet = /^\d+\./.test(l) ? `${i + 1}.` : '•';
           return ce(View, { key: i, style: styles.listRow },
             ce(Text, { style: styles.bullet }, bullet),
-            inlineText(text),
+            inlineText(withFootnoteMarkers(text, footnotes)),
           );
         }),
       );
@@ -407,11 +415,16 @@ function buildChapterDocument(book: Book, ch: BookChapter) {
   } else if (kind === 'credits' && ch.credits) {
     bodyContent = renderCreditsPdf(ch.credits);
   } else {
-    bodyContent = ch.blocks.map(b => renderBlock(b, ch.footnotes)).filter((x): x is React.ReactElement => x !== null);
+    bodyContent = ch.blocks
+      .flatMap(b => {
+        const r = renderBlock(b, ch.footnotes);
+        if (r === null) return [];
+        return Array.isArray(r) ? r : [r];
+      });
     if (ch.footnotes && ch.footnotes.length > 0) {
       const allCited = new Set<number>();
       for (const b of ch.blocks) {
-        if (b.kind !== 'paragraph' && b.kind !== 'quote') continue;
+        if (!b.content) continue;
         const re = new RegExp(FOOTNOTE_MARKER_RE.source, 'g');
         let m: RegExpExecArray | null;
         while ((m = re.exec(b.content)) !== null) allCited.add(Number(m[1]));

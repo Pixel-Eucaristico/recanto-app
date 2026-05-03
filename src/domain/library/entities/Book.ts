@@ -2,26 +2,33 @@ import { Book, BookChapter, BookBlock, BookFootnote, BookSectionKind } from '@/d
 import { CanonicalRefEntity } from '@/domain/library/entities/CanonicalRef';
 
 /**
- * Ordem global das seções: front matter → body → back matter.
- * Segue ABNT NBR 14724 + tradição acadêmica brasileira:
- *  - Pré-textuais: folha de rosto → prefácio → introdução
- *  - Textuais: capítulos
- *  - Pós-textuais: notas → apêndice → glossário → bibliografia → sobre
+ * Ordem global das seções: front → body → back.
+ * Segue ABNT NBR 14724 + 6029:
+ *  - Pré-textuais: folha de rosto → prefácio
+ *  - Textuais: introdução → capítulos
+ *  - Pós-textuais: bibliografia → glossário → apêndice → notas → sobre
  */
 const SECTION_GROUP_ORDER: Record<BookSectionKind, number> = {
   // Pré-textuais
   credits:      0,
   preface:      1,
+  // Textuais (introdução faz parte do corpo per ABNT)
   introduction: 2,
-  // Textuais
   chapter:      3,
-  // Pós-textuais (ABNT)
-  notes:        4,
-  appendix:     5,
-  glossary:     6,
-  bibliography: 7,
+  // Pós-textuais (ordem ABNT)
+  bibliography: 4,
+  glossary:     5,
+  appendix:     6,
+  notes:        7,
   about:        8,
 };
+
+/** Pré-textual: cover/folha de rosto/prefácio. Sem paginação visível. */
+export const FRONT_MATTER_KINDS = new Set<BookSectionKind>(['credits', 'preface']);
+/** Textual: introdução + capítulos. Paginação Arabic visível. */
+export const BODY_MATTER_KINDS = new Set<BookSectionKind>(['introduction', 'chapter']);
+/** Pós-textual: bibliografia/glossário/apêndice/notas/sobre. Paginação continua. */
+export const BACK_MATTER_KINDS = new Set<BookSectionKind>(['bibliography', 'glossary', 'appendix', 'notes', 'about']);
 
 /** Kinds que NÃO devem ter numeração de capítulo (são pré/pós-textuais únicos ou agrupados). */
 const NON_CHAPTER_KINDS = new Set<BookSectionKind>([

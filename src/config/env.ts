@@ -31,6 +31,9 @@ export const env = createEnv({
       .endsWith('.apps.googleusercontent.com', 'GOOGLE_CLIENT_ID deve terminar com .apps.googleusercontent.com')
       .optional(),
     GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
+
+    // PDF engine — typst default (page-bottom footnotes nativo). Override via env ou ?engine=react-pdf
+    PDF_ENGINE: z.enum(['react-pdf', 'typst']).default('typst'),
     /** Callback unificado registrado no Google Cloud Console. */
     GOOGLE_OAUTH_CALLBACK_URL: z
       .string()
@@ -105,6 +108,7 @@ export const env = createEnv({
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
     GOOGLE_OAUTH_CALLBACK_URL: process.env.GOOGLE_OAUTH_CALLBACK_URL,
     GOOGLE_REDIRECT_URI: process.env.GOOGLE_REDIRECT_URI,
+    PDF_ENGINE: process.env.PDF_ENGINE,
     NEXT_PUBLIC_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
     NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
     NEXT_PUBLIC_FIREBASE_PROJECT_ID: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,

@@ -883,3 +883,7 @@ firebase-service-account.json
 *-service-account.json
 *.txt
 docs/
+
+# Typst PDF generator debug artifacts
+typst-debug.typ
+test-output*.pdf

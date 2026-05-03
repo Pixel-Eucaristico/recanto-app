@@ -9,6 +9,7 @@ import { BookSpoilerEngine } from '@/application/library/BookSpoilerEngine';
 import { bookPdfGenerator } from '@/application/library/BookPdfGenerator';
 import { BookExportEntity } from '@/domain/library/entities/BookExport';
 import { canDownloadLibrary, canReadLibrary } from '@/application/library/libraryPermissions';
+import { env } from '@/config/env';
 
 interface AuthedUser {
   uid: string;
@@ -89,7 +90,20 @@ export async function GET(
     }
   }
 
-  const pdfBuffer = await bookPdfGenerator.generate(book, chapters, coverBuffer, truncatedAt, backCoverBuffer);
+  // Engine selection: query string `?engine=typst|react-pdf` override, fallback env PDF_ENGINE
+  const engineQuery = req.nextUrl.searchParams.get('engine');
+  const engine = engineQuery === 'typst' || engineQuery === 'react-pdf'
+    ? engineQuery
+    : env.PDF_ENGINE;
+
+  let pdfBuffer: Buffer;
+  if (engine === 'typst') {
+    // Lazy import — só carrega native module quando typst engine ativo
+    const { bookPdfGeneratorTypst } = await import('@/application/library/BookPdfGeneratorTypst');
+    pdfBuffer = await bookPdfGeneratorTypst.generate(book, chapters, coverBuffer, truncatedAt, backCoverBuffer);
+  } else {
+    pdfBuffer = await bookPdfGenerator.generate(book, chapters, coverBuffer, truncatedAt, backCoverBuffer);
+  }
   const slug = BookExportEntity.bookSlug(book);
 
   const headers = new Headers({
@@ -100,6 +114,7 @@ export async function GET(
   if (truncatedAt) {
     headers.set('X-Spoiler-Cut-At', truncatedAt);
   }
+  headers.set('X-Pdf-Engine', engine);
 
   return new NextResponse(new Uint8Array(pdfBuffer), { status: 200, headers });
 }
