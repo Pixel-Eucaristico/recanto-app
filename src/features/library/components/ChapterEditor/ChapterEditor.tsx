@@ -25,13 +25,15 @@ interface ChapterEditorProps {
   bookCitationStyle?: CitationStyle;
   /** Save updated reference list back to the book's bibliography chapter */
   onUpdateBookReferences?: (refs: BookReference[]) => Promise<void>;
+  /** Outros capítulos do livro — pra auto-carregar singleton existente ao trocar kind. */
+  existingChapters?: BookChapter[];
 }
 
 export function ChapterEditor({
   bookId, chapter, defaultOrder, saving, onSave, onCancel,
-  bookReferences, bookCitationStyle, onUpdateBookReferences,
+  bookReferences, bookCitationStyle, onUpdateBookReferences, existingChapters,
 }: ChapterEditorProps) {
-  const ed = useChapterEditor({ bookId, chapter, defaultOrder, saving, onSave, onCancel });
+  const ed = useChapterEditor({ bookId, chapter, defaultOrder, saving, onSave, onCancel, existingChapters });
   const [citationPicker, setCitationPicker] = useState<{ insertAtCursor: (text: string) => void } | null>(null);
 
   // Sections that use a markdown editor (with optional footnotes)

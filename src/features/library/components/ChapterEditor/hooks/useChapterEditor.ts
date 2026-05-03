@@ -31,6 +31,8 @@ interface UseChapterEditorOptions {
   saving: boolean;
   onSave: (payload: SaveChapterPayload) => Promise<void>;
   onCancel: () => void;
+  /** Outros capítulos do livro — usado pra auto-carregar singleton existente ao trocar kind. */
+  existingChapters?: BookChapter[];
 }
 
 interface Baseline {
@@ -61,8 +63,11 @@ function snapshotFromChapter(chapter: BookChapter | null, defaultOrder: number):
   };
 }
 
-export function useChapterEditor({ bookId, chapter, defaultOrder, saving, onSave, onCancel }: UseChapterEditorOptions) {
+export function useChapterEditor({ bookId, chapter, defaultOrder, saving, onSave, onCancel, existingChapters = [] }: UseChapterEditorOptions) {
   const initial = snapshotFromChapter(chapter, defaultOrder);
+  // Quando user troca kind pra singleton existente, este state guarda o ID
+  // pra preservar no save (evita criar duplicado)
+  const [loadedExistingId, setLoadedExistingId] = useState<string | null>(null);
 
   const [title, setTitle] = useState(initial.title);
   const [subtitle, setSubtitle] = useState(initial.subtitle);
@@ -97,6 +102,37 @@ export function useChapterEditor({ bookId, chapter, defaultOrder, saving, onSave
     setMode(chapter ? 'view' : 'edit');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chapter?.id, defaultOrder]);
+
+  /**
+   * Troca kind. Se for singleton (não permite múltiplos) e já existe um capítulo
+   * com esse kind no livro, AUTO-CARREGA os dados do existente — evita criar duplicado.
+   */
+  function handleKindChange(newKind: BookSectionKind) {
+    setKind(newKind);
+    // Só auto-carrega se está criando (chapter === null) e o kind é singleton
+    if (chapter || BookEntity.allowsMultiple(newKind)) {
+      setLoadedExistingId(null);
+      return;
+    }
+    const existing = existingChapters.find(c => BookEntity.kindOf(c) === newKind);
+    if (!existing) {
+      setLoadedExistingId(null);
+      return;
+    }
+    // Carrega dados do singleton existente no editor atual
+    const snap = snapshotFromChapter(existing, defaultOrder);
+    setTitle(snap.title);
+    setSubtitle(snap.subtitle);
+    setOrder(snap.order);
+    setMarkdown(snap.markdown);
+    setFootnotes(snap.footnotes);
+    setReferences(snap.references);
+    setCitationStyle(snap.citationStyle);
+    setGlossaryTerms(snap.glossaryTerms);
+    setCredits(snap.credits);
+    setBaseline({ ...snap, kind: newKind });
+    setLoadedExistingId(existing.id);
+  }
 
   const isDirty =
     title !== baseline.title ||
@@ -160,8 +196,8 @@ export function useChapterEditor({ bookId, chapter, defaultOrder, saving, onSave
         : BlockMarkdownEntity.parse(markdown);
 
       await onSave({
-        // Passa id quando editando — service preserva ID e evita criar duplicado
-        id: chapter?.id,
+        // Passa id quando editando OU quando carregou singleton existente — evita duplicar
+        id: chapter?.id ?? loadedExistingId ?? undefined,
         book_id: bookId, order, title,
         subtitle: subtitle || undefined,
         kind, blocks,
@@ -194,7 +230,7 @@ export function useChapterEditor({ bookId, chapter, defaultOrder, saving, onSave
     title, setTitle,
     subtitle, setSubtitle,
     order, setOrder,
-    kind, setKind,
+    kind, setKind: handleKindChange,
     markdown, setMarkdown,
     footnotes, setFootnotes,
     references, setReferences,

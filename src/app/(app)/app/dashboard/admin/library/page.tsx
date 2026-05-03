@@ -109,6 +109,7 @@ export default function AdminLibraryPage() {
               bookReferences={bookReferences}
               bookCitationStyle={bookCitationStyle}
               onUpdateBookReferences={handleUpdateBookReferences}
+              existingChapters={chapters}
             />
           </div>
         )}
