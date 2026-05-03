@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Loader2, Check, RotateCcw, X } from 'lucide-react';
 import type { BookChapter, BookReference, CitationStyle } from '@/domain/library/types';
 import { ChapterMetaForm } from './components/ChapterMetaForm';
 import { ChapterViewPanel } from './components/ChapterViewPanel';
@@ -50,6 +51,14 @@ export function ChapterEditor({
 
   return (
     <div className="space-y-4">
+      <DraftStatusBadge status={ed.draftStatus} />
+      {ed.draftRestored && (
+        <DraftRestoredBanner
+          ts={ed.draftRestored.ts}
+          onDiscard={ed.discardRestoredDraft}
+          onDismiss={ed.dismissDraftRestored}
+        />
+      )}
       <ChapterMetaForm
         title={ed.title}
         subtitle={ed.subtitle}
@@ -162,9 +171,50 @@ export function ChapterEditor({
           saving={saving}
           titleEmpty={ed.title.trim().length === 0}
           onContinue={() => ed.setConfirmDiscard(false)}
-          onDiscard={() => { ed.setConfirmDiscard(false); onCancel(); }}
+          onDiscard={() => { ed.clearDraft(); ed.setConfirmDiscard(false); onCancel(); }}
           onSaveAndExit={ed.handleSaveAndClose}
         />
+      )}
+    </div>
+  );
+}
+
+function DraftRestoredBanner({ ts, onDiscard, onDismiss }: { ts: number; onDiscard: () => void; onDismiss: () => void }) {
+  const when = new Date(ts).toLocaleString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+  return (
+    <div className="alert alert-info text-sm flex items-center gap-3 py-2.5">
+      <RotateCcw className="w-4 h-4 shrink-0" />
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold">Rascunho não salvo restaurado</p>
+        <p className="text-xs opacity-80">Editado em {when} — você pode continuar de onde parou.</p>
+      </div>
+      <div className="flex gap-1 shrink-0">
+        <button type="button" className="btn btn-ghost btn-xs" onClick={onDiscard} title="Descartar rascunho">
+          Descartar
+        </button>
+        <button type="button" className="btn btn-ghost btn-xs btn-circle" onClick={onDismiss} title="Fechar aviso">
+          <X className="w-3 h-3" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function DraftStatusBadge({ status }: { status: 'idle' | 'pending' | 'saved' }) {
+  if (status === 'idle') return null;
+  return (
+    <div className="fixed bottom-4 right-4 z-40">
+      {status === 'pending' && (
+        <div className="badge badge-ghost gap-2 py-3 px-3 shadow-md">
+          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          <span className="text-xs">Salvando rascunho...</span>
+        </div>
+      )}
+      {status === 'saved' && (
+        <div className="badge badge-success gap-2 py-3 px-3 shadow-md">
+          <Check className="w-3.5 h-3.5" />
+          <span className="text-xs">Rascunho salvo</span>
+        </div>
       )}
     </div>
   );

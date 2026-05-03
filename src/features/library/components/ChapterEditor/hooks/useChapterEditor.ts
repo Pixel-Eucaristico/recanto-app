@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import type {
   BookChapter, BookSectionKind, BookReference, BookGlossaryTerm,
   BookCredits, BookFootnote, CitationStyle,
@@ -85,21 +85,40 @@ export function useChapterEditor({ bookId, chapter, defaultOrder, saving, onSave
   const [error, setError] = useState<string | null>(null);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
 
-  // Depende de chapter?.id (ID estável) — evita reset de form quando pai re-renderiza
+  // ─── localStorage draft persistence ─────────────────────────────────────────
+  // Mantém edição não-salva mesmo após F5/troca de página acidental
+  const draftKey = `chapter-draft:${bookId}:${chapter?.id ?? 'new'}`;
+
+  // Restore: tenta carregar draft do localStorage no mount; senão usa snapshot do chapter
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     const snap = snapshotFromChapter(chapter, defaultOrder);
-    setTitle(snap.title);
-    setSubtitle(snap.subtitle);
-    setOrder(snap.order);
-    setKind(snap.kind);
-    setMarkdown(snap.markdown);
-    setFootnotes(snap.footnotes);
-    setReferences(snap.references);
-    setCitationStyle(snap.citationStyle);
-    setGlossaryTerms(snap.glossaryTerms);
-    setCredits(snap.credits);
+    let restored: Baseline | null = null;
+    let restoredTs: number | null = null;
+    try {
+      const raw = localStorage.getItem(draftKey);
+      if (raw) {
+        const parsed = JSON.parse(raw) as { baseline: Baseline; draft: Baseline; ts: number };
+        if (JSON.stringify(parsed.baseline) === JSON.stringify(snap)) {
+          restored = parsed.draft;
+          restoredTs = parsed.ts;
+        }
+      }
+    } catch { /* parse fail — usa snap */ }
+    const data = restored ?? snap;
+    setTitle(data.title);
+    setSubtitle(data.subtitle);
+    setOrder(data.order);
+    setKind(data.kind);
+    setMarkdown(data.markdown);
+    setFootnotes(data.footnotes);
+    setReferences(data.references);
+    setCitationStyle(data.citationStyle);
+    setGlossaryTerms(data.glossaryTerms);
+    setCredits(data.credits);
     setBaseline(snap);
     setMode(chapter ? 'view' : 'edit');
+    if (restored && restoredTs) setDraftRestored({ ts: restoredTs });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chapter?.id, defaultOrder]);
 
@@ -145,6 +164,103 @@ export function useChapterEditor({ bookId, chapter, defaultOrder, saving, onSave
     citationStyle !== baseline.citationStyle ||
     JSON.stringify(glossaryTerms) !== JSON.stringify(baseline.glossaryTerms) ||
     JSON.stringify(credits) !== JSON.stringify(baseline.credits);
+
+  // ─── Autosave sem useEffect — refs + setter wrappers ─────────────────────
+  // Refs guardam último valor sem trigger de render. scheduleSave debounce 1.5s.
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const latestRef = useRef<Baseline>(initial);
+  const baselineRef = useRef<Baseline>(initial);
+
+  // Status visual: 'idle' | 'pending' (digitando) | 'saved' (acabou de salvar)
+  const [draftStatus, setDraftStatus] = useState<'idle' | 'pending' | 'saved'>('idle');
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Banner "rascunho restaurado" — mostra na primeira renderização após restore
+  const [draftRestored, setDraftRestored] = useState<{ ts: number } | null>(null);
+
+  // Atualiza refs em cada render (sync, sem trigger de re-render)
+  latestRef.current = { title, subtitle, order, kind, markdown, footnotes, references, citationStyle, glossaryTerms, credits };
+  baselineRef.current = baseline;
+
+  function scheduleSave() {
+    if (typeof window === 'undefined') return;
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    setDraftStatus('pending'); // mostra loading enquanto digita
+    saveTimerRef.current = setTimeout(() => {
+      try {
+        const equal = JSON.stringify(latestRef.current) === JSON.stringify(baselineRef.current);
+        if (equal) {
+          localStorage.removeItem(draftKey);
+          setDraftStatus('idle');
+          return;
+        }
+        localStorage.setItem(draftKey, JSON.stringify({
+          baseline: baselineRef.current,
+          draft: latestRef.current,
+          ts: Date.now(),
+        }));
+        setDraftStatus('saved');
+        // Volta pra idle após 2s
+        if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+        savedTimerRef.current = setTimeout(() => setDraftStatus('idle'), 2000);
+      } catch {
+        setDraftStatus('idle');
+      }
+    }, 1500);
+  }
+
+  function clearDraft() {
+    if (typeof window === 'undefined') return;
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    try { localStorage.removeItem(draftKey); } catch { /* ignore */ }
+    setDraftRestored(null);
+  }
+
+  /** Descarta rascunho restaurado e volta ao estado do banco. */
+  function discardRestoredDraft() {
+    const snap = baselineRef.current;
+    setTitle(snap.title);
+    setSubtitle(snap.subtitle);
+    setOrder(snap.order);
+    setKind(snap.kind);
+    setMarkdown(snap.markdown);
+    setFootnotes(snap.footnotes);
+    setReferences(snap.references);
+    setCitationStyle(snap.citationStyle);
+    setGlossaryTerms(snap.glossaryTerms);
+    setCredits(snap.credits);
+    clearDraft();
+  }
+
+  /** Dismiss do banner sem descartar — fecha visualmente e mantém o draft. */
+  function dismissDraftRestored() {
+    setDraftRestored(null);
+  }
+
+  // Setters wrapped — chamam o setter original + scheduleSave
+  const wrapSetter = <T,>(set: React.Dispatch<React.SetStateAction<T>>) =>
+    (v: React.SetStateAction<T>) => { set(v); scheduleSave(); };
+
+  const setTitleS = wrapSetter(setTitle);
+  const setSubtitleS = wrapSetter(setSubtitle);
+  const setOrderS = wrapSetter(setOrder);
+  const setMarkdownS = wrapSetter(setMarkdown);
+  const setFootnotesS = wrapSetter(setFootnotes);
+  const setReferencesS = wrapSetter(setReferences);
+  const setCitationStyleS = wrapSetter(setCitationStyle);
+  const setGlossaryTermsS = wrapSetter(setGlossaryTerms);
+  const setCreditsS = wrapSetter(setCredits);
+
+  // beforeunload — apenas registra/desregistra na primeira mudança via ref
+  // Sem useEffect: usa registro direto no window (lazy)
+  if (typeof window !== 'undefined' && isDirty && !(window as Window & { __chapterEditorUnloadGuard?: boolean }).__chapterEditorUnloadGuard) {
+    const handler = (e: BeforeUnloadEvent) => {
+      // Re-checa dirty no momento — usuário pode ter salvo
+      const stillDirty = JSON.stringify(latestRef.current) !== JSON.stringify(baselineRef.current);
+      if (stillDirty) { e.preventDefault(); e.returnValue = ''; }
+    };
+    window.addEventListener('beforeunload', handler);
+    (window as Window & { __chapterEditorUnloadGuard?: boolean }).__chapterEditorUnloadGuard = true;
+  }
 
   const previewBlocks = useMemo(() => {
     const blocks = BlockMarkdownEntity.parse(markdown);
@@ -210,6 +326,7 @@ export function useChapterEditor({ bookId, chapter, defaultOrder, saving, onSave
       const newBaseline: Baseline = { title, subtitle, order, kind, markdown, footnotes, references, citationStyle, glossaryTerms, credits };
       setBaseline(newBaseline);
       setMode('view');
+      clearDraft(); // Salvou — limpa rascunho
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     }
@@ -217,6 +334,7 @@ export function useChapterEditor({ bookId, chapter, defaultOrder, saving, onSave
 
   function handleBack() {
     if (isDirty) { setConfirmDiscard(true); return; }
+    clearDraft(); // Sem mudanças — limpa rascunho residual
     onCancel();
   }
 
@@ -227,16 +345,16 @@ export function useChapterEditor({ bookId, chapter, defaultOrder, saving, onSave
   }
 
   return {
-    title, setTitle,
-    subtitle, setSubtitle,
-    order, setOrder,
+    title, setTitle: setTitleS,
+    subtitle, setSubtitle: setSubtitleS,
+    order, setOrder: setOrderS,
     kind, setKind: handleKindChange,
-    markdown, setMarkdown,
-    footnotes, setFootnotes,
-    references, setReferences,
-    citationStyle, setCitationStyle,
-    glossaryTerms, setGlossaryTerms,
-    credits, setCredits,
+    markdown, setMarkdown: setMarkdownS,
+    footnotes, setFootnotes: setFootnotesS,
+    references, setReferences: setReferencesS,
+    citationStyle, setCitationStyle: setCitationStyleS,
+    glossaryTerms, setGlossaryTerms: setGlossaryTermsS,
+    credits, setCredits: setCreditsS,
     insertFootnoteMarker,
     reserveFootnoteNumber,
     mode, setMode,
@@ -247,5 +365,10 @@ export function useChapterEditor({ bookId, chapter, defaultOrder, saving, onSave
     handleSave,
     handleBack,
     handleSaveAndClose,
+    clearDraft,
+    draftStatus,
+    draftRestored,
+    discardRestoredDraft,
+    dismissDraftRestored,
   };
 }
