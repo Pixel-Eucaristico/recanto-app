@@ -18,7 +18,7 @@ interface UseBookAnnotationsResult {
    * Adiciona highlight de texto selecionado.
    * Se já existe highlight com mesmo selectedText + ref → remove (toggle).
    */
-  addHighlight: (ref: string, color: HighlightColor, selectedText: string) => Promise<void>;
+  addHighlight: (ref: string, color: HighlightColor, selectedText: string, occurrenceIndex?: number) => Promise<void>;
   removeHighlight: (id: string) => Promise<void>;
   addComment: (ref: string, text: string) => Promise<void>;
   updateComment: (id: string, text: string) => Promise<void>;
@@ -57,15 +57,16 @@ export function useBookAnnotations(
   );
 
   const addHighlight = useCallback(
-    async (ref: string, color: HighlightColor, selectedText: string) => {
+    async (ref: string, color: HighlightColor, selectedText: string, occurrenceIndex?: number) => {
       if (!userId) { setError('Faça login para salvar destaques'); return; }
       if (!selectedText.trim()) return;
       setError(null);
       try {
         const refHighlights = highlights.filter(h => h.ref === ref && h.selected_text);
+        const occ = occurrenceIndex && occurrenceIndex > 0 ? occurrenceIndex : 1;
 
-        // Mesma seleção exata → toggle (remove)
-        const exactMatch = refHighlights.find(h => h.selected_text === selectedText);
+        // Mesma seleção exata + mesma ocorrência → toggle (remove)
+        const exactMatch = refHighlights.find(h => h.selected_text === selectedText && (h.occurrence_index ?? 1) === occ);
         if (exactMatch) {
           await bookHighlightRepository.remove(exactMatch.id);
           setHighlights(prev => prev.filter(h => h.id !== exactMatch.id));
@@ -90,7 +91,7 @@ export function useBookAnnotations(
         }
 
         // Adiciona novo highlight
-        const created = await bookHighlightRepository.add(userId, bookId, ref, color, selectedText);
+        const created = await bookHighlightRepository.add(userId, bookId, ref, color, selectedText, occ);
         countDelta++;
 
         setHighlights(prev => [

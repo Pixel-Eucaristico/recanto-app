@@ -7,14 +7,29 @@ import {
   List, ListOrdered, Quote, Code, Undo, Redo, ImagePlus, Asterisk, BookMarked,
 } from 'lucide-react';
 import {
-  $getSelection, $isRangeSelection, $insertNodes, $createParagraphNode,
+  $getSelection, $isRangeSelection, $insertNodes, $createParagraphNode, $getRoot,
   FORMAT_TEXT_COMMAND, UNDO_COMMAND, REDO_COMMAND,
+  type LexicalNode,
 } from 'lexical';
 import { $setBlocksType } from '@lexical/selection';
 import { $createHeadingNode, $createQuoteNode } from '@lexical/rich-text';
 import { INSERT_ORDERED_LIST_COMMAND, INSERT_UNORDERED_LIST_COMMAND } from '@lexical/list';
 import { MediaPickerModal } from '@/shared/components/MediaPickerModal';
 import { $createImageNode } from '../ImageNode';
+import { $createFootnoteRefNode, $isFootnoteRefNode, FootnoteRefNode } from '../FootnoteRefNode';
+
+/** Coleta todas FootnoteRefNode em ordem de documento via DFS. */
+function collectFootnoteRefs(root: LexicalNode, out: FootnoteRefNode[]): void {
+  if ($isFootnoteRefNode(root)) {
+    out.push(root);
+    return;
+  }
+  // ElementNode tem getChildren; outros não
+  const elem = root as { getChildren?: () => LexicalNode[] };
+  if (typeof elem.getChildren === 'function') {
+    for (const child of elem.getChildren()) collectFootnoteRefs(child, out);
+  }
+}
 
 function ToolbarButton({ children, title, onClick }: { children: React.ReactNode; title: string; onClick: () => void }) {
   return (
@@ -25,8 +40,12 @@ function ToolbarButton({ children, title, onClick }: { children: React.ReactNode
 }
 
 interface ToolbarProps {
-  /** When provided, shows a footnote button. Returns the next [^N] number to insert. */
-  onRequestFootnote?: () => number;
+  /**
+   * When provided, shows footnote button.
+   * Receives `insertAtCursor` callback. If returns number > 0, auto-inserts `[^N]`.
+   * If returns void/null/-1, parent handles insertion (opens modal etc).
+   */
+  onRequestFootnote?: (insertAtCursor: (text: string) => void) => number | void;
   /**
    * When provided, shows a citation button. Opens picker; receives a callback
    * to insert citation text at the cursor when user picks one.
@@ -55,16 +74,36 @@ export function Toolbar({ onRequestFootnote, onRequestCitation }: ToolbarProps =
   function insertTextAtCursor(text: string) {
     editor.update(() => {
       const sel = $getSelection();
-      if ($isRangeSelection(sel)) {
-        sel.insertText(text);
+      if (!$isRangeSelection(sel)) return;
+      // Detecta marker [^N] e cria FootnoteRefNode (renderiza como ¹)
+      const fnMatch = text.match(/^\[\^(\d+)\]$/);
+      if (fnMatch) {
+        const num = Number(fnMatch[1]);
+        $insertNodes([$createFootnoteRefNode(num)]);
+        // Renumera TODOS os FootnoteRefNode em ordem de documento (1..N)
+        const refs: FootnoteRefNode[] = [];
+        collectFootnoteRefs($getRoot(), refs);
+        refs.forEach((node, idx) => {
+          const expected = idx + 1;
+          if (node.__number !== expected) {
+            const w = node.getWritable();
+            w.__number = expected;
+          }
+        });
+        return;
       }
+      sel.insertText(text);
     });
   }
 
   function insertFootnoteAtCursor() {
     if (!onRequestFootnote) return;
-    const num = onRequestFootnote();
-    insertTextAtCursor(`[^${num}]`);
+    // API antiga: retorna número e auto-insere
+    // API nova: retorna -1 e parent abre modal customizado (que chama insertTextAtCursor depois)
+    const result = onRequestFootnote(insertTextAtCursor);
+    if (typeof result === 'number' && result > 0) {
+      insertTextAtCursor(`[^${result}]`);
+    }
   }
 
   function openCitationPicker() {

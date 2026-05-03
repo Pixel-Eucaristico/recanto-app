@@ -20,6 +20,23 @@ interface RichContentProps {
 const components: Components = {
   a: ({ href, children, ...props }) => {
     if (!href) return <a {...props}>{children}</a>;
+    // Fragment links (#fn1, #anchor) — scroll interno, NÃO abre nova aba
+    if (href.startsWith('#')) {
+      return (
+        <a
+          href={href}
+          className="link link-primary"
+          onClick={e => {
+            e.preventDefault();
+            const target = document.getElementById(href.slice(1));
+            if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }}
+          {...props}
+        >
+          {children}
+        </a>
+      );
+    }
     const src = parseVideoSource(href);
     if (src.kind === 'youtube') {
       return (

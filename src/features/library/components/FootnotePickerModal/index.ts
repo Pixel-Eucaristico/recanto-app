@@ -1,0 +1,1 @@
+export { FootnotePickerModal } from './FootnotePickerModal';

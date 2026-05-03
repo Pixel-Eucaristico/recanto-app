@@ -11,8 +11,8 @@ interface ChapterEditPanelProps {
   onChange: (v: string) => void;
   onPreview: () => void;
   onSave: () => void;
-  /** Returns next footnote number when toolbar button is clicked */
-  onRequestFootnote?: () => number;
+  /** Toolbar footnote button — recebe insertAtCursor; void = parent abre modal. */
+  onRequestFootnote?: (insertAtCursor: (text: string) => void) => number | void;
   /** Opens citation picker; receives `insertAtCursor` callback */
   onRequestCitation?: (insertAtCursor: (text: string) => void) => void;
 }

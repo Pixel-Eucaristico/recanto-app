@@ -1,13 +1,31 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { BookBlock, BookHighlight, BookTag, HighlightColor, TagColor } from '@/domain/library/types';
+import type { BookBlock, BookHighlight, BookTag, BookFootnote, HighlightColor, TagColor } from '@/domain/library/types';
 import { RichContent } from '@/shared/components/RichContent';
 import { TagInput } from '@/shared/components/TagInput';
 import { SelectionToolbar } from './SelectionToolbar';
 import { BlockControls } from './BlockControls';
 import { TagBadges } from './TagBadges';
 import { applyTextHighlights } from '../utils/applyTextHighlights';
+
+/**
+ * Substitui markers `[^N]` por <sup> clicável + popup com conteúdo.
+ * Usa data-fn-id pra event delegation. Title atribute = popup nativo no Kindle/web.
+ */
+function applyFootnoteMarkers(content: string, footnotes: BookFootnote[]): string {
+  return content.replace(/\[\^(\d+)\]/g, (_, n) => {
+    const num = Number(n);
+    const fn = footnotes?.find(f => f.number === num);
+    // Marker órfão (sem footnote correspondente) — esconde do leitor
+    if (!fn) return '';
+    const preview = fn.content.slice(0, 200).replace(/[<>"']/g, c =>
+      ({ '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } as Record<string, string>)[c] || c
+    );
+    // <sup> simples — rehype-raw aceita; clique tratado por event delegation no BookReader
+    return `<sup id="fnref${num}" class="footnote-ref-marker" data-fn-id="${num}" title="${preview}" style="color:var(--color-primary,#1d4ed8);font-weight:600;cursor:pointer;padding:0 1px;">${num}</sup>`;
+  });
+}
 
 interface BlockReaderProps {
   block: BookBlock;
@@ -19,7 +37,8 @@ interface BlockReaderProps {
   blockHighlights: BookHighlight[];
   commentCount: number;
   blockTags: BookTag[];
-  onAddHighlight: (color: HighlightColor, selectedText: string) => void;
+  footnotes?: BookFootnote[];
+  onAddHighlight: (color: HighlightColor, selectedText: string, occurrenceIndex?: number) => void;
   onRemoveHighlight: (id: string) => void;
   onAddTag: (text: string, color: TagColor) => void;
   onRemoveTag: (id: string) => void;
@@ -28,7 +47,7 @@ interface BlockReaderProps {
 
 export function BlockReader({
   block, fontPx, isBookmarked, onBookmark, onVisible,
-  blockHighlights, commentCount, blockTags,
+  blockHighlights, commentCount, blockTags, footnotes = [],
   onAddHighlight, onRemoveHighlight, onAddTag, onRemoveTag, onOpenComment,
 }: BlockReaderProps) {
   const ref = block.ref;
@@ -36,7 +55,7 @@ export function BlockReader({
   const [copied, setCopied] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [tagInputOpen, setTagInputOpen] = useState(false);
-  const [selection, setSelection] = useState<{ text: string; x: number; y: number } | null>(null);
+  const [selection, setSelection] = useState<{ text: string; x: number; y: number; occurrenceIndex: number } | null>(null);
   const elRef = useRef<HTMLElement | null>(null);
   const fontStyle = { fontSize: `${fontPx}px`, lineHeight: 1.7, wordBreak: 'break-word' as const, overflowWrap: 'anywhere' as const };
 
@@ -62,6 +81,21 @@ export function BlockReader({
     return () => document.removeEventListener('mousedown', handleMouseDown);
   }, [selection]);
 
+  function computeOccurrenceIndex(range: Range, text: string): number {
+    if (!elRef.current) return 1;
+    try {
+      const pre = document.createRange();
+      pre.selectNodeContents(elRef.current);
+      pre.setEnd(range.startContainer, range.startOffset);
+      const before = pre.toString();
+      const escaped = text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const matches = before.match(new RegExp(escaped, 'g'));
+      return (matches?.length ?? 0) + 1;
+    } catch {
+      return 1;
+    }
+  }
+
   function handleMouseUp(e: React.MouseEvent) {
     const sel = window.getSelection();
     if (!sel || sel.isCollapsed || !sel.toString().trim()) return;
@@ -70,7 +104,8 @@ export function BlockReader({
     if ((e.target as HTMLElement).closest('[data-controls]')) return;
     const range = sel.getRangeAt(0);
     const rect = range.getBoundingClientRect();
-    setSelection({ text, x: rect.left + rect.width / 2, y: rect.top - 8 });
+    const occurrenceIndex = computeOccurrenceIndex(range, text);
+    setSelection({ text, x: rect.left + rect.width / 2, y: rect.top - 8, occurrenceIndex });
   }
 
   function handleTouchEnd() {
@@ -81,7 +116,8 @@ export function BlockReader({
       if (!elRef.current?.contains(sel.anchorNode)) return;
       const range = sel.getRangeAt(0);
       const rect = range.getBoundingClientRect();
-      setSelection({ text, x: rect.left + rect.width / 2, y: rect.top - 8 });
+      const occurrenceIndex = computeOccurrenceIndex(range, text);
+      setSelection({ text, x: rect.left + rect.width / 2, y: rect.top - 8, occurrenceIndex });
     }, 100);
   }
 
@@ -92,9 +128,11 @@ export function BlockReader({
     setTimeout(() => setCopied(false), 1600);
   }
 
-  const markedContent = blockHighlights.length > 0
+  const highlighted = blockHighlights.length > 0
     ? applyTextHighlights(block.content, blockHighlights)
     : block.content;
+  // Aplica markers de footnote APÓS highlights pra não interferir no regex de seleção
+  const markedContent = applyFootnoteMarkers(highlighted, footnotes);
 
   const firstHighlight = blockHighlights[0];
 
@@ -103,7 +141,7 @@ export function BlockReader({
       x={selection.x}
       y={selection.y}
       onSelectColor={color => {
-        onAddHighlight(color, selection.text);
+        onAddHighlight(color, selection.text, selection.occurrenceIndex);
         setSelection(null);
         window.getSelection()?.removeAllRanges();
       }}

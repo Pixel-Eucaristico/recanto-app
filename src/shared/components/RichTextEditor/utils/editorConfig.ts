@@ -4,6 +4,7 @@ import { CodeNode, CodeHighlightNode } from '@lexical/code';
 import { LinkNode } from '@lexical/link';
 import { TRANSFORMERS } from '@lexical/markdown';
 import { ImageNode, IMAGE_TRANSFORMER } from '../ImageNode';
+import { FootnoteRefNode, FOOTNOTE_REF_TRANSFORMER } from '../FootnoteRefNode';
 
 export const editorTheme = {
   paragraph: 'mb-2 min-h-[1.5em]',
@@ -30,7 +31,8 @@ export const editorTheme = {
 
 export const editorNodes = [
   HeadingNode, QuoteNode, ListNode, ListItemNode,
-  CodeNode, CodeHighlightNode, LinkNode, ImageNode,
+  CodeNode, CodeHighlightNode, LinkNode, ImageNode, FootnoteRefNode,
 ];
 
-export const markdownTransformers = [IMAGE_TRANSFORMER, ...TRANSFORMERS];
+// Footnote transformer ANTES dos default — pra interceptar [^N] antes de outros matchers
+export const markdownTransformers = [IMAGE_TRANSFORMER, FOOTNOTE_REF_TRANSFORMER, ...TRANSFORMERS];

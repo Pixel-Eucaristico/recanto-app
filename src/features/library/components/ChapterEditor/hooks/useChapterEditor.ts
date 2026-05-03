@@ -184,9 +184,22 @@ export function useChapterEditor({ bookId, chapter, defaultOrder, saving, onSave
   function scheduleSave() {
     if (typeof window === 'undefined') return;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    setDraftStatus('pending'); // mostra loading enquanto digita
+    setDraftStatus('pending');
     saveTimerRef.current = setTimeout(() => {
       try {
+        // Renumera footnotes by position antes de salvar — `[^N]` ordem de aparição
+        const blocks = BlockMarkdownEntity.parse(latestRef.current.markdown);
+        const renumbered = BookEntity.renumberFootnotes(blocks, latestRef.current.footnotes);
+        const newMarkdown = BlockMarkdownEntity.stringify(renumbered.blocks);
+        const fnChanged = JSON.stringify(renumbered.footnotes) !== JSON.stringify(latestRef.current.footnotes)
+          || newMarkdown !== latestRef.current.markdown;
+        if (fnChanged) {
+          // Atualiza state + ref (sem dispatch reentrante via wrapped setter)
+          setMarkdown(newMarkdown);
+          setFootnotes(renumbered.footnotes);
+          latestRef.current = { ...latestRef.current, markdown: newMarkdown, footnotes: renumbered.footnotes };
+        }
+
         const equal = JSON.stringify(latestRef.current) === JSON.stringify(baselineRef.current);
         if (equal) {
           localStorage.removeItem(draftKey);
@@ -199,7 +212,6 @@ export function useChapterEditor({ bookId, chapter, defaultOrder, saving, onSave
           ts: Date.now(),
         }));
         setDraftStatus('saved');
-        // Volta pra idle após 2s
         if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
         savedTimerRef.current = setTimeout(() => setDraftStatus('idle'), 2000);
       } catch {
@@ -291,6 +303,21 @@ export function useChapterEditor({ bookId, chapter, defaultOrder, saving, onSave
     return next;
   }
 
+  /** Cria footnote já com conteúdo. Retorna o número atribuído. */
+  function createFootnoteWithContent(content: string): number {
+    const next = footnotes.length > 0
+      ? Math.max(...footnotes.map(f => f.number)) + 1
+      : 1;
+    const newNote: BookFootnote = {
+      id: `fn_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      number: next,
+      anchor_block_id: '',
+      content,
+    };
+    setFootnotes(prev => [...prev, newNote]);
+    return next;
+  }
+
   async function handleSave() {
     setError(null);
 
@@ -357,6 +384,7 @@ export function useChapterEditor({ bookId, chapter, defaultOrder, saving, onSave
     credits, setCredits: setCreditsS,
     insertFootnoteMarker,
     reserveFootnoteNumber,
+    createFootnoteWithContent,
     mode, setMode,
     isDirty,
     error,

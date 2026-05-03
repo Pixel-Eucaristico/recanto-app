@@ -11,6 +11,7 @@ export class BookHighlightRepository {
     ref: string,
     color: HighlightColor,
     selectedText?: string,
+    occurrenceIndex?: number,
   ): Promise<BookHighlight> {
     const now = new Date().toISOString();
     const data: Omit<BookHighlight, 'id'> = {
@@ -20,6 +21,7 @@ export class BookHighlightRepository {
       color,
       created_at: now,
       ...(selectedText ? { selected_text: selectedText } : {}),
+      ...(occurrenceIndex && occurrenceIndex > 0 ? { occurrence_index: occurrenceIndex } : {}),
     };
     const docRef = await addDoc(collection(db, COLLECTION), data);
     return { id: docRef.id, ...data };

@@ -79,7 +79,17 @@ export async function GET(
     }
   }
 
-  const pdfBuffer = await bookPdfGenerator.generate(book, chapters, coverBuffer, truncatedAt);
+  let backCoverBuffer: Buffer | undefined;
+  if (book.back_cover_url) {
+    try {
+      const res = await fetch(book.back_cover_url);
+      if (res.ok) backCoverBuffer = Buffer.from(await res.arrayBuffer());
+    } catch {
+      // Proceed without back cover
+    }
+  }
+
+  const pdfBuffer = await bookPdfGenerator.generate(book, chapters, coverBuffer, truncatedAt, backCoverBuffer);
   const slug = BookExportEntity.bookSlug(book);
 
   const headers = new Headers({

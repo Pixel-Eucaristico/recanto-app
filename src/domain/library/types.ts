@@ -139,6 +139,12 @@ export interface BookHighlight {
   ref: string;
   /** Texto selecionado. Se ausente = highlight de parágrafo inteiro (legado). */
   selected_text?: string;
+  /**
+   * 1-based index da ocorrência do `selected_text` no parágrafo.
+   * Ex: se "fé" aparece 3x e user selecionou a 2ª, occurrence_index=2.
+   * Default 1 (primeira ocorrência) — retro-compat com highlights antigos.
+   */
+  occurrence_index?: number;
   color: HighlightColor;
   created_at: string;
 }

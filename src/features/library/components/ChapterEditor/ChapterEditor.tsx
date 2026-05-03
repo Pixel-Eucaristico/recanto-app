@@ -12,6 +12,7 @@ import { BibliographyEditor } from '@/features/library/components/BibliographyEd
 import { GlossaryEditor } from '@/features/library/components/GlossaryEditor';
 import { CreditsEditor } from '@/features/library/components/CreditsEditor';
 import { FootnotePanel } from '@/features/library/components/FootnotePanel';
+import { FootnotePickerModal } from '@/features/library/components/FootnotePickerModal';
 import { CitationPickerModal } from '@/features/library/components/CitationPickerModal';
 
 interface ChapterEditorProps {
@@ -36,6 +37,7 @@ export function ChapterEditor({
 }: ChapterEditorProps) {
   const ed = useChapterEditor({ bookId, chapter, defaultOrder, saving, onSave, onCancel, existingChapters });
   const [citationPicker, setCitationPicker] = useState<{ insertAtCursor: (text: string) => void } | null>(null);
+  const [footnotePicker, setFootnotePicker] = useState<{ insertAtCursor: (text: string) => void } | null>(null);
 
   // Sections that use a markdown editor (with optional footnotes)
   const isMarkdownSection = ed.kind !== 'bibliography' && ed.kind !== 'glossary' && ed.kind !== 'credits';
@@ -47,6 +49,11 @@ export function ChapterEditor({
   function handlePickCitation(citationText: string) {
     citationPicker?.insertAtCursor(citationText);
     setCitationPicker(null);
+  }
+
+  function handleRequestFootnote(insertAtCursor: (text: string) => void): void {
+    // Abre modal — não retorna número (parent handles inserção via callback)
+    setFootnotePicker({ insertAtCursor });
   }
 
   return (
@@ -137,7 +144,7 @@ export function ChapterEditor({
               onChange={ed.setMarkdown}
               onPreview={() => ed.setMode('view')}
               onSave={ed.handleSave}
-              onRequestFootnote={ed.reserveFootnoteNumber}
+              onRequestFootnote={handleRequestFootnote}
               onRequestCitation={bookReferences ? handleRequestCitation : undefined}
             />
           )}
@@ -163,6 +170,25 @@ export function ChapterEditor({
           onClose={() => setCitationPicker(null)}
           onPick={handlePickCitation}
           onAddReference={onUpdateBookReferences}
+        />
+      )}
+
+      {footnotePicker && (
+        <FootnotePickerModal
+          footnotes={ed.footnotes}
+          chapterMarkdown={ed.markdown}
+          onInsert={(num) => {
+            footnotePicker.insertAtCursor(`[^${num}]`);
+            setFootnotePicker(null);
+          }}
+          onCreate={(content) => ed.createFootnoteWithContent(content)}
+          onUpdate={(id, content) => {
+            ed.setFootnotes(ed.footnotes.map(f => f.id === id ? { ...f, content } : f));
+          }}
+          onDelete={(id) => {
+            ed.setFootnotes(ed.footnotes.filter(f => f.id !== id));
+          }}
+          onClose={() => setFootnotePicker(null)}
         />
       )}
 

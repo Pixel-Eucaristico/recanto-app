@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import type { BookChapter, BookHighlight, BookComment, BookTag, HighlightColor, TagColor } from '@/domain/library/types';
 import { BlockReader } from './BlockReader';
+import { RichContent } from '@/shared/components/RichContent';
 
 interface ChapterSectionProps {
   chapter: BookChapter;
@@ -15,7 +16,7 @@ interface ChapterSectionProps {
   highlightsForRef: (ref: string) => BookHighlight[];
   commentsForRef: (ref: string) => BookComment[];
   tagsForRef: (ref: string) => BookTag[];
-  onAddHighlight: (ref: string, color: HighlightColor, selectedText: string) => Promise<void>;
+  onAddHighlight: (ref: string, color: HighlightColor, selectedText: string, occurrenceIndex?: number) => Promise<void>;
   onRemoveHighlight: (id: string) => Promise<void>;
   onAddTag: (chapterOrder: number, text: string, color: TagColor, ref?: string) => Promise<void>;
   onRemoveTag: (id: string) => Promise<void>;
@@ -56,7 +57,8 @@ export function ChapterSection({
             blockHighlights={b.ref ? highlightsForRef(b.ref) : []}
             commentCount={b.ref ? commentsForRef(b.ref).length : 0}
             blockTags={b.ref ? tagsForRef(b.ref) : []}
-            onAddHighlight={(color, text) => { if (b.ref) onAddHighlight(b.ref, color, text); }}
+            footnotes={chapter.footnotes ?? []}
+            onAddHighlight={(color, text, occ) => { if (b.ref) onAddHighlight(b.ref, color, text, occ); }}
             onRemoveHighlight={onRemoveHighlight}
             onAddTag={(text, color) => onAddTag(chapter.order, text, color, b.ref ?? undefined)}
             onRemoveTag={onRemoveTag}
@@ -64,6 +66,30 @@ export function ChapterSection({
           />
         ))}
       </div>
+
+      {/* Footnotes section — fim do capítulo */}
+      {chapter.footnotes && chapter.footnotes.length > 0 && (
+        <aside className="mt-8 pt-4 border-t border-base-300" aria-label="Notas de rodapé">
+          <h3 className="text-sm font-semibold text-base-content/70 mb-3">Notas</h3>
+          <ol className="space-y-2 text-sm">
+            {[...chapter.footnotes].sort((a, b) => a.number - b.number).map(f => (
+              <li
+                key={f.id}
+                id={`fn${f.number}`}
+                className="scroll-mt-24 flex gap-2 items-start"
+              >
+                <sup className="text-primary font-semibold shrink-0 mt-0.5">{f.number}.</sup>
+                <div className="flex-1 min-w-0">
+                  <RichContent
+                    markdown={f.content}
+                    className="[&>div]:p-0 [&_p]:my-0 text-sm"
+                  />
+                </div>
+              </li>
+            ))}
+          </ol>
+        </aside>
+      )}
     </section>
   );
 }

@@ -220,30 +220,107 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
   },
+  inlineFootnotes: {
+    marginTop: 8,
+    marginBottom: 8,
+    paddingTop: 5,
+    borderTopWidth: 0.5,
+    borderTopColor: '#888888',
+    width: '70%',
+  },
+  inlineFnRow: {
+    flexDirection: 'row',
+    marginBottom: 2,
+  },
+  inlineFnNum: {
+    fontSize: 7,
+    width: 12,
+    color: '#444444',
+  },
 });
 
 const ce = React.createElement;
 
-/** Strips/formats [^N] markers as superscript numbers in text */
+const SUPERSCRIPTS: Record<string, string> = {
+  '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴',
+  '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹',
+};
+function toSuperscript(n: number): string {
+  return String(n).split('').map(d => SUPERSCRIPTS[d] ?? d).join('');
+}
+
+/** Aceita [^N] e \[\^N\] (Lexical escapa brackets/circumflex no markdown). */
+const FOOTNOTE_MARKER_RE = /\\?\[\\?\^(\d+)\\?\]/g;
+
+/** Substitui [^N] por superscript ¹²³. Markers órfãos somem. */
 function withFootnoteMarkers(content: string, footnotes?: BookFootnote[]): string {
-  if (!footnotes || footnotes.length === 0) return content;
-  // Just leave them visible as superscript-like markers since react-pdf doesn't support sup well
-  return content; // Keep [^N] as plain text — readers can match against the footnotes section
+  if (!footnotes || footnotes.length === 0) {
+    return content.replace(FOOTNOTE_MARKER_RE, '');
+  }
+  return content.replace(FOOTNOTE_MARKER_RE, (_, n) => {
+    const num = Number(n);
+    const fn = footnotes.find(f => f.number === num);
+    return fn ? toSuperscript(num) : '';
+  });
+}
+
+/** Extrai footnotes citados (escapados ou não), em ordem de aparição. */
+function extractCitedFootnotes(content: string, footnotes?: BookFootnote[]): BookFootnote[] {
+  if (!footnotes || footnotes.length === 0) return [];
+  const seen = new Set<number>();
+  const result: BookFootnote[] = [];
+  const re = new RegExp(FOOTNOTE_MARKER_RE.source, 'g');
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(content)) !== null) {
+    const num = Number(m[1]);
+    if (seen.has(num)) continue;
+    const fn = footnotes.find(f => f.number === num);
+    if (fn) { seen.add(num); result.push(fn); }
+  }
+  return result;
+}
+
+function renderInlineFootnotes(cited: BookFootnote[]): React.ReactElement | null {
+  if (cited.length === 0) return null;
+  // Inline-after-paragraph com wrap=false no wrapper → garante mesma página.
+  // Estilo book-footer: top rule curta (70%), small italic, indent.
+  return ce(View, { style: styles.inlineFootnotes },
+    ...cited.map(f =>
+      ce(View, { key: f.id, style: styles.inlineFnRow },
+        ce(Text, { style: styles.inlineFnNum }, toSuperscript(f.number)),
+        ce(View, { style: { flex: 1 } }, inlineText(f.content, { fontSize: 8, color: '#444444', lineHeight: 1.35, fontFamily: 'Times-Italic' } as object)),
+      ),
+    ),
+  );
 }
 
 function renderBlock(block: BookBlock, footnotes?: BookFootnote[]): React.ReactElement | null {
   switch (block.kind) {
-    case 'paragraph':
-      return ce(View, { key: block.id, style: styles.paragraph },
-        block.ref ? ce(Text, { style: styles.ref }, `[${block.ref}]  `) : null,
-        inlineText(withFootnoteMarkers(block.content, footnotes)),
+    case 'paragraph': {
+      const cited = extractCitedFootnotes(block.content, footnotes);
+      const inlineFn = renderInlineFootnotes(cited);
+      // wrap=false só quando tem footnote — força parágrafo+footnote ficarem juntos na mesma página.
+      // Sem footnote, parágrafo wrappa normal.
+      return ce(View, { key: block.id, wrap: cited.length === 0 },
+        ce(View, { style: styles.paragraph },
+          block.ref ? ce(Text, { style: styles.ref }, `[${block.ref}]  `) : null,
+          inlineText(withFootnoteMarkers(block.content, footnotes)),
+        ),
+        inlineFn,
       );
+    }
 
-    case 'quote':
-      return ce(View, { key: block.id, style: styles.quote },
-        block.ref ? ce(Text, { style: styles.ref }, `[${block.ref}]`) : null,
-        inlineText(withFootnoteMarkers(block.content, footnotes), { fontFamily: 'Times-Italic' }),
+    case 'quote': {
+      const cited = extractCitedFootnotes(block.content, footnotes);
+      const inlineFn = renderInlineFootnotes(cited);
+      return ce(View, { key: block.id, wrap: cited.length === 0 },
+        ce(View, { style: styles.quote },
+          block.ref ? ce(Text, { style: styles.ref }, `[${block.ref}]`) : null,
+          inlineText(withFootnoteMarkers(block.content, footnotes), { fontFamily: 'Times-Italic' }),
+        ),
+        inlineFn,
       );
+    }
 
     case 'heading': {
       const lvl = block.heading_level ?? 2;
@@ -288,48 +365,64 @@ function renderBlock(block: BookBlock, footnotes?: BookFootnote[]): React.ReactE
   }
 }
 
-function buildDocument(
-  book: Book,
-  chapters: BookChapter[],
-  coverImageBuffer?: Buffer,
-  truncatedAt?: string,
-) {
-  // Ordena por grupo (front → body → back) + order dentro do grupo
-  const sorted = BookEntity.sortChapters(chapters);
+// A5 dimensions in points for pdf-lib
+const A5_WIDTH = 419.53;
+const A5_HEIGHT = 595.28;
 
-  // Cover page — simple stacked layout, no flex centering
-  const coverPage = ce(Page, { key: 'cover', size: 'A5', style: styles.page },
-    coverImageBuffer
-      ? ce(Image, {
-          src: `data:image/jpeg;base64,${coverImageBuffer.toString('base64')}`,
-          style: styles.coverImage,
-        })
-      : null,
-    ce(Text, { style: styles.coverTitle }, book.title),
-    book.subtitle ? ce(Text, { style: styles.coverSubtitle }, book.subtitle) : null,
-    book.author ? ce(Text, { style: styles.coverAuthor }, book.author) : null,
+const fullBleedStyles = StyleSheet.create({
+  page: { padding: 0, margin: 0 },
+  fullImage: { width: A5_WIDTH, height: A5_HEIGHT, objectFit: 'cover' },
+});
+
+function buildCoverDocument(coverBuffer: Buffer, title: string) {
+  return ce(Document, { title },
+    ce(Page, { size: 'A5', style: fullBleedStyles.page },
+      ce(Image, {
+        src: `data:image/jpeg;base64,${coverBuffer.toString('base64')}`,
+        style: fullBleedStyles.fullImage,
+      }),
+    ),
   );
+}
 
-  // Section pages — header/footer + content varies by kind
-  const chapterPages = sorted.map(ch => {
-    const kind = ch.kind ?? 'chapter';
-    let bodyContent: React.ReactNode[];
+function buildBackCoverDocument(backBuffer: Buffer, title: string) {
+  return ce(Document, { title },
+    ce(Page, { size: 'A5', style: fullBleedStyles.page },
+      ce(Image, {
+        src: `data:image/jpeg;base64,${backBuffer.toString('base64')}`,
+        style: fullBleedStyles.fullImage,
+      }),
+    ),
+  );
+}
 
-    if (kind === 'bibliography' && ch.references && ch.references.length > 0) {
-      bodyContent = renderBibliographyPdf(ch.references, ch.citation_style ?? 'abnt');
-    } else if (kind === 'glossary' && ch.glossary_terms && ch.glossary_terms.length > 0) {
-      bodyContent = renderGlossaryPdf(ch.glossary_terms);
-    } else if (kind === 'credits' && ch.credits) {
-      bodyContent = renderCreditsPdf(ch.credits);
-    } else {
-      bodyContent = ch.blocks.map(b => renderBlock(b, ch.footnotes)).filter((x): x is React.ReactElement => x !== null);
-      // Append footnotes section
-      if (ch.footnotes && ch.footnotes.length > 0) {
-        bodyContent.push(renderFootnotesPdf(ch.footnotes));
+function buildChapterDocument(book: Book, ch: BookChapter) {
+  const kind = ch.kind ?? 'chapter';
+  let bodyContent: React.ReactNode[];
+
+  if (kind === 'bibliography' && ch.references && ch.references.length > 0) {
+    bodyContent = renderBibliographyPdf(ch.references, ch.citation_style ?? 'abnt');
+  } else if (kind === 'glossary' && ch.glossary_terms && ch.glossary_terms.length > 0) {
+    bodyContent = renderGlossaryPdf(ch.glossary_terms);
+  } else if (kind === 'credits' && ch.credits) {
+    bodyContent = renderCreditsPdf(ch.credits);
+  } else {
+    bodyContent = ch.blocks.map(b => renderBlock(b, ch.footnotes)).filter((x): x is React.ReactElement => x !== null);
+    if (ch.footnotes && ch.footnotes.length > 0) {
+      const allCited = new Set<number>();
+      for (const b of ch.blocks) {
+        if (b.kind !== 'paragraph' && b.kind !== 'quote') continue;
+        const re = new RegExp(FOOTNOTE_MARKER_RE.source, 'g');
+        let m: RegExpExecArray | null;
+        while ((m = re.exec(b.content)) !== null) allCited.add(Number(m[1]));
       }
+      const orphans = ch.footnotes.filter(f => !allCited.has(f.number));
+      if (orphans.length > 0) bodyContent.push(renderFootnotesPdf(orphans));
     }
+  }
 
-    return ce(Page, { key: ch.id, size: 'A5', style: styles.page },
+  return ce(Document, { title: ch.title },
+    ce(Page, { size: 'A5', style: styles.page },
       ce(View, { style: styles.headerFixed, fixed: true },
         ce(Text, null, book.title),
         ce(Text, { render: ({ pageNumber }: { pageNumber: number }) => String(pageNumber) }),
@@ -339,29 +432,21 @@ function buildDocument(
       ...bodyContent,
       ce(View, { style: styles.footerFixed, fixed: true },
         ce(Text, null, ch.title.slice(0, 40)),
-        ce(Text, {
-          render: ({ pageNumber, totalPages }: { pageNumber: number; totalPages: number }) =>
-            `${pageNumber} / ${totalPages}`,
-        }),
+        ce(Text, { render: ({ pageNumber }: { pageNumber: number }) => String(pageNumber) }),
       ),
-    );
-  });
+    ),
+  );
+}
 
-  const spoilerPage = truncatedAt
-    ? ce(Page, { key: 'spoiler', size: 'A5', style: styles.page },
-        ce(View, { style: styles.spoilerBox },
-          ce(Text, { style: styles.spoilerText },
-            `Conteúdo cortado em ${truncatedAt}.\nConclua as aulas relacionadas para liberar o restante.`,
-          ),
+function buildSpoilerDocument(truncatedAt: string) {
+  return ce(Document, { title: 'Conteúdo cortado' },
+    ce(Page, { size: 'A5', style: styles.page },
+      ce(View, { style: styles.spoilerBox },
+        ce(Text, { style: styles.spoilerText },
+          `Conteúdo cortado em ${truncatedAt}.\nConclua as aulas relacionadas para liberar o restante.`,
         ),
-      )
-    : null;
-
-  return ce(Document,
-    { title: book.title, author: book.author ?? '', language: book.language ?? 'pt' },
-    coverPage,
-    ...chapterPages,
-    ...(spoilerPage ? [spoilerPage] : []),
+      ),
+    ),
   );
 }
 
@@ -425,8 +510,65 @@ export class BookPdfGenerator {
     chapters: BookChapter[],
     coverImageBuffer?: Buffer,
     truncatedAt?: string,
+    backCoverImageBuffer?: Buffer,
   ): Promise<Buffer> {
-    return renderToBuffer(buildDocument(book, chapters, coverImageBuffer, truncatedAt));
+    const { PDFDocument } = await import('pdf-lib');
+    const sorted = BookEntity.sortChapters(chapters);
+
+    const finalDoc = await PDFDocument.create();
+    finalDoc.setTitle(book.title);
+    if (book.author) finalDoc.setAuthor(book.author);
+    if (book.language) finalDoc.setLanguage(book.language);
+
+    const addBlank = () => finalDoc.addPage([A5_WIDTH, A5_HEIGHT]);
+
+    const appendDoc = async (buffer: Buffer) => {
+      const src = await PDFDocument.load(new Uint8Array(buffer));
+      const pages = await finalDoc.copyPages(src, src.getPageIndices());
+      for (const p of pages) finalDoc.addPage(p);
+    };
+
+    // 1. Cover (full-bleed) — always page 1
+    if (coverImageBuffer) {
+      const coverBuf = await renderToBuffer(buildCoverDocument(coverImageBuffer, book.title));
+      await appendDoc(coverBuf);
+    } else {
+      // Cover textual fallback when no image
+      addBlank();
+    }
+
+    // 2. Blank after cover (page 2)
+    addBlank();
+
+    // 3. Each chapter starts on odd page
+    for (const ch of sorted) {
+      if (finalDoc.getPageCount() % 2 === 1) addBlank(); // pad so next page is odd
+      const chBuf = await renderToBuffer(buildChapterDocument(book, ch));
+      await appendDoc(chBuf);
+    }
+
+    // 4. Spoiler page (if any) starts on odd
+    if (truncatedAt) {
+      if (finalDoc.getPageCount() % 2 === 1) addBlank();
+      const spoilerBuf = await renderToBuffer(buildSpoilerDocument(truncatedAt));
+      await appendDoc(spoilerBuf);
+    }
+
+    // 5. Back cover handling
+    if (backCoverImageBuffer) {
+      // Blank before back cover
+      addBlank();
+      // Ensure total ends even after back cover added: count must be odd before adding back cover
+      if (finalDoc.getPageCount() % 2 === 0) addBlank();
+      const backBuf = await renderToBuffer(buildBackCoverDocument(backCoverImageBuffer, book.title));
+      await appendDoc(backBuf);
+    } else {
+      // No back cover — pad to even total
+      if (finalDoc.getPageCount() % 2 === 1) addBlank();
+    }
+
+    const bytes = await finalDoc.save();
+    return Buffer.from(bytes);
   }
 }
 

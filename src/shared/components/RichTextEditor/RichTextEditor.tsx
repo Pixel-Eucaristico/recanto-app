@@ -13,6 +13,7 @@ import { LoadInitialMarkdown } from './plugins/LoadInitialMarkdown';
 import { EnsureParagraphAfterImagePlugin } from './plugins/EnsureParagraphAfterImage';
 import { MarkdownExport } from './plugins/MarkdownExport';
 import { Toolbar } from './components/Toolbar';
+import { FootnoteRenumberPlugin } from './components/FootnoteRenumberPlugin';
 
 interface RichTextEditorProps {
   value: string;
@@ -20,8 +21,12 @@ interface RichTextEditorProps {
   placeholder?: string;
   height?: number;
   disabled?: boolean;
-  /** When provided, shows footnote button in toolbar. Returns next [^N] number. */
-  onRequestFootnote?: () => number;
+  /**
+   * When provided, shows footnote button in toolbar.
+   * Receives `insertAtCursor`. Return number > 0 auto-inserts [^N];
+   * void/null = parent handles insertion (e.g. opens picker modal).
+   */
+  onRequestFootnote?: (insertAtCursor: (text: string) => void) => number | void;
   /** When provided, shows citation button. Receives `insertAtCursor` callback. */
   onRequestCitation?: (insertAtCursor: (text: string) => void) => void;
 }
@@ -62,6 +67,7 @@ export function RichTextEditor({
         <LinkPlugin />
         <MarkdownShortcutPlugin transformers={markdownTransformers} />
         <EnsureParagraphAfterImagePlugin />
+        <FootnoteRenumberPlugin />
         <LoadInitialMarkdown markdown={value} transformers={markdownTransformers} />
         <MarkdownExport onChange={onChange} transformers={markdownTransformers} />
       </LexicalComposer>

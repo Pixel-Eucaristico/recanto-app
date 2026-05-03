@@ -62,7 +62,7 @@ export function FootnotePanel({ footnotes, chapterMarkdown, onChange, onInsertMa
       </div>
 
       <p className="text-xs text-base-content/60">
-        Marcador <code className="bg-base-200 px-1 rounded">[^N]</code> aparece no texto.
+        Marcador <sup className="font-bold text-primary">¹</sup> aparece no texto.
         Clique no <Pencil className="inline w-3 h-3" /> para editar uma nota salva.
       </p>
 
@@ -77,7 +77,9 @@ export function FootnotePanel({ footnotes, chapterMarkdown, onChange, onInsertMa
               <div className="card-body p-3 gap-2">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-1 flex-wrap">
-                    <span className="badge badge-secondary badge-sm">[^{f.number}]</span>
+                    <span className="badge badge-secondary badge-sm font-bold">
+                      <sup>{f.number}</sup>
+                    </span>
                     {isOrphan(f.number) && (
                       <span className="badge badge-warning badge-xs" title="Marcador removido do texto. Reinsira ou apague a nota.">
                         órfã

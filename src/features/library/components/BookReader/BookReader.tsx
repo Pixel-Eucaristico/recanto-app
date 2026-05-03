@@ -1,7 +1,9 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { BookOpen, X } from 'lucide-react';
-import type { Book, BookChapter } from '@/domain/library/types';
+import type { Book, BookChapter, BookFootnote } from '@/domain/library/types';
+import { RichContent } from '@/shared/components/RichContent';
 import { BookSpoilerVeil } from '@/features/library/components/BookSpoilerVeil';
 import { CommentModal } from '@/shared/components/CommentModal';
 import { BookReaderHeader } from './components/BookReaderHeader';
@@ -49,6 +51,35 @@ export function BookReader({ book, chapters, visibleUntil, truncated, initialRef
     registerChapterRef,
     setActiveRef,
   } = useBookReader({ userId, bookId: book.id, chapters, initialRef });
+
+  // Modal de footnote — clica no marcador <sup> abre popup
+  const [footnoteModal, setFootnoteModal] = useState<{ footnote: BookFootnote; refId: string } | null>(null);
+
+  // Event delegation: captura clicks em qualquer botão `[data-fn-id]`.
+  // Procura o footnote do MESMO capítulo via DOM ancestor (`section[data-chapter-order]`).
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      const target = (e.target as HTMLElement)?.closest('[data-fn-id]') as HTMLElement | null;
+      if (!target) return;
+      e.preventDefault();
+      const num = Number(target.getAttribute('data-fn-id'));
+      const section = target.closest('[data-chapter-order]') as HTMLElement | null;
+      const order = section ? Number(section.getAttribute('data-chapter-order')) : null;
+      // 1) Procura no capítulo correto (mesmo do marker)
+      if (order !== null) {
+        const ch = chapters.find(c => c.order === order);
+        const fn = ch?.footnotes?.find(f => f.number === num);
+        if (fn) { setFootnoteModal({ footnote: fn, refId: target.id }); return; }
+      }
+      // 2) Fallback: procura em todos
+      for (const ch of chapters) {
+        const fn = ch.footnotes?.find(f => f.number === num);
+        if (fn) { setFootnoteModal({ footnote: fn, refId: target.id }); return; }
+      }
+    }
+    document.addEventListener('click', handler);
+    return () => document.removeEventListener('click', handler);
+  }, [chapters]);
 
   return (
     <div className="min-h-screen bg-base-200">
@@ -201,6 +232,55 @@ export function BookReader({ book, chapters, visibleUntil, truncated, initialRef
           onExit={handleExit}
           onSaveAndExit={handleSaveAndExit}
         />
+      )}
+
+      {/* Footnote popup modal — clique no marcador <sup> exibe nota */}
+      {footnoteModal && (
+        <div className="modal modal-open" onClick={() => setFootnoteModal(null)}>
+          <div className="modal-box max-w-md" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-base flex items-center gap-2">
+                <sup className="text-primary font-bold text-lg">{footnoteModal.footnote.number}</sup>
+                Nota de rodapé
+              </h3>
+              <button
+                type="button"
+                className="btn btn-ghost btn-xs btn-circle"
+                onClick={() => setFootnoteModal(null)}
+                aria-label="Fechar"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <RichContent
+              markdown={footnoteModal.footnote.content}
+              className="[&>div]:p-0 [&_p]:my-0 text-sm"
+            />
+            <div className="modal-action mt-4">
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => {
+                  // Vai para a nota no rodapé do capítulo (mantém o modal fechado)
+                  setFootnoteModal(null);
+                  setTimeout(() => {
+                    const target = document.getElementById(`fn${footnoteModal.footnote.number}`);
+                    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }, 100);
+                }}
+              >
+                Ver no rodapé do capítulo
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                onClick={() => setFootnoteModal(null)}
+              >
+                Continuar lendo
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

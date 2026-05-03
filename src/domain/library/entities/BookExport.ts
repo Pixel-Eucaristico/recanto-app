@@ -82,12 +82,12 @@ function applyInlineStyles(escaped: string): string {
     .replace(/`(.+?)`/g, '<code>$1</code>');
 }
 
-/** Replace [^N] markers with proper EPUB footnote anchors. */
+/** Replace [^N] markers with proper EPUB 3 footnote anchors (Kindle/Apple Books popup compatible). */
 function renderFootnoteMarkers(text: string, footnotes?: BookFootnote[]): string {
   if (!footnotes || footnotes.length === 0) return text;
   return text.replace(/\[\^(\d+)\]/g, (_, n) => {
     const num = Number(n);
-    return `<a href="#fn${num}" id="fnref${num}" epub:type="noteref" class="fn-marker"><sup>${num}</sup></a>`;
+    return `<a href="#fn${num}" id="fnref${num}" epub:type="noteref" role="doc-noteref" class="fn-marker"><sup>${num}</sup></a>`;
   });
 }
 
@@ -190,14 +190,23 @@ export class BookExportEntity {
       body = renderCredits(chapter.credits);
     } else {
       body = chapter.blocks.map(b => renderBlock(b, chapter.order, chapter.footnotes)).join('\n');
-      // Footnotes section at the bottom
+      // Footnotes section: cada footnote é um <aside> SEPARADO com epub:type="footnote".
+      // Kindle e Apple Books detectam aside individual + epub:type=footnote como popup.
+      // Wrapper <section> agrupa todos no fim do capítulo.
       if (chapter.footnotes && chapter.footnotes.length > 0) {
-        footnotesBlock = `\n    <aside epub:type="footnotes" class="footnotes">
+        const items = chapter.footnotes
+          .sort((a, b) => a.number - b.number)
+          .map(f =>
+            `      <aside id="fn${f.number}" epub:type="footnote" role="doc-footnote" class="footnote-item">` +
+            `<p><span class="fn-num">${f.number}.</span> ${renderInline(f.content)} ` +
+            `<a href="#fnref${f.number}" epub:type="backlink" role="doc-backlink" class="fn-back" aria-label="Voltar ao texto">↩</a></p>` +
+            `</aside>`
+          )
+          .join('\n');
+        footnotesBlock = `\n    <section epub:type="footnotes" role="doc-endnotes" class="footnotes" aria-label="Notas de rodapé">
       <hr/>
-      <ol>
-${chapter.footnotes.sort((a, b) => a.number - b.number).map(f => `        <li id="fn${f.number}" epub:type="footnote">${renderInline(f.content)} <a href="#fnref${f.number}" class="fn-back">↩</a></li>`).join('\n')}
-      </ol>
-    </aside>`;
+${items}
+    </section>`;
       }
     }
 
@@ -448,12 +457,14 @@ li { margin: 0.3em 0; }
 .credits-publisher { font-size: 0.9em; color: #666; margin-top: 1em; }
 .credits-isbn, .credits-copyright, .credits-license { font-size: 0.85em; color: #777; margin: 0.3em 0; }
 
-/* Footnotes */
+/* Footnotes — Kindle/Apple Books popup compatible */
 .footnotes { font-size: 0.85em; margin-top: 2em; color: #555; }
-.footnotes ol { padding-left: 1.5em; }
-.footnotes li { margin-bottom: 0.5em; }
-.fn-marker { text-decoration: none; color: #1d4ed8; }
-.fn-back { text-decoration: none; margin-left: 0.4em; color: #888; }`;
+.footnote-item { margin-bottom: 0.6em; }
+.footnote-item .fn-num { font-weight: bold; color: #1d4ed8; margin-right: 0.3em; }
+.fn-marker { text-decoration: none; color: #1d4ed8; vertical-align: super; font-size: 0.75em; }
+.fn-marker sup { line-height: 0; }
+.fn-back { text-decoration: none; margin-left: 0.4em; color: #888; font-size: 1.1em; }
+.footnote-ref a { text-decoration: none; }`;
   }
 
   static bookSlug(book: Book): string {
