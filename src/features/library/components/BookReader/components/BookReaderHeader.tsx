@@ -4,6 +4,8 @@ import { ArrowLeft, Menu, Type } from 'lucide-react';
 import type { Book } from '@/domain/library/types';
 import { Tooltip } from '@/shared/components/Tooltip';
 import { BookExportButtons } from '@/features/library/components/BookExportButtons';
+import { NotificationBell } from '@/features/notifications';
+import { PrayerCenterButton } from '@/features/prayer';
 
 interface BookReaderHeaderProps {
   book: Book;
@@ -21,7 +23,7 @@ export function BookReaderHeader({
   book, fontLevel, fontPx, readPercent, truncated, visibleUntil, changeFontLevel, onBack, onOpenDrawer,
 }: BookReaderHeaderProps) {
   return (
-    <header className="sticky top-0 z-30 bg-base-100/95 backdrop-blur border-b border-base-300">
+    <header className="book-header-fixed fixed top-0 left-0 right-0 z-30 bg-base-100/95 backdrop-blur border-b border-base-300 shadow-sm transition-[left] duration-300">
       <div className="h-0.5 bg-primary transition-all duration-500" style={{ width: `${readPercent}%` }} />
       <div className="flex items-center gap-2 px-3 md:px-6 py-2 min-w-0">
         <Tooltip tip="Voltar à biblioteca" position="bottom">
@@ -95,6 +97,21 @@ export function BookReaderHeader({
             {readPercent}%
           </span>
         )}
+
+        {/* Bar do dashboard absorvida aqui — prayer + notificação */}
+        <div className="flex items-center shrink-0 border-l border-base-300/60 pl-1 ml-1">
+          <PrayerCenterButton />
+          <NotificationBell />
+        </div>
+
+        {/* Mobile: drawer toggle do dashboard sidebar */}
+        <label
+          htmlFor="dashboard-drawer"
+          aria-label="Abrir menu do app"
+          className="btn btn-ghost btn-sm btn-circle shrink-0 lg:hidden"
+        >
+          <Menu className="w-4 h-4" />
+        </label>
       </div>
     </header>
   );

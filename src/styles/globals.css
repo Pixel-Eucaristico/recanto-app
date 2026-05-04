@@ -185,6 +185,18 @@
   }
 }
 
+/* BookReader header fixed — responsivo ao drawer-toggle (sidebar collapse/expand).
+   Default unchecked = sidebar w-14 (close). Checked = sidebar w-64 (open).
+   Header desktop alinha com lado direito do sidebar. Mobile = full width. */
+@media (min-width: 1024px) {
+  .book-header-fixed {
+    left: 3.5rem; /* w-14 (sidebar collapsed) */
+  }
+  .drawer:has(.drawer-toggle:checked) .book-header-fixed {
+    left: 16rem; /* w-64 (sidebar expanded) */
+  }
+}
+
 /* CMS Editor - Isolate fullscreen components in preview */
 .boundary-reset section,
 .boundary-reset [class*="h-screen"],
