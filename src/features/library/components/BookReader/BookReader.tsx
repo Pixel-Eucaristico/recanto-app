@@ -15,6 +15,7 @@ import { CompletionBlock } from './components/CompletionBlock';
 import { MobileBottomBar } from './components/MobileBottomBar';
 import { ContinueModal } from './components/ContinueModal';
 import { ExitGuardModal } from './components/ExitGuardModal';
+import { ScrollToTopButton } from './components/ScrollToTopButton';
 import { useBookReader } from './hooks/useBookReader';
 
 interface BookReaderProps {
@@ -287,6 +288,8 @@ export function BookReader({ book, chapters, visibleUntil, truncated, initialRef
           </div>
         </div>
       )}
+
+      <ScrollToTopButton />
     </div>
   );
 }
