@@ -186,14 +186,13 @@
 }
 
 /* BookReader header fixed — responsivo ao drawer-toggle (sidebar collapse/expand).
-   Default unchecked = sidebar w-14 (close). Checked = sidebar w-64 (open).
-   Header desktop alinha com lado direito do sidebar. Mobile = full width. */
+   Default checked = sidebar w-64 (open). Unchecked = sidebar w-14 (close). */
 @media (min-width: 1024px) {
   .book-header-fixed {
-    left: 3.5rem; /* w-14 (sidebar collapsed) */
+    left: 16rem; /* checked default = expanded w-64 */
   }
-  .drawer:has(.drawer-toggle:checked) .book-header-fixed {
-    left: 16rem; /* w-64 (sidebar expanded) */
+  .drawer:not(:has(.drawer-toggle:checked)) .book-header-fixed {
+    left: 3.5rem; /* unchecked = collapsed w-14 */
   }
 }
 

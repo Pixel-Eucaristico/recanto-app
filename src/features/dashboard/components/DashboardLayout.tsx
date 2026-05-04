@@ -20,7 +20,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="drawer lg:drawer-open">
-      <input id="dashboard-drawer" type="checkbox" className="drawer-toggle" />
+      <input id="dashboard-drawer" type="checkbox" className="drawer-toggle" defaultChecked />
 
       {/* Main content */}
       <div className="drawer-content flex flex-col overflow-x-hidden">
