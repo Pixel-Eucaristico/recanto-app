@@ -6,6 +6,7 @@ import type { BookChapter } from '@/domain/library/types';
 import { useReadingProgress } from '@/features/library/hooks/useReadingProgress';
 import { useBookAnnotations } from '@/features/library/hooks/useBookAnnotations';
 import { useBookTags } from '@/features/library/hooks/useBookTags';
+import { CanonicalRefEntity } from '@/domain/library/entities/CanonicalRef';
 import { sliderToPx } from '../utils/constants';
 
 interface UseBookReaderOptions {
@@ -35,6 +36,9 @@ export function useBookReader({ userId, bookId, chapters, initialRef }: UseBookR
 
   const chapterRefs = useRef<Map<number, HTMLElement>>(new Map());
   const activeRefForChapter = useRef<Map<number, string>>(new Map());
+  // Track maior ponto alcançado (não o que está visível agora) — pra modal/bookmark refletir progresso real
+  const maxChapterReached = useRef<number>(0);
+  const maxRefReached = useRef<string | null>(null);
 
   const { progress, bookmarkError, updatePosition, saveBookmark, completeReading } =
     useReadingProgress(userId, bookId);
@@ -100,8 +104,10 @@ export function useBookReader({ userId, bookId, chapters, initialRef }: UseBookR
           const order = Number(visible[0].target.getAttribute('data-chapter-order'));
           if (!Number.isNaN(order)) {
             setActiveChapter(order);
+            // Atualiza maxChapterReached só pra cima (nunca desce)
+            if (order > maxChapterReached.current) maxChapterReached.current = order;
             const lastRef = activeRefForChapter.current.get(order) ?? null;
-            updatePosition(order, lastRef, chapters.length);
+            updatePosition(maxChapterReached.current, lastRef, chapters.length);
           }
         }
       },
@@ -128,10 +134,20 @@ export function useBookReader({ userId, bookId, chapters, initialRef }: UseBookR
     jumpToChapter(progress.last_chapter_order);
   }, [progress, jumpToChapter]);
 
+  // Bookmark é stale se passou > 7 dias desde última marcação manual
+  const STALE_BOOKMARK_DAYS = 7;
+  function isBookmarkStale(): boolean {
+    if (!progress?.last_bookmark_at) return false;
+    const last = new Date(progress.last_bookmark_at).getTime();
+    const elapsedDays = (Date.now() - last) / (1000 * 60 * 60 * 24);
+    return elapsedDays > STALE_BOOKMARK_DAYS;
+  }
+
   function handleBack() {
     const inProgress = readPercent > 5 && readPercent < 100;
-    const hasManualBookmark = !!progress?.last_ref;
-    if (inProgress && !hasManualBookmark) {
+    const hasManualBookmark = !!progress?.last_bookmark_at;
+    // Mostra modal se: (1) sem marcação manual nunca OU (2) marcação muito antiga
+    if (inProgress && (!hasManualBookmark || isBookmarkStale())) {
       setShowExitGuard(true);
       return;
     }
@@ -143,10 +159,10 @@ export function useBookReader({ userId, bookId, chapters, initialRef }: UseBookR
   }
 
   async function handleSaveAndExit() {
-    if (activeChapter !== null) {
-      const lastRef = activeRefForChapter.current.get(activeChapter) ?? null;
-      await saveBookmark(lastRef, activeChapter, chapters.length);
-    }
+    // Salva ponto MAIS PROFUNDO alcançado (não posição atual de scroll)
+    const targetChapter = maxChapterReached.current || activeChapter || 1;
+    const targetRef = maxRefReached.current ?? activeRefForChapter.current.get(targetChapter) ?? null;
+    await saveBookmark(targetRef, targetChapter, chapters.length);
     router.push('/app/dashboard/library');
   }
 
@@ -156,12 +172,38 @@ export function useBookReader({ userId, bookId, chapters, initialRef }: UseBookR
   }
 
   function setActiveRef(chapterOrder: number, ref: string) {
+    // Atualiza apenas se ref é maior que último registrado (memoriza ponto mais avançado)
+    const prev = activeRefForChapter.current.get(chapterOrder);
+    if (prev) {
+      const prevParsed = CanonicalRefEntity.tryParse(prev);
+      const newParsed = CanonicalRefEntity.tryParse(ref);
+      if (prevParsed && newParsed && CanonicalRefEntity.compare(newParsed, prevParsed) <= 0) return;
+    }
     activeRefForChapter.current.set(chapterOrder, ref);
+
+    // Track max global (capítulo + ref) pra modal exibir ponto mais profundo
+    if (chapterOrder > maxChapterReached.current) {
+      maxChapterReached.current = chapterOrder;
+      maxRefReached.current = ref;
+    } else if (chapterOrder === maxChapterReached.current) {
+      const max = CanonicalRefEntity.tryParse(maxRefReached.current ?? '');
+      const cur = CanonicalRefEntity.tryParse(ref);
+      if (!max || (cur && CanonicalRefEntity.compare(cur, max) > 0)) {
+        maxRefReached.current = ref;
+      }
+    }
   }
+
+  // Ponto MAIS PROFUNDO alcançado na leitura (não o atualmente visível) — usado pelo modal
+  const currentRef = maxRefReached.current;
+  const maxChapterOrder = maxChapterReached.current || activeChapter || 0;
+  const currentChapter = chapters.find(c => c.order === maxChapterOrder) ?? null;
 
   return {
     drawerOpen, setDrawerOpen,
     activeChapter,
+    currentRef,
+    currentChapter,
     fontLevel, fontPx, changeFontLevel,
     showContinueBanner, setShowContinueBanner,
     showContinueModal, setShowContinueModal,

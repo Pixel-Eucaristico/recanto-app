@@ -118,6 +118,8 @@ export interface BookReadingProgress {
   started_at?: string;
   /** Set when percent === 100. */
   completed_at?: string;
+  /** Set quando usuário aciona saveBookmark explícito. Atualiza-position automático NÃO mexe aqui. */
+  last_bookmark_at?: string;
   /** Denormalizado para zero N+1 na history page. */
   book_title?: string;
   book_cover_url?: string;

@@ -64,6 +64,7 @@ export function useReadingProgress(userId: string | undefined, bookId: string): 
       setBookmarkError(null);
       // Cancela debounce pendente — saveBookmark é prioritário
       if (debounceRef.current) clearTimeout(debounceRef.current);
+      const now = new Date().toISOString();
       const percent = totalChapters > 0 ? Math.round((chapterOrder / totalChapters) * 100) : 0;
       const data = {
         user_id: userId,
@@ -71,7 +72,9 @@ export function useReadingProgress(userId: string | undefined, bookId: string): 
         last_chapter_order: chapterOrder,
         last_ref: ref ?? undefined,
         percent,
-        updated_at: new Date().toISOString(),
+        updated_at: now,
+        // Marca quando usuário acionou bookmark explicito
+        last_bookmark_at: now,
       };
       try {
         const saved = await bookReadingProgressRepository.upsert(data);
@@ -89,12 +92,15 @@ export function useReadingProgress(userId: string | undefined, bookId: string): 
     async (lastChapterOrder: number) => {
       if (!userId) return;
       if (debounceRef.current) clearTimeout(debounceRef.current);
+      const now = new Date().toISOString();
       const data = {
         user_id: userId,
         book_id: bookId,
         last_chapter_order: lastChapterOrder,
         percent: 100,
-        updated_at: new Date().toISOString(),
+        updated_at: now,
+        // Marca conclusão APENAS quando usuário aciona explicitamente
+        completed_at: now,
       };
       try {
         const saved = await bookReadingProgressRepository.upsert(data);

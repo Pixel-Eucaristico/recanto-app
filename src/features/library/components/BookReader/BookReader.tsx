@@ -34,6 +34,7 @@ export function BookReader({ book, chapters, visibleUntil, truncated, initialRef
     showContinueBanner, setShowContinueBanner,
     showContinueModal, setShowContinueModal,
     showExitGuard, setShowExitGuard,
+    currentRef, currentChapter,
     commentTarget, setCommentTarget,
     completing,
     readPercent,
@@ -228,6 +229,10 @@ export function BookReader({ book, chapters, visibleUntil, truncated, initialRef
       {showExitGuard && (
         <ExitGuardModal
           readPercent={readPercent}
+          chapterTitle={currentChapter?.title}
+          chapterOrder={currentChapter?.order}
+          currentRef={currentRef}
+          lastBookmarkAt={progress?.last_bookmark_at}
           onClose={() => setShowExitGuard(false)}
           onExit={handleExit}
           onSaveAndExit={handleSaveAndExit}

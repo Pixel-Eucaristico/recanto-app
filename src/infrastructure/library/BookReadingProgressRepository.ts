@@ -50,9 +50,15 @@ export class BookReadingProgressRepository {
     if (progress.book_title) firestoreData.book_title = progress.book_title;
     if (progress.book_cover_url) firestoreData.book_cover_url = progress.book_cover_url;
 
-    // Marca conclusão ao atingir 100%
-    if (progress.percent >= 100 && !existing.data()?.completed_at) {
-      firestoreData.completed_at = now;
+    // Conclusão NÃO é automática — só seta completed_at quando explicitamente passado
+    // (usuário clica "Finalizar leitura"). Antes auto-marcava ao atingir 100%.
+    if (progress.completed_at !== undefined) {
+      firestoreData.completed_at = progress.completed_at;
+    }
+
+    // Bookmark explícito (usuário clicou Salvar) — diferente de updatePosition automático
+    if (progress.last_bookmark_at !== undefined) {
+      firestoreData.last_bookmark_at = progress.last_bookmark_at;
     }
 
     await setDoc(docRef, firestoreData, { merge: true });
