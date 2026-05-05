@@ -177,6 +177,33 @@ export class GoogleYouTubeService {
   }
 
   /**
+   * Fetches metadata (title, duration) for any YouTube video by ID.
+   * Uses authed client — works for any public/unlisted video.
+   */
+  async getVideoMetadata(userId: string, videoId: string): Promise<{
+    id: string;
+    title: string;
+    durationSeconds: number;
+    privacyStatus: string;
+  } | null> {
+    const { client } = await this.authedClient(userId);
+    const youtube = google.youtube({ version: 'v3', auth: client });
+    const res = await youtube.videos.list({
+      part: ['snippet', 'contentDetails', 'status'],
+      id: [videoId],
+      maxResults: 1,
+    });
+    const v = res.data.items?.[0];
+    if (!v) return null;
+    return {
+      id: v.id ?? videoId,
+      title: v.snippet?.title ?? '',
+      durationSeconds: parseIso8601Duration(v.contentDetails?.duration ?? 'PT0S'),
+      privacyStatus: v.status?.privacyStatus ?? 'unknown',
+    };
+  }
+
+  /**
    * Creates a resumable upload session at YouTube.
    * Returns the session URL so the BROWSER can upload directly to YouTube
    * (bypasses our server — no body size limit).

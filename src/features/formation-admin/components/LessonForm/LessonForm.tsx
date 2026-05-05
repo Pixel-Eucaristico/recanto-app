@@ -14,7 +14,7 @@ import { LessonComponentsEditor } from '../LessonComponentsEditor';
 import { LessonStepsPreview } from '../LessonStepsPreview';
 import { RichTextEditor } from '@/shared/components/RichTextEditor';
 import { CanonicalRefPicker } from '@/features/library/components/CanonicalRefPicker';
-import { detectVideoDuration, formatDuration, parseDurationString, parseVideoSource } from '@/features/lesson/video-player';
+import { detectVideoDuration, formatDuration, parseVideoSource } from '@/features/lesson/video-player';
 import { VideoPickerModal } from '../VideoPicker';
 import { ActivityManager } from '../ActivityManager';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
@@ -153,11 +153,27 @@ export function LessonForm({ lesson, moduleId, defaultOrder, saving, onSave, onC
     }
   }
 
-  function handleDurationInputChange(v: string) {
-    setDurationInput(v);
-    const parsed = parseDurationString(v);
-    if (parsed !== null) setVideoDuration(parsed);
-  }
+  // Auto-detect debounced — dispara quando URL muda e duration ainda não preenchida
+  useEffect(() => {
+    const url = videoUrl.trim();
+    if (!url) return;
+    if (videoDuration > 0) return; // já preenchido (manual ou via picker)
+    const t = setTimeout(async () => {
+      setDetectingDuration(true);
+      try {
+        const detected = await detectVideoDuration(url);
+        if (detected) {
+          setVideoDuration(detected);
+          setDurationInput(formatDuration(detected));
+        }
+      } finally {
+        setDetectingDuration(false);
+      }
+    }, 800);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [videoUrl]);
+
 
   const videoSourceKind = videoUrl.trim() ? parseVideoSource(videoUrl).kind : null;
 
@@ -283,28 +299,20 @@ export function LessonForm({ lesson, moduleId, defaultOrder, saving, onSave, onC
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Field label="Duração">
-            <div className="flex gap-1">
-              <input
-                type="text"
-                className="input input-bordered input-sm flex-1 min-w-0"
-                value={durationInput}
-                placeholder="ex: 5:30"
-                onChange={e => handleDurationInputChange(e.target.value)}
-              />
-              {videoSourceKind === 'file' && videoUrl && (
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm"
-                  onClick={handleAutoDetect}
-                  disabled={detectingDuration}
-                  title="Detectar duração automaticamente"
-                >
-                  {detectingDuration ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Auto'}
-                </button>
+            <div className="flex items-center gap-2 input input-bordered input-sm cursor-not-allowed bg-base-200">
+              {detectingDuration ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
+                  <span className="text-base-content/60">Detectando...</span>
+                </>
+              ) : (
+                <span className={videoDuration > 0 ? 'font-mono' : 'text-base-content/40'}>
+                  {videoDuration > 0 ? durationInput : 'auto-preenchido'}
+                </span>
               )}
             </div>
             <p className="text-[10px] text-base-content/40 mt-1">
-              {videoDuration > 0 ? `${videoDuration}s` : 'sem duração'}
+              {videoDuration > 0 ? `${videoDuration}s — preenchido automaticamente` : 'detectado ao colar URL ou via picker'}
             </p>
           </Field>
 

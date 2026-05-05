@@ -11,8 +11,16 @@ import { parseVideoSource } from './parseVideoSource';
 export async function detectVideoDuration(url: string): Promise<number | null> {
   const src = parseVideoSource(url);
   if (src.kind === 'youtube') {
-    // YouTube precisa de API key — placeholder. Por ora, retorna null.
-    return null;
+    if (!src.value) return null;
+    try {
+      const res = await fetch(`/api/youtube/metadata?id=${encodeURIComponent(src.value)}`);
+      if (!res.ok) return null;
+      const data = await res.json();
+      const dur = Number(data.durationSeconds);
+      return Number.isFinite(dur) && dur > 0 ? dur : null;
+    } catch {
+      return null;
+    }
   }
   if (!src.value) return null;
 
