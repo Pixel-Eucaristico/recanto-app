@@ -19,6 +19,7 @@ import { VideoPickerModal } from '../VideoPicker';
 import { ActivityManager } from '../ActivityManager';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 import { ImagePicker } from '@/shared/components/ImagePicker';
+import { QuickHabitCreate } from './components/QuickHabitCreate';
 
 interface LessonFormProps {
   lesson: FormationLesson | null;
@@ -76,6 +77,8 @@ export function LessonForm({ lesson, moduleId, defaultOrder, saving, onSave, onC
   // Habits
   const [habitIds, setHabitIds] = useState<string[]>(lesson?.habit_ids ?? []);
   const [availableHabits, setAvailableHabits] = useState<Habit[]>([]);
+  const [resolvedTrackId, setResolvedTrackId] = useState<string | null>(null);
+  const [habitCreateOpen, setHabitCreateOpen] = useState(false);
 
   // Plugin components (Fase A.1)
   const [components, setComponents] = useState<LessonComponentInstance[]>(lesson?.components ?? []);
@@ -121,7 +124,8 @@ export function LessonForm({ lesson, moduleId, defaultOrder, saving, onSave, onC
     (async () => {
       try {
         const mod = await moduleRepository.findById(moduleId);
-        const trackId = mod?.track_id;
+        const trackId = mod?.track_id ?? null;
+        setResolvedTrackId(trackId);
         const community = await habitRepository.findCommunity();
         const courseHabits = trackId ? await habitRepository.findByCourse(trackId) : [];
         const merged = [...community, ...courseHabits];
@@ -552,10 +556,23 @@ export function LessonForm({ lesson, moduleId, defaultOrder, saving, onSave, onC
       </Section>
 
       {/* Hábitos vinculados */}
-      <Section title="Hábitos vinculados" icon={<HeartHandshake className="w-4 h-4" />}>
+      <Section
+        title="Hábitos vinculados"
+        icon={<HeartHandshake className="w-4 h-4" />}
+        action={
+          <button
+            type="button"
+            className="btn btn-primary btn-xs gap-1"
+            onClick={() => setHabitCreateOpen(true)}
+            title="Criar hábito vinculado a esta aula"
+          >
+            <Plus className="w-3 h-3" /> Novo hábito
+          </button>
+        }
+      >
         {availableHabits.length === 0 ? (
           <p className="text-xs text-base-content/60">
-            Sem hábitos disponíveis. Crie hábitos da comunidade ou do curso em <code className="text-[11px]">/dashboard/habits</code>.
+            Sem hábitos disponíveis. Crie um novo aqui ou em <code className="text-[11px]">/dashboard/habits</code>.
           </p>
         ) : (
           <div className="space-y-1">
@@ -592,6 +609,19 @@ export function LessonForm({ lesson, moduleId, defaultOrder, saving, onSave, onC
           {saving ? 'Salvando...' : 'Salvar aula'}
         </button>
       </div>
+
+      {habitCreateOpen && (
+        <QuickHabitCreate
+          trackId={resolvedTrackId}
+          lessonId={lesson?.id}
+          createdBy={user?.id ?? 'unknown'}
+          onClose={() => setHabitCreateOpen(false)}
+          onCreated={habit => {
+            setAvailableHabits(prev => [...prev, habit]);
+            setHabitIds(prev => prev.includes(habit.id) ? prev : [...prev, habit.id]);
+          }}
+        />
+      )}
 
       {videoPickerOpen && (
         <VideoPickerModal
