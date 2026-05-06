@@ -623,16 +623,29 @@ function RefField({ label, value, chapters, onChange, placeholder }: RefFieldPro
     setParagraph(p?.paragraph?.toString() ?? '');
   }, [value]);
 
-  function commit(ch: number | null, par: string) {
-    if (ch === null) { onChange(''); return; }
-    const trimmed = par.trim();
-    onChange(trimmed ? `${ch}:${trimmed}` : `${ch}`);
-  }
-
   const activeChapter = chapter !== null ? chapters.find(c => c.order === chapter) : undefined;
   const maxParagraph = activeChapter
     ? activeChapter.blocks.filter(b => b.kind === 'paragraph' || b.kind === 'quote').length
     : 0;
+
+  function commit(ch: number | null, par: string) {
+    if (ch === null) { onChange(''); return; }
+    const trimmed = par.trim();
+    if (!trimmed) { onChange(`${ch}`); return; }
+    // Clamp 1..maxParagraph
+    const n = Math.max(1, Math.min(maxParagraph || 1, Number(trimmed) || 1));
+    onChange(`${ch}:${n}`);
+  }
+
+  function handleParagraphChange(raw: string) {
+    if (!raw) { setParagraph(''); commit(chapter, ''); return; }
+    const n = Math.max(1, Math.min(maxParagraph || 1, Number(raw) || 1));
+    const clamped = String(n);
+    setParagraph(clamped);
+    commit(chapter, clamped);
+  }
+
+  const overLimit = paragraph !== '' && Number(paragraph) > maxParagraph && maxParagraph > 0;
 
   return (
     <div>
@@ -644,7 +657,17 @@ function RefField({ label, value, chapters, onChange, placeholder }: RefFieldPro
           onChange={e => {
             const c = e.target.value ? Number(e.target.value) : null;
             setChapter(c);
-            commit(c, paragraph);
+            // Reset paragraph se exceder novo chapter
+            const newCh = c !== null ? chapters.find(x => x.order === c) : undefined;
+            const newMax = newCh ? newCh.blocks.filter(b => b.kind === 'paragraph' || b.kind === 'quote').length : 0;
+            const currentP = Number(paragraph);
+            if (currentP > newMax && newMax > 0) {
+              const clamped = String(newMax);
+              setParagraph(clamped);
+              commit(c, clamped);
+            } else {
+              commit(c, paragraph);
+            }
           }}
         >
           <option value="">— cap —</option>
@@ -656,20 +679,18 @@ function RefField({ label, value, chapters, onChange, placeholder }: RefFieldPro
         </select>
         <input
           type="number"
-          className="input input-bordered input-sm w-20"
+          className={`input input-bordered input-sm w-20 ${overLimit ? 'input-error' : ''}`}
           value={paragraph}
           placeholder="¶"
           min={1}
           max={maxParagraph || undefined}
-          onChange={e => {
-            setParagraph(e.target.value);
-            commit(chapter, e.target.value);
-          }}
+          disabled={chapter === null}
+          onChange={e => handleParagraphChange(e.target.value)}
         />
       </div>
       {activeChapter && (
-        <p className="text-[10px] text-base-content/40 mt-0.5">
-          {maxParagraph} parágrafos numerados ({chapter}:1–{chapter}:{maxParagraph})
+        <p className={`text-[10px] mt-0.5 ${overLimit ? 'text-error' : 'text-base-content/40'}`}>
+          {maxParagraph} parágrafo{maxParagraph === 1 ? '' : 's'} no cap. {chapter} ({chapter}:1–{chapter}:{maxParagraph || 1})
         </p>
       )}
     </div>

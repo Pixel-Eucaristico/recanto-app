@@ -58,10 +58,14 @@ export class BookEntity {
    * Renumera também footnotes baseado na ordem em que `[^N]` aparece nos blocks.
    * Chamado antes de salvar pra garantir refs estáveis.
    */
-  static numberChapter(chapter: BookChapter): BookChapter {
+  /**
+   * @param bodyChapterNumber Position among body chapters (1-based). Default: chapter.order.
+   *   Pra body matter, refs ficam `${bodyChapterNumber}:${paragraphIdx}`.
+   *   Pré/pós-textuais ficam sem ref.
+   */
+  static numberChapter(chapter: BookChapter, bodyChapterNumber?: number): BookChapter {
     const kind = chapter.kind ?? 'chapter';
-    // Numeração canônica (capítulo:parágrafo) é só pra body matter.
-    // Pré/pós-textuais não recebem ref — refs lá poluem range (ex: 1:1 existe em vários kinds).
+    // Apenas kind='chapter' recebe ref canônica.
     if (kind !== 'chapter') {
       const blocksWithoutRef = chapter.blocks.map(b => {
         const { ref: _ref, ...rest } = b;
@@ -70,7 +74,8 @@ export class BookEntity {
       const { blocks, footnotes } = BookEntity.renumberFootnotes(blocksWithoutRef, chapter.footnotes);
       return { ...chapter, blocks, footnotes };
     }
-    const numberedBlocks = CanonicalRefEntity.numberBlocks(chapter.order, chapter.blocks);
+    const num = bodyChapterNumber ?? chapter.order;
+    const numberedBlocks = CanonicalRefEntity.numberBlocks(num, chapter.blocks);
     const { blocks, footnotes } = BookEntity.renumberFootnotes(numberedBlocks, chapter.footnotes);
     return { ...chapter, blocks, footnotes };
   }

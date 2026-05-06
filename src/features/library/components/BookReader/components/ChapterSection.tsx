@@ -38,7 +38,7 @@ export function ChapterSection({
       className="scroll-mt-24"
     >
       <header className="mb-4 pb-3 border-b border-base-300">
-        <p className="text-xs uppercase tracking-wide text-base-content/50">Capítulo {chapter.order}</p>
+        <p className="text-xs uppercase tracking-wide text-base-content/50">{chapterKindLabel(chapter.kind, chapter.order)}</p>
         <h2 className="text-2xl md:text-3xl font-bold text-base-content mt-1">{chapter.title}</h2>
         {chapter.subtitle && (
           <p className="text-sm md:text-base text-base-content/70 italic mt-1">{chapter.subtitle}</p>
@@ -92,4 +92,20 @@ export function ChapterSection({
       )}
     </section>
   );
+}
+
+function chapterKindLabel(kind: string | undefined, order: number): string {
+  switch (kind) {
+    case 'credits': return 'Folha de Rosto';
+    case 'preface': return 'Prefácio';
+    case 'introduction': return 'Introdução';
+    case 'bibliography': return 'Bibliografia';
+    case 'glossary': return 'Glossário';
+    case 'appendix': return 'Apêndice';
+    case 'notes': return 'Notas';
+    case 'about': return 'Sobre';
+    case 'chapter':
+    default:
+      return `Capítulo ${order}`;
+  }
 }
