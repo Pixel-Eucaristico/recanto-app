@@ -59,6 +59,17 @@ export class BookEntity {
    * Chamado antes de salvar pra garantir refs estáveis.
    */
   static numberChapter(chapter: BookChapter): BookChapter {
+    const kind = chapter.kind ?? 'chapter';
+    // Numeração canônica (capítulo:parágrafo) é só pra body matter.
+    // Pré/pós-textuais não recebem ref — refs lá poluem range (ex: 1:1 existe em vários kinds).
+    if (kind !== 'chapter') {
+      const blocksWithoutRef = chapter.blocks.map(b => {
+        const { ref: _ref, ...rest } = b;
+        return rest;
+      });
+      const { blocks, footnotes } = BookEntity.renumberFootnotes(blocksWithoutRef, chapter.footnotes);
+      return { ...chapter, blocks, footnotes };
+    }
     const numberedBlocks = CanonicalRefEntity.numberBlocks(chapter.order, chapter.blocks);
     const { blocks, footnotes } = BookEntity.renumberFootnotes(numberedBlocks, chapter.footnotes);
     return { ...chapter, blocks, footnotes };

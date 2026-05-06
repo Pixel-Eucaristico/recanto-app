@@ -18,7 +18,7 @@ const MindMapPlugin: LessonComponent<MindMapConfig> = {
   defaultConfig: {},
   defaultRequired: false,
 
-  EditorComponent: ({ config, required, onChange }) => (
+  EditorComponent: ({ config, onChange }) => (
     <div className="space-y-2">
       <label className="form-control">
         <span className="label-text text-xs mb-1">ID do template (opcional)</span>
@@ -28,10 +28,9 @@ const MindMapPlugin: LessonComponent<MindMapConfig> = {
           onChange={e => onChange({ config: { template_id: e.target.value || undefined } as Partial<MindMapConfig> })}
         />
       </label>
-      <label className="cursor-pointer flex items-center gap-2">
-        <input type="checkbox" className="checkbox checkbox-sm" checked={required} onChange={e => onChange({ required: e.target.checked })} />
-        <span className="text-sm">Obrigatório</span>
-      </label>
+      <p className="text-[11px] text-base-content/60">
+        Mapa mental é atividade exploratória — sempre opcional, não bloqueia próxima aula.
+      </p>
     </div>
   ),
 

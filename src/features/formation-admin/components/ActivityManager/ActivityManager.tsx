@@ -59,13 +59,15 @@ const ACTIVITY_META: Record<ActivityType, {
   flagKey: keyof ActivityFlags;
   description: string;
   color: string;
+  /** Pode ser marcada como obrigatória (bloqueia próxima aula). Mind map é exploratória — sempre opcional. */
+  canBeRequired: boolean;
 }> = {
-  quiz:        { label: 'Quiz',              icon: <Award className="w-5 h-5" />,    flagKey: 'requires_quiz',        description: 'Múltipla escolha, lacuna, associar',  color: 'bg-warning/15 text-warning' },
-  flashcards:  { label: 'Flashcards',        icon: <Layers className="w-5 h-5" />,   flagKey: 'requires_flashcards',  description: 'Cartões frente/verso',                color: 'bg-info/15 text-info' },
-  case_study:  { label: 'Estudo de caso',    icon: <Network className="w-5 h-5" />,  flagKey: 'requires_case_study',  description: 'Cenários com decisões',                color: 'bg-secondary/15 text-secondary' },
-  word_search: { label: 'Caça-palavras',     icon: <Search className="w-5 h-5" />,   flagKey: 'requires_word_search', description: 'Grid auto-gerado',                     color: 'bg-success/15 text-success' },
-  crossword:   { label: 'Palavras cruzadas', icon: <Grid3x3 className="w-5 h-5" />,  flagKey: 'requires_crossword',   description: 'Pergunta + resposta cruzadas',         color: 'bg-accent/15 text-accent' },
-  mind_map:    { label: 'Mapa mental',       icon: <Sparkles className="w-5 h-5" />, flagKey: 'requires_mind_map',    description: 'Template editável pelo aluno',         color: 'bg-primary/15 text-primary' },
+  quiz:        { label: 'Quiz',              icon: <Award className="w-5 h-5" />,    flagKey: 'requires_quiz',        description: 'Múltipla escolha, lacuna, associar',  color: 'bg-warning/15 text-warning',     canBeRequired: true  },
+  flashcards:  { label: 'Flashcards',        icon: <Layers className="w-5 h-5" />,   flagKey: 'requires_flashcards',  description: 'Cartões frente/verso',                color: 'bg-info/15 text-info',           canBeRequired: true  },
+  case_study:  { label: 'Estudo de caso',    icon: <Network className="w-5 h-5" />,  flagKey: 'requires_case_study',  description: 'Cenários com decisões',                color: 'bg-secondary/15 text-secondary', canBeRequired: true  },
+  word_search: { label: 'Caça-palavras',     icon: <Search className="w-5 h-5" />,   flagKey: 'requires_word_search', description: 'Grid auto-gerado',                     color: 'bg-success/15 text-success',     canBeRequired: true  },
+  crossword:   { label: 'Palavras cruzadas', icon: <Grid3x3 className="w-5 h-5" />,  flagKey: 'requires_crossword',   description: 'Pergunta + resposta cruzadas',         color: 'bg-accent/15 text-accent',       canBeRequired: true  },
+  mind_map:    { label: 'Mapa mental',       icon: <Sparkles className="w-5 h-5" />, flagKey: 'requires_mind_map',    description: 'Template editável pelo aluno (sempre opcional)', color: 'bg-primary/15 text-primary', canBeRequired: false },
 };
 
 export function ActivityManager({ lessonId, createdBy, flags, order, onChange, onOrderChange }: ActivityManagerProps) {
@@ -344,15 +346,21 @@ function SortableActivityCard({
           </div>
 
           <div className="flex items-center gap-2 mt-1">
-            <button
-              type="button"
-              className={`btn btn-xs gap-1 flex-1 ${required ? 'btn-primary' : 'btn-ghost border border-base-300'}`}
-              onClick={onToggleRequired}
-              disabled={disabled}
-            >
-              {required && <Check className="w-3.5 h-3.5" />}
-              {required ? 'Obrigatória' : 'Opcional'}
-            </button>
+            {meta.canBeRequired ? (
+              <button
+                type="button"
+                className={`btn btn-xs gap-1 flex-1 ${required ? 'btn-primary' : 'btn-ghost border border-base-300'}`}
+                onClick={onToggleRequired}
+                disabled={disabled}
+              >
+                {required && <Check className="w-3.5 h-3.5" />}
+                {required ? 'Obrigatória' : 'Opcional'}
+              </button>
+            ) : (
+              <span className="badge badge-ghost badge-sm flex-1 justify-center text-base-content/60">
+                Sempre opcional
+              </span>
+            )}
             <button
               type="button"
               className="btn btn-primary btn-sm gap-1 flex-1"

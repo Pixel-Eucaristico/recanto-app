@@ -46,15 +46,18 @@ export function LessonTabs({ lesson, track, module, userId, userName, onProgress
     }
   }, [openForumComposerKey]);
 
+  // Plugin instances também ativam a aba (paralelo aos flags requires_*)
+  const hasPluginKind = (kind: string) => (lesson.components ?? []).some(c => c.kind === kind);
+
   const tabs: { id: TabId; label: string; icon: ReactNode; enabled: boolean }[] = [
     { id: 'apostila', label: 'Apostila', icon: <BookOpen className="w-4 h-4" />, enabled: !!lesson.apostila_content || lesson.highlight_quotes.length > 0 || (lesson.book_citations?.length ?? 0) > 0 },
-    { id: 'reflection', label: 'Caderno', icon: <PenLine className="w-4 h-4" />, enabled: lesson.requires_reflection },
-    { id: 'quiz', label: 'Quiz', icon: <Award className="w-4 h-4" />, enabled: !!lesson.requires_quiz },
-    { id: 'flashcards', label: 'Flashcards', icon: <Layers className="w-4 h-4" />, enabled: !!lesson.requires_flashcards },
-    { id: 'case_study', label: 'Caso', icon: <Network className="w-4 h-4" />, enabled: !!lesson.requires_case_study },
-    { id: 'word_search', label: 'Caça-palavras', icon: <Search className="w-4 h-4" />, enabled: !!lesson.requires_word_search },
-    { id: 'crossword', label: 'Cruzadas', icon: <Grid3x3 className="w-4 h-4" />, enabled: !!lesson.requires_crossword },
-    { id: 'mind_map', label: 'Mapa mental', icon: <Network className="w-4 h-4" />, enabled: !!lesson.requires_mind_map },
+    { id: 'reflection', label: 'Caderno', icon: <PenLine className="w-4 h-4" />, enabled: lesson.requires_reflection || hasPluginKind('reflection') },
+    { id: 'quiz', label: 'Quiz', icon: <Award className="w-4 h-4" />, enabled: !!lesson.requires_quiz || hasPluginKind('quiz') },
+    { id: 'flashcards', label: 'Flashcards', icon: <Layers className="w-4 h-4" />, enabled: !!lesson.requires_flashcards || hasPluginKind('flashcards') },
+    { id: 'case_study', label: 'Caso', icon: <Network className="w-4 h-4" />, enabled: !!lesson.requires_case_study || hasPluginKind('case_study') },
+    { id: 'word_search', label: 'Caça-palavras', icon: <Search className="w-4 h-4" />, enabled: !!lesson.requires_word_search || hasPluginKind('word_search') },
+    { id: 'crossword', label: 'Cruzadas', icon: <Grid3x3 className="w-4 h-4" />, enabled: !!lesson.requires_crossword || hasPluginKind('crossword') },
+    { id: 'mind_map', label: 'Mapa mental', icon: <Network className="w-4 h-4" />, enabled: !!lesson.requires_mind_map || hasPluginKind('mind_map') },
     { id: 'practical', label: 'Prática', icon: <Activity className="w-4 h-4" />, enabled: !!lesson.practical_activity },
     { id: 'forum', label: 'Fórum', icon: <MessageSquare className="w-4 h-4" />, enabled: true },
   ];
@@ -165,10 +168,13 @@ function ApostilaTab({ lesson, userId }: { lesson: FormationLesson; userId: stri
     <div className="space-y-4">
       {lesson.apostila_content && <RichContent markdown={lesson.apostila_content} />}
 
-      {/* Book excerpts embedded inline */}
+      {/* Book excerpts embedded inline. Dedup por (book_id+start_ref+end_ref)
+          pra evitar render duplicado se admin adicionou citation idêntica 2x. */}
       {citations.length > 0 && (
         <div className="space-y-3">
-          {citations.map((c, i) => (
+          {Array.from(
+            new Map(citations.map(c => [`${c.book_id}|${c.start_ref ?? ''}|${c.end_ref ?? ''}`, c])).values(),
+          ).map((c, i) => (
             <LessonBookExcerpt key={`${c.book_id}_${i}`} citation={c} />
           ))}
         </div>
