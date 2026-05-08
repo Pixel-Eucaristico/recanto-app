@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState, ReactNode } from 'react';
-import { BookOpen, PenLine, Award, MessageSquare, Quote, Activity, Megaphone, Layers, Search, Grid3x3, Network } from 'lucide-react';
+import { useEffect, useLayoutEffect, useRef, useState, ReactNode } from 'react';
+import { BookOpen, PenLine, Award, MessageSquare, Quote, Activity, Megaphone, Layers, Search, Grid3x3, Network, Maximize2, X } from 'lucide-react';
 import { FormationLesson } from '@/domain/formation/types';
 import { RichContent } from '@/shared/components/RichContent';
 import { useReflection } from '@/features/spiritual-notebook';
@@ -38,6 +38,9 @@ interface LessonTabsProps {
 export function LessonTabs({ lesson, track, module, userId, userName, onProgress, openForumComposerKey }: LessonTabsProps) {
   const [tab, setTab] = useState<TabId>('apostila');
   const [forumAutoOpen, setForumAutoOpen] = useState(0);
+  const [fullscreen, setFullscreen] = useState(false);
+  const tablistRef = useRef<HTMLDivElement | null>(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (openForumComposerKey !== undefined && openForumComposerKey > 0) {
@@ -45,6 +48,46 @@ export function LessonTabs({ lesson, track, module, userId, userName, onProgress
       setForumAutoOpen(k => k + 1);
     }
   }, [openForumComposerKey]);
+
+  const wantScrollRef = useRef(false);
+  function selectTab(id: TabId) {
+    if (id !== tab) wantScrollRef.current = true;
+    setTab(id);
+  }
+
+  useLayoutEffect(() => {
+    if (!wantScrollRef.current) return;
+    wantScrollRef.current = false;
+    const el = tablistRef.current;
+    if (!el) return;
+
+    let debounce: number | null = null;
+    const scheduleScroll = () => {
+      if (debounce) window.clearTimeout(debounce);
+      debounce = window.setTimeout(() => {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 80);
+    };
+
+    const obs = new ResizeObserver(scheduleScroll);
+    obs.observe(el);
+    scheduleScroll();
+
+    const stop = window.setTimeout(() => obs.disconnect(), 1500);
+    return () => {
+      obs.disconnect();
+      if (debounce) window.clearTimeout(debounce);
+      window.clearTimeout(stop);
+    };
+  }, [tab]);
+
+  useEffect(() => {
+    if (!fullscreen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setFullscreen(false); };
+    window.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = ''; };
+  }, [fullscreen]);
 
   // Plugin instances também ativam a aba (paralelo aos flags requires_*)
   const hasPluginKind = (kind: string) => (lesson.components ?? []).some(c => c.kind === kind);
@@ -64,54 +107,100 @@ export function LessonTabs({ lesson, track, module, userId, userName, onProgress
 
   const visibleTabs = tabs.filter(t => t.enabled);
 
+  const activeTabMeta = visibleTabs.find(t => t.id === tab);
+  const isActivity = tab !== 'apostila' && tab !== 'forum';
+
+  const tabContent = (
+    <>
+      {tab === 'apostila' && <ApostilaTab lesson={lesson} userId={userId} />}
+      {tab === 'reflection' && (
+        <ReflectionTab
+          lesson={lesson}
+          track={track}
+          module={module}
+          onSaved={onProgress}
+        />
+      )}
+      {tab === 'quiz' && (
+        <QuizTab lessonId={lesson.id} quizId={lesson.quiz_id ?? ''} userId={userId} onPassed={onProgress} />
+      )}
+      {tab === 'flashcards' && (
+        <FlashcardsTab lessonId={lesson.id} onCompleted={onProgress} />
+      )}
+      {tab === 'case_study' && (
+        <CaseStudyTab lessonId={lesson.id} onCompleted={onProgress} />
+      )}
+      {tab === 'word_search' && (
+        <WordSearchTab lessonId={lesson.id} onCompleted={onProgress} />
+      )}
+      {tab === 'crossword' && (
+        <CrosswordTab lessonId={lesson.id} onCompleted={onProgress} />
+      )}
+      {tab === 'mind_map' && (
+        <MindMapTab lessonId={lesson.id} onCompleted={onProgress} />
+      )}
+      {tab === 'practical' && lesson.practical_activity && (
+        <PracticalTab lesson={lesson} />
+      )}
+    </>
+  );
+
   return (
-    <div className="space-y-3">
-      <div role="tablist" className="tabs tabs-boxed bg-base-100 border border-base-300 w-fit flex-wrap">
-        {visibleTabs.map(t => (
+    <div className="space-y-3" ref={tablistRef} style={{ scrollMarginTop: '8px' }}>
+      <div className="flex items-center gap-2 flex-wrap">
+        <div role="tablist" className="tabs tabs-boxed bg-base-100 border border-base-300 flex-wrap">
+          {visibleTabs.map(t => (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              className={`tab gap-1 ${tab === t.id ? 'tab-active' : ''}`}
+              onClick={() => selectTab(t.id)}
+            >
+              {t.icon}
+              {t.label}
+            </button>
+          ))}
+        </div>
+        {isActivity && activeTabMeta && (
           <button
-            key={t.id}
             type="button"
-            role="tab"
-            className={`tab gap-1 ${tab === t.id ? 'tab-active' : ''}`}
-            onClick={() => setTab(t.id)}
+            onClick={() => setFullscreen(true)}
+            className="btn btn-ghost btn-sm gap-1"
+            aria-label="Maximizar atividade"
+            title="Maximizar"
           >
-            {t.icon}
-            {t.label}
+            <Maximize2 className="w-4 h-4" />
+            <span className="hidden md:inline">Tela cheia</span>
           </button>
-        ))}
+        )}
       </div>
 
-      <div className="bg-base-100 border border-base-300 rounded-2xl p-4">
-        {tab === 'apostila' && <ApostilaTab lesson={lesson} userId={userId} />}
-        {tab === 'reflection' && (
-          <ReflectionTab
-            lesson={lesson}
-            track={track}
-            module={module}
-            onSaved={onProgress}
-          />
-        )}
-        {tab === 'quiz' && (
-          <QuizTab lessonId={lesson.id} quizId={lesson.quiz_id ?? ''} userId={userId} onPassed={onProgress} />
-        )}
-        {tab === 'flashcards' && (
-          <FlashcardsTab lessonId={lesson.id} onCompleted={onProgress} />
-        )}
-        {tab === 'case_study' && (
-          <CaseStudyTab lessonId={lesson.id} onCompleted={onProgress} />
-        )}
-        {tab === 'word_search' && (
-          <WordSearchTab lessonId={lesson.id} onCompleted={onProgress} />
-        )}
-        {tab === 'crossword' && (
-          <CrosswordTab lessonId={lesson.id} onCompleted={onProgress} />
-        )}
-        {tab === 'mind_map' && (
-          <MindMapTab lessonId={lesson.id} onCompleted={onProgress} />
-        )}
-        {tab === 'practical' && lesson.practical_activity && (
-          <PracticalTab lesson={lesson} />
-        )}
+      {fullscreen && activeTabMeta && (
+        <div className="fixed inset-0 z-[100] bg-base-200 flex flex-col">
+          <div className="flex items-center justify-between gap-2 px-4 py-2 border-b border-base-300 bg-base-100">
+            <div className="flex items-center gap-2 font-semibold text-base-content">
+              {activeTabMeta.icon}
+              {activeTabMeta.label}
+            </div>
+            <button
+              type="button"
+              onClick={() => setFullscreen(false)}
+              className="btn btn-ghost btn-sm gap-1"
+              aria-label="Fechar tela cheia"
+            >
+              <X className="w-4 h-4" />
+              <span className="hidden md:inline">Fechar</span>
+            </button>
+          </div>
+          <div className="flex-1 overflow-auto p-4 md:p-6">
+            <div className="max-w-5xl mx-auto">{tabContent}</div>
+          </div>
+        </div>
+      )}
+
+      <div className={`bg-base-100 border border-base-300 rounded-2xl p-4 ${fullscreen ? 'hidden' : ''}`}>
+        {tab !== 'forum' && tabContent}
         {tab === 'forum' && (
           <div className="space-y-3">
             {lesson.forum_prompt && (

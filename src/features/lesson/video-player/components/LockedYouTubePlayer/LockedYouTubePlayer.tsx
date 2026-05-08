@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import YouTube, { YouTubeEvent, YouTubePlayer } from 'react-youtube';
-import { Play, Pause, Lock, CheckCircle2 } from 'lucide-react';
+import { Play, Pause, Lock, CheckCircle2, Volume2, VolumeX, Volume1 } from 'lucide-react';
 import { VideoSession } from '@/domain/video-player/types';
 import { VideoSessionEntity } from '@/domain/video-player/entities/VideoSession';
 
@@ -17,7 +17,30 @@ export function LockedYouTubePlayer({ videoId, session, onTick }: LockedYouTubeP
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [volume, setVolume] = useState(100);
+  const [muted, setMuted] = useState(false);
   const lockState = VideoSessionEntity.lockState(session);
+
+  function applyVolume(v: number) {
+    const p = playerRef.current;
+    setVolume(v);
+    if (v === 0) setMuted(true);
+    else setMuted(false);
+    if (!p) return;
+    try {
+      p.setVolume(v);
+      if (v === 0) p.mute();
+      else p.unMute();
+    } catch {}
+  }
+
+  function toggleMute() {
+    const p = playerRef.current;
+    const next = !muted;
+    setMuted(next);
+    if (!p) return;
+    try { next ? p.mute() : p.unMute(); } catch {}
+  }
 
   // tick loop — lê player e repassa
   useEffect(() => {
@@ -108,28 +131,75 @@ export function LockedYouTubePlayer({ videoId, session, onTick }: LockedYouTubeP
           >
             {playing ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
           </button>
-          <div className="relative flex-1 h-1.5 bg-base-300/30 rounded-full overflow-hidden">
-            {/* Camada base: assistido (success quando concluído) */}
-            <div
-              className={`absolute left-0 top-0 h-full ${VideoSessionEntity.isMinimumReached(session) ? 'bg-success' : 'bg-primary'}`}
-              style={{ width: `${safePct}%` }}
-            />
-            {/* Sobreposto: barra warning da revisita + linha primary marker */}
-            {showRewatchOverlay && (
-              <>
+          <div
+            className={`relative flex-1 h-2 group ${VideoSessionEntity.isMinimumReached(session) ? 'cursor-pointer' : ''}`}
+            onClick={e => e.stopPropagation()}
+            onPointerDown={e => {
+              if (!VideoSessionEntity.isMinimumReached(session)) return;
+              const p = playerRef.current;
+              if (!p || duration <= 0) return;
+              e.stopPropagation();
+              const bar = e.currentTarget as HTMLDivElement;
+              bar.setPointerCapture(e.pointerId);
+              const seekFromEvent = (clientX: number) => {
+                const rect = bar.getBoundingClientRect();
+                const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+                setCurrentTime(ratio * duration);
+                try { p.seekTo(ratio * duration, true); } catch {}
+              };
+              seekFromEvent(e.clientX);
+              const onMove = (ev: PointerEvent) => seekFromEvent(ev.clientX);
+              const onUp = (ev: PointerEvent) => {
+                bar.releasePointerCapture(ev.pointerId);
+                bar.removeEventListener('pointermove', onMove);
+                bar.removeEventListener('pointerup', onUp);
+                bar.removeEventListener('pointercancel', onUp);
+              };
+              bar.addEventListener('pointermove', onMove);
+              bar.addEventListener('pointerup', onUp);
+              bar.addEventListener('pointercancel', onUp);
+            }}
+          >
+            <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1.5 bg-base-300/30 rounded-full overflow-hidden">
+              <div
+                className={`absolute left-0 top-0 h-full ${VideoSessionEntity.isMinimumReached(session) ? 'bg-success' : 'bg-primary'}`}
+                style={{ width: `${safePct}%` }}
+              />
+              {showRewatchOverlay && (
                 <div
                   className="absolute left-0 top-0 h-full bg-warning"
                   style={{ width: `${positionPct}%` }}
                 />
-                <div
-                  className="absolute top-0 h-full w-0.5 bg-primary"
-                  style={{ left: `calc(${positionPct}% - 1px)` }}
-                />
-              </>
+              )}
+            </div>
+            {VideoSessionEntity.isMinimumReached(session) && (
+              <div
+                className="absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-white rounded-full shadow ring-2 ring-primary -translate-x-1/2 transition-transform group-hover:scale-110 pointer-events-none"
+                style={{ left: `${positionPct}%` }}
+              />
             )}
           </div>
           <div className="text-xs text-white/80 whitespace-nowrap font-mono">
             {formatTime(currentTime)} / {formatTime(duration)}
+          </div>
+          <div className="flex items-center gap-1 group" onClick={e => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={toggleMute}
+              className="btn btn-ghost btn-xs btn-circle text-white hover:bg-white/20"
+              aria-label={muted ? 'Ativar som' : 'Silenciar'}
+            >
+              {muted || volume === 0 ? <VolumeX className="w-4 h-4" /> : volume < 50 ? <Volume1 className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+            </button>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={muted ? 0 : volume}
+              onChange={e => applyVolume(Number(e.target.value))}
+              className="range range-xs w-16 hidden md:block"
+              aria-label="Volume"
+            />
           </div>
         </div>
 

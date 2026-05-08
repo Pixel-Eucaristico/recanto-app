@@ -49,6 +49,7 @@ function LockedMp4Player({ videoUrl, session, onTick }: LockedVideoPlayerProps) 
   function handleSeeking() {
     const v = videoRef.current;
     if (!v) return;
+    if (VideoSessionEntity.isMinimumReached(session)) return;
     const maxAllowed = VideoSessionEntity.maxAllowedSeekSeconds(session);
     if (v.currentTime > maxAllowed) v.currentTime = maxAllowed;
   }

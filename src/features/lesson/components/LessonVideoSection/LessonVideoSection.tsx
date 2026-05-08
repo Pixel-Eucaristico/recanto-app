@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import { CheckCircle2, PlayCircle, Eye } from 'lucide-react';
 import { FormationLesson } from '@/domain/formation/types';
 import { LockedVideoPlayer, useVideoSession, WatchProgressBar } from '@/features/lesson/video-player';
@@ -9,9 +10,10 @@ interface LessonVideoSectionProps {
   moduleId: string;
   trackId: string;
   userId: string;
+  onProgress?: () => void;
 }
 
-export function LessonVideoSection({ lesson, moduleId, trackId, userId }: LessonVideoSectionProps) {
+export function LessonVideoSection({ lesson, moduleId, trackId, userId, onProgress }: LessonVideoSectionProps) {
   const { session, tick, loading, error, watchCount } = useVideoSession({
     userId,
     lessonId: lesson.id,
@@ -20,6 +22,16 @@ export function LessonVideoSection({ lesson, moduleId, trackId, userId }: Lesson
     minWatchPercent: lesson.min_watch_percent,
     durationSeconds: lesson.video_duration_seconds,
   });
+
+  const reachedMinRef = useRef(false);
+  useEffect(() => {
+    if (!session) return;
+    const min = lesson.min_watch_percent ?? 0;
+    if (min > 0 && session.watchPercent >= min && !reachedMinRef.current) {
+      reachedMinRef.current = true;
+      onProgress?.();
+    }
+  }, [session, lesson.min_watch_percent, onProgress]);
 
   if (loading) {
     return <div className="aspect-video bg-base-300 rounded-2xl animate-pulse" />;

@@ -91,6 +91,7 @@ export default function LessonPage({ params }: Props) {
             moduleId={module.id}
             trackId={track.id}
             userId={user.id}
+            onProgress={refreshProgress}
           />
 
           {lesson.video_url && !progress?.video_completed_at ? (
