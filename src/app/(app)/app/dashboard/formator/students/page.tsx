@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Users, Search, ChevronRight, Activity, AlertTriangle, TrendingUp, Download } from 'lucide-react';
+import { Users, Search, ChevronRight, Activity, AlertTriangle, TrendingUp, Download } from 'lucide-react';
+import { BackButton } from '@/shared/components/BackButton';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 import { formatorService, type StudentSummary, type FormatorStats } from '@/application/formation/FormatorService';
 import type { FormationTrack } from '@/domain/formation/types';
@@ -103,9 +104,7 @@ export default function FormatorStudentsPage() {
     <div className="min-h-screen bg-base-200 p-3 sm:p-6">
       <div className="max-w-3xl mx-auto space-y-3">
         <div className="flex items-center gap-2">
-          <Link href="/app/dashboard/journey" className="btn btn-ghost btn-sm gap-1">
-            <ArrowLeft className="w-4 h-4" /> Voltar
-          </Link>
+          <BackButton fallbackHref="/app/dashboard/journey" />
           <h1 className="text-base sm:text-lg font-bold flex items-center gap-1">
             <Users className="w-5 h-5 text-accent" /> Meus alunos
           </h1>

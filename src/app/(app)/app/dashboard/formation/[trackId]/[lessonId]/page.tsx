@@ -2,7 +2,8 @@
 
 import { use } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Lock, PlayCircle } from 'lucide-react';
+import { Lock, PlayCircle } from 'lucide-react';
+import { BackButton } from '@/shared/components/BackButton';
 import { LessonHeader, LessonVideoSection, LessonTabs, LessonSidebar, useLessonPage } from '@/features/lesson';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 import { UnlockRuleEngine } from '@/domain/formation/entities/UnlockRuleEngine';
@@ -41,12 +42,7 @@ export default function LessonPage({ params }: Props) {
   if (!unlockResult.isUnlocked) {
     return (
       <div className="min-h-screen bg-base-200 p-4 md:p-6 space-y-4">
-        <Link
-          href={`/app/dashboard/formation/${track.id}`}
-          className="btn btn-ghost btn-sm gap-1"
-        >
-          <ArrowLeft className="w-4 h-4" /> Voltar pra trilha
-        </Link>
+        <BackButton fallbackHref={`/app/dashboard/formation/${track.id}`}>Voltar</BackButton>
 
         <div className="card bg-base-100 border border-base-300 max-w-xl mx-auto">
           <div className="card-body items-center text-center gap-3 p-8">

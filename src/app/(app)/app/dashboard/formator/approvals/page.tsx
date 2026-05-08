@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, CheckCircle2, XCircle, Clock, Loader2, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, Loader2, ShieldCheck } from 'lucide-react';
+import { BackButton } from '@/shared/components/BackButton';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 import { trackEnrollmentService } from '@/application/enrollment/TrackEnrollmentService';
 import type { TrackEnrollmentRequest } from '@/domain/enrollment/types';
@@ -67,9 +68,7 @@ export default function FormatorApprovalsPage() {
     <div className="min-h-screen bg-base-200 p-3 sm:p-6">
       <div className="max-w-3xl mx-auto space-y-3">
         <div className="flex items-center gap-2">
-          <Link href="/app/dashboard/journey" className="btn btn-ghost btn-sm gap-1">
-            <ArrowLeft className="w-4 h-4" /> Voltar
-          </Link>
+          <BackButton fallbackHref="/app/dashboard/journey" />
           <h1 className="text-base sm:text-lg font-bold flex items-center gap-1">
             <ShieldCheck className="w-5 h-5 text-accent" /> Aprovações pendentes
           </h1>

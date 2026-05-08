@@ -2,8 +2,7 @@
 
 import { use } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { BackButton } from '@/shared/components/BackButton';
 import { useBookReader, BookReader } from '@/features/library';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 
@@ -30,9 +29,7 @@ export default function BookReaderPage({ params }: { params: Promise<{ bookId: s
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-3 p-6 bg-base-200">
         <p className="text-base-content/70">{error ?? 'Livro não encontrado.'}</p>
-        <Link href="/app/dashboard/library" className="btn btn-ghost btn-sm gap-1">
-          <ArrowLeft className="w-4 h-4" /> Voltar
-        </Link>
+        <BackButton fallbackHref="/app/dashboard/library" />
       </div>
     );
   }

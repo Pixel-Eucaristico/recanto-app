@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, MessageCircle, MessageSquare, Search, Loader2 } from 'lucide-react';
+import { MessageCircle, MessageSquare, Search, Loader2 } from 'lucide-react';
+import { BackButton } from '@/shared/components/BackButton';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 import { communityPostRepository } from '@/infrastructure/community/CommunityPostRepository';
 import { communityReplyRepository } from '@/infrastructure/community/CommunityReplyRepository';
@@ -125,9 +126,7 @@ export default function MyForumActivityPage() {
     <div className="min-h-screen bg-base-200 p-3 sm:p-6">
       <div className="max-w-3xl mx-auto space-y-3">
         <div className="flex items-center gap-2">
-          <Link href="/app/dashboard/journey" className="btn btn-ghost btn-sm gap-1">
-            <ArrowLeft className="w-4 h-4" /> Voltar
-          </Link>
+          <BackButton fallbackHref="/app/dashboard/journey" />
           <h1 className="text-base sm:text-lg font-bold">Minha participação no fórum</h1>
         </div>
 

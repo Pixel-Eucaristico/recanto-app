@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { ArrowLeft, BookOpen, GraduationCap, CheckCircle2, Clock, BookMarked } from 'lucide-react';
+import { BookOpen, GraduationCap, CheckCircle2, Clock, BookMarked } from 'lucide-react';
+import { BackButton } from '@/shared/components/BackButton';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 import { formatorService } from '@/application/formation/FormatorService';
 import { bookReadingProgressRepository } from '@/infrastructure/library/BookReadingProgressRepository';
@@ -93,9 +94,7 @@ export default function FormatorStudentDetailPage() {
     <div className="min-h-screen bg-base-200 p-3 sm:p-6">
       <div className="max-w-3xl mx-auto space-y-3">
         <div className="flex items-center gap-2">
-          <Link href="/app/dashboard/formator/students" className="btn btn-ghost btn-sm gap-1">
-            <ArrowLeft className="w-4 h-4" /> Voltar
-          </Link>
+          <BackButton fallbackHref="/app/dashboard/formator/students" />
           <h1 className="text-base sm:text-lg font-bold truncate">
             {student?.name || student?.email || 'Aluno'}
           </h1>
