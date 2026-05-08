@@ -5,7 +5,6 @@ import type { Book } from '@/domain/library/types';
 import { Tooltip } from '@/shared/components/Tooltip';
 import { BookExportButtons } from '@/features/library/components/BookExportButtons';
 import { NotificationBell } from '@/features/notifications';
-import { PrayerCenterButton } from '@/features/prayer';
 
 interface BookReaderHeaderProps {
   book: Book;
@@ -98,9 +97,8 @@ export function BookReaderHeader({
           </span>
         )}
 
-        {/* Bar do dashboard absorvida aqui — prayer + notificação */}
+        {/* Bar do dashboard absorvida aqui — notificação */}
         <div className="flex items-center shrink-0 border-l border-base-300/60 pl-1 ml-1">
-          <PrayerCenterButton />
           <NotificationBell />
         </div>
 

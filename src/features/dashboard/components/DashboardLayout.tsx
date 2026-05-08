@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 
 import Link from "next/link";
 import { NotificationBell } from "@/features/notifications";
-import { PrayerCenterButton } from "@/features/prayer";
 // Bootstrap registry de plugins client-side (singleton via globalThis garante uma instância)
 import "@/application/lesson/registerAllPlugins";
 
@@ -40,15 +39,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               <img src="/logo.svg" alt="Recanto Logo" className="w-6 h-6 object-contain" />
               <span className="text-lg font-bold text-base-content">Recanto Digital</span>
             </Link>
-            <PrayerCenterButton />
             <NotificationBell />
           </nav>
         )}
 
-        {/* Navbar desktop — sino + oração */}
+        {/* Navbar desktop — sino */}
         {!isBookReader && (
           <nav className="hidden lg:flex justify-end items-center gap-1 px-4 py-2 bg-base-100 border-b border-base-300">
-            <PrayerCenterButton />
             <NotificationBell />
           </nav>
         )}
