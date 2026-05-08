@@ -87,6 +87,17 @@ export class QuizService {
     return this.attemptRepo.findByUserAndQuiz(userId, quizId);
   }
 
+  /** Última tentativa salva + scoreDetail reconstruído. Pra mostrar resultado ao reabrir. */
+  async getLatestResult(userId: string, quizId: string): Promise<{ attempt: QuizAttempt; scoreDetail: ScoreResult } | null> {
+    const attempts = await this.attemptRepo.findByUserAndQuiz(userId, quizId);
+    if (attempts.length === 0) return null;
+    const latest = attempts.sort((a, b) => b.attempted_at.localeCompare(a.attempted_at))[0];
+    const quiz = await this.quizRepo.findById(quizId);
+    if (!quiz) return null;
+    const scoreDetail = QuizAttemptEntity.score(quiz, latest.answers);
+    return { attempt: latest, scoreDetail };
+  }
+
   async save(quiz: Quiz | (Omit<Quiz, 'id'> & { id?: string })): Promise<Quiz> {
     const validation = QuizEntity.validate(quiz);
     if (!validation.valid) throw new Error(validation.errors.join(' '));

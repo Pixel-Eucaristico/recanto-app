@@ -66,6 +66,14 @@ export class WordSearchService {
     return existing.length > 0;
   }
 
+  /** Último resultado salvo (palavras encontradas + score). */
+  async getLatestResult(userId: string, puzzleId: string): Promise<{ found: string[]; score: number } | null> {
+    const existing = await this.resultRepo.findByUserAndPuzzle(userId, puzzleId);
+    if (existing.length === 0) return null;
+    const latest = existing.sort((a, b) => b.completed_at.localeCompare(a.completed_at))[0];
+    return { found: latest.found ?? [], score: latest.score };
+  }
+
   async save(
     puzzle: WordSearchPuzzle | (Omit<WordSearchPuzzle, 'id' | 'grid' | 'placements'> & {
       id?: string;

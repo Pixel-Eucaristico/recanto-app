@@ -20,13 +20,12 @@ export class FirebaseFlashcardReviewRepository
   }
 
   async findByUserAndDeck(userId: string, deckId: string): Promise<FlashcardReview[]> {
-    return this.queryByFilters(
-      [
-        { field: 'user_id', operator: '==', value: userId },
-        { field: 'deck_id', operator: '==', value: deckId },
-      ],
-      { orderByField: 'reviewed_at', direction: 'desc' },
-    );
+    // Query sem orderBy pra evitar dependência de index composto. Sort client-side.
+    const all = await this.queryByFilters([
+      { field: 'user_id', operator: '==', value: userId },
+      { field: 'deck_id', operator: '==', value: deckId },
+    ]);
+    return all.sort((a, b) => b.reviewed_at.localeCompare(a.reviewed_at));
   }
 }
 

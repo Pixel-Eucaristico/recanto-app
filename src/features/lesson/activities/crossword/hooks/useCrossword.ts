@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { crosswordService } from '@/application/crossword/CrosswordService';
 import { CrosswordPuzzle } from '@/domain/crossword/types';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
@@ -17,9 +17,13 @@ export function useCrossword({ lessonId, puzzleId }: UseCrosswordInput) {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{ persisted: boolean; score: number; correct: number; total: number } | null>(null);
+  const loadedKey = useRef<string | null>(null);
 
   const load = useCallback(async () => {
     if (!lessonId && !puzzleId) return;
+    const key = `${lessonId ?? ''}|${puzzleId ?? ''}|${user?.id ?? ''}`;
+    if (loadedKey.current === key) return;
+    loadedKey.current = key;
     try {
       setLoading(true);
       setError(null);
@@ -29,13 +33,23 @@ export function useCrossword({ lessonId, puzzleId }: UseCrosswordInput) {
         ? await crosswordService.getById(puzzleId)
         : null;
       setPuzzle(p);
-      setResult(null);
+      // Carrega resultado prévio se existir.
+      if (p && user) {
+        const prev = await crosswordService.getLatestResult(user.id, p.id);
+        if (prev) {
+          setResult({ persisted: true, score: prev.score, correct: prev.correct, total: prev.total });
+        } else {
+          setResult(null);
+        }
+      } else {
+        setResult(null);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
-  }, [lessonId, puzzleId]);
+  }, [lessonId, puzzleId, user?.id]);
 
   useEffect(() => { load(); }, [load]);
 

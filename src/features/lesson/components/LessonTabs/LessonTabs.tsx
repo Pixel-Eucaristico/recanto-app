@@ -208,7 +208,7 @@ function ReflectionTab({
   module: { id: string; title: string };
   onSaved?: () => void;
 }) {
-  const { reflection, saving, error, saveDraft, submit } = useReflection({
+  const { reflection, saving, error, saveDraft, submit, addNote } = useReflection({
     lessonId: lesson.id,
     lessonTitle: lesson.title,
     moduleTitle: module.title,
@@ -225,8 +225,12 @@ function ReflectionTab({
         await saveDraft(content);
         onSaved?.();
       }}
-      onSubmit={async () => {
-        await submit();
+      onSubmit={async content => {
+        await submit(content);
+        onSaved?.();
+      }}
+      onAddNote={async content => {
+        await addNote(content);
         onSaved?.();
       }}
     />

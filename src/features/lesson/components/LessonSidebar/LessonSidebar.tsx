@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { LessonWithProgress } from '@/domain/formation/types';
 import { LessonChecklist } from '@/features/progress-checklist';
+import { HabitChecklist } from '@/features/habits';
+import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 
 interface LessonSidebarProps {
   userId: string;
@@ -15,6 +17,7 @@ interface LessonSidebarProps {
 }
 
 export function LessonSidebar({ userId, trackId, lessonId, moduleId, prev, next }: LessonSidebarProps) {
+  const user = useCurrentUser();
   return (
     <aside className="space-y-3">
       <LessonChecklist
@@ -23,6 +26,19 @@ export function LessonSidebar({ userId, trackId, lessonId, moduleId, prev, next 
         moduleId={moduleId}
         trackId={trackId}
       />
+
+      {/* Hábitos do curso vinculados — toggle direto sem ir pra /habits */}
+      <div className="card bg-base-100 border border-base-300">
+        <div className="card-body p-3 gap-2">
+          <h4 className="font-semibold text-xs uppercase tracking-wide text-base-content/60">Hábitos do curso</h4>
+          <HabitChecklist
+            userId={userId}
+            role={user?.role ?? null}
+            scope="course"
+            courseId={trackId}
+          />
+        </div>
+      </div>
 
       <div className="flex gap-2">
         {prev ? (

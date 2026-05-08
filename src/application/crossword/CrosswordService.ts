@@ -88,6 +88,20 @@ export class CrosswordService {
   async remove(id: string): Promise<void> {
     return this.puzzleRepo.remove(id);
   }
+
+  /** Último resultado salvo (correct entries + score). */
+  async getLatestResult(userId: string, puzzleId: string): Promise<{ correct: number; total: number; score: number } | null> {
+    const existing = await this.resultRepo.findByUserAndPuzzle(userId, puzzleId);
+    if (existing.length === 0) return null;
+    const puzzle = await this.puzzleRepo.findById(puzzleId);
+    if (!puzzle) return null;
+    const latest = existing.sort((a, b) => b.completed_at.localeCompare(a.completed_at))[0];
+    return {
+      correct: latest.correct_entries.length,
+      total: puzzle.entries.length,
+      score: latest.score,
+    };
+  }
 }
 
 export const crosswordService = new CrosswordService();

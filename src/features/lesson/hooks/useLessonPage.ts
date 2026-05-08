@@ -5,6 +5,24 @@ import { lessonPageService, LessonPageData } from '@/application/lesson/LessonPa
 import { lessonProgressReconciler } from '@/application/formation/LessonProgressReconciler';
 import { progressRepository } from '@/infrastructure/formation/ProgressRepository';
 
+/**
+ * Merge stable: quando lesson/track/module IDs + updated_at iguais, preserva refs antigas.
+ * Evita LessonVideoSection / LockedYouTubePlayer remount em cada reload (trocavam lesson.ref
+ * mesmo sem conteúdo mudar). Só progress + unlockResult realmente trocam após activity submit.
+ */
+function mergeStable(prev: LessonPageData | null, next: LessonPageData): LessonPageData {
+  if (!prev) return next;
+  const lessonStable = prev.lesson.id === next.lesson.id && prev.lesson.updated_at === next.lesson.updated_at;
+  const trackStable = prev.track.id === next.track.id && prev.track.updated_at === next.track.updated_at;
+  const moduleStable = prev.module.id === next.module.id && prev.module.updated_at === next.module.updated_at;
+  return {
+    ...next,
+    track: trackStable ? prev.track : next.track,
+    module: moduleStable ? prev.module : next.module,
+    lesson: lessonStable ? prev.lesson : next.lesson,
+  };
+}
+
 export function useLessonPage(trackId: string, lessonId: string, userId: string | null, habitsBlocked = false) {
   const [data, setData] = useState<LessonPageData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -29,12 +47,12 @@ export function useLessonPage(trackId: string, lessonId: string, userId: string 
         const rc = await lessonProgressReconciler.reconcile(userId, result.lesson, result.module.id, result.track.id);
         if (rc.updated) {
           const fresh = await lessonPageService.getLessonPage(trackId, lessonId, userId, habitsBlocked);
-          setData(fresh);
+          setData(prev => mergeStable(prev, fresh));
           lastStatusRef.current = fresh.progress?.status ?? null;
           return;
         }
       }
-      setData(result);
+      setData(prev => mergeStable(prev, result));
       lastStatusRef.current = result.progress?.status ?? null;
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -69,6 +87,11 @@ export function useLessonPage(trackId: string, lessonId: string, userId: string 
       const prevStatus = lastStatusRef.current;
       lastStatusRef.current = snap.status;
 
+      // Atualiza data.progress granular SEM re-fetch da lesson — push real-time.
+      // Componentes que dependem de progress (header, checklist) re-renderizam só.
+      // lesson/track/module refs preservadas → LockedYouTubePlayer não remonta.
+      setData(prev => prev ? { ...prev, progress: snap } : prev);
+
       // Status mudou (ex: -> completed): reload pra atualizar unlock da próxima
       if (snap.status !== prevStatus) {
         reconciledKey.current = null;
@@ -100,5 +123,26 @@ export function useLessonPage(trackId: string, lessonId: string, userId: string 
     await load();
   }, [load]);
 
-  return { data, loading, error, reload };
+  /**
+   * Trigger leve após activity submit: roda reconciler, sem fetch da lesson inteira.
+   * Reconciler grava progress doc → Firebase onSnapshot dispara automaticamente em
+   * TODOS hooks subscribers (useLessonPage, useLessonChecklist, sidebar, header) →
+   * UI atualiza granular sem re-fetch. Zero re-render desnecessário.
+   */
+  const triggerReconcile = useCallback(async () => {
+    if (!userId || !dataRef.current) return;
+    try {
+      await lessonProgressReconciler.reconcile(
+        userId,
+        dataRef.current.lesson,
+        dataRef.current.module.id,
+        dataRef.current.track.id,
+      );
+      // Não chama setData. onSnapshot do progress doc fará isso (push real-time).
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  }, [userId]);
+
+  return { data, loading, error, reload, refreshProgress: triggerReconcile };
 }

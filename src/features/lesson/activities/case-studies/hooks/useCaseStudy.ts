@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { caseStudyService } from '@/application/case-studies/CaseStudyService';
 import { CaseStudy, CaseStep } from '@/domain/case-studies/types';
 import { CaseStudyEntity } from '@/domain/case-studies/entities/CaseStudy';
@@ -22,9 +22,13 @@ export function useCaseStudy({ lessonId, caseId }: UseCaseStudyInput) {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{ persisted: boolean } | null>(null);
   const [alreadyRun, setAlreadyRun] = useState(false);
+  const loadedKey = useRef<string | null>(null);
 
   const load = useCallback(async () => {
     if (!lessonId && !caseId) return;
+    const key = `${lessonId ?? ''}|${caseId ?? ''}|${user?.id ?? ''}`;
+    if (loadedKey.current === key) return;
+    loadedKey.current = key;
     try {
       setLoading(true);
       setError(null);
@@ -37,7 +41,12 @@ export function useCaseStudy({ lessonId, caseId }: UseCaseStudyInput) {
       if (cs) {
         setCurrentNodeId(cs.start_node_id);
         setPath([{ node_id: cs.start_node_id }]);
-        if (user) setAlreadyRun(await caseStudyService.hasRun(user.id, cs.id));
+        if (user) {
+          const ran = await caseStudyService.hasRun(user.id, cs.id);
+          setAlreadyRun(ran);
+          // Já rodou → marca result final pra mostrar resumo direto (sem replay).
+          if (ran) setResult({ persisted: true });
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));

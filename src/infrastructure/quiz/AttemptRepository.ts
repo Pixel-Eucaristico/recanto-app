@@ -18,25 +18,21 @@ export class FirebaseAttemptRepository extends BaseRepository<QuizAttempt> imple
   }
 
   async findByUserAndQuiz(userId: string, quizId: string): Promise<QuizAttempt[]> {
-    return this.queryByFilters(
-      [
-        { field: 'user_id', operator: '==', value: userId },
-        { field: 'quiz_id', operator: '==', value: quizId },
-      ],
-      { orderByField: 'attempted_at', direction: 'desc' },
-    );
+    const all = await this.queryByFilters([
+      { field: 'user_id', operator: '==', value: userId },
+      { field: 'quiz_id', operator: '==', value: quizId },
+    ]);
+    return all.sort((a, b) => b.attempted_at.localeCompare(a.attempted_at));
   }
 
   async findLatestPassed(userId: string, quizId: string): Promise<QuizAttempt | null> {
-    const results = await this.queryByFilters(
-      [
-        { field: 'user_id', operator: '==', value: userId },
-        { field: 'quiz_id', operator: '==', value: quizId },
-        { field: 'passed', operator: '==', value: true },
-      ],
-      { orderByField: 'attempted_at', direction: 'desc', limitCount: 1 },
-    );
-    return results[0] ?? null;
+    const all = await this.queryByFilters([
+      { field: 'user_id', operator: '==', value: userId },
+      { field: 'quiz_id', operator: '==', value: quizId },
+      { field: 'passed', operator: '==', value: true },
+    ]);
+    const sorted = all.sort((a, b) => b.attempted_at.localeCompare(a.attempted_at));
+    return sorted[0] ?? null;
   }
 }
 

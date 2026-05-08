@@ -1,6 +1,14 @@
 import type { LessonComponent } from '@/domain/lesson-components/types';
 
-const registry = new Map<string, LessonComponent<any>>();
+/**
+ * Singleton via globalThis. Necessário porque webpack bundling em Next.js App Router
+ * pode duplicar o módulo em chunks diferentes (server/client/cada route group),
+ * criando Maps separados. globalThis garante 1 instância real compartilhada.
+ */
+const REGISTRY_KEY = '__lesson_components_registry__';
+type RegistryMap = Map<string, LessonComponent<unknown>>;
+const g = globalThis as unknown as Record<string, RegistryMap | undefined>;
+const registry: RegistryMap = g[REGISTRY_KEY] ?? (g[REGISTRY_KEY] = new Map());
 
 export function registerLessonComponent<C>(plugin: LessonComponent<C> | undefined): void {
   // Silencia chamadas inválidas — Next.js Fast Refresh às vezes invoca com

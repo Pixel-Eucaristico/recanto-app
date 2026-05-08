@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { flashcardService } from '@/application/flashcards/FlashcardService';
 import { FlashcardDeck, FlashcardReviewResult } from '@/domain/flashcards/types';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
@@ -18,9 +18,14 @@ export function useFlashcardDeck({ lessonId, deckId }: UseFlashcardDeckInput) {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{ correct: number; total: number; score: number; persisted: boolean } | null>(null);
   const [reviewed, setReviewed] = useState(false);
+  // Cache pra evitar reload quando restart() chama. restart só limpa result local.
+  const loadedKey = useRef<string | null>(null);
 
   const load = useCallback(async () => {
     if (!lessonId && !deckId) return;
+    const key = `${lessonId ?? ''}|${deckId ?? ''}|${user?.id ?? ''}`;
+    if (loadedKey.current === key) return; // já carregado pra esta combinação
+    loadedKey.current = key;
     try {
       setLoading(true);
       setError(null);
@@ -30,7 +35,14 @@ export function useFlashcardDeck({ lessonId, deckId }: UseFlashcardDeckInput) {
         ? await flashcardService.getDeck(deckId)
         : null;
       setDeck(d);
-      if (d && user) setReviewed(await flashcardService.hasReviewed(user.id, d.id));
+      if (d && user) {
+        const r = await flashcardService.hasReviewed(user.id, d.id);
+        setReviewed(r);
+        if (r) {
+          const prev = await flashcardService.getLatestResult(user.id, d.id);
+          if (prev) setResult({ ...prev, persisted: true });
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -62,9 +74,10 @@ export function useFlashcardDeck({ lessonId, deckId }: UseFlashcardDeckInput) {
   }, [deck, user]);
 
   const restart = useCallback(() => {
+    // Limpa só state local — entra em retake mode SEM re-fetch (evita reload do histórico
+    // que sobrescreveria pra mostrar resultado anterior de novo).
     setResult(null);
-    load();
-  }, [load]);
+  }, []);
 
   return { deck, loading, error, submitting, result, reviewed, submit, restart };
 }

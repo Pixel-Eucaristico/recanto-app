@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { wordSearchService } from '@/application/word-search/WordSearchService';
 import { WordSearchPuzzle } from '@/domain/word-search/types';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
@@ -18,9 +18,13 @@ export function useWordSearch({ lessonId, puzzleId }: UseWordSearchInput) {
   const [found, setFound] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{ persisted: boolean; score: number } | null>(null);
+  const loadedKey = useRef<string | null>(null);
 
   const load = useCallback(async () => {
     if (!lessonId && !puzzleId) return;
+    const key = `${lessonId ?? ''}|${puzzleId ?? ''}|${user?.id ?? ''}`;
+    if (loadedKey.current === key) return;
+    loadedKey.current = key;
     try {
       setLoading(true);
       setError(null);
@@ -30,14 +34,26 @@ export function useWordSearch({ lessonId, puzzleId }: UseWordSearchInput) {
         ? await wordSearchService.getById(puzzleId)
         : null;
       setPuzzle(p);
-      setFound([]);
-      setResult(null);
+      // Carrega resultado prévio se existir — mostra direto, retake não persiste.
+      if (p && user) {
+        const prev = await wordSearchService.getLatestResult(user.id, p.id);
+        if (prev) {
+          setFound(prev.found);
+          setResult({ persisted: true, score: prev.score });
+        } else {
+          setFound([]);
+          setResult(null);
+        }
+      } else {
+        setFound([]);
+        setResult(null);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
-  }, [lessonId, puzzleId]);
+  }, [lessonId, puzzleId, user?.id]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -66,6 +82,7 @@ export function useWordSearch({ lessonId, puzzleId }: UseWordSearchInput) {
   }, [puzzle, user, found]);
 
   const restart = useCallback(() => {
+    // Limpa só state local — não re-fetch (evita re-load do histórico).
     setFound([]);
     setResult(null);
   }, []);

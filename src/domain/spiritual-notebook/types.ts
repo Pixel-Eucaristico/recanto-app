@@ -1,5 +1,11 @@
 export type ReflectionStatus = 'draft' | 'submitted' | 'reviewed';
 
+export interface PostReviewNote {
+  id: string;
+  content: string;
+  created_at: string;
+}
+
 export interface Reflection {
   id: string;
   user_id: string;
@@ -13,6 +19,7 @@ export interface Reflection {
   submitted_at?: string;
   reviewed_by?: string;
   review_notes?: string;
+  post_review_notes?: PostReviewNote[];
   created_at: string;
   updated_at?: string;
 }

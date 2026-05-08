@@ -45,13 +45,11 @@ export class FirebaseCrosswordResultRepository
   }
 
   async findByUserAndPuzzle(userId: string, puzzleId: string): Promise<CrosswordResult[]> {
-    return this.queryByFilters(
-      [
-        { field: 'user_id', operator: '==', value: userId },
-        { field: 'puzzle_id', operator: '==', value: puzzleId },
-      ],
-      { orderByField: 'completed_at', direction: 'desc' },
-    );
+    const all = await this.queryByFilters([
+      { field: 'user_id', operator: '==', value: userId },
+      { field: 'puzzle_id', operator: '==', value: puzzleId },
+    ]);
+    return all.sort((a, b) => b.completed_at.localeCompare(a.completed_at));
   }
 }
 

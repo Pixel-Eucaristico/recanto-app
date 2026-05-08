@@ -17,13 +17,12 @@ export class FirebaseCaseRunRepository extends BaseRepository<CaseRun> implement
   }
 
   async findByUserAndCase(userId: string, caseId: string): Promise<CaseRun[]> {
-    return this.queryByFilters(
-      [
-        { field: 'user_id', operator: '==', value: userId },
-        { field: 'case_id', operator: '==', value: caseId },
-      ],
-      { orderByField: 'run_at', direction: 'desc' },
-    );
+    // Sem orderBy server-side — sort client (não depende de index composto).
+    const all = await this.queryByFilters([
+      { field: 'user_id', operator: '==', value: userId },
+      { field: 'case_id', operator: '==', value: caseId },
+    ]);
+    return all.sort((a, b) => b.run_at.localeCompare(a.run_at));
   }
 }
 

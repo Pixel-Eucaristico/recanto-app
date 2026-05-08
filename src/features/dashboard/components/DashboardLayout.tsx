@@ -7,6 +7,8 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { NotificationBell } from "@/features/notifications";
 import { PrayerCenterButton } from "@/features/prayer";
+// Bootstrap registry de plugins client-side (singleton via globalThis garante uma instância)
+import "@/application/lesson/registerAllPlugins";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;

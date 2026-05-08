@@ -34,7 +34,13 @@ export function useQuiz({ lessonId, quizId }: UseQuizOptions) {
       setShuffled(q);
       if (q && user) {
         setPassed(await quizService.hasPassed(user.id, q.quiz.id));
-        setHasAttempted(await quizService.hasAttempted(user.id, q.quiz.id));
+        const attempted = await quizService.hasAttempted(user.id, q.quiz.id);
+        setHasAttempted(attempted);
+        // Se já tentou, carrega último resultado pra mostrar direto (sem reabrir player).
+        if (attempted) {
+          const prev = await quizService.getLatestResult(user.id, q.quiz.id);
+          if (prev) setResult({ ...prev, persisted: true });
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -68,10 +74,10 @@ export function useQuiz({ lessonId, quizId }: UseQuizOptions) {
     }
   }, [shuffled, user, passed]);
 
-  const restart = useCallback(async () => {
+  const restart = useCallback(() => {
+    // Só limpa result — não re-fetch (sobrescreveria pra mostrar resultado anterior de novo).
     setResult(null);
-    await load();
-  }, [load]);
+  }, []);
 
   return { shuffled, loading, error, submitting, result, passed, hasAttempted, submit, restart };
 }

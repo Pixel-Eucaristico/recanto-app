@@ -1,21 +1,24 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Save, Send, CheckCircle2, Lock } from 'lucide-react';
+import { Save, Send, CheckCircle2, Lock, Plus, StickyNote } from 'lucide-react';
 import { ReflectionEntity, REFLECTION_MIN_LENGTH, REFLECTION_MAX_LENGTH } from '@/domain/spiritual-notebook/entities/Reflection';
 import { Reflection } from '@/domain/spiritual-notebook/types';
-import { MarkdownField } from '@/shared/components/MarkdownField';
+import { RichTextEditor } from '@/shared/components/RichTextEditor';
 
 interface ReflectionEditorProps {
   reflection: Reflection | null;
   saving: boolean;
   error: string | null;
   onSaveDraft: (content: string) => Promise<unknown>;
-  onSubmit: () => Promise<unknown>;
+  onSubmit: (content: string) => Promise<unknown>;
+  onAddNote?: (content: string) => Promise<unknown>;
 }
 
-export function ReflectionEditor({ reflection, saving, error, onSaveDraft, onSubmit }: ReflectionEditorProps) {
+export function ReflectionEditor({ reflection, saving, error, onSaveDraft, onSubmit, onAddNote }: ReflectionEditorProps) {
   const [content, setContent] = useState(reflection?.content ?? '');
+  const [noteDraft, setNoteDraft] = useState('');
+  const [showNoteForm, setShowNoteForm] = useState(false);
 
   useEffect(() => {
     setContent(reflection?.content ?? '');
@@ -23,11 +26,21 @@ export function ReflectionEditor({ reflection, saving, error, onSaveDraft, onSub
 
   const status = reflection?.status ?? 'draft';
   const locked = status === 'reviewed';
-  const submitted = status === 'submitted' || status === 'reviewed';
   const validation = ReflectionEntity.validate(content);
-  const canSubmit = validation.valid && !saving && !submitted;
-  const canSave = !submitted && !saving && content.trim().length > 0;
+  const canSubmit = validation.valid && !saving && !locked;
+  const canSave = !locked && !saving && content.trim().length > 0;
   const charCount = content.trim().length;
+  const submittedNotReviewed = status === 'submitted';
+  const notes = reflection?.post_review_notes ?? [];
+
+  async function handleAddNote() {
+    if (!onAddNote || !noteDraft.trim()) return;
+    try {
+      await onAddNote(noteDraft);
+      setNoteDraft('');
+      setShowNoteForm(false);
+    } catch {}
+  }
 
   return (
     <div className="space-y-3">
@@ -47,18 +60,28 @@ export function ReflectionEditor({ reflection, saving, error, onSaveDraft, onSub
         </span>
       </div>
 
-      <MarkdownField
+      {submittedNotReviewed && (
+        <div className="alert alert-info text-sm py-2">
+          <span>Enviada — você ainda pode editar e reenviar enquanto não for revisada.</span>
+        </div>
+      )}
+
+      {/* key={reflection?.id} força remount quando reflection carrega — LoadInitialMarkdown
+          plugin do Lexical só carrega 1x no mount, então sem key o rascunho não aparece. */}
+      <RichTextEditor
+        key={reflection?.id ?? 'new'}
         value={content}
         onChange={v => { if (!locked) setContent(v.slice(0, REFLECTION_MAX_LENGTH)); }}
         height={360}
-        preview={locked ? 'preview' : 'live'}
         disabled={locked}
-        placeholder="Escreva sua reflexão em Markdown...\n\n**negrito**, *itálico*, # títulos, - listas, > citações, `código`"
+        placeholder="Escreva sua reflexão..."
       />
 
-      <p className="text-xs text-base-content/50">
-        Suporta Markdown completo: <strong>negrito</strong>, <em>itálico</em>, títulos, listas, citações e código.
-      </p>
+      {!locked && (
+        <p className="text-xs text-base-content/50">
+          Use a barra de ferramentas pra formatar: negrito, itálico, títulos, listas, citações e mais.
+        </p>
+      )}
 
       {error && (
         <div className="alert alert-error text-sm">
@@ -73,6 +96,65 @@ export function ReflectionEditor({ reflection, saving, error, onSaveDraft, onSub
             <div className="font-semibold">Comentário do formador:</div>
             <p className="text-sm mt-1">{reflection.review_notes}</p>
           </div>
+        </div>
+      )}
+
+      {locked && (
+        <div className="space-y-2 pt-2 border-t border-base-300">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm font-semibold text-base-content/70">
+              <StickyNote className="w-4 h-4" />
+              Anotações pessoais
+              {notes.length > 0 && <span className="badge badge-sm badge-ghost">{notes.length}</span>}
+            </div>
+            {onAddNote && !showNoteForm && (
+              <button className="btn btn-ghost btn-xs gap-1" onClick={() => setShowNoteForm(true)}>
+                <Plus className="w-3 h-3" />
+                Nova nota
+              </button>
+            )}
+          </div>
+
+          {notes.length > 0 && (
+            <div className="space-y-2">
+              {notes.map(n => (
+                <div key={n.id} className="bg-base-200 rounded-lg p-3 text-sm">
+                  <div className="text-xs text-base-content/50 mb-1">
+                    {new Date(n.created_at).toLocaleString('pt-BR')}
+                  </div>
+                  <p className="whitespace-pre-wrap">{n.content}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {showNoteForm && onAddNote && (
+            <div className="space-y-2">
+              <textarea
+                className="textarea textarea-bordered w-full text-sm"
+                rows={3}
+                placeholder="Anote algo após a revisão..."
+                value={noteDraft}
+                onChange={e => setNoteDraft(e.target.value)}
+              />
+              <div className="flex gap-2 justify-end">
+                <button
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => { setShowNoteForm(false); setNoteDraft(''); }}
+                  disabled={saving}
+                >
+                  Cancelar
+                </button>
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={handleAddNote}
+                  disabled={saving || !noteDraft.trim()}
+                >
+                  Salvar nota
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -95,22 +177,22 @@ export function ReflectionEditor({ reflection, saving, error, onSaveDraft, onSub
             <div
               className="tooltip tooltip-top"
               data-tip={
-                submitted
-                  ? 'Já foi enviada — aguarde revisão do formador'
-                  : !validation.valid
+                !validation.valid
                   ? `Mínimo ${REFLECTION_MIN_LENGTH} caracteres (atual: ${charCount})`
                   : saving
                   ? 'Salvando...'
+                  : submittedNotReviewed
+                  ? 'Reenviar para revisão'
                   : 'Enviar para revisão'
               }
             >
               <button
                 className="btn btn-primary btn-sm gap-1"
-                onClick={() => onSubmit()}
+                onClick={() => onSubmit(content)}
                 disabled={!canSubmit}
               >
                 <Send className="w-4 h-4" />
-                {submitted ? 'Enviada' : 'Enviar para formador'}
+                {submittedNotReviewed ? 'Reenviar' : 'Enviar para formador'}
               </button>
             </div>
           </>

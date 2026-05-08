@@ -94,6 +94,24 @@ export class ReflectionService {
     return this.repo.findSubmitted();
   }
 
+  async addPostReviewNote(reflectionId: string, userId: string, content: string): Promise<Reflection> {
+    const trimmed = content.trim();
+    if (trimmed.length === 0) throw new Error('Nota vazia.');
+    const existing = await this.repo.findById(reflectionId);
+    if (!existing) throw new Error('Reflexão não encontrada.');
+    if (existing.user_id !== userId) throw new Error('Sem permissão.');
+    if (existing.status !== 'reviewed') throw new Error('Notas só após revisão.');
+    const note: import('@/domain/spiritual-notebook/types').PostReviewNote = {
+      id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      content: trimmed,
+      created_at: new Date().toISOString(),
+    };
+    const notes = [...(existing.post_review_notes ?? []), note];
+    const updated = await this.repo.update(reflectionId, { post_review_notes: notes });
+    if (!updated) throw new Error('Falha ao adicionar nota.');
+    return updated;
+  }
+
   async review(input: ReviewInput): Promise<Reflection> {
     const existing = await this.repo.findById(input.reflectionId);
     if (!existing) throw new Error('Reflexão não encontrada.');

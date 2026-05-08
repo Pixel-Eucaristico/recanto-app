@@ -76,6 +76,17 @@ export class FlashcardService {
     return existing.length > 0;
   }
 
+  /** Resultado da última review persistida + score reconstruído. */
+  async getLatestResult(userId: string, deckId: string): Promise<{ correct: number; total: number; score: number } | null> {
+    const existing = await this.reviewRepo.findByUserAndDeck(userId, deckId);
+    if (existing.length === 0) return null;
+    const deck = await this.deckRepo.findById(deckId);
+    if (!deck) return null;
+    const latest = existing.sort((a, b) => b.reviewed_at.localeCompare(a.reviewed_at))[0];
+    const score = FlashcardEntity.score(latest.answers, deck.cards.length);
+    return { correct: score.correct, total: score.total, score: score.score };
+  }
+
   async save(deck: FlashcardDeck | (Omit<FlashcardDeck, 'id'> & { id?: string })): Promise<FlashcardDeck> {
     const errors = FlashcardEntity.validateDeck(deck);
     if (errors.length > 0) throw new Error(errors.join(' '));

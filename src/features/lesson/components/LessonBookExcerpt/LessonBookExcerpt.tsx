@@ -60,7 +60,7 @@ export function LessonBookExcerpt({ citation }: LessonBookExcerptProps) {
   const annotations = useBookAnnotations(user?.id, citation.book_id);
   const tagsHook = useBookTags(user?.id, citation.book_id);
 
-  // Load book + chapters + progress
+  // Load book + chapters
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
@@ -76,7 +76,6 @@ export function LessonBookExcerpt({ citation }: LessonBookExcerptProps) {
           return;
         }
         // Renumera client-side: SÓ kind='chapter' (body) recebe ref body-relative (1..N).
-        // Introdução e demais pré/pós-textuais ficam sem ref.
         const sortedChapters = BookEntity.sortChapters(chapters);
         let bodyCounter = 0;
         const renumbered = sortedChapters.map(ch => {
@@ -90,20 +89,6 @@ export function LessonBookExcerpt({ citation }: LessonBookExcerptProps) {
         const slicedIds = new Set(sliced.map(b => b.id));
         const hasExplicitRange = !!(citation.start_ref || citation.end_ref);
 
-        if (process.env.NODE_ENV !== 'production') {
-          const debug = {
-            range: { start: citation.start_ref, end: citation.end_ref },
-            chapters: sortedChapters.map(c => ({
-              kind: c.kind ?? 'chapter',
-              order: c.order,
-              title: c.title,
-              refs: (c.blocks ?? []).map(b => `${b.kind}:${b.ref ?? 'NO-REF'}`),
-            })),
-            sliced: sliced.length,
-            slicedRefs: sliced.map(b => b.ref ?? 'NO-REF'),
-          };
-          console.log('[LessonBookExcerpt] DEBUG\n' + JSON.stringify(debug, null, 2));
-        }
         const chaptersInRange = renumbered
           .map(ch => ({
             chapter: ch,

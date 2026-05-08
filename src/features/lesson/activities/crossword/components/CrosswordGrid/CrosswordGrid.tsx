@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
-import { CheckCircle2, Send, RefreshCw } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { CheckCircle2, Send, RefreshCw, X } from 'lucide-react';
 import type { CrosswordPuzzle, CrosswordEntry } from '@/domain/crossword/types';
 import { CrosswordEntity } from '@/domain/crossword/entities/Crossword';
 import { CluesList } from './components/CluesList';
@@ -19,7 +19,10 @@ export function CrosswordGrid({ puzzle, onSubmit, onRestart, submitting, result 
     puzzle.grid.map(row => row.split('').map(c => (c === ' ' ? ' ' : ''))),
   );
   const [activeEntry, setActiveEntry] = useState<CrosswordEntry | null>(puzzle.entries[0] ?? null);
+  const [clueOpen, setClueOpen] = useState(true);
   const inputRefs = useRef<Map<string, HTMLInputElement>>(new Map());
+
+  useEffect(() => { setClueOpen(true); }, [activeEntry?.number, activeEntry?.direction]);
 
   function ck(r: number, c: number) { return `${r},${c}`; }
 
@@ -94,6 +97,16 @@ export function CrosswordGrid({ puzzle, onSubmit, onRestart, submitting, result 
     return puzzle.entries.filter(e => CrosswordEntity.isEntryCorrect(e, userGrid)).map(e => e.number);
   }, [puzzle.entries, userGrid]);
 
+  const bounds = useMemo(() => {
+    let maxR = 0, maxC = 0;
+    for (let r = 0; r < puzzle.size; r++) {
+      for (let c = 0; c < puzzle.size; c++) {
+        if ((puzzle.grid[r]?.[c] ?? ' ') !== ' ') { if (r > maxR) maxR = r; if (c > maxC) maxC = c; }
+      }
+    }
+    return { rows: maxR + 1, cols: maxC + 1 };
+  }, [puzzle.grid, puzzle.size]);
+
   const allCorrect = correctEntries.length === puzzle.entries.length;
 
   if (result) {
@@ -117,20 +130,104 @@ export function CrosswordGrid({ puzzle, onSubmit, onRestart, submitting, result 
         <span className="badge badge-ghost">{correctEntries.length} / {puzzle.entries.length}</span>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[auto_1fr]">
-        <div className="inline-block">
-          <div className="grid gap-0.5 bg-base-300 p-1 rounded-lg" style={{ gridTemplateColumns: `repeat(${puzzle.size}, minmax(0, 1fr))` }}>
-            {Array.from({ length: puzzle.size }).map((_, r) =>
-              Array.from({ length: puzzle.size }).map((__, c) => {
+      <div className="flex flex-col gap-4">
+        <div className="flex-1 min-w-0 flex justify-center">
+          <div className="relative w-full" style={{ maxWidth: `${bounds.cols * 2.4}rem` }}>
+            {activeEntry && (() => {
+              const len = activeEntry.answer.length;
+              const r = activeEntry.row;
+              const c = activeEntry.col;
+              const isAcross = activeEntry.direction === 'across';
+              const isCorrect = correctEntries.includes(activeEntry.number);
+              let allFilled = true;
+              for (let i = 0; i < len; i++) {
+                const rr = isAcross ? r : r + i;
+                const cc = isAcross ? c + i : c;
+                const v = userGrid[rr]?.[cc];
+                if (!v || v === ' ') { allFilled = false; break; }
+              }
+              const isWrong = allFilled && !isCorrect;
+              const status: 'correct' | 'wrong' | 'neutral' = isCorrect ? 'correct' : isWrong ? 'wrong' : 'neutral';
+              const borderCls = status === 'correct' ? 'border-success' : status === 'wrong' ? 'border-error' : 'border-primary';
+              const badgeCls = status === 'correct' ? 'badge-success' : status === 'wrong' ? 'badge-error' : 'badge-primary';
+              const btnCls = status === 'correct' ? 'btn-success' : status === 'wrong' ? 'btn-error' : 'btn-primary';
+              const placeAbove = isAcross ? r > Math.floor(bounds.rows / 3) : false;
+              const placeBelow = isAcross && !placeAbove;
+              const placeRight = !isAcross && (c + 1 < bounds.cols);
+              const placeLeft = !isAcross && !placeRight;
+
+              const cellW = 100 / bounds.cols;
+              const cellH = 100 / bounds.rows;
+              let top: string, left: string, transform: string;
+
+              if (isAcross) {
+                left = `${(c + len / 2) * cellW}%`;
+                if (placeAbove) {
+                  top = `${r * cellH}%`;
+                  transform = 'translate(-50%, calc(-100% - 6px))';
+                } else {
+                  top = `${(r + 1) * cellH}%`;
+                  transform = 'translate(-50%, 6px)';
+                }
+              } else {
+                top = `${(r + len / 2) * cellH}%`;
+                if (placeRight) {
+                  left = `${(c + 1) * cellW}%`;
+                  transform = 'translate(6px, -50%)';
+                } else {
+                  left = `${c * cellW}%`;
+                  transform = 'translate(calc(-100% - 6px), -50%)';
+                }
+              }
+
+              return clueOpen ? (
+                <div
+                  className={`absolute z-20 w-[min(220px,80vw)] rounded-lg bg-base-100 border-2 shadow-xl p-2 pr-7 text-xs ${borderCls}`}
+                  style={{ top, left, transform }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setClueOpen(false)}
+                    className="absolute top-0.5 right-0.5 btn btn-ghost btn-xs btn-circle"
+                    aria-label="Fechar dica"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                  <div className="flex items-baseline gap-1 flex-wrap mb-0.5">
+                    <span className={`badge badge-xs font-bold ${badgeCls}`}>{activeEntry.number}</span>
+                    <span className="text-[10px] text-base-content/60">
+                      {isAcross ? 'horiz.' : 'vert.'} · {len} letras
+                    </span>
+                    {status === 'correct' && <span className="text-[10px] text-success font-semibold">✓ correta</span>}
+                    {status === 'wrong' && <span className="text-[10px] text-error font-semibold">✗ revise</span>}
+                  </div>
+                  <p className="text-base-content leading-snug">{activeEntry.clue}</p>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setClueOpen(true)}
+                  className={`absolute z-20 btn btn-xs btn-circle shadow ${btnCls}`}
+                  style={{ top, left, transform }}
+                  aria-label="Mostrar dica"
+                  title={activeEntry.clue}
+                >
+                  ?
+                </button>
+              );
+            })()}
+            <div className="grid gap-px bg-base-content/40 p-px rounded-md w-full" style={{ gridTemplateColumns: `repeat(${bounds.cols}, minmax(0, 1fr))` }}>
+            {Array.from({ length: bounds.rows }).map((_, r) =>
+              Array.from({ length: bounds.cols }).map((__, c) => {
                 const cell = puzzle.grid[r]?.[c] ?? ' ';
-                if (cell === ' ') return <div key={`${r}-${c}`} className="w-8 h-8 sm:w-9 sm:h-9 bg-base-content/80 rounded-sm" />;
+                if (cell === ' ') return <div key={`${r}-${c}`} className="aspect-square bg-base-content/80" />;
                 const number = cellNumber.get(ck(r, c));
                 const entries = cellToEntries.get(ck(r, c)) ?? [];
                 const isActive = activeEntry && entries.some(e => e.number === activeEntry.number && e.direction === activeEntry.direction);
                 const inActiveEntry = activeEntry && entries.some(e => e === activeEntry);
                 return (
-                  <div key={`${r}-${c}`} className="relative w-8 h-8 sm:w-9 sm:h-9">
-                    {number !== undefined && <span className="absolute top-0 left-0.5 text-[8px] text-base-content/50 pointer-events-none leading-none">{number}</span>}
+                  <div key={`${r}-${c}`} className="relative aspect-square">
+                    {number !== undefined && <span className="absolute top-0 left-0.5 text-[9px] md:text-[10px] font-semibold text-base-content/60 pointer-events-none leading-none z-10">{number}</span>}
                     <input
                       ref={el => { if (el) inputRefs.current.set(ck(r, c), el); }}
                       type="text" maxLength={1}
@@ -138,18 +235,19 @@ export function CrosswordGrid({ puzzle, onSubmit, onRestart, submitting, result 
                       onFocus={() => handleFocus(r, c)}
                       onKeyDown={e => handleKeyDown(e, r, c)}
                       onChange={() => {}}
-                      className={`w-full h-full rounded-sm text-center text-sm font-bold uppercase outline-none border ${
-                        inActiveEntry ? 'bg-primary/20 border-primary' : 'bg-base-100 border-base-300'
-                      } ${isActive ? 'ring-2 ring-primary' : ''} text-base-content`}
+                      className={`w-full h-full text-center font-bold uppercase outline-none text-[clamp(0.7rem,2.4vw,1.125rem)] text-base-content ${
+                        inActiveEntry ? 'bg-primary/25' : 'bg-base-100'
+                      } ${isActive ? 'ring-2 ring-primary ring-inset' : ''}`}
                     />
                   </div>
                 );
               }),
             )}
+            </div>
           </div>
         </div>
 
-        <div className="space-y-3">
+        <div className="w-full grid grid-cols-1 xl:grid-cols-2 gap-3">
           <CluesList direction="across" entries={puzzle.entries.filter(e => e.direction === 'across')} activeEntry={activeEntry} correctEntries={correctEntries} onPick={e => setActiveEntry(e)} />
           <CluesList direction="down" entries={puzzle.entries.filter(e => e.direction === 'down')} activeEntry={activeEntry} correctEntries={correctEntries} onPick={e => setActiveEntry(e)} />
         </div>

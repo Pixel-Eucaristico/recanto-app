@@ -92,10 +92,10 @@ export function WordSearchGrid({ puzzle, found, onFound, onSubmit, onRestart, su
       </div>
       <p className="text-xs text-base-content/60">Arraste o mouse (ou o dedo) de uma letra até a outra para marcar a palavra.</p>
 
-      <div className="flex flex-col lg:flex-row lg:items-start gap-4 lg:gap-6 justify-center">
-        <div className="flex justify-center lg:justify-start">
+      <div className="flex flex-col lg:flex-row lg:items-start gap-4 lg:gap-6">
+        <div className="flex-1 min-w-0 flex justify-center">
           <div
-            className="grid gap-0.5 bg-base-300 p-1 rounded-lg select-none touch-none w-fit"
+            className="grid gap-0.5 md:gap-1 bg-base-300 p-1 md:p-2 rounded-lg select-none touch-none w-full max-w-[36rem]"
             style={{ gridTemplateColumns: `repeat(${puzzle.size}, minmax(0, 1fr))` }}
             onMouseUp={endSelect}
             onMouseLeave={endSelect}
@@ -118,7 +118,7 @@ export function WordSearchGrid({ puzzle, found, onFound, onSubmit, onRestart, su
                     onMouseDown={e => { e.preventDefault(); beginSelect(row, col); }}
                     onMouseEnter={() => updateSelect(row, col)}
                     onTouchStart={e => { e.preventDefault(); beginSelect(row, col); }}
-                    className={`w-8 h-8 sm:w-9 sm:h-9 rounded-sm flex items-center justify-center text-sm font-bold uppercase transition-colors ${
+                    className={`aspect-square rounded-sm flex items-center justify-center font-bold uppercase transition-colors text-[clamp(0.65rem,2.4vw,1.125rem)] ${
                       inFound ? 'bg-success text-success-content' : isStart ? 'bg-primary text-primary-content' : inPreview ? 'bg-primary/30 text-base-content' : 'bg-base-100 hover:bg-primary/10 text-base-content'
                     }`}
                   >
@@ -130,7 +130,7 @@ export function WordSearchGrid({ puzzle, found, onFound, onSubmit, onRestart, su
           </div>
         </div>
 
-        <div className="card bg-base-100 border border-base-300 w-full lg:w-64 flex-shrink-0">
+        <div className="card bg-base-100 border border-base-300 w-full lg:w-64 lg:flex-shrink-0">
           <div className="card-body p-4 gap-2">
             <h4 className="text-sm font-semibold">Palavras</h4>
             <ul className="space-y-1">

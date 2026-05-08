@@ -180,6 +180,11 @@ export interface LessonProgress {
   reflection_submitted: boolean;
   quiz_passed: boolean;
   forum_post_made: boolean;
+  crossword_passed?: boolean;
+  word_search_passed?: boolean;
+  flashcards_passed?: boolean;
+  case_study_passed?: boolean;
+  mind_map_passed?: boolean;
   unlocked_at?: string;
   completed_at?: string;
   created_at: string;
