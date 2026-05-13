@@ -19,6 +19,8 @@ export default function LibraryPage() {
   const { books, categories, loading, error, search, setSearch, activeCategoryId, setActiveCategoryId, progressGated, unlockedCount } = useLibraryCatalog({
     onlyPublished: !isManager,
     userId: user?.id,
+    userRole: user?.role,
+    userBirthdate: user?.birthdate,
     bypassProgressGate: hasReadLibrary,
   });
   const { remove } = useBooksAdmin();

@@ -10,11 +10,14 @@ import { bookPdfGenerator } from '@/application/library/BookPdfGenerator';
 import { BookExportEntity } from '@/domain/library/entities/BookExport';
 import { canDownloadLibrary, canReadLibrary } from '@/application/library/libraryPermissions';
 import { env } from '@/config/env';
+import { evaluateAccess } from '@/shared/content-access/accessGate';
+import type { Role } from '@/shared/types/role';
 
 interface AuthedUser {
   uid: string;
   role?: string | null;
   features?: string[];
+  birthdate?: string;
 }
 
 async function verifyRequest(req: NextRequest): Promise<AuthedUser | null> {
@@ -28,6 +31,7 @@ async function verifyRequest(req: NextRequest): Promise<AuthedUser | null> {
         uid: decoded.uid,
         role: data?.role ?? null,
         features: (data?.features as string[] | undefined) ?? [],
+        birthdate: data?.birthdate as string | undefined,
       };
     } catch {
       // Fall through
@@ -35,7 +39,23 @@ async function verifyRequest(req: NextRequest): Promise<AuthedUser | null> {
   }
   const session = await verifySession();
   if (!session) return null;
-  return { uid: session.uid, role: (session as { role?: string | null }).role ?? null, features: (session as { features?: string[] }).features ?? [] };
+  return {
+    uid: session.uid,
+    role: (session as { role?: string | null }).role ?? null,
+    features: (session as { features?: string[] }).features ?? [],
+    birthdate: (session as { birthdate?: string }).birthdate,
+  };
+}
+
+async function userHasGrant(userId: string, bookId: string): Promise<boolean> {
+  const snap = await firestore
+    .collection('content_grants')
+    .where('user_id', '==', userId)
+    .where('content_id', '==', bookId)
+    .where('content_type', '==', 'book')
+    .limit(1)
+    .get();
+  return !snap.empty;
 }
 
 async function userHasProgress(userId: string, bookId: string): Promise<boolean> {
@@ -65,6 +85,25 @@ export async function GET(
 
   const book = await adminGetBook(bookId);
   if (!book) return NextResponse.json({ error: 'Livro não encontrado' }, { status: 404 });
+
+  // Access gate (idade + role + grant). Admin sempre passa.
+  const hasGrant = await userHasGrant(user.uid, bookId);
+  const grantSet = new Set<string>(hasGrant ? [bookId] : []);
+  const accessDecision = evaluateAccess(
+    {
+      id: bookId,
+      required_roles: book.required_roles ?? [],
+      age_rating: book.age_rating ?? 'L',
+    },
+    { uid: user.uid, role: (user.role ?? null) as Role, birthdate: user.birthdate },
+    grantSet,
+  );
+  if (!accessDecision.allowed) {
+    return NextResponse.json(
+      { error: 'Acesso bloqueado por classificação ou grupo.', reason: accessDecision.reason, minAge: accessDecision.minAge },
+      { status: 403 },
+    );
+  }
 
   const allChapters = await adminListChapters(bookId);
   const { visible_until } = BookSpoilerEngine.compute(book, []);

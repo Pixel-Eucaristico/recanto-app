@@ -22,6 +22,15 @@ export class FirebaseTrackRepository
     super('formation_tracks');
   }
 
+  protected deserialize(id: string, data: Record<string, unknown>): FormationTrack {
+    const raw = { id, ...data } as FormationTrack;
+    return {
+      ...raw,
+      required_roles: Array.isArray(raw.required_roles) ? raw.required_roles : [],
+      age_rating: raw.age_rating ?? 'L',
+    };
+  }
+
   async findAll(): Promise<FormationTrack[]> {
     return this.list('order', 'asc');
   }

@@ -4,6 +4,8 @@ import type {
   Book, BookChapter, BookCategory, BookSpoilerMode,
   BookFootnote, BookReference, BookGlossaryTerm, BookCredits, CitationStyle,
 } from '@/domain/library/types';
+import type { Role } from '@/shared/types/role';
+import type { AgeRating } from '@/shared/types/content-access';
 import { BookEntity } from '@/domain/library/entities/Book';
 import { CanonicalRefEntity } from '@/domain/library/entities/CanonicalRef';
 import { BookSpoilerEngine, type SpoilerLessonInput } from '@/application/library/BookSpoilerEngine';
@@ -27,6 +29,8 @@ export interface SaveBookInput {
   year?: number;
   is_published?: boolean;
   spoiler_mode?: BookSpoilerMode;
+  required_roles?: Role[];
+  age_rating?: AgeRating;
   created_by: string;
 }
 
@@ -67,6 +71,8 @@ export class LibraryService {
       year: input.year,
       is_published: input.is_published ?? false,
       spoiler_mode: input.spoiler_mode ?? 'open',
+      required_roles: input.required_roles ?? [],
+      age_rating: input.age_rating ?? 'L',
       created_by: input.created_by,
       created_at: now,
     };
@@ -79,6 +85,7 @@ export class LibraryService {
         description: draft.description, cover_url: draft.cover_url, back_cover_url: draft.back_cover_url,
         category_ids: draft.category_ids, tags: draft.tags, isbn: draft.isbn, edition: draft.edition,
         year: draft.year, is_published: draft.is_published, spoiler_mode: draft.spoiler_mode,
+        required_roles: draft.required_roles, age_rating: draft.age_rating,
       });
       if (!updated) throw new Error('Livro não encontrado.');
       return updated;

@@ -800,5 +800,36 @@ service cloud.firestore {
       allow update: if isAuthenticated() && resource.data.user_id == request.auth.uid;
       allow delete: if isAdmin();
     }
+
+    // ===========================
+    // Content Grants (per-user override de gate de classificação/role)
+    // Documento: { user_id, content_id, content_type ('book'|'track'),
+    //              granted_at, granted_by, expires_at? }
+    // ===========================
+    match /content_grants/{grantId} {
+      // Leitura: dono (pra catálogo) ou quem gerencia o tipo de conteúdo (CMS picker)
+      allow read: if isAuthenticated() && (
+        resource.data.user_id == request.auth.uid ||
+        hasFeature('manage:library') ||
+        hasFeature('manage:formation') ||
+        isAdmin()
+      );
+      // Write: só admins/gestores de conteúdo. Nunca o próprio usuário concede grant a si.
+      allow create: if isAuthenticated() && (
+        hasFeature('manage:library') ||
+        hasFeature('manage:formation') ||
+        isAdmin()
+      ) && request.resource.data.granted_by == request.auth.uid;
+      allow update: if isAuthenticated() && (
+        hasFeature('manage:library') ||
+        hasFeature('manage:formation') ||
+        isAdmin()
+      );
+      allow delete: if isAuthenticated() && (
+        hasFeature('manage:library') ||
+        hasFeature('manage:formation') ||
+        isAdmin()
+      );
+    }
   }
 }

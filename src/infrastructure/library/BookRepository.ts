@@ -6,6 +6,15 @@ export class BookRepository extends BaseRepository<Book> {
     super('library_books');
   }
 
+  protected deserialize(id: string, data: Record<string, unknown>): Book {
+    const raw = { id, ...data } as Book;
+    return {
+      ...raw,
+      required_roles: Array.isArray(raw.required_roles) ? raw.required_roles : [],
+      age_rating: raw.age_rating ?? 'L',
+    };
+  }
+
   async listPublished(): Promise<Book[]> {
     const list = await this.queryByFilters([
       { field: 'is_published', operator: '==', value: true },

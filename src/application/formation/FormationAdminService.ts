@@ -27,6 +27,7 @@ export interface SaveTrackInput {
   requires_formator_approval?: boolean;
   formator_ids?: string[];
   lesson_visibility?: FormationTrack['lesson_visibility'];
+  age_rating?: FormationTrack['age_rating'];
 }
 
 export class FormationAdminService {
@@ -55,6 +56,7 @@ export class FormationAdminService {
         requires_formator_approval: input.requires_formator_approval,
         formator_ids: input.formator_ids,
         lesson_visibility: input.lesson_visibility,
+        age_rating: input.age_rating ?? 'L',
         updated_at: new Date().toISOString(),
       });
       if (!updated) throw new Error('Trilha não encontrada.');
@@ -73,6 +75,8 @@ export class FormationAdminService {
       requires_track_ids: input.requires_track_ids,
       requires_formator_approval: input.requires_formator_approval,
       formator_ids: input.formator_ids,
+      lesson_visibility: input.lesson_visibility,
+      age_rating: input.age_rating ?? 'L',
       created_at: new Date().toISOString(),
     });
   }

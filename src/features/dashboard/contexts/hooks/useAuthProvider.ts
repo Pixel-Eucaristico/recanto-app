@@ -88,8 +88,8 @@ export function useAuthProvider() {
     catch (error) { console.error('Erro ao fazer login:', error); throw error; }
   };
 
-  const register = async (email: string, password: string, name: string, role: Role = null) => {
-    try { await authService.register(email, password, name, role); }
+  const register = async (email: string, password: string, name: string, role: Role = null, birthdate?: string) => {
+    try { await authService.register(email, password, name, role, birthdate); }
     catch (error) { console.error('Erro ao registrar:', error); throw error; }
   };
 

@@ -10,6 +10,7 @@ import {
 } from '@/features/formation-admin';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 import type { FormationTrack, FormationModule, FormationLesson } from '@/domain/formation/types';
+import { contentGrantService } from '@/application/content-access/ContentGrantService';
 
 type View = 'tracks' | 'track-form' | 'modules' | 'lessons' | 'lesson-form' | 'track-types';
 
@@ -138,8 +139,12 @@ export default function AdminFormationPage() {
             track={editingTrack}
             allTracks={tracksAdmin.tracks}
             saving={tracksAdmin.saving}
-            onSave={async input => {
-              await tracksAdmin.save(input);
+            onSave={async (input, allowedUserIds) => {
+              const saved = await tracksAdmin.save(input);
+              const trackId = saved?.id ?? input.id;
+              if (trackId && user) {
+                await contentGrantService.syncGrants(trackId, 'track', allowedUserIds, user.id);
+              }
               setView('tracks');
               setEditingTrack(null);
             }}

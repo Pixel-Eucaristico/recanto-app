@@ -13,4 +13,6 @@ export interface CurrentUser {
   name: string;
   role: Role;
   features: string[];
+  /** Data de nascimento ISO (YYYY-MM-DD). Opcional — usuários antigos podem não ter. */
+  birthdate?: string;
 }

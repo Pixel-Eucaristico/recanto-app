@@ -19,6 +19,7 @@ export async function createUserProfile(
   email: string,
   role: Role,
   photo_url: string | null = null,
+  birthdate?: string,
 ): Promise<FirebaseUser> {
   const userRef = doc(firestore, 'users', uid);
 
@@ -55,6 +56,7 @@ export async function createUserProfile(
   };
   if (finalFeatures) userData.features = finalFeatures;
   if (finalPhone) userData.phone = finalPhone;
+  if (birthdate) userData.birthdate = birthdate;
 
   await setDoc(userRef, userData, { merge: true });
   devLog(`✅ [AuthService] Novo usuário ${uid} criado com role: ${finalRole}`);

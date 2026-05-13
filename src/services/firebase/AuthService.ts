@@ -14,10 +14,10 @@ const devLog = (...args: unknown[]) => { if (DEV_LOG) console.log(...args); };
 const devWarn = (...args: unknown[]) => { if (DEV_LOG) console.warn(...args); };
 
 class AuthService {
-  async register(email: string, password: string, name: string, role: Role = 'visitante'): Promise<FirebaseUser> {
+  async register(email: string, password: string, name: string, role: Role = 'visitante', birthdate?: string): Promise<FirebaseUser> {
     try {
       const { user } = await createUserWithEmailAndPassword(auth, email, password);
-      return await createUserProfile(user.uid, name, email, role);
+      return await createUserProfile(user.uid, name, email, role, null, birthdate);
     } catch (error: any) {
       console.error('Error registering user:', error);
       throw new Error(error.message || 'Erro ao registrar usuário');

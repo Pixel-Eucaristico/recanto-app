@@ -1,10 +1,15 @@
 'use client';
 
-import { Save, X } from 'lucide-react';
+import { Save, X, Shield } from 'lucide-react';
 import type { Book, BookCategory, BookSpoilerMode } from '@/domain/library/types';
+import type { Role } from '@/shared/types/role';
+import type { AgeRating } from '@/shared/types/content-access';
 import { MarkdownField } from '@/shared/components/MarkdownField';
 import { CoverUploader } from './components/CoverUploader';
 import { useBookForm, type BookFormState } from './hooks/useBookForm';
+import { AgeRatingBadge } from '@/shared/components/AgeRatingBadge';
+import { AGE_RATINGS } from '@/shared/content-access/ageRating';
+import { UserGrantPicker } from '@/shared/components/UserGrantPicker';
 
 interface BookFormProps {
   book: Book | null;
@@ -17,8 +22,17 @@ interface BookFormProps {
 
 export type { BookFormState };
 
+const ROLE_OPTIONS: { value: Exclude<Role, null>; label: string }[] = [
+  { value: 'recantiano', label: 'Recantiano' },
+  { value: 'missionario', label: 'Missionário' },
+  { value: 'pai', label: 'Pai/Mãe' },
+  { value: 'colaborador', label: 'Colaborador' },
+  { value: 'benfeitor', label: 'Benfeitor' },
+  { value: 'visitante', label: 'Visitante' },
+];
+
 export function BookForm({ book, categories, saving, userId, onSave, onCancel }: BookFormProps) {
-  const { form, patch, toggleCategory } = useBookForm(book, userId);
+  const { form, patch, toggleCategory, toggleRole, setAllowedUserIds } = useBookForm(book, userId);
 
   return (
     <div className="card bg-base-100 border border-base-300">
@@ -109,6 +123,57 @@ export function BookForm({ book, categories, saving, userId, onSave, onCancel }:
             <input type="checkbox" className="checkbox checkbox-sm" checked={form.is_published} onChange={e => patch({ is_published: e.target.checked })} />
             <span className="label-text text-xs">Publicado (visível no catálogo)</span>
           </label>
+        </div>
+
+        {/* ─── Acesso ─────────────────────────────────────────────── */}
+        <div className="border border-base-300 rounded-lg p-3 bg-base-200/30">
+          <div className="flex items-center gap-2 mb-3">
+            <Shield className="w-4 h-4 text-primary" />
+            <h4 className="text-sm font-bold">Acesso</h4>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+            <div>
+              <span className="label-text text-xs font-medium block mb-1">Grupos permitidos (vazio = todos)</span>
+              <div className="flex flex-wrap gap-1">
+                {ROLE_OPTIONS.map(r => (
+                  <button
+                    key={r.value}
+                    type="button"
+                    className={`badge badge-sm cursor-pointer ${form.required_roles.includes(r.value) ? 'badge-primary' : 'badge-outline'}`}
+                    onClick={() => toggleRole(r.value)}
+                  >
+                    {r.label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-base-content/60 mt-1">Admin sempre vê o conteúdo.</p>
+            </div>
+
+            <label className="form-control">
+              <span className="label-text text-xs mb-1">Classificação indicativa</span>
+              <select
+                className="select select-bordered select-sm"
+                value={form.age_rating}
+                onChange={e => patch({ age_rating: e.target.value as AgeRating })}
+              >
+                {AGE_RATINGS.map(r => (
+                  <option key={r.value} value={r.value}>{r.label}</option>
+                ))}
+              </select>
+              <div className="mt-2 flex items-center gap-2">
+                <AgeRatingBadge rating={form.age_rating} showTooltip />
+                <span className="text-[10px] text-base-content/60 leading-snug">
+                  Passe o mouse no ícone pra ver os critérios.
+                </span>
+              </div>
+            </label>
+          </div>
+
+          <UserGrantPicker
+            selectedUserIds={form.allowed_user_ids}
+            onChange={setAllowedUserIds}
+          />
         </div>
 
         <div className="flex justify-end gap-2">

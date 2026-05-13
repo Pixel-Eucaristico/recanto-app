@@ -4,12 +4,17 @@ import { useState, useEffect } from 'react';
 import { Save, ArrowLeft } from 'lucide-react';
 import type { FormationTrack, TrackType, FormationTrackType } from '@/domain/formation/types';
 import type { Role } from '@/shared/types/role';
+import type { AgeRating } from '@/shared/types/content-access';
 import type { SaveTrackInput } from '@/application/formation/FormationAdminService';
 import { formationAdminService } from '@/application/formation/FormationAdminService';
 import { RichTextEditor } from '@/shared/components/RichTextEditor';
 import { ImagePicker } from '@/shared/components/ImagePicker';
 import { userService } from '@/services/firebase';
 import type { FirebaseUser } from '@/types/firebase-entities';
+import { AgeRatingBadge } from '@/shared/components/AgeRatingBadge';
+import { AGE_RATINGS } from '@/shared/content-access/ageRating';
+import { UserGrantPicker } from '@/shared/components/UserGrantPicker';
+import { contentGrantService } from '@/application/content-access/ContentGrantService';
 
 const ROLES: { value: Role; label: string }[] = [
   { value: 'recantiano', label: 'Recantiano' },
@@ -24,7 +29,7 @@ interface TrackFormProps {
   /** Lista de outras trilhas pra picker de pré-requisitos. */
   allTracks: FormationTrack[];
   saving: boolean;
-  onSave: (input: SaveTrackInput) => Promise<void>;
+  onSave: (input: SaveTrackInput, allowedUserIds: string[]) => Promise<void>;
   onCancel: () => void;
 }
 
@@ -40,6 +45,8 @@ export function TrackForm({ track, allTracks, saving, onSave, onCancel }: TrackF
   const [requiresApproval, setRequiresApproval] = useState(track?.requires_formator_approval ?? false);
   const [formatorIds, setFormatorIds] = useState<string[]>(track?.formator_ids ?? []);
   const [lessonVisibility, setLessonVisibility] = useState<FormationTrack['lesson_visibility']>(track?.lesson_visibility ?? 'all');
+  const [ageRating, setAgeRating] = useState<AgeRating>(track?.age_rating ?? 'L');
+  const [allowedUserIds, setAllowedUserIds] = useState<string[]>([]);
   const [trackTypes, setTrackTypes] = useState<FormationTrackType[]>([]);
   const [eligibleFormators, setEligibleFormators] = useState<FirebaseUser[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +64,18 @@ export function TrackForm({ track, allTracks, saving, onSave, onCancel }: TrackF
     setRequiresApproval(track?.requires_formator_approval ?? false);
     setFormatorIds(track?.formator_ids ?? []);
     setLessonVisibility(track?.lesson_visibility ?? 'all');
+    setAgeRating(track?.age_rating ?? 'L');
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [track?.id]);
+
+  // Carrega grants existentes do track
+  useEffect(() => {
+    if (!track?.id) { setAllowedUserIds([]); return; }
+    let alive = true;
+    contentGrantService.listForContent(track.id, 'track').then(grants => {
+      if (alive) setAllowedUserIds(grants.map(g => g.user_id));
+    }).catch(err => console.error('[TrackForm] erro carregar grants:', err));
+    return () => { alive = false; };
   }, [track?.id]);
 
   useEffect(() => {
@@ -105,7 +123,8 @@ export function TrackForm({ track, allTracks, saving, onSave, onCancel }: TrackF
         requires_formator_approval: requiresApproval || undefined,
         formator_ids: formatorIds.length ? formatorIds : undefined,
         lesson_visibility: lessonVisibility !== 'all' ? lessonVisibility : undefined,
-      });
+        age_rating: ageRating,
+      }, allowedUserIds);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
@@ -202,21 +221,49 @@ export function TrackForm({ track, allTracks, saving, onSave, onCancel }: TrackF
             <span className="text-[11px] text-base-content/50 mt-1">Admin sempre vê tudo.</span>
           </label>
 
-          <div>
-            <span className="label-text text-xs mb-1 block">Quem pode acessar (vazio = todos)</span>
-            <div className="flex flex-wrap gap-1">
-              {ROLES.map(r => (
-                <button
-                  key={r.value}
-                  type="button"
-                  className={`badge badge-sm cursor-pointer ${requiredRoles.includes(r.value) ? 'badge-primary' : 'badge-outline'}`}
-                  onClick={() => toggleRole(r.value)}
-                >
-                  {r.label}
-                </button>
-              ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <span className="label-text text-xs mb-1 block">Quem pode acessar (vazio = todos)</span>
+              <div className="flex flex-wrap gap-1">
+                {ROLES.map(r => (
+                  <button
+                    key={r.value}
+                    type="button"
+                    className={`badge badge-sm cursor-pointer ${requiredRoles.includes(r.value) ? 'badge-primary' : 'badge-outline'}`}
+                    onClick={() => toggleRole(r.value)}
+                  >
+                    {r.label}
+                  </button>
+                ))}
+              </div>
             </div>
+
+            <label className="form-control">
+              <span className="label-text text-xs mb-1">Classificação indicativa</span>
+              <select
+                className="select select-bordered select-sm"
+                value={ageRating}
+                onChange={e => setAgeRating(e.target.value as AgeRating)}
+              >
+                {AGE_RATINGS.map(r => (
+                  <option key={r.value} value={r.value}>{r.label}</option>
+                ))}
+              </select>
+              <div className="mt-2 flex items-center gap-2">
+                <AgeRatingBadge rating={ageRating} showTooltip />
+                <span className="text-[10px] text-base-content/60 leading-snug">
+                  Passe o mouse no ícone pra ver os critérios.
+                </span>
+              </div>
+            </label>
           </div>
+
+          <UserGrantPicker
+            selectedUserIds={allowedUserIds}
+            onChange={setAllowedUserIds}
+            label="Usuários liberados (exceção)"
+            helperText="Liberam esta trilha mesmo fora do grupo/idade."
+          />
 
           {/* Pré-requisitos */}
           {candidateTracks.length > 0 && (

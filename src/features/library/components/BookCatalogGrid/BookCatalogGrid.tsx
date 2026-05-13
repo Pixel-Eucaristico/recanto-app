@@ -8,6 +8,7 @@ import { HoverGallery } from '@/shared/components/HoverGallery';
 import { BookExportButtons } from '@/features/library/components/BookExportButtons';
 import { Tooltip } from '@/shared/components/Tooltip';
 import { auth } from '@/domains/auth/services/firebaseClient';
+import { AgeRatingBadge } from '@/shared/components/AgeRatingBadge';
 
 interface BookCatalogGridProps {
   books: Book[];
@@ -115,6 +116,9 @@ function BookCard({ book, manager, canDownload = true, onEdit, onEditChapters, o
           {book.spoiler_mode === 'progressive' && (
             <span className="absolute bottom-2 left-2 badge badge-info badge-xs z-10">progressivo</span>
           )}
+          <span className="absolute bottom-2 right-2 z-10">
+            <AgeRatingBadge rating={book.age_rating ?? 'L'} size="sm" />
+          </span>
         </figure>
         <div className="card-body p-3 gap-1">
           <h3 className="text-sm font-semibold text-base-content line-clamp-2">{book.title}</h3>

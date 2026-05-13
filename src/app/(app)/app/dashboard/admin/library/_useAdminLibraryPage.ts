@@ -6,6 +6,7 @@ import type { Book, BookChapter, BookReference } from '@/domain/library/types';
 import type { SaveChapterPayload } from '@/features/library/components/ChapterEditor/hooks/useChapterEditor';
 import type { BookFormState } from '@/features/library';
 import { useBooksAdmin, useLibraryCatalog, useBookChapters } from '@/features/library';
+import { contentGrantService } from '@/application/content-access/ContentGrantService';
 
 type View = 'list' | 'form' | 'categories' | 'chapters' | 'chapter-edit';
 
@@ -37,7 +38,29 @@ export function useAdminLibraryPage() {
   async function handleSaveBook(form: BookFormState) {
     const tags = form.tags.split(',').map(t => t.trim()).filter(Boolean);
     const year = form.year ? Number(form.year) : undefined;
-    await save({ id: form.id, title: form.title, subtitle: form.subtitle || undefined, author: form.author || undefined, language: form.language, description: form.description || undefined, cover_url: form.cover_url || undefined, back_cover_url: form.back_cover_url || undefined, category_ids: form.category_ids, tags, isbn: form.isbn || undefined, edition: form.edition || undefined, year, is_published: form.is_published, spoiler_mode: form.spoiler_mode, created_by: form.created_by });
+    const saved = await save({
+      id: form.id,
+      title: form.title,
+      subtitle: form.subtitle || undefined,
+      author: form.author || undefined,
+      language: form.language,
+      description: form.description || undefined,
+      cover_url: form.cover_url || undefined,
+      back_cover_url: form.back_cover_url || undefined,
+      category_ids: form.category_ids,
+      tags,
+      isbn: form.isbn || undefined,
+      edition: form.edition || undefined,
+      year,
+      is_published: form.is_published,
+      spoiler_mode: form.spoiler_mode,
+      required_roles: form.required_roles,
+      age_rating: form.age_rating,
+      created_by: form.created_by,
+    });
+    if (saved?.id) {
+      await contentGrantService.syncGrants(saved.id, 'book', form.allowed_user_ids, form.created_by);
+    }
     setView('list');
     setActiveBook(null);
   }

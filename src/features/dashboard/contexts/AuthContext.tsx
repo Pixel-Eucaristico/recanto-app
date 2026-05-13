@@ -9,7 +9,7 @@ interface AuthContextProps {
   user: FirebaseUser | null;
   authProviders: string[];
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name: string, role?: Role) => Promise<void>;
+  register: (email: string, password: string, name: string, role?: Role, birthdate?: string) => Promise<void>;
   loginWithProvider: (provider: 'google' | 'facebook' | 'twitter') => Promise<void>;
   linkGoogleAccount: () => Promise<void>;
   createLocalPassword: (password: string) => Promise<void>;

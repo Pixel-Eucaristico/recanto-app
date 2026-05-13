@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useAuth } from "@/features/dashboard/contexts/AuthContext";
 import { useRouter } from "next/navigation";
-import { Role } from "@/features/auth/types/user";
+import { registerSchema, loginSchema } from "@/features/auth/schemas/registerSchema";
 
 interface LoginFormProps {
   isRegister?: boolean;
@@ -17,6 +17,7 @@ export function LoginForm({ isRegister = false }: LoginFormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [birthdate, setBirthdate] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,14 +26,27 @@ export function LoginForm({ isRegister = false }: LoginFormProps) {
 
     try {
       if (isRegister) {
-        await register(email, password, name);
+        const parsed = registerSchema.safeParse({ name, email, password, birthdate });
+        if (!parsed.success) {
+          setError(parsed.error.issues[0]?.message ?? 'Dados inválidos');
+          setIsLoading(false);
+          return;
+        }
+        await register(parsed.data.email, parsed.data.password, parsed.data.name, null, parsed.data.birthdate);
       } else {
-        await login(email, password);
+        const parsed = loginSchema.safeParse({ email, password });
+        if (!parsed.success) {
+          setError(parsed.error.issues[0]?.message ?? 'Dados inválidos');
+          setIsLoading(false);
+          return;
+        }
+        await login(parsed.data.email, parsed.data.password);
       }
       router.push('/app/dashboard');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro:', error);
-      setError(error.message || 'Erro ao processar sua solicitação');
+      const message = error instanceof Error ? error.message : 'Erro ao processar sua solicitação';
+      setError(message);
     } finally {
       setIsLoading(false);
     }
@@ -45,9 +59,10 @@ export function LoginForm({ isRegister = false }: LoginFormProps) {
     try {
       await loginWithProvider(provider);
       router.push('/app/dashboard');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao fazer login com provedor:', error);
-      setError(error.message || 'Erro ao fazer login');
+      const message = error instanceof Error ? error.message : 'Erro ao fazer login';
+      setError(message);
     } finally {
       setIsLoading(false);
     }
@@ -56,16 +71,16 @@ export function LoginForm({ isRegister = false }: LoginFormProps) {
   return (
     <div className="flex flex-col gap-4 w-full max-w-sm">
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-2">
-          {error}
+        <div className="alert alert-error text-sm">
+          <span>{error}</span>
         </div>
       )}
-      
+
       <form onSubmit={handleSubmit} className="flex flex-col gap-4 mb-4">
         {isRegister && (
           <div className="form-control">
             <label className="label">
-              <span className="label-text">Nome Completo</span>
+              <span className="label-text">Nome completo</span>
             </label>
             <input
               type="text"
@@ -107,6 +122,25 @@ export function LoginForm({ isRegister = false }: LoginFormProps) {
           />
         </div>
 
+        {isRegister && (
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text">Data de nascimento</span>
+            </label>
+            <input
+              type="date"
+              className="input input-bordered"
+              value={birthdate}
+              onChange={(e) => setBirthdate(e.target.value)}
+              max={new Date().toISOString().split('T')[0]}
+              required
+            />
+            <span className="label-text-alt mt-1 text-base-content/60">
+              Usada para classificação indicativa de conteúdo.
+            </span>
+          </div>
+        )}
+
         <button
           type="submit"
           className={`btn btn-primary ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -129,26 +163,6 @@ export function LoginForm({ isRegister = false }: LoginFormProps) {
             >
               Google
             </button>
-
-{/* 
-            <button
-              type="button"
-              className={`btn btn-outline ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-              onClick={() => handleProviderLogin('facebook')}
-              disabled={isLoading}
-            >
-              Facebook
-            </button>
-
-            <button
-              type="button"
-              className={`btn btn-outline ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-              onClick={() => handleProviderLogin('twitter')}
-              disabled={isLoading}
-            >
-              Twitter
-            </button> 
-            */}
           </div>
         </>
       )}

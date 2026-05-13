@@ -36,7 +36,8 @@ export default function UserFormDialog({ isOpen, setIsOpen, user, onSave, availa
         email: '',
         phone: '',
         role: 'recantiano' as Role,
-        features: [] as string[]
+        features: [] as string[],
+        birthdate: '',
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -50,10 +51,11 @@ export default function UserFormDialog({ isOpen, setIsOpen, user, onSave, availa
                 email: user.email,
                 phone: user.phone || '',
                 role: user.role,
-                features: user.features || []
+                features: user.features || [],
+                birthdate: user.birthdate || '',
             });
         } else {
-            setFormData({ name: '', email: '', phone: '', role: 'recantiano', features: [] });
+            setFormData({ name: '', email: '', phone: '', role: 'recantiano', features: [], birthdate: '' });
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user?.id, isOpen]);
@@ -161,6 +163,17 @@ export default function UserFormDialog({ isOpen, setIsOpen, user, onSave, availa
                                     </option>
                                 ))}
                             </select>
+                        </fieldset>
+
+                        <fieldset className="fieldset">
+                            <legend className="fieldset-legend text-[10px] uppercase font-bold opacity-50">Data de nascimento</legend>
+                            <input
+                                type="date"
+                                className="input input-xs input-bordered w-full"
+                                value={formData.birthdate}
+                                max={new Date().toISOString().split('T')[0]}
+                                onChange={(e) => setFormData({ ...formData, birthdate: e.target.value })}
+                            />
                         </fieldset>
                     </div>
 

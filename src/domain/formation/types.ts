@@ -1,4 +1,5 @@
 import { Role } from '@/shared/types/role';
+import { AgeRating } from '@/shared/types/content-access';
 
 /**
  * Tipo da trilha — agora é referência a `formation_track_types/{id}`.
@@ -67,6 +68,8 @@ export interface FormationTrack {
    * Admin sempre vê tudo.
    */
   lesson_visibility?: 'all' | 'current_only' | 'current_and_next';
+  /** Classificação indicativa da trilha. Default 'L'. */
+  age_rating: AgeRating;
   created_at: string;
   updated_at?: string;
 }

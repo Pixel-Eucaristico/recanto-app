@@ -6,6 +6,7 @@ import { Lock, ChevronRight } from 'lucide-react';
 import { FormationTrack } from '@/domain/formation/types';
 import { Track, TRACK_TYPE_LABELS } from '@/domain/formation/entities/Track';
 import { Role } from '@/shared/types/role';
+import { AgeRatingBadge } from '@/shared/components/AgeRatingBadge';
 
 interface TrackCardProps {
   track: FormationTrack;
@@ -47,10 +48,11 @@ export function TrackCard({ track, completedLessons, totalLessons, userRole }: T
       ) : null}
 
       <div className="card-body gap-2">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <span className="badge badge-outline badge-sm">
             {TRACK_TYPE_LABELS[track.type]}
           </span>
+          <AgeRatingBadge rating={track.age_rating ?? 'L'} size="sm" />
           {!accessible && <span className="badge badge-error badge-sm">Bloqueado</span>}
         </div>
 

@@ -6,6 +6,9 @@
  * Headings, listas, código e imagens não numeram.
  */
 
+import { Role } from '@/shared/types/role';
+import { AgeRating } from '@/shared/types/content-access';
+
 export type BookSpoilerMode = 'open' | 'progressive';
 
 export type BookBlockKind = 'heading' | 'paragraph' | 'quote' | 'list' | 'code' | 'image_ref';
@@ -87,6 +90,10 @@ export interface Book {
    * 'progressive' — corte de spoiler vale por aula que referencia o livro com `apply_spoiler=true`.
    */
   spoiler_mode: BookSpoilerMode;
+  /** Roles que podem acessar o livro. [] = todos os autenticados. */
+  required_roles: Role[];
+  /** Classificação indicativa. Default 'L'. */
+  age_rating: AgeRating;
   created_by: string;
   created_at: string;
   updated_at?: string;

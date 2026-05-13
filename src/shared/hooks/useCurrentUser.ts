@@ -10,6 +10,7 @@ export function useCurrentUser(): CurrentUser | null {
   const name = user?.name;
   const role = user?.role ?? null;
   const featuresKey = (user?.features ?? []).join(',');
+  const birthdate = user?.birthdate;
 
   return useMemo<CurrentUser | null>(() => {
     if (!id) return null;
@@ -18,6 +19,7 @@ export function useCurrentUser(): CurrentUser | null {
       name: name ?? '',
       role,
       features: featuresKey ? featuresKey.split(',') : [],
+      birthdate,
     };
-  }, [id, name, role, featuresKey]);
+  }, [id, name, role, featuresKey, birthdate]);
 }
