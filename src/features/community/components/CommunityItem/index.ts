@@ -1,0 +1,1 @@
+export { CommunityItem } from './CommunityItem';

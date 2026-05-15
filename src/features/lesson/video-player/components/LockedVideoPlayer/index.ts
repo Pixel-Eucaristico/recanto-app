@@ -1,0 +1,1 @@
+export { LockedVideoPlayer } from './LockedVideoPlayer';

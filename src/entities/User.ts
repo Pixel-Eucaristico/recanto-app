@@ -20,7 +20,7 @@ export class User {
   }
 
   static async create(data: Omit<FirebaseUser, 'id' | 'created_at'>): Promise<FirebaseUser> {
-    return userService.create(data);
+    return userService.create({ ...data, created_at: new Date().toISOString() });
   }
 
   static async update(id: string, data: Partial<FirebaseUser>): Promise<FirebaseUser | null> {

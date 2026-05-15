@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
       userId,
       tokens,
       syncEnabled: false, // Will be enabled after calendar selection
-      lastSync: null,
+      lastSync: undefined,
     });
 
     console.log('✅ [Calendar Callback] Tokens salvos. Redirecionando para seleção de calendário...');

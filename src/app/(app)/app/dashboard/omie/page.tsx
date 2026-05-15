@@ -32,7 +32,7 @@ export default function OmieIntegrationPage() {
     const { user } = useAuth();
     const [isLoading, setIsLoading] = useState(true);
     const [connectionStatus, setConnectionStatus] = useState('disconnected'); // disconnected, connecting, connected, error
-    const [omieData, setOmieData] = useState(null);
+    const [omieData, setOmieData] = useState<typeof mockOmieData | null>(null);
 
     useEffect(() => {
         if (!user) return;

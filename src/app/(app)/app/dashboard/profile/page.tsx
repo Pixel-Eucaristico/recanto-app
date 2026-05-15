@@ -71,6 +71,7 @@ export default function ProfilePage() {
   const [photoUrl, setPhotoUrl] = useState(user?.photo_url || '');
   const [themeLight, setThemeLight] = useState(user?.theme_light || 'recanto-light');
   const [themeDark, setThemeDark] = useState(user?.theme_dark || 'recanto-dark');
+  const [birthdate, setBirthdate] = useState(user?.birthdate || '');
 
   // Estados de vinculação
   const [showPasswordInput, setShowPasswordInput] = useState(false);
@@ -113,12 +114,14 @@ export default function ProfilePage() {
     try {
       if (!user) return;
       
-      await userService.update(user.id, {
-         name,
-         phone,
-         theme_light: themeLight,
-         theme_dark: themeDark
-      });
+      const payload: Record<string, unknown> = {
+        name,
+        phone,
+        theme_light: themeLight,
+        theme_dark: themeDark,
+      };
+      if (birthdate) payload.birthdate = birthdate;
+      await userService.update(user.id, payload);
       
       toast({ title: "Perfil salvo!", description: "Suas alterações foram aplicadas com sucesso. A página será recarregada para aplicar temas." });
       
@@ -260,6 +263,21 @@ export default function ProfilePage() {
                       className="input input-bordered w-full h-11"
                       placeholder="(00) 00000-0000"
                     />
+                  </div>
+
+                  {/* Data de nascimento */}
+                  <div className="w-full">
+                    <label className="fieldset-label font-bold text-base-content/70">Data de nascimento</label>
+                    <input
+                      type="date"
+                      value={birthdate}
+                      onChange={(e) => setBirthdate(e.target.value)}
+                      max={new Date().toISOString().split('T')[0]}
+                      className="input input-bordered w-full h-11"
+                    />
+                    <span className="text-[11px] text-base-content/60 mt-1 block">
+                      Usada para liberar conteúdos por classificação indicativa.
+                    </span>
                   </div>
                 </fieldset>
 

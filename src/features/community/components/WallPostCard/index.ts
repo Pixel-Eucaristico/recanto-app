@@ -1,0 +1,1 @@
+export { WallPostCard } from './WallPostCard';

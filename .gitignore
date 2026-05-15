@@ -876,11 +876,14 @@ FodyWeavers.xsd
 pnpm-lock.yaml
 pnpm-workspace.yaml
 
-# SEGURANÇA: Não commitar whitelist de admins (contém emails e UIDs autorizados)
-src/config/admin-whitelist.ts
+# Whitelist de admins agora lê de env var ADMIN_WHITELIST — arquivo seguro pra committar.
 
 # Firebase Service Account (NUNCA commitar - acesso admin ao Firebase!)
 firebase-service-account.json
 *-service-account.json
 *.txt
 docs/
+
+# Typst PDF generator debug artifacts
+typst-debug.typ
+test-output*.pdf

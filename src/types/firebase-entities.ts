@@ -15,6 +15,8 @@ export interface FirebaseUser {
   theme_dark?: string; // Preferência de tema do dashboard (escuro)
   missionario_responsavel_id?: string; // Para recantianos
   filho_recantiano_id?: string; // Para pais
+  /** Data de nascimento ISO (YYYY-MM-DD). Usada pra classificação indicativa. */
+  birthdate?: string;
   created_at: string;
   updated_at?: string;
 }

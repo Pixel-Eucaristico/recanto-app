@@ -1,0 +1,1 @@
+export { ModuleAccordion } from './ModuleAccordion';

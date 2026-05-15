@@ -76,7 +76,7 @@ export class CalendarAutoSyncService {
       const { googleCalendarService } = await import('@/integrations/google-calendar/GoogleCalendarService');
 
       for (const doc of configsSnapshot.docs) {
-        const config = doc.data();
+        const config = doc.data() as import('@/types/google-calendar').GoogleCalendarConfig;
         const userId = doc.id;
 
         try {
@@ -205,7 +205,7 @@ export class CalendarAutoSyncService {
         .get();
 
       for (const doc of configsSnapshot.docs) {
-        const config = doc.data();
+        const config = doc.data() as import('@/types/google-calendar').GoogleCalendarConfig;
         const userId = doc.id;
 
         try {

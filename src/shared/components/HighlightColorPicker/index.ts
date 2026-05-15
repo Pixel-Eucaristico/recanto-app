@@ -1,0 +1,1 @@
+export { HighlightColorPicker } from './HighlightColorPicker';

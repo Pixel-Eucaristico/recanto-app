@@ -1,4 +1,4 @@
-import { database } from '@/lib/firebase';
+import { database } from '@/lib/firebase'; 
 import { ref, set, get, child } from 'firebase/database';
 import { Role } from '@/features/auth/types/user';
 

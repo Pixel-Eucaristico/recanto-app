@@ -331,5 +331,505 @@ service cloud.firestore {
       allow read: if isAdmin();
       allow write: if isAdmin();
     }
+
+    // ===========================
+    // Formation Track Types Collection
+    // ===========================
+    match /formation_track_types/{typeId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if hasFeature('manage:formation');
+    }
+
+    // ===========================
+    // Formation Tracks Collection
+    // ===========================
+    match /formation_tracks/{trackId} {
+      allow read: if hasFeature('read:formation') || hasFeature('manage:formation');
+      allow create: if hasFeature('manage:formation');
+      allow update: if hasFeature('manage:formation');
+      allow delete: if hasFeature('manage:formation');
+    }
+
+    // ===========================
+    // Formation Modules Collection
+    // ===========================
+    match /formation_modules/{moduleId} {
+      allow read: if hasFeature('read:formation') || hasFeature('manage:formation');
+      allow create: if hasFeature('manage:formation');
+      allow update: if hasFeature('manage:formation');
+      allow delete: if hasFeature('manage:formation');
+    }
+
+    // ===========================
+    // Formation Lessons Collection
+    // ===========================
+    match /formation_lessons/{lessonId} {
+      allow read: if hasFeature('read:formation') || hasFeature('manage:formation');
+      allow create: if hasFeature('manage:formation');
+      allow update: if hasFeature('manage:formation');
+      allow delete: if hasFeature('manage:formation');
+    }
+
+    // ===========================
+    // Formation Progress Collection
+    // ===========================
+    match /formation_progress/{progressId} {
+      // Leitura: próprio progresso ou quem tem review:formation
+      allow read: if hasFeature('review:formation') ||
+                    (isAuthenticated() && resource.data.user_id == request.auth.uid);
+      // Criação/atualização: próprio usuário
+      allow create: if isAuthenticated() &&
+                      request.resource.data.user_id == request.auth.uid;
+      allow update: if isAuthenticated() &&
+                      resource.data.user_id == request.auth.uid;
+      // Deleção: só admin
+      allow delete: if isAdmin();
+    }
+
+    // ===========================
+    // Quizzes Collection
+    // ===========================
+    match /quizzes/{quizId} {
+      allow read: if hasFeature('read:formation') || hasFeature('manage:formation');
+      allow create: if hasFeature('manage:formation');
+      allow update: if hasFeature('manage:formation');
+      allow delete: if hasFeature('manage:formation');
+    }
+
+    // ===========================
+    // Quiz Attempts Collection
+    // ===========================
+    match /quiz_attempts/{attemptId} {
+      // Leitura: próprio usuário OU quem tem review:formation
+      allow read: if hasFeature('review:formation') ||
+                    (isAuthenticated() && resource.data.user_id == request.auth.uid);
+      // Criação: próprio usuário com complete:formation
+      allow create: if isAuthenticated() &&
+                      hasFeature('complete:formation') &&
+                      request.resource.data.user_id == request.auth.uid;
+      // Tentativas são imutáveis (audit trail)
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    // ===========================
+    // Crosswords Collection
+    // ===========================
+    match /crosswords/{puzzleId} {
+      allow read: if hasFeature('read:formation') || hasFeature('manage:formation');
+      allow create: if hasFeature('manage:formation');
+      allow update: if hasFeature('manage:formation');
+      allow delete: if hasFeature('manage:formation');
+    }
+
+    // ===========================
+    // Crossword Results Collection
+    // ===========================
+    match /crossword_results/{resultId} {
+      allow read: if hasFeature('review:formation') ||
+                    (isAuthenticated() && resource.data.user_id == request.auth.uid);
+      allow create: if isAuthenticated() &&
+                      hasFeature('complete:formation') &&
+                      request.resource.data.user_id == request.auth.uid;
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    // ===========================
+    // Word Searches Collection
+    // ===========================
+    match /word_searches/{puzzleId} {
+      allow read: if hasFeature('read:formation') || hasFeature('manage:formation');
+      allow create: if hasFeature('manage:formation');
+      allow update: if hasFeature('manage:formation');
+      allow delete: if hasFeature('manage:formation');
+    }
+
+    // ===========================
+    // Word Search Results Collection
+    // ===========================
+    match /word_search_results/{resultId} {
+      allow read: if hasFeature('review:formation') ||
+                    (isAuthenticated() && resource.data.user_id == request.auth.uid);
+      allow create: if isAuthenticated() &&
+                      hasFeature('complete:formation') &&
+                      request.resource.data.user_id == request.auth.uid;
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    // ===========================
+    // Mind Map Templates Collection
+    // ===========================
+    match /mind_map_templates/{templateId} {
+      allow read: if hasFeature('read:formation') || hasFeature('manage:formation');
+      allow create: if hasFeature('manage:formation');
+      allow update: if hasFeature('manage:formation');
+      allow delete: if hasFeature('manage:formation');
+    }
+
+    // ===========================
+    // Student Mind Maps Collection (snapshot por aluno)
+    // ===========================
+    match /student_mind_maps/{mapId} {
+      allow read: if hasFeature('review:formation') ||
+                    (isAuthenticated() && resource.data.user_id == request.auth.uid);
+      allow create: if isAuthenticated() &&
+                      hasFeature('complete:formation') &&
+                      request.resource.data.user_id == request.auth.uid;
+      allow update: if isAuthenticated() && resource.data.user_id == request.auth.uid;
+      allow delete: if isAdmin();
+    }
+
+    // ===========================
+    // Media Registry Collection (dedupe de arquivos R2)
+    // ===========================
+    match /media_registry/{assetId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.uploaded_by == request.auth.uid;
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    // ===========================
+    // Case Studies Collection
+    // ===========================
+    match /case_studies/{caseId} {
+      allow read: if hasFeature('read:formation') || hasFeature('manage:formation');
+      allow create: if hasFeature('manage:formation');
+      allow update: if hasFeature('manage:formation');
+      allow delete: if hasFeature('manage:formation');
+    }
+
+    // ===========================
+    // Case Runs Collection
+    // ===========================
+    match /case_runs/{runId} {
+      allow read: if hasFeature('review:formation') ||
+                    (isAuthenticated() && resource.data.user_id == request.auth.uid);
+      allow create: if isAuthenticated() &&
+                      hasFeature('complete:formation') &&
+                      request.resource.data.user_id == request.auth.uid;
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    // ===========================
+    // Flashcard Decks Collection
+    // ===========================
+    match /flashcard_decks/{deckId} {
+      allow read: if hasFeature('read:formation') || hasFeature('manage:formation');
+      allow create: if hasFeature('manage:formation');
+      allow update: if hasFeature('manage:formation');
+      allow delete: if hasFeature('manage:formation');
+    }
+
+    // ===========================
+    // Flashcard Reviews Collection
+    // ===========================
+    match /flashcard_reviews/{reviewId} {
+      allow read: if hasFeature('review:formation') ||
+                    (isAuthenticated() && resource.data.user_id == request.auth.uid);
+      allow create: if isAuthenticated() &&
+                      hasFeature('complete:formation') &&
+                      request.resource.data.user_id == request.auth.uid;
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    // ===========================
+    // Video Watch Sessions (log append-only de visualizações)
+    // ===========================
+    match /video_watch_sessions/{sessionId} {
+      allow read: if hasFeature('review:formation') ||
+                    (isAuthenticated() && resource.data.user_id == request.auth.uid);
+      allow create: if isAuthenticated() &&
+                      request.resource.data.user_id == request.auth.uid;
+      allow update: if isAuthenticated() && resource.data.user_id == request.auth.uid;
+      allow delete: if isAdmin();
+    }
+
+    // ===========================
+    // Habits (admin CRUD, todos leem)
+    // ===========================
+    match /habits/{habitId} {
+      allow read: if hasFeature('log:habits') || hasFeature('manage:habits');
+      allow write: if hasFeature('manage:habits') || isAdmin();
+    }
+
+    // ===========================
+    // Habit Logs (id determinístico {habitId}_{userId}_{YYYY-MM-DD})
+    // ===========================
+    match /habit_logs/{logId} {
+      allow read: if hasFeature('manage:habits') ||
+                    (isAuthenticated() && resource.data.user_id == request.auth.uid);
+      allow write: if isAuthenticated() &&
+                     hasFeature('log:habits') &&
+                     request.resource.data.user_id == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.user_id == request.auth.uid;
+    }
+
+    // ===========================
+    // Community Categories (admin gerencia)
+    // ===========================
+    match /community_categories/{categoryId} {
+      allow read: if hasFeature('read:community') || hasFeature('manage:community');
+      allow write: if hasFeature('manage:community') || isAdmin();
+    }
+
+    // ===========================
+    // Community Posts (fórum / enquete / mural)
+    // ===========================
+    match /community_posts/{postId} {
+      allow read: if hasFeature('read:community') || hasFeature('manage:community');
+      allow create: if isAuthenticated() &&
+                      hasFeature('post:community') &&
+                      request.resource.data.created_by == request.auth.uid;
+      allow update: if (isAuthenticated() && resource.data.created_by == request.auth.uid) ||
+                      hasFeature('manage:community');
+      allow delete: if (isAuthenticated() && resource.data.created_by == request.auth.uid) ||
+                      hasFeature('manage:community');
+    }
+
+    // ===========================
+    // Community Replies
+    // ===========================
+    match /community_replies/{replyId} {
+      allow read: if hasFeature('read:community') || hasFeature('manage:community');
+      allow create: if isAuthenticated() &&
+                      hasFeature('post:community') &&
+                      request.resource.data.created_by == request.auth.uid;
+      allow update: if isAuthenticated() && resource.data.created_by == request.auth.uid;
+      allow delete: if (isAuthenticated() && resource.data.created_by == request.auth.uid) ||
+                      hasFeature('manage:community');
+    }
+
+    // ===========================
+    // Poll Votes (id determinístico {pollId}_{userId})
+    // ===========================
+    match /community_poll_votes/{voteId} {
+      allow read: if hasFeature('read:community') || hasFeature('manage:community');
+      // Dono pode criar/atualizar — troca o voto via setDoc merge
+      allow write: if isAuthenticated() &&
+                     hasFeature('post:community') &&
+                     request.resource.data.user_id == request.auth.uid &&
+                     voteId == (request.resource.data.poll_id + '_' + request.auth.uid);
+      allow delete: if isAdmin();
+    }
+
+    // ===========================
+    // Library — Books / Chapters / Categories
+    // ===========================
+    match /library_books/{bookId} {
+      allow read: if hasFeature('read:library') || hasFeature('manage:library');
+      allow create: if hasFeature('manage:library') || isAdmin();
+      allow update, delete: if hasFeature('manage:library') || isAdmin();
+    }
+
+    match /library_book_chapters/{chapterId} {
+      allow read: if hasFeature('read:library') || hasFeature('manage:library');
+      allow write: if hasFeature('manage:library') || isAdmin();
+    }
+
+    match /library_book_categories/{catId} {
+      allow read: if hasFeature('read:library') || hasFeature('manage:library');
+      allow write: if hasFeature('manage:library') || isAdmin();
+    }
+
+    match /book_reading_progress/{progressId} {
+      // Leitura: dono, admin ou quem tem review:formation (formadores/missionários acompanhando alunos).
+      allow read: if isAuthenticated() && (
+        resource.data.user_id == request.auth.uid ||
+        isAdmin() ||
+        hasFeature('review:formation')
+      );
+      allow create, update: if isAuthenticated() &&
+        request.resource.data.user_id == request.auth.uid &&
+        hasFeature('read:library');
+    }
+
+    match /book_highlights/{highlightId} {
+      allow read, delete: if isAuthenticated() && resource.data.user_id == request.auth.uid;
+      allow create, update: if isAuthenticated() &&
+        request.resource.data.user_id == request.auth.uid &&
+        hasFeature('read:library');
+    }
+
+    match /book_comments/{commentId} {
+      allow read, delete: if isAuthenticated() && resource.data.user_id == request.auth.uid;
+      allow create, update: if isAuthenticated() &&
+        request.resource.data.user_id == request.auth.uid &&
+        hasFeature('read:library');
+    }
+
+    match /book_tags/{tagId} {
+      allow read, delete: if isAuthenticated() && resource.data.user_id == request.auth.uid;
+      allow create, update: if isAuthenticated() &&
+        request.resource.data.user_id == request.auth.uid &&
+        hasFeature('read:library');
+    }
+
+    // ===========================
+    // Spiritual Reflections Collection (Caderno Espiritual)
+    // ===========================
+    match /spiritual_reflections/{reflectionId} {
+      // Leitura: dono ou quem revisa (review:formation)
+      allow read: if hasFeature('review:formation') ||
+                    (isAuthenticated() && resource.data.user_id == request.auth.uid);
+      // Criação: próprio usuário com complete:formation
+      allow create: if isAuthenticated() &&
+                      hasFeature('complete:formation') &&
+                      request.resource.data.user_id == request.auth.uid;
+      // Atualização: dono (editar rascunho / enviar) OU quem revisa (adicionar comentário)
+      allow update: if (isAuthenticated() && resource.data.user_id == request.auth.uid) ||
+                      hasFeature('review:formation');
+      // Deleção: só admin
+      allow delete: if isAdmin();
+    }
+
+    // ===========================
+    // Content Versions (histórico append-only de edições)
+    // ===========================
+    match /content_versions/{versionId} {
+      // Leitura: dono OU quem revisa (formador)
+      allow read: if isAuthenticated() && (
+        resource.data.user_id == request.auth.uid ||
+        hasFeature('review:formation') ||
+        isAdmin()
+      );
+      // Criação: próprio usuário (plugin grava no save)
+      allow create: if isAuthenticated() &&
+                      request.resource.data.user_id == request.auth.uid;
+      // Imutável após criação
+      allow update, delete: if false;
+    }
+
+    // ===========================
+    // Prayer Intentions + Logs
+    // ===========================
+    match /prayer_intentions/{intentionId} {
+      allow read: if isAuthenticated() && (
+        hasFeature('read:prayer') || hasFeature('manage:prayer') || isAdmin()
+      );
+      allow create: if isAuthenticated() &&
+                      hasFeature('read:prayer') &&
+                      request.resource.data.created_by == request.auth.uid;
+      // Update: dono (marcar respondida) OU sistema incrementa contador via log
+      // Permissão simples: dono OU autenticado (pra incrementar prayed_count após log)
+      allow update: if isAuthenticated() && (
+        resource.data.created_by == request.auth.uid ||
+        hasFeature('read:prayer')
+      );
+      allow delete: if isAuthenticated() && (
+        resource.data.created_by == request.auth.uid || isAdmin() || hasFeature('manage:prayer')
+      );
+    }
+
+    match /prayer_logs/{logId} {
+      allow read: if isAuthenticated() && (
+        resource.data.user_id == request.auth.uid ||
+        hasFeature('manage:prayer') ||
+        isAdmin()
+      );
+      allow create: if isAuthenticated() &&
+                      hasFeature('read:prayer') &&
+                      request.resource.data.user_id == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // ===========================
+    // Notifications (in-app, fan-out por destinatário)
+    // ===========================
+    match /notifications/{notificationId} {
+      // Leitura: dono OU admin
+      allow read: if isAuthenticated() && (
+        resource.data.user_id == request.auth.uid || isAdmin()
+      );
+      // Criação: qualquer autenticado pode criar (service grava em nome de outros via fan-out client)
+      // Trade-off: simplicidade > segurança rígida. Pra prod considerar Cloud Function.
+      allow create: if isAuthenticated() && request.resource.data.read == false;
+      // Update: só dono (marcar como lida)
+      allow update: if isAuthenticated() && resource.data.user_id == request.auth.uid;
+      allow delete: if isAuthenticated() && (
+        resource.data.user_id == request.auth.uid || isAdmin()
+      );
+    }
+
+    // ===========================
+    // Track Enrollment Requests (aprovação manual do formador)
+    // ===========================
+    match /track_enrollment_requests/{requestId} {
+      // Leitura: dono OU formador/admin (formador filtra client-side por trilhas que gerencia)
+      allow read: if isAuthenticated() && (
+        resource.data.user_id == request.auth.uid ||
+        hasFeature('manage:formation') ||
+        hasFeature('review:formation') ||
+        isAdmin()
+      );
+      // Criação: aluno cria seu próprio pedido em status pending
+      allow create: if isAuthenticated() &&
+                      request.resource.data.user_id == request.auth.uid &&
+                      request.resource.data.status == 'pending';
+      // Update do dono: só pra alterar request_note, status SEMPRE pending
+      // Update de formador/admin: pode mudar pra approved/rejected
+      allow update: if isAuthenticated() && (
+        (
+          resource.data.user_id == request.auth.uid &&
+          request.resource.data.status == 'pending' &&
+          request.resource.data.user_id == resource.data.user_id
+        ) ||
+        hasFeature('manage:formation') ||
+        hasFeature('review:formation') ||
+        isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+
+    // ===========================
+    // Video Watch Sessions (log de visualizações + rewatch)
+    // ===========================
+    match /video_watch_sessions/{sessionId} {
+      allow read: if isAuthenticated() && (
+        resource.data.user_id == request.auth.uid ||
+        hasFeature('review:formation') ||
+        isAdmin()
+      );
+      allow create: if isAuthenticated() &&
+                      request.resource.data.user_id == request.auth.uid;
+      // Sessão pode ser atualizada pelo dono (preencher ended_at após terminar)
+      allow update: if isAuthenticated() && resource.data.user_id == request.auth.uid;
+      allow delete: if isAdmin();
+    }
+
+    // ===========================
+    // Content Grants (per-user override de gate de classificação/role)
+    // Documento: { user_id, content_id, content_type ('book'|'track'),
+    //              granted_at, granted_by, expires_at? }
+    // ===========================
+    match /content_grants/{grantId} {
+      // Leitura: dono (pra catálogo) ou quem gerencia o tipo de conteúdo (CMS picker)
+      allow read: if isAuthenticated() && (
+        resource.data.user_id == request.auth.uid ||
+        hasFeature('manage:library') ||
+        hasFeature('manage:formation') ||
+        isAdmin()
+      );
+      // Write: só admins/gestores de conteúdo. Nunca o próprio usuário concede grant a si.
+      allow create: if isAuthenticated() && (
+        hasFeature('manage:library') ||
+        hasFeature('manage:formation') ||
+        isAdmin()
+      ) && request.resource.data.granted_by == request.auth.uid;
+      allow update: if isAuthenticated() && (
+        hasFeature('manage:library') ||
+        hasFeature('manage:formation') ||
+        isAdmin()
+      );
+      allow delete: if isAuthenticated() && (
+        hasFeature('manage:library') ||
+        hasFeature('manage:formation') ||
+        isAdmin()
+      );
+    }
   }
 }

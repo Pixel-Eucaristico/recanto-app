@@ -7,13 +7,13 @@ import { formSubmissionService } from '@/services/firebase/FormSubmissionService
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // TODO: Add admin authentication check
 
     const { status } = await request.json();
-    const submissionId = params.id;
+    const { id: submissionId } = await params;
 
     if (status === 'read') {
       await formSubmissionService.markAsRead(submissionId);
@@ -21,8 +21,6 @@ export async function PUT(
       await formSubmissionService.markAsReplied(submissionId, 'admin');
     } else if (status === 'archived') {
       await formSubmissionService.archive(submissionId);
-    } else {
-      await formSubmissionService.update(submissionId, { status });
     }
 
     return NextResponse.json({ success: true });

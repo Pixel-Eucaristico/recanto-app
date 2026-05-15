@@ -1,0 +1,1 @@
+export { AgeRatingBadge } from './AgeRatingBadge';

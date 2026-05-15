@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Heart, Users, BookOpen, CircleUserRound, Shield, UserCheck, HandHeart, Briefcase, Wrench } from 'lucide-react';
 
-const SectionCard = ({ title, icon, children }) => (
+const SectionCard = ({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) => (
     <Card className="shadow-sm bg-white">
         <CardHeader className="flex flex-row items-center gap-4">
             {icon}
@@ -14,7 +14,7 @@ const SectionCard = ({ title, icon, children }) => (
     </Card>
 );
 
-const Role = ({ icon, title, children }) => (
+const Role = ({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) => (
     <div className="flex items-start gap-4 p-4 rounded-lg bg-slate-50">
         <div className="bg-sky-100 p-3 rounded-full">{icon}</div>
         <div>

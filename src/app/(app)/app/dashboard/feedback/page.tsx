@@ -21,7 +21,7 @@ export default function FeedbackPage() {
     const [priority, setPriority] = useState('normal');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
         
@@ -30,7 +30,7 @@ export default function FeedbackPage() {
 FEEDBACK DO RECANTO DIGITAL
 ===========================
 
-Usuário: ${user?.full_name || 'Anônimo'} (${user?.email || 'N/A'})
+Usuário: ${user?.name || 'Anônimo'} (${user?.email || 'N/A'})
 Papel: ${user?.role || 'N/A'}
 Categoria: ${category}
 Prioridade: ${priority}
@@ -49,7 +49,6 @@ Enviado via Recanto Digital em ${new Date().toLocaleString('pt-BR')}
                 to: 'admin@recanto.org.br', // Email do administrador
                 subject: `[Recanto Digital] ${category}: ${subject}`,
                 body: emailBody,
-                from_name: 'Sistema de Feedback'
             });
 
             toast({

@@ -1,6 +1,6 @@
 /**
  * API Route: Google Calendar OAuth Authorization
- * GET /api/calendar/auth - Redirects to Google OAuth consent screen
+ * GET /api/calendar/auth - Redirects to Google OAuth consent screen via central callback.
  */
 
 export const runtime = 'nodejs';
@@ -12,25 +12,16 @@ import { verifySession } from '@/domains/auth/services/sessionService';
 
 export async function GET(req: NextRequest) {
   try {
-    // Verify user is authenticated (ANY authenticated user can connect)
     const session = await verifySession();
-
+    const fallbackReturn = '/app/dashboard/schedule?step=select_calendar';
     if (!session) {
-      console.error('❌ [Calendar Auth] Sessão não encontrada');
-      // Redirect to login instead of returning JSON error
-      return NextResponse.redirect(new URL('/app/login?error=session_expired&redirect=/app/dashboard/schedule', req.url));
+      return NextResponse.redirect(new URL(`/app/login?error=session_expired&redirect=${encodeURIComponent(fallbackReturn)}`, req.url));
     }
-
-    console.log('✅ [Calendar Auth] Usuário autenticado - role:', session.role);
-
-    // Generate OAuth URL with userId as state
-    const authUrl = googleCalendarService.getAuthUrl(session.uid);
-
-    // Redirect to Google OAuth consent screen
+    const returnTo = req.nextUrl.searchParams.get('return_to') ?? fallbackReturn;
+    const authUrl = googleCalendarService.getAuthUrl(session.uid, returnTo);
     return NextResponse.redirect(authUrl);
   } catch (error) {
-    console.error('❌ [Calendar Auth] Erro:', error instanceof Error ? error.message : 'Unknown error');
-    // Redirect to schedule with error message
+    console.error('[Calendar Auth] error:', error instanceof Error ? error.message : 'Unknown');
     return NextResponse.redirect(new URL('/app/dashboard/schedule?error=auth_failed', req.url));
   }
 }
