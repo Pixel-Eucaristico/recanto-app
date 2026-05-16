@@ -1,13 +1,20 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ICommand } from '@uiw/react-md-editor';
 import '@uiw/react-md-editor/markdown-editor.css';
 import '@uiw/react-markdown-preview/markdown.css';
 import { type MediaKind, buildMediaMarkdown, EDITOR_LABELS } from './utils/markdownFieldUtils';
 import { MediaInsertModal } from './components/MediaInsertModal';
 import { useMarkdownField } from './hooks/useMarkdownField';
+import {
+  alignLeftCommand,
+  alignCenterCommand,
+  alignRightCommand,
+} from './utils/customCommands';
+import { commands as mdCommands } from '@uiw/react-md-editor';
+import { detectActiveCommands, detectMaxHeadingLevel } from './utils/detectActiveCommands';
 
 const MDEditor = dynamic(() => import('@uiw/react-md-editor'), { ssr: false });
 
@@ -70,6 +77,38 @@ export function MarkdownField({
     };
   }, [autoGrow, value]);
 
+  // Toolbar active-state feedback: marca botões cujo formato bate com cursor/seleção
+  useEffect(() => {
+    const root = containerRef.current;
+    if (!root) return;
+    const ta = root.querySelector('textarea') as HTMLTextAreaElement | null;
+    if (!ta) return;
+
+    const update = () => {
+      const cursor = ta.selectionStart ?? 0;
+      const active = detectActiveCommands(ta.value, cursor);
+      // Botões do MDEditor têm data-name="<command>"
+      const buttons = root.querySelectorAll<HTMLElement>('[data-name]');
+      buttons.forEach(btn => {
+        const name = btn.getAttribute('data-name') ?? '';
+        if (active.has(name)) btn.setAttribute('data-active', 'true');
+        else btn.removeAttribute('data-active');
+      });
+    };
+
+    update();
+    ta.addEventListener('keyup', update);
+    ta.addEventListener('mouseup', update);
+    ta.addEventListener('input', update);
+    document.addEventListener('selectionchange', update);
+    return () => {
+      ta.removeEventListener('keyup', update);
+      ta.removeEventListener('mouseup', update);
+      ta.removeEventListener('input', update);
+      document.removeEventListener('selectionchange', update);
+    };
+  }, [value]);
+
   const {
     colorMode, uploadOpen, setUploadOpen,
     pendingUrl, setPendingUrl,
@@ -92,6 +131,38 @@ export function MarkdownField({
     return next;
   };
 
+  // Headings progressivos: H1-H3 sempre, H4-H6 aparecem 1 por vez conforme nível anterior é usado
+  const maxHeadingLevel = useMemo(() => detectMaxHeadingLevel(value), [value]);
+
+  const commands = useMemo<ICommand[]>(() => {
+    const titleCommands: ICommand[] = [mdCommands.title1, mdCommands.title2, mdCommands.title3];
+    if (maxHeadingLevel >= 3) titleCommands.push(mdCommands.title4);
+    if (maxHeadingLevel >= 4) titleCommands.push(mdCommands.title5);
+    if (maxHeadingLevel >= 5) titleCommands.push(mdCommands.title6);
+    return [
+      mdCommands.bold,
+      mdCommands.italic,
+      mdCommands.strikethrough,
+      mdCommands.hr,
+      mdCommands.divider,
+      ...titleCommands,
+      mdCommands.divider,
+      mdCommands.link,
+      mdCommands.quote,
+      mdCommands.code,
+      mdCommands.codeBlock,
+      mdCommands.comment,
+      mdCommands.image,
+      mdCommands.table,
+      mdCommands.divider,
+      mdCommands.unorderedListCommand,
+      mdCommands.orderedListCommand,
+      mdCommands.checkedListCommand,
+      mdCommands.divider,
+      mdCommands.help,
+    ];
+  }, [maxHeadingLevel]);
+
   function insertMedia() {
     if (!pendingUrl.trim()) return;
     const md = buildMediaMarkdown(mediaKind, pendingUrl.trim(), altText.trim() || 'mídia');
@@ -110,7 +181,19 @@ export function MarkdownField({
         onChange={v => onChange(v ?? '')}
         height={effectiveHeight}
         preview={effectivePreview}
+        commands={commands}
         commandsFilter={commandsFilter}
+        extraCommands={[
+          alignLeftCommand,
+          alignCenterCommand,
+          alignRightCommand,
+          mdCommands.divider,
+          mdCommands.codeEdit,
+          mdCommands.codeLive,
+          mdCommands.codePreview,
+          mdCommands.divider,
+          mdCommands.fullscreen,
+        ]}
         textareaProps={{ placeholder, disabled, style: { fontSize: '16px' } }}
         visibleDragbar={!autoGrow}
       />

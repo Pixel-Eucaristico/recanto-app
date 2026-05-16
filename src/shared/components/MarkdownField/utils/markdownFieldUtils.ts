@@ -38,6 +38,7 @@ export const EDITOR_LABELS: Record<string, string> = {
   unordered: 'Lista', 'unordered-list': 'Lista',
   ordered: 'Lista numerada', 'ordered-list': 'Lista numerada',
   checked: 'Checklist', 'checked-list': 'Checklist',
+  table: 'Inserir tabela',
   edit: 'Editar', live: 'Editor + preview', preview: 'Preview',
   fullscreen: 'Tela cheia', help: 'Ajuda',
 };

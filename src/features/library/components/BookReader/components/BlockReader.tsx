@@ -57,6 +57,7 @@ export function BlockReader({
   const [tagInputOpen, setTagInputOpen] = useState(false);
   const [selection, setSelection] = useState<{ text: string; x: number; y: number; occurrenceIndex: number } | null>(null);
   const elRef = useRef<HTMLElement | null>(null);
+  const bodyRef = useRef<HTMLDivElement | null>(null);
   const fontStyle = { fontSize: `${fontPx}px`, lineHeight: 1.7, wordBreak: 'break-word' as const, overflowWrap: 'anywhere' as const };
 
   useEffect(() => {
@@ -166,6 +167,7 @@ export function BlockReader({
         onOpenTag={() => setTagInputOpen(p => !p)}
         commentCount={commentCount}
         onOpenComment={onOpenComment}
+        containerRef={bodyRef}
       />
       {tagInputOpen && (
         <div className="absolute left-8 top-0 z-40">
@@ -179,7 +181,7 @@ export function BlockReader({
   );
 
   const richBody = (
-    <div className="flex-1 min-w-0 space-y-1">
+    <div ref={bodyRef} className="min-w-0 space-y-1">
       <RichContent markdown={markedContent} className="[&>div]:p-0 [&_p]:my-0 [&_p]:leading-[inherit]" />
       {blockTags.length > 0 && <TagBadges tags={blockTags} onRemove={onRemoveTag} />}
     </div>
@@ -206,12 +208,16 @@ export function BlockReader({
         style={fontStyle}
         onMouseUp={handleMouseUp}
         onTouchEnd={handleTouchEnd}
-        className={`group relative text-base-content flex gap-1.5 scroll-mt-24 rounded transition-colors select-text ${
-          isBookmarked ? 'bg-warning/10 -mx-2 px-2' : ''
+        className={`group relative text-base-content pl-8 scroll-mt-24 rounded transition-colors select-text ${
+          isBookmarked ? 'bg-warning/10 -mx-2 px-2 pl-10' : ''
         }`}
       >
         {selectionToolbar}
-        {blockControlsPanel}
+        {ref && (
+          <div className="absolute left-0 top-0">
+            {blockControlsPanel}
+          </div>
+        )}
         {richBody}
       </div>
     );
@@ -225,12 +231,16 @@ export function BlockReader({
         style={fontStyle}
         onMouseUp={handleMouseUp}
         onTouchEnd={handleTouchEnd}
-        className={`group relative border-l-4 border-primary pl-3 italic text-base-content/80 flex gap-1.5 scroll-mt-24 rounded transition-colors select-text ${
+        className={`group relative border-l-4 border-primary italic text-base-content/80 pl-10 scroll-mt-24 rounded transition-colors select-text ${
           isBookmarked ? 'bg-warning/10 -mx-2 px-2' : ''
         }`}
       >
         {selectionToolbar}
-        {blockControlsPanel}
+        {ref && (
+          <div className="absolute left-3 top-0">
+            {blockControlsPanel}
+          </div>
+        )}
         {richBody}
       </blockquote>
     );

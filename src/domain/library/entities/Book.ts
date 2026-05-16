@@ -118,14 +118,19 @@ export class BookEntity {
       return { ...b, content };
     });
 
-    // 3) Renumera o array de footnotes (mantém ordem dos números antigos pra estabilidade do dado)
-    //    e ordena pelo novo número
-    const newFootnotes = footnotes
-      .map(f => {
-        const renum = remap.get(f.number);
-        return renum ? { ...f, number: renum } : f; // se não está em uso, mantém antigo
-      })
-      .sort((a, b) => a.number - b.number);
+    // 3) Renumera o array de footnotes.
+    //    Referenciadas no texto: usam remap (1..N na ordem de aparição).
+    //    Órfãs (sem marker no texto): realocadas pra números acima do max do remap,
+    //    evitando colisão. FootnotePanel as marca como "órfã" visualmente.
+    const referenced: BookFootnote[] = [];
+    const orphans: BookFootnote[] = [];
+    for (const f of footnotes) {
+      const renum = remap.get(f.number);
+      if (renum) referenced.push({ ...f, number: renum });
+      else orphans.push(f);
+    }
+    const orphansRenumbered = orphans.map((f, i) => ({ ...f, number: next + i }));
+    const newFootnotes = [...referenced, ...orphansRenumbered].sort((a, b) => a.number - b.number);
 
     return { blocks: newBlocks, footnotes: newFootnotes };
   }

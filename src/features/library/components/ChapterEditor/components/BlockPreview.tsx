@@ -20,15 +20,19 @@ export function BlockPreview({ block }: BlockPreviewProps) {
       5: 'text-sm font-semibold',
       6: 'text-xs font-semibold uppercase',
     };
-    return <p className={`${sizes[level]} my-2 text-base-content`}>{block.content}</p>;
+    return (
+      <div className={`${sizes[level]} my-2 text-base-content`}>
+        <RichContent markdown={block.content} className="inline-content" />
+      </div>
+    );
   }
 
   if (block.kind === 'paragraph') {
     return (
-      <p className="text-sm text-base-content flex gap-2">
+      <div className="text-sm text-base-content flex gap-2">
         {ref && <span className="badge badge-primary badge-xs flex-shrink-0 mt-1">{ref}</span>}
-        <span>{block.content}</span>
-      </p>
+        <RichContent markdown={block.content} className="flex-1" />
+      </div>
     );
   }
 
@@ -36,7 +40,7 @@ export function BlockPreview({ block }: BlockPreviewProps) {
     return (
       <blockquote className="border-l-4 border-primary pl-3 italic text-base-content/80 my-2 flex gap-2">
         {ref && <span className="badge badge-primary badge-xs flex-shrink-0 mt-1 not-italic">{ref}</span>}
-        <span>{block.content}</span>
+        <RichContent markdown={block.content} className="flex-1" />
       </blockquote>
     );
   }

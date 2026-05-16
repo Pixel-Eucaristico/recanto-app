@@ -8,12 +8,14 @@ import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
 import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
 import { ListPlugin } from '@lexical/react/LexicalListPlugin';
 import { LinkPlugin } from '@lexical/react/LexicalLinkPlugin';
+import { TablePlugin } from '@lexical/react/LexicalTablePlugin';
 import { editorTheme, editorNodes, markdownTransformers } from './utils/editorConfig';
 import { LoadInitialMarkdown } from './plugins/LoadInitialMarkdown';
 import { EnsureParagraphAfterImagePlugin } from './plugins/EnsureParagraphAfterImage';
 import { MarkdownExport } from './plugins/MarkdownExport';
 import { Toolbar } from './components/Toolbar';
 import { FootnoteRenumberPlugin } from './components/FootnoteRenumberPlugin';
+import { TableCellResizerPlugin } from './plugins/TableCellResizerPlugin';
 
 interface RichTextEditorProps {
   value: string;
@@ -65,6 +67,8 @@ export function RichTextEditor({
         <HistoryPlugin />
         <ListPlugin />
         <LinkPlugin />
+        <TablePlugin hasCellMerge hasCellBackgroundColor={false} hasTabHandler />
+        <TableCellResizerPlugin />
         <MarkdownShortcutPlugin transformers={markdownTransformers} />
         <EnsureParagraphAfterImagePlugin />
         <FootnoteRenumberPlugin />
