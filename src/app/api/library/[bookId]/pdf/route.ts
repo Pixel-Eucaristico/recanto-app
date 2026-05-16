@@ -1,5 +1,8 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+// PDF generation pode ser pesado pra livros grandes. Vercel Pro = max 300s.
+// Em Hobby (default 10s) livros grandes vão estourar — upgrade necessário.
+export const maxDuration = 300;
 
 import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth, firestore } from '@/domains/auth/services/firebaseAdmin';
@@ -135,25 +138,45 @@ export async function GET(
     ? engineQuery
     : env.PDF_ENGINE;
 
-  let pdfBuffer: Buffer;
-  if (engine === 'typst') {
-    // Lazy import — só carrega native module quando typst engine ativo
-    const { bookPdfGeneratorTypst } = await import('@/application/library/BookPdfGeneratorTypst');
-    pdfBuffer = await bookPdfGeneratorTypst.generate(book, chapters, coverBuffer, truncatedAt, backCoverBuffer);
-  } else {
-    pdfBuffer = await bookPdfGenerator.generate(book, chapters, coverBuffer, truncatedAt, backCoverBuffer);
-  }
-  const slug = BookExportEntity.bookSlug(book);
+  try {
+    let pdfBuffer: Buffer;
+    if (engine === 'typst') {
+      // Lazy import — só carrega native module quando typst engine ativo
+      const { bookPdfGeneratorTypst } = await import('@/application/library/BookPdfGeneratorTypst');
+      pdfBuffer = await bookPdfGeneratorTypst.generate(book, chapters, coverBuffer, truncatedAt, backCoverBuffer);
+    } else {
+      pdfBuffer = await bookPdfGenerator.generate(book, chapters, coverBuffer, truncatedAt, backCoverBuffer);
+    }
+    const slug = BookExportEntity.bookSlug(book);
 
-  const headers = new Headers({
-    'Content-Type': 'application/pdf',
-    'Content-Disposition': `attachment; filename="${slug}.pdf"`,
-    'Content-Length': String(pdfBuffer.length),
-  });
-  if (truncatedAt) {
-    headers.set('X-Spoiler-Cut-At', truncatedAt);
-  }
-  headers.set('X-Pdf-Engine', engine);
+    const headers = new Headers({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${slug}.pdf"`,
+      'Content-Length': String(pdfBuffer.length),
+    });
+    if (truncatedAt) {
+      headers.set('X-Spoiler-Cut-At', truncatedAt);
+    }
+    headers.set('X-Pdf-Engine', engine);
 
-  return new NextResponse(new Uint8Array(pdfBuffer), { status: 200, headers });
+    return new NextResponse(new Uint8Array(pdfBuffer), { status: 200, headers });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('[PDF export] Falha gerando PDF', {
+      bookId,
+      engine,
+      chapterCount: chapters.length,
+      totalBlocks: chapters.reduce((acc, ch) => acc + ch.blocks.length, 0),
+      error: message,
+      stack: err instanceof Error ? err.stack : undefined,
+    });
+    return NextResponse.json(
+      {
+        error: 'Falha ao gerar PDF. Livro pode ser grande demais.',
+        details: message,
+        chapterCount: chapters.length,
+      },
+      { status: 500 },
+    );
+  }
 }

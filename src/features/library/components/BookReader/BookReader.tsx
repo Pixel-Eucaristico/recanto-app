@@ -11,6 +11,7 @@ import { ContinueBanner } from './components/ContinueBanner';
 import { BookTOC } from './components/BookTOC';
 import { BookDrawer } from './components/BookDrawer';
 import { ChapterSection } from './components/ChapterSection';
+import { LazyChapter } from './components/LazyChapter';
 import { CompletionBlock } from './components/CompletionBlock';
 import { MobileBottomBar } from './components/MobileBottomBar';
 import { ContinueModal } from './components/ContinueModal';
@@ -149,26 +150,34 @@ export function BookReader({ book, chapters, visibleUntil, truncated, initialRef
                 </div>
               </div>
             ) : (
-              chapters.map(ch => (
-                <ChapterSection
-                  key={ch.id}
-                  chapter={ch}
-                  fontPx={fontPx}
-                  bookmarkedRef={progress?.last_ref ?? null}
-                  totalChapters={chapters.length}
-                  onBookmark={ref => saveBookmark(ref, ch.order, chapters.length)}
-                  onActiveRef={ref => setActiveRef(ch.order, ref)}
-                  registerRef={el => registerChapterRef(ch.order, el)}
-                  highlightsForRef={highlightsForRef}
-                  commentsForRef={commentsForRef}
-                  tagsForRef={tagsForRef}
-                  onAddHighlight={addHighlight}
-                  onRemoveHighlight={removeHighlight}
-                  onAddTag={(chapterOrder, text, color, ref) => addTag(chapterOrder, text, color, ref)}
-                  onRemoveTag={removeTag}
-                  onOpenComment={setCommentTarget}
-                />
-              ))
+              chapters.map(ch => {
+                // Mount imediato: chapter do deep-link (initialRef) ou do bookmark salvo.
+                const initialChapterOrder = initialRef
+                  ? Number(initialRef.split(':')[0])
+                  : (progress?.last_chapter_order ?? null);
+                const forceMount = initialChapterOrder != null && ch.order === initialChapterOrder;
+                return (
+                <LazyChapter key={ch.id} chapterId={ch.id} forceMount={forceMount} estimatedHeight={Math.max(400, ch.blocks.length * 60)}>
+                  <ChapterSection
+                    chapter={ch}
+                    fontPx={fontPx}
+                    bookmarkedRef={progress?.last_ref ?? null}
+                    totalChapters={chapters.length}
+                    onBookmark={ref => saveBookmark(ref, ch.order, chapters.length)}
+                    onActiveRef={ref => setActiveRef(ch.order, ref)}
+                    registerRef={el => registerChapterRef(ch.order, el)}
+                    highlightsForRef={highlightsForRef}
+                    commentsForRef={commentsForRef}
+                    tagsForRef={tagsForRef}
+                    onAddHighlight={addHighlight}
+                    onRemoveHighlight={removeHighlight}
+                    onAddTag={(chapterOrder, text, color, ref) => addTag(chapterOrder, text, color, ref)}
+                    onRemoveTag={removeTag}
+                    onOpenComment={setCommentTarget}
+                  />
+                </LazyChapter>
+                );
+              })
             )}
 
             {truncated && visibleUntil && <BookSpoilerVeil visibleUntil={visibleUntil} />}

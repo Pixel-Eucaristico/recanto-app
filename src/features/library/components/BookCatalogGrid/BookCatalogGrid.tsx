@@ -7,7 +7,7 @@ import { Book } from '@/domain/library/types';
 import { HoverGallery } from '@/shared/components/HoverGallery';
 import { BookExportButtons } from '@/features/library/components/BookExportButtons';
 import { Tooltip } from '@/shared/components/Tooltip';
-import { auth } from '@/domains/auth/services/firebaseClient';
+import { exportBookClientSide } from '@/features/library/utils/clientBookExport';
 import { AgeRatingBadge } from '@/shared/components/AgeRatingBadge';
 
 interface BookCatalogGridProps {
@@ -55,24 +55,8 @@ interface BookCardProps {
   onDelete?: (book: Book) => void;
 }
 
-async function getFreshToken(): Promise<string | undefined> {
-  return auth.currentUser?.getIdToken(true);
-}
-
-async function downloadBook(bookId: string, bookTitle: string, format: 'epub' | 'pdf') {
-  const token = await getFreshToken();
-  const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
-  const res = await fetch(`/api/library/${bookId}/${format}`, { headers });
-  if (!res.ok) throw new Error(`Falha ao gerar ${format.toUpperCase()}`);
-  const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${bookTitle}.${format}`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+async function downloadBook(bookId: string, _bookTitle: string, format: 'epub' | 'pdf') {
+  await exportBookClientSide(bookId, format);
 }
 
 function BookCard({ book, manager, canDownload = true, onEdit, onEditChapters, onDelete }: BookCardProps) {

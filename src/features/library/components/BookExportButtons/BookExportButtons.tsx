@@ -1,9 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { BookText, FileText, AlertCircle } from 'lucide-react';
+import { BookText, FileText, AlertCircle, Loader2 } from 'lucide-react';
 import { Tooltip } from '@/shared/components/Tooltip';
-import { auth } from '@/domains/auth/services/firebaseClient';
+import { useClientBookExport, type ExportFormat } from '@/features/library/hooks/useClientBookExport';
 
 interface BookExportButtonsProps {
   bookId: string;
@@ -12,40 +11,18 @@ interface BookExportButtonsProps {
   visibleUntil?: string | null;
 }
 
-type ExportFormat = 'epub' | 'pdf';
+export function BookExportButtons({ bookId, truncated, visibleUntil }: BookExportButtonsProps) {
+  const { state, exportBook } = useClientBookExport(bookId);
+  const busy = state.phase === 'working';
 
-async function downloadBook(bookId: string, bookTitle: string, format: ExportFormat): Promise<void> {
-  // Force-refresh token so expired sessions don't cause 401
-  const token = await auth.currentUser?.getIdToken(true);
-  const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
-  const res = await fetch(`/api/library/${bookId}/${format}`, { headers });
-  if (!res.ok) throw new Error(`Falha ao gerar ${format.toUpperCase()}`);
+  function isLoading(format: ExportFormat): boolean {
+    return busy && state.format === format;
+  }
 
-  const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${bookTitle}.${format}`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
-
-export function BookExportButtons({ bookId, bookTitle, truncated, visibleUntil }: BookExportButtonsProps) {
-  const [loading, setLoading] = useState<ExportFormat | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  async function handleExport(format: ExportFormat) {
-    setLoading(format);
-    setError(null);
-    try {
-      await downloadBook(bookId, bookTitle, format);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : `Erro ao exportar ${format.toUpperCase()}`);
-    } finally {
-      setLoading(null);
-    }
+  function statusLabel(): string | null {
+    if (state.phase === 'working') return 'Gerando...';
+    if (state.phase === 'done') return 'Pronto!';
+    return null;
   }
 
   const spoilerBadge = truncated && visibleUntil && (
@@ -57,40 +34,45 @@ export function BookExportButtons({ bookId, bookTitle, truncated, visibleUntil }
     </Tooltip>
   );
 
+  const label = statusLabel();
+
   return (
     <div className="flex items-center gap-1">
       {spoilerBadge}
 
-      <Tooltip tip="Baixar EPUB (e-readers)" position="bottom">
+      <Tooltip tip="Baixar EPUB (gera no navegador)" position="bottom">
         <button
           type="button"
           className="btn btn-ghost btn-xs btn-circle min-h-0 h-7 w-7"
-          onClick={() => handleExport('epub')}
-          disabled={loading !== null}
+          onClick={() => exportBook('epub')}
+          disabled={busy}
           aria-label="Exportar EPUB"
         >
-          {loading === 'epub'
-            ? <span className="loading loading-spinner loading-xs" />
+          {isLoading('epub')
+            ? <Loader2 className="w-4 h-4 animate-spin" />
             : <BookText className="w-4 h-4" />}
         </button>
       </Tooltip>
 
-      <Tooltip tip="Baixar PDF" position="bottom">
+      <Tooltip tip="Baixar PDF (gera no navegador)" position="bottom">
         <button
           type="button"
           className="btn btn-ghost btn-xs btn-circle min-h-0 h-7 w-7"
-          onClick={() => handleExport('pdf')}
-          disabled={loading !== null}
+          onClick={() => exportBook('pdf')}
+          disabled={busy}
           aria-label="Exportar PDF"
         >
-          {loading === 'pdf'
-            ? <span className="loading loading-spinner loading-xs" />
+          {isLoading('pdf')
+            ? <Loader2 className="w-4 h-4 animate-spin" />
             : <FileText className="w-4 h-4" />}
         </button>
       </Tooltip>
 
-      {error && (
-        <span className="text-error text-[10px] max-w-32 truncate">{error}</span>
+      {label && (
+        <span className="text-[10px] text-base-content/60">{label}</span>
+      )}
+      {state.error && (
+        <span className="text-error text-[10px] max-w-32 truncate" title={state.error}>{state.error}</span>
       )}
     </div>
   );

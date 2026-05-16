@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import ReactMarkdown, { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
@@ -99,7 +100,7 @@ const components: Components = {
   },
 };
 
-export function RichContent({ markdown, className = '' }: RichContentProps) {
+function RichContentImpl({ markdown, className = '' }: RichContentProps) {
   return (
     <div className={`prose prose-sm max-w-none text-base-content [&_*]:text-inherit ${className}`}>
       <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]} components={components}>
@@ -108,3 +109,7 @@ export function RichContent({ markdown, className = '' }: RichContentProps) {
     </div>
   );
 }
+
+// Memoizado — parse de markdown + rehype-raw é caro (~10-50ms por bloco).
+// Re-renderiza só quando markdown ou className mudam.
+export const RichContent = memo(RichContentImpl);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import type { BookBlock, BookHighlight, BookTag, BookFootnote, HighlightColor, TagColor } from '@/domain/library/types';
 import { RichContent } from '@/shared/components/RichContent';
 import { TagInput } from '@/shared/components/TagInput';
@@ -45,7 +45,7 @@ interface BlockReaderProps {
   onOpenComment: () => void;
 }
 
-export function BlockReader({
+function BlockReaderImpl({
   block, fontPx, isBookmarked, onBookmark, onVisible,
   blockHighlights, commentCount, blockTags, footnotes = [],
   onAddHighlight, onRemoveHighlight, onAddTag, onRemoveTag, onOpenComment,
@@ -129,11 +129,13 @@ export function BlockReader({
     setTimeout(() => setCopied(false), 1600);
   }
 
-  const highlighted = blockHighlights.length > 0
-    ? applyTextHighlights(block.content, blockHighlights)
-    : block.content;
-  // Aplica markers de footnote APÓS highlights pra não interferir no regex de seleção
-  const markedContent = applyFootnoteMarkers(highlighted, footnotes);
+  // Cache regex-pesado: roda só quando content/highlights/footnotes mudam.
+  const markedContent = useMemo(() => {
+    const highlighted = blockHighlights.length > 0
+      ? applyTextHighlights(block.content, blockHighlights)
+      : block.content;
+    return applyFootnoteMarkers(highlighted, footnotes);
+  }, [block.content, blockHighlights, footnotes]);
 
   const firstHighlight = blockHighlights[0];
 
@@ -208,7 +210,7 @@ export function BlockReader({
         style={fontStyle}
         onMouseUp={handleMouseUp}
         onTouchEnd={handleTouchEnd}
-        className={`group relative text-base-content pl-8 scroll-mt-24 rounded transition-colors select-text ${
+        className={`book-reader-block group relative text-base-content pl-8 scroll-mt-24 rounded transition-colors select-text ${
           isBookmarked ? 'bg-warning/10 -mx-2 px-2 pl-10' : ''
         }`}
       >
@@ -231,7 +233,7 @@ export function BlockReader({
         style={fontStyle}
         onMouseUp={handleMouseUp}
         onTouchEnd={handleTouchEnd}
-        className={`group relative border-l-4 border-primary italic text-base-content/80 pl-10 scroll-mt-24 rounded transition-colors select-text ${
+        className={`book-reader-block group relative border-l-4 border-primary italic text-base-content/80 pl-10 scroll-mt-24 rounded transition-colors select-text ${
           isBookmarked ? 'bg-warning/10 -mx-2 px-2' : ''
         }`}
       >
@@ -271,3 +273,17 @@ export function BlockReader({
 
   return null;
 }
+
+// Memo com comparison custom — só re-renderiza quando o estado visível muda.
+// Callbacks são intencionalmente IGNORADOS (parent recria refs a cada render).
+export const BlockReader = memo(BlockReaderImpl, (prev, next) => {
+  return (
+    prev.block === next.block &&
+    prev.fontPx === next.fontPx &&
+    prev.isBookmarked === next.isBookmarked &&
+    prev.commentCount === next.commentCount &&
+    prev.blockHighlights === next.blockHighlights &&
+    prev.blockTags === next.blockTags &&
+    prev.footnotes === next.footnotes
+  );
+});
