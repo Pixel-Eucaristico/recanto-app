@@ -131,18 +131,12 @@ export async function GET(
   }
 
   // Typst-only — único engine suportado (footnotes no rodapé, layout correto).
-  // Chunked merge pra processar livros grandes sem estourar memória, mas
-  // gerando UM PDF único (capa/TOC só no chunk 0, back cover só no último,
-  // paginação contínua via startPageNumber).
+  // Estratégia: 1 chapter por chunk Typst (compile isolado). Se chapter X falha,
+  // SKIP esse chapter (log warn) e continua os demais.
+  // Merge final via pdf-lib em UM PDF único (capa/TOC chunk 0, back cover último).
   try {
     const { bookPdfGeneratorTypst } = await import('@/application/library/BookPdfGeneratorTypst');
     const { PDFDocument } = await import('pdf-lib');
-
-    const CHUNK_SIZE = Math.max(1, parseInt(req.nextUrl.searchParams.get('chunk') ?? '25', 10) || 25);
-    const chunks: typeof chapters[] = [];
-    for (let i = 0; i < chapters.length; i += CHUNK_SIZE) {
-      chunks.push(chapters.slice(i, i + CHUNK_SIZE));
-    }
 
     const finalDoc = await PDFDocument.create();
     finalDoc.setTitle(book.title);
@@ -150,26 +144,42 @@ export async function GET(
     if (book.language) finalDoc.setLanguage(book.language);
 
     let pageOffset = 1;
-    for (let i = 0; i < chunks.length; i++) {
-      const isFirst = i === 0;
-      const isLast = i === chunks.length - 1;
-      const chunkBuf = await bookPdfGeneratorTypst.generate(
-        book,
-        chunks[i],
-        isFirst ? coverBuffer : undefined,
-        isLast ? truncatedAt : undefined,
-        isLast ? backCoverBuffer : undefined,
-        {
-          skipCover: !isFirst,
-          skipToc: !isFirst,
-          skipBackCover: !isLast,
-          startPageNumber: pageOffset,
-        },
+    let firstSuccessful = true;
+    const failedChapters: { order: number; title: string; error: string }[] = [];
+
+    for (let i = 0; i < chapters.length; i++) {
+      const ch = chapters[i];
+      const isLast = i === chapters.length - 1;
+      try {
+        const chunkBuf = await bookPdfGeneratorTypst.generate(
+          book,
+          [ch],
+          firstSuccessful ? coverBuffer : undefined,
+          isLast ? truncatedAt : undefined,
+          isLast ? backCoverBuffer : undefined,
+          {
+            skipCover: !firstSuccessful,
+            skipToc: !firstSuccessful,
+            skipBackCover: !isLast,
+            startPageNumber: pageOffset,
+          },
+        );
+        const src = await PDFDocument.load(new Uint8Array(chunkBuf));
+        const pages = await finalDoc.copyPages(src, src.getPageIndices());
+        for (const p of pages) finalDoc.addPage(p);
+        pageOffset += src.getPageCount();
+        firstSuccessful = false; // próximos chunks: pula capa/TOC
+      } catch (chErr) {
+        const msg = chErr instanceof Error ? chErr.message : String(chErr);
+        console.error(`[PDF] Falha no chapter ${ch.order} "${ch.title}":`, msg);
+        failedChapters.push({ order: ch.order, title: ch.title, error: msg });
+      }
+    }
+
+    if (finalDoc.getPageCount() === 0) {
+      throw new Error(
+        `Nenhum chapter compilou. Falhas: ${failedChapters.map(f => `cap.${f.order} "${f.title}"`).join('; ')}`,
       );
-      const src = await PDFDocument.load(new Uint8Array(chunkBuf));
-      const pages = await finalDoc.copyPages(src, src.getPageIndices());
-      for (const p of pages) finalDoc.addPage(p);
-      pageOffset += src.getPageCount();
     }
 
     const pdfBuffer = Buffer.from(await finalDoc.save());
@@ -184,6 +194,9 @@ export async function GET(
       headers.set('X-Spoiler-Cut-At', truncatedAt);
     }
     headers.set('X-Pdf-Engine', 'typst');
+    if (failedChapters.length > 0) {
+      headers.set('X-Failed-Chapters', JSON.stringify(failedChapters));
+    }
 
     return new NextResponse(new Uint8Array(pdfBuffer), { status: 200, headers });
   } catch (err) {
