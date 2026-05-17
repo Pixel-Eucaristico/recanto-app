@@ -14,7 +14,8 @@ async function getCompiler() {
 
 // ─── Markdown → Typst converters ─────────────────────────────────────────────
 
-/** Escape ASCII especiais Typst. Chars Unicode privados (U+E000+) NÃO são tocados. */
+/** Escape ASCII especiais Typst pra contexto MARKUP (dentro de `[...]`).
+ * Chars Unicode privados (U+E000+) NÃO são tocados. */
 function escapeTypst(text: string): string {
   return text
     .replace(/\\/g, '\\\\')
@@ -30,6 +31,17 @@ function escapeTypst(text: string): string {
     .replace(/\[/g, '\\[')
     .replace(/\]/g, '\\]')
     .replace(/=/g, '\\=');
+}
+
+/** Escape pra contexto STRING (dentro de `"..."`).
+ * Typst string literal só aceita JSON-like: escapa `"`, `\`, newlines, tabs. */
+function escapeTypstString(text: string): string {
+  return text
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"')
+    .replace(/\r/g, '')
+    .replace(/\n/g, '\\n')
+    .replace(/\t/g, '\\t');
 }
 
 const FOOTNOTE_MARKER_RE = /\\*\[\\*\^(\d+)\\*\]/g;
@@ -216,14 +228,18 @@ interface BuildArgs {
 
 function buildTypstSource({ book, chapters, coverImage, backCoverImage, truncatedAt }: BuildArgs): string {
   const sorted = BookEntity.sortChapters(chapters);
-  const docTitle = escapeTypst(book.title);
-  const docAuthor = book.author ? escapeTypst(book.author) : '';
+  // Title e author são usados em DOIS contextos: string literal (set document)
+  // e markup `[...]`. Geramos as duas versões.
+  const docTitleStr = escapeTypstString(book.title);
+  const docTitleMd = escapeTypst(book.title);
+  const docAuthorStr = book.author ? escapeTypstString(book.author) : '';
+  const docAuthorMd = book.author ? escapeTypst(book.author) : '';
   const lang = book.language ?? 'pt';
 
   const out: string[] = [];
 
   // Document metadata + page setup base
-  out.push(`#set document(title: "${docTitle}"${docAuthor ? `, author: "${docAuthor}"` : ''})`);
+  out.push(`#set document(title: "${docTitleStr}"${docAuthorStr ? `, author: "${docAuthorStr}"` : ''})`);
   out.push(`#set text(lang: "${lang}", font: ("New Computer Modern", "Liberation Serif", "Times New Roman"), size: 11pt)`);
   out.push(`#set par(justify: true, leading: 0.7em)`);
   out.push(`#set page(paper: "a5", margin: (top: 2cm, bottom: 2cm, left: 2cm, right: 2cm))`);
@@ -233,7 +249,7 @@ function buildTypstSource({ book, chapters, coverImage, backCoverImage, truncate
   if (coverImage) {
     out.push(`#page(margin: 0pt, footer: none, header: none, numbering: none)[#image("${coverImage.path}", width: 100%, height: 100%, fit: "cover")]`);
   } else {
-    out.push(`#page(footer: none, header: none, numbering: none)[#align(center + horizon)[#text(size: 24pt, weight: "bold")[${docTitle}]${docAuthor ? `\\\n#text(size: 14pt)[${docAuthor}]` : ''}]]`);
+    out.push(`#page(footer: none, header: none, numbering: none)[#align(center + horizon)[#text(size: 24pt, weight: "bold")[${docTitleMd}]${docAuthorMd ? `\\\n#text(size: 14pt)[${docAuthorMd}]` : ''}]]`);
   }
 
   // 2. Blank page após capa (sem numeração)
@@ -318,9 +334,9 @@ function buildTypstSource({ book, chapters, coverImage, backCoverImage, truncate
       out.push(`  header: context {`);
       out.push(`    let n = counter(page).get().first()`);
       out.push(`    if calc.odd(n) {`);
-      out.push(`      align(right)[#text(size: 8pt, fill: rgb("#888"), style: "italic")[${docTitle}]]`);
+      out.push(`      align(right)[#text(size: 8pt, fill: rgb("#888"), style: "italic")[${docTitleMd}]]`);
       out.push(`    } else {`);
-      out.push(`      align(left)[#text(size: 8pt, fill: rgb("#888"), style: "italic")[${docTitle}]]`);
+      out.push(`      align(left)[#text(size: 8pt, fill: rgb("#888"), style: "italic")[${docTitleMd}]]`);
       out.push(`    }`);
       out.push(`  },`);
       out.push(`  footer: context {`);
