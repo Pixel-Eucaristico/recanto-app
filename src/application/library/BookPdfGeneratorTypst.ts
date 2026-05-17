@@ -99,7 +99,7 @@ function markdownInlineToTypst(raw: string, footnotes?: BookFootnote[]): string 
   // Links [text](url)
   content = content.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, text, url) => {
     const safeText = markdownInlineToTypst(text, footnotes);
-    const safeUrl = url.replace(/"/g, '\\"');
+    const safeUrl = escapeTypstString(url);
     return reserve(`#link("${safeUrl}")[${safeText}]`);
   });
   // Bold+italic ***text***
@@ -112,7 +112,7 @@ function markdownInlineToTypst(raw: string, footnotes?: BookFootnote[]): string 
   content = content.replace(/(?<!\*)\*([^*]+?)\*(?!\*)/g, (_, t) => reserve(`#emph[${markdownInlineToTypst(t, footnotes)}]`));
   content = content.replace(/(?<!_)_([^_]+?)_(?!_)/g, (_, t) => reserve(`#emph[${markdownInlineToTypst(t, footnotes)}]`));
   // Inline code `code`
-  content = content.replace(/`([^`]+)`/g, (_, t) => reserve(`#raw("${t.replace(/"/g, '\\"')}")`));
+  content = content.replace(/`([^`]+)`/g, (_, t) => reserve(`#raw("${escapeTypstString(t)}")`));
 
   // Step 3: escape ASCII especiais (tokens Unicode privados não tocados)
   content = escapeTypst(content);
@@ -173,7 +173,8 @@ function blockToTypst(block: BookBlock, footnotes?: BookFootnote[]): string {
       }
       const safeCaption = caption ? escapeTypst(caption) : '';
       const captionPart = safeCaption ? `, caption: [${safeCaption}]` : '';
-      return `\n#figure(image("${url}", width: 80%)${captionPart})\n`;
+      const safeUrl = escapeTypstString(url);
+      return `\n#figure(image("${safeUrl}", width: 80%)${captionPart})\n`;
     }
     default:
       return `\n${escapeTypst(block.content || '')}\n`;
@@ -449,7 +450,12 @@ export class BookPdfGeneratorTypst {
       const errInfo = result.takeDiagnostics?.();
       const diags = errInfo ? compiler.fetchDiagnostics?.(errInfo) : [];
       console.error('[Typst] Compile failed. Diagnostics:', JSON.stringify(diags, null, 2));
-      console.error('[Typst] Source length:', source.length, 'first 500:', source.slice(0, 500));
+      console.error('[Typst] Source length:', source.length);
+      // Log em chunks de 2000 chars pra ver no Vercel logs onde está o problema
+      const CHUNK = 2000;
+      for (let i = 0; i < source.length; i += CHUNK) {
+        console.error(`[Typst] Source[${i}..${i + CHUNK}]:`, source.slice(i, i + CHUNK));
+      }
       throw new Error(`Typst compile error: ${JSON.stringify(diags)}`);
     }
 
