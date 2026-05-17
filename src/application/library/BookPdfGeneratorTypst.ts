@@ -139,9 +139,10 @@ function blockToTypst(block: BookBlock, footnotes?: BookFootnote[]): string {
       return `\n#quote(block: true)[${body}]\n`;
     }
     case 'heading': {
-      const lvl = Math.min(6, Math.max(1, block.heading_level ?? 2));
-      // Strip markers do body. Footnotes emitidas APÓS heading pra outline.entry
-      // não re-renderizar #footnote[] na página do TOC.
+      // Shift +1: user h1 → Typst h2. Reserva level 1 só pro título do chapter
+      // (única coisa que dispara pagebreak/estilo de chapter).
+      const rawLvl = Math.min(6, Math.max(1, block.heading_level ?? 2));
+      const lvl = Math.min(6, rawLvl + 1);
       const cleanText = stripFootnoteMarkers(block.content);
       const cleanContent = markdownInlineToTypst(cleanText);
       const cited = collectFootnotes(block.content, footnotes);
@@ -265,10 +266,10 @@ function buildTypstSource({ book, chapters, coverImage, backCoverImage, truncate
     out.push(`#page(footer: none, header: none, numbering: none)[]`);
   }
 
-  // Show rule pra heading lvl 1 = capítulos body/back matter.
-  // Front matter NÃO usa heading() pra ficar fora do TOC.
+  // Style level-1 heading (capítulo body/back) — SEM pagebreak automático.
+  // Pagebreak emitido manual antes do #heading() pra cada chapter.
+  // Subtítulos internos usam level 2+ → NÃO recebem este estilo nem pagebreak.
   out.push(`#show heading.where(level: 1): it => {`);
-  out.push(`  pagebreak(weak: true, to: "odd")`);
   out.push(`  v(2em)`);
   out.push(`  align(center)[#text(size: 18pt, weight: "bold")[#it.body]]`);
   out.push(`  v(2.5em)`);
@@ -364,6 +365,9 @@ function buildTypstSource({ book, chapters, coverImage, backCoverImage, truncate
       numberingStarted = true;
     }
 
+    // Pagebreak manual ANTES do heading do chapter — só primeira página do
+    // capítulo vai pra ímpar. Subtítulos internos NÃO geram pagebreak.
+    out.push(`#pagebreak(weak: true, to: "odd")`);
     out.push(`#heading(level: 1)[${titleClean}]`);
     // Footnotes do título — emitidas após heading. TOC só pega body limpo do heading.
     for (const fn of titleFns) {
