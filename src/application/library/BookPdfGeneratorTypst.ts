@@ -415,8 +415,8 @@ function buildTypstSource({ book, chapters, coverImage, backCoverImage, truncate
     out.push(`#align(center + horizon)[#box(stroke: 1pt + rgb("#ffca28"), inset: 1em)[#text(size: 11pt, fill: rgb("#666"))[Conteúdo cortado em ${escapeTypst(truncatedAt)}.\\\nConclua as aulas relacionadas para liberar o restante.]]]`);
   }
 
-  // 5. Back cover full-bleed na última página
-  if (backCoverImage) {
+  // 5. Back cover full-bleed na última página — SÓ no último chunk
+  if (backCoverImage && !skipBackCover) {
     out.push(`#pagebreak()`);
     out.push(`#pagebreak(to: "even")`);
     out.push(`#page(margin: 0pt, footer: none, header: none)[#image("${backCoverImage.path}", width: 100%, height: 100%, fit: "cover")]`);
@@ -427,6 +427,17 @@ function buildTypstSource({ book, chapters, coverImage, backCoverImage, truncate
 
 // ─── Public API ──────────────────────────────────────────────────────────────
 
+export interface TypstGenerateOptions {
+  /** Pula capa (chunks 1+). */
+  skipCover?: boolean;
+  /** Pula sumário (chunks 1+). */
+  skipToc?: boolean;
+  /** Pula contra-capa (chunks 0..N-1). */
+  skipBackCover?: boolean;
+  /** Página inicial pra continuar numeração entre chunks. */
+  startPageNumber?: number;
+}
+
 export class BookPdfGeneratorTypst {
   async generate(
     book: Book,
@@ -434,6 +445,7 @@ export class BookPdfGeneratorTypst {
     coverImageBuffer?: Buffer,
     truncatedAt?: string,
     backCoverImageBuffer?: Buffer,
+    options?: TypstGenerateOptions,
   ): Promise<Buffer> {
     const compiler = await getCompiler();
 
@@ -454,6 +466,10 @@ export class BookPdfGeneratorTypst {
       coverImage,
       backCoverImage,
       truncatedAt,
+      skipCover: options?.skipCover,
+      skipToc: options?.skipToc,
+      skipBackCover: options?.skipBackCover,
+      startPageNumber: options?.startPageNumber,
     });
 
     const result = compiler.compile({ mainFileContent: source });

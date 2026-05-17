@@ -9,10 +9,8 @@ import { adminAuth, firestore } from '@/domains/auth/services/firebaseAdmin';
 import { verifySession } from '@/domains/auth/services/sessionService';
 import { adminGetBook, adminListChapters } from '@/application/library/BookAdminLoader';
 import { BookSpoilerEngine } from '@/application/library/BookSpoilerEngine';
-import { bookPdfGenerator } from '@/application/library/BookPdfGenerator';
 import { BookExportEntity } from '@/domain/library/entities/BookExport';
 import { canDownloadLibrary, canReadLibrary } from '@/application/library/libraryPermissions';
-import { env } from '@/config/env';
 import { evaluateAccess } from '@/shared/content-access/accessGate';
 import type { Role } from '@/shared/types/role';
 
@@ -132,31 +130,49 @@ export async function GET(
     }
   }
 
-  // Engine selection: query string `?engine=typst|react-pdf` override, fallback env PDF_ENGINE
-  const engineQuery = req.nextUrl.searchParams.get('engine');
-  const engine = engineQuery === 'typst' || engineQuery === 'react-pdf'
-    ? engineQuery
-    : env.PDF_ENGINE;
-
+  // Typst-only — único engine suportado (footnotes no rodapé, layout correto).
+  // Chunked merge pra processar livros grandes sem estourar memória, mas
+  // gerando UM PDF único (capa/TOC só no chunk 0, back cover só no último,
+  // paginação contínua via startPageNumber).
   try {
-    let pdfBuffer: Buffer;
-    let usedEngine: string = engine;
-    if (engine === 'typst') {
-      // Typst gera o livro inteiro em UMA compilação — preserva capa única,
-      // TOC único, paginação contínua, footnotes corretos.
-      // Chunking quebrava tudo (cada chunk virava mini-livro separado).
-      try {
-        const { bookPdfGeneratorTypst } = await import('@/application/library/BookPdfGeneratorTypst');
-        pdfBuffer = await bookPdfGeneratorTypst.generate(book, chapters, coverBuffer, truncatedAt, backCoverBuffer);
-      } catch (typstErr) {
-        console.error('[PDF] Typst falhou, fallback react-pdf:', typstErr instanceof Error ? typstErr.message : typstErr);
-        pdfBuffer = await bookPdfGenerator.generate(book, chapters, coverBuffer, truncatedAt, backCoverBuffer);
-        usedEngine = 'react-pdf-fallback';
-      }
-    } else {
-      pdfBuffer = await bookPdfGenerator.generate(book, chapters, coverBuffer, truncatedAt, backCoverBuffer);
-      usedEngine = 'react-pdf';
+    const { bookPdfGeneratorTypst } = await import('@/application/library/BookPdfGeneratorTypst');
+    const { PDFDocument } = await import('pdf-lib');
+
+    const CHUNK_SIZE = Math.max(1, parseInt(req.nextUrl.searchParams.get('chunk') ?? '25', 10) || 25);
+    const chunks: typeof chapters[] = [];
+    for (let i = 0; i < chapters.length; i += CHUNK_SIZE) {
+      chunks.push(chapters.slice(i, i + CHUNK_SIZE));
     }
+
+    const finalDoc = await PDFDocument.create();
+    finalDoc.setTitle(book.title);
+    if (book.author) finalDoc.setAuthor(book.author);
+    if (book.language) finalDoc.setLanguage(book.language);
+
+    let pageOffset = 1;
+    for (let i = 0; i < chunks.length; i++) {
+      const isFirst = i === 0;
+      const isLast = i === chunks.length - 1;
+      const chunkBuf = await bookPdfGeneratorTypst.generate(
+        book,
+        chunks[i],
+        isFirst ? coverBuffer : undefined,
+        isLast ? truncatedAt : undefined,
+        isLast ? backCoverBuffer : undefined,
+        {
+          skipCover: !isFirst,
+          skipToc: !isFirst,
+          skipBackCover: !isLast,
+          startPageNumber: pageOffset,
+        },
+      );
+      const src = await PDFDocument.load(new Uint8Array(chunkBuf));
+      const pages = await finalDoc.copyPages(src, src.getPageIndices());
+      for (const p of pages) finalDoc.addPage(p);
+      pageOffset += src.getPageCount();
+    }
+
+    const pdfBuffer = Buffer.from(await finalDoc.save());
     const slug = BookExportEntity.bookSlug(book);
 
     const headers = new Headers({
@@ -167,14 +183,13 @@ export async function GET(
     if (truncatedAt) {
       headers.set('X-Spoiler-Cut-At', truncatedAt);
     }
-    headers.set('X-Pdf-Engine', usedEngine);
+    headers.set('X-Pdf-Engine', 'typst');
 
     return new NextResponse(new Uint8Array(pdfBuffer), { status: 200, headers });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error('[PDF export] Falha gerando PDF', {
+    console.error('[PDF export] Falha Typst', {
       bookId,
-      engine,
       chapterCount: chapters.length,
       totalBlocks: chapters.reduce((acc, ch) => acc + ch.blocks.length, 0),
       error: message,
@@ -182,7 +197,7 @@ export async function GET(
     });
     return NextResponse.json(
       {
-        error: 'Falha ao gerar PDF. Livro pode ser grande demais.',
+        error: 'Falha ao gerar PDF.',
         details: message,
         chapterCount: chapters.length,
       },
