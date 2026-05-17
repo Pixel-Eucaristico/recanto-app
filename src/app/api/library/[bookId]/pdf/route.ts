@@ -138,6 +138,22 @@ export async function GET(
     ? engineQuery
     : env.PDF_ENGINE;
 
+  // Debug: ?debug=source retorna o source Typst do primeiro chunk pra inspeção.
+  // Permite identificar o que está quebrando "expected comma" etc.
+  if (req.nextUrl.searchParams.get('debug') === 'source' && engine === 'typst') {
+    try {
+      const { bookPdfGeneratorTypst: gen } = await import('@/application/library/BookPdfGeneratorTypst');
+      const debugSource = gen.buildSourceForDebug(book, chapters.slice(0, 25));
+      return new NextResponse(debugSource, {
+        status: 200,
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return new NextResponse(`Erro ao gerar debug source: ${msg}`, { status: 500 });
+    }
+  }
+
   try {
     let pdfBuffer: Buffer;
     if (engine === 'typst') {

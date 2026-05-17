@@ -417,6 +417,11 @@ function buildTypstSource({ book, chapters, coverImage, backCoverImage, truncate
 // ─── Public API ──────────────────────────────────────────────────────────────
 
 export class BookPdfGeneratorTypst {
+  /** Debug: retorna source Typst raw (sem compilar). Pra inspecionar sintaxe quebrada. */
+  buildSourceForDebug(book: Book, chapters: BookChapter[]): string {
+    return buildTypstSource({ book, chapters });
+  }
+
   async generate(
     book: Book,
     chapters: BookChapter[],
