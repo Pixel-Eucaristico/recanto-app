@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type RefObject } from 'react';
+import { createPortal } from 'react-dom';
 import { Bookmark, Highlighter, MessageSquare, Tag, Link as LinkIcon, Check, ChevronDown } from 'lucide-react';
 import type { BookHighlight } from '@/domain/library/types';
 import { Tooltip } from '@/shared/components/Tooltip';
@@ -38,7 +39,9 @@ export function BlockControls({
   // Default 0 — adaptado depois pelo ResizeObserver. Linha curta = só chevron.
   const [visibleCount, setVisibleCount] = useState(0);
   const [expanded, setExpanded] = useState(false);
+  const [popupPos, setPopupPos] = useState<{ top: number; left: number } | null>(null);
   const rootRef = useRef<HTMLDivElement | null>(null);
+  const chevronRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     const el = containerRef?.current;
@@ -66,10 +69,28 @@ export function BlockControls({
     if (!expanded) return;
     function onDocPointer(e: PointerEvent) {
       const root = rootRef.current;
-      if (root && !root.contains(e.target as Node)) setExpanded(false);
+      const target = e.target as Node;
+      // Ignora click dentro do rootRef OU dentro do popup portaled
+      if (root && root.contains(target)) return;
+      const popup = document.getElementById('block-controls-popup');
+      if (popup && popup.contains(target)) return;
+      setExpanded(false);
     }
     document.addEventListener('pointerdown', onDocPointer);
     return () => document.removeEventListener('pointerdown', onDocPointer);
+  }, [expanded]);
+
+  // Posiciona popup abaixo do chevron usando viewport coords (portal pra body)
+  useEffect(() => {
+    if (!expanded) { setPopupPos(null); return; }
+    const btn = chevronRef.current;
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    // position: fixed usa viewport coords — sem scrollY/scrollX
+    setPopupPos({
+      top: rect.bottom + 4,
+      left: rect.left + rect.width / 2,
+    });
   }, [expanded]);
 
   const buttons = [
@@ -198,6 +219,7 @@ export function BlockControls({
 
       {hasHidden && (
         <button
+          ref={chevronRef}
           type="button"
           onClick={() => setExpanded(e => !e)}
           className={`${expanded ? 'opacity-100' : 'opacity-60 group-hover/blockctl:opacity-100 pointer-coarse:opacity-100'} transition-opacity flex items-center justify-center w-6 h-6 rounded-md bg-base-100 text-base-content/60 border border-base-300 shadow-sm hover:text-primary hover:border-primary/40 hover:bg-base-200 active:bg-base-300 touch-manipulation`}
@@ -208,13 +230,21 @@ export function BlockControls({
         </button>
       )}
 
-      {expanded && hasHidden && (
+      {expanded && hasHidden && popupPos && typeof document !== 'undefined' && createPortal(
         <div
-          className="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-base-100 border border-base-300 rounded-md shadow-lg p-1 flex flex-col gap-1 z-30"
+          id="block-controls-popup"
+          className="fixed bg-base-100 border border-base-300 rounded-md shadow-lg p-1 flex flex-col gap-1"
           role="menu"
+          style={{
+            top: popupPos.top,
+            left: popupPos.left,
+            transform: 'translateX(-50%)',
+            zIndex: 9999,
+          }}
         >
           {hidden.map(b => b.render())}
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );

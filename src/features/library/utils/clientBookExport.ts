@@ -14,7 +14,8 @@ async function fetchCover(url: string | undefined): Promise<Buffer | undefined> 
     const res = await fetch(url);
     if (!res.ok) return undefined;
     const arrayBuffer = await res.arrayBuffer();
-    return Buffer.from(arrayBuffer);
+    // Browser não tem Buffer. Uint8Array é compat com pdf-lib e @react-pdf/Image.
+    return new Uint8Array(arrayBuffer) as unknown as Buffer;
   } catch {
     return undefined;
   }

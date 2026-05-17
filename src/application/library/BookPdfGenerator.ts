@@ -1,6 +1,24 @@
 import {
-  Document, Page, Text, View, Image, Link, StyleSheet, renderToBuffer,
+  Document, Page, Text, View, Image, Link, StyleSheet, renderToBuffer as renderToBufferNode, pdf,
 } from '@react-pdf/renderer';
+
+/**
+ * Cross-env render helper.
+ * - Browser: `renderToBuffer` é Node-only. Usa `pdf(doc).toBlob()` e converte.
+ * - Node/server: usa `renderToBuffer` direto.
+ *
+ * Browser não tem Buffer global. Retorna Uint8Array castado pra Buffer (compat
+ * com pdf-lib `PDFDocument.load()` e Blob constructor — ambos aceitam Uint8Array).
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function renderToBuffer(doc: React.ReactElement<any>): Promise<Buffer> {
+  if (typeof window !== 'undefined') {
+    const blob = await pdf(doc).toBlob();
+    const arrayBuffer = await blob.arrayBuffer();
+    return new Uint8Array(arrayBuffer) as unknown as Buffer;
+  }
+  return renderToBufferNode(doc);
+}
 import React from 'react';
 import type {
   Book, BookChapter, BookBlock, BookReference, BookGlossaryTerm, BookCredits,
