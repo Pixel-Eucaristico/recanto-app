@@ -185,14 +185,10 @@
   }
 }
 
-/* BookReader — content-visibility otimiza paint/layout de blocos fora da viewport.
-   Browser pula renderização offscreen automaticamente; React mantém VDOM,
-   mas paint cost cai ~70% em livros longos.
-   contain-intrinsic-size reserva ~60px placeholder pra evitar layout shift. */
-.book-reader-block {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 60px;
-}
+/* Nota: content-visibility:auto causava clip do popup BlockControls
+   (contain:paint corta overflow). LazyChapter já faz o trabalho de virtualização.
+   Mantive a classe vazia pra preservar markup. */
+.book-reader-block { /* intentionally empty — see git history */ }
 
 /* BookReader header fixed — responsivo ao drawer-toggle (sidebar collapse/expand).
    Default checked = sidebar w-64 (open). Unchecked = sidebar w-14 (close). */
