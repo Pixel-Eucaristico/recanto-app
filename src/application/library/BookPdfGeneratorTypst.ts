@@ -225,9 +225,17 @@ interface BuildArgs {
   coverImage?: { path: string; ext: string };
   backCoverImage?: { path: string; ext: string };
   truncatedAt?: string;
+  /** Pula renderização da capa (chunk intermediário/final). */
+  skipCover?: boolean;
+  /** Pula sumário/TOC (chunk não-primeiro). */
+  skipToc?: boolean;
+  /** Pula contra-capa (chunk não-último). */
+  skipBackCover?: boolean;
+  /** Página inicial pra continuar paginação cross-chunk. Default 1. */
+  startPageNumber?: number;
 }
 
-function buildTypstSource({ book, chapters, coverImage, backCoverImage, truncatedAt }: BuildArgs): string {
+function buildTypstSource({ book, chapters, coverImage, backCoverImage, truncatedAt, skipCover, skipToc, skipBackCover, startPageNumber }: BuildArgs): string {
   const sorted = BookEntity.sortChapters(chapters);
   // Title e author são usados em DOIS contextos: string literal (set document)
   // e markup `[...]`. Geramos as duas versões.
@@ -246,15 +254,16 @@ function buildTypstSource({ book, chapters, coverImage, backCoverImage, truncate
   out.push(`#set page(paper: "a5", margin: (top: 2cm, bottom: 2cm, left: 2cm, right: 2cm))`);
   out.push('');
 
-  // 1. Cover full-bleed (não conta paginação, sem header/footer)
-  if (coverImage) {
-    out.push(`#page(margin: 0pt, footer: none, header: none, numbering: none)[#image("${coverImage.path}", width: 100%, height: 100%, fit: "cover")]`);
-  } else {
-    out.push(`#page(footer: none, header: none, numbering: none)[#align(center + horizon)[#text(size: 24pt, weight: "bold")[${docTitleMd}]${docAuthorMd ? `\\\n#text(size: 14pt)[${docAuthorMd}]` : ''}]]`);
+  // 1. Cover full-bleed (não conta paginação, sem header/footer) — SÓ no primeiro chunk
+  if (!skipCover) {
+    if (coverImage) {
+      out.push(`#page(margin: 0pt, footer: none, header: none, numbering: none)[#image("${coverImage.path}", width: 100%, height: 100%, fit: "cover")]`);
+    } else {
+      out.push(`#page(footer: none, header: none, numbering: none)[#align(center + horizon)[#text(size: 24pt, weight: "bold")[${docTitleMd}]${docAuthorMd ? `\\\n#text(size: 14pt)[${docAuthorMd}]` : ''}]]`);
+    }
+    // Blank page após capa (sem numeração)
+    out.push(`#page(footer: none, header: none, numbering: none)[]`);
   }
-
-  // 2. Blank page após capa (sem numeração)
-  out.push(`#page(footer: none, header: none, numbering: none)[]`);
 
   // Show rule pra heading lvl 1 = capítulos body/back matter.
   // Front matter NÃO usa heading() pra ficar fora do TOC.
@@ -310,13 +319,15 @@ function buildTypstSource({ book, chapters, coverImage, backCoverImage, truncate
   // Render credits primeiro (sem numeração, fora TOC)
   for (const ch of credits) emitFrontChapter(ch);
 
-  // Sumário entre credits e numbered sections
-  out.push(`#pagebreak(weak: true, to: "odd")`);
-  out.push(`#set page(header: none, footer: none, numbering: none)`);
-  out.push(`#v(2em)`);
-  out.push(`#align(center)[#text(size: 18pt, weight: "bold")[Sumário]]`);
-  out.push(`#v(2em)`);
-  out.push(`#outline(title: none, indent: 1em, depth: 1)`);
+  // Sumário entre credits e numbered sections — SÓ no primeiro chunk
+  if (!skipToc) {
+    out.push(`#pagebreak(weak: true, to: "odd")`);
+    out.push(`#set page(header: none, footer: none, numbering: none)`);
+    out.push(`#v(2em)`);
+    out.push(`#align(center)[#text(size: 18pt, weight: "bold")[Sumário]]`);
+    out.push(`#v(2em)`);
+    out.push(`#outline(title: none, indent: 1em, depth: 1)`);
+  }
 
   // Prefácio + body + back: numeração ativa, todos via #heading() → entram no TOC
   let numberingStarted = false;
@@ -330,7 +341,7 @@ function buildTypstSource({ book, chapters, coverImage, backCoverImage, truncate
 
     if (!numberingStarted) {
       out.push(`#pagebreak(weak: true, to: "odd")`);
-      out.push(`#counter(page).update(1)`);
+      out.push(`#counter(page).update(${Math.max(1, startPageNumber ?? 1)})`);
       out.push(`#set page(`);
       out.push(`  header: context {`);
       out.push(`    let n = counter(page).get().first()`);
@@ -417,11 +428,6 @@ function buildTypstSource({ book, chapters, coverImage, backCoverImage, truncate
 // ─── Public API ──────────────────────────────────────────────────────────────
 
 export class BookPdfGeneratorTypst {
-  /** Debug: retorna source Typst raw (sem compilar). Pra inspecionar sintaxe quebrada. */
-  buildSourceForDebug(book: Book, chapters: BookChapter[]): string {
-    return buildTypstSource({ book, chapters });
-  }
-
   async generate(
     book: Book,
     chapters: BookChapter[],

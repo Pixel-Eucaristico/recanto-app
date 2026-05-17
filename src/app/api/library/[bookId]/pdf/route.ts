@@ -138,62 +138,18 @@ export async function GET(
     ? engineQuery
     : env.PDF_ENGINE;
 
-  // Debug: ?debug=source retorna o source Typst do primeiro chunk pra inspeção.
-  // Permite identificar o que está quebrando "expected comma" etc.
-  if (req.nextUrl.searchParams.get('debug') === 'source' && engine === 'typst') {
-    try {
-      const { bookPdfGeneratorTypst: gen } = await import('@/application/library/BookPdfGeneratorTypst');
-      const debugSource = gen.buildSourceForDebug(book, chapters.slice(0, 25));
-      return new NextResponse(debugSource, {
-        status: 200,
-        headers: { 'Content-Type': 'text/plain; charset=utf-8' },
-      });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      return new NextResponse(`Erro ao gerar debug source: ${msg}`, { status: 500 });
-    }
-  }
-
   try {
     let pdfBuffer: Buffer;
     let usedEngine: string = engine;
     if (engine === 'typst') {
-      // Chunked generation: split em chunks pra evitar OOM/timeout.
-      // Cada chunk: Typst.generate → pdf-lib merge → free buffer.
-      // Mantém layout correto (Typst trata footnotes no rodapé nativo).
+      // Typst gera o livro inteiro em UMA compilação — preserva capa única,
+      // TOC único, paginação contínua, footnotes corretos.
+      // Chunking quebrava tudo (cada chunk virava mini-livro separado).
       try {
-        const CHUNK_SIZE = 1; // 1 chapter por vez pra isolar erro Typst em log
         const { bookPdfGeneratorTypst } = await import('@/application/library/BookPdfGeneratorTypst');
-        const { PDFDocument } = await import('pdf-lib');
-
-        const finalDoc = await PDFDocument.create();
-        finalDoc.setTitle(book.title);
-        if (book.author) finalDoc.setAuthor(book.author);
-        if (book.language) finalDoc.setLanguage(book.language);
-
-        for (let i = 0; i < chapters.length; i += CHUNK_SIZE) {
-          const chunk = chapters.slice(i, i + CHUNK_SIZE);
-          const isFirst = i === 0;
-          const isLast = i + CHUNK_SIZE >= chapters.length;
-          try {
-            const chunkBuf = await bookPdfGeneratorTypst.generate(
-              book,
-              chunk,
-              isFirst ? coverBuffer : undefined,
-              isLast ? truncatedAt : undefined,
-              isLast ? backCoverBuffer : undefined,
-            );
-            const src = await PDFDocument.load(new Uint8Array(chunkBuf));
-            const pages = await finalDoc.copyPages(src, src.getPageIndices());
-            for (const p of pages) finalDoc.addPage(p);
-          } catch (chunkErr) {
-            console.error(`[PDF] Typst falhou em chapter ${chunk[0]?.order} "${chunk[0]?.title}":`, chunkErr instanceof Error ? chunkErr.message : chunkErr);
-            // Continua próximo chapter
-          }
-        }
-        pdfBuffer = Buffer.from(await finalDoc.save());
-      } catch (typstFatal) {
-        console.error('[PDF] Typst engine falhou totalmente, fallback pra react-pdf:', typstFatal instanceof Error ? typstFatal.message : typstFatal);
+        pdfBuffer = await bookPdfGeneratorTypst.generate(book, chapters, coverBuffer, truncatedAt, backCoverBuffer);
+      } catch (typstErr) {
+        console.error('[PDF] Typst falhou, fallback react-pdf:', typstErr instanceof Error ? typstErr.message : typstErr);
         pdfBuffer = await bookPdfGenerator.generate(book, chapters, coverBuffer, truncatedAt, backCoverBuffer);
         usedEngine = 'react-pdf-fallback';
       }
