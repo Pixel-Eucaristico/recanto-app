@@ -141,9 +141,40 @@ export async function GET(
   try {
     let pdfBuffer: Buffer;
     if (engine === 'typst') {
-      // Lazy import — só carrega native module quando typst engine ativo
+      // Chunked generation: split em chunks pra evitar OOM/timeout.
+      // Cada chunk: Typst.generate → pdf-lib merge → free buffer.
+      // Mantém layout correto (Typst trata footnotes no rodapé nativo).
+      const CHUNK_SIZE = 25;
       const { bookPdfGeneratorTypst } = await import('@/application/library/BookPdfGeneratorTypst');
-      pdfBuffer = await bookPdfGeneratorTypst.generate(book, chapters, coverBuffer, truncatedAt, backCoverBuffer);
+      const { PDFDocument } = await import('pdf-lib');
+
+      const chunks: typeof chapters[] = [];
+      for (let i = 0; i < chapters.length; i += CHUNK_SIZE) {
+        chunks.push(chapters.slice(i, i + CHUNK_SIZE));
+      }
+
+      const finalDoc = await PDFDocument.create();
+      finalDoc.setTitle(book.title);
+      if (book.author) finalDoc.setAuthor(book.author);
+      if (book.language) finalDoc.setLanguage(book.language);
+
+      for (let i = 0; i < chunks.length; i++) {
+        const isFirst = i === 0;
+        const isLast = i === chunks.length - 1;
+        const chunkBuf = await bookPdfGeneratorTypst.generate(
+          book,
+          chunks[i],
+          isFirst ? coverBuffer : undefined,
+          isLast ? truncatedAt : undefined,
+          isLast ? backCoverBuffer : undefined,
+        );
+        const src = await PDFDocument.load(new Uint8Array(chunkBuf));
+        const pages = await finalDoc.copyPages(src, src.getPageIndices());
+        for (const p of pages) finalDoc.addPage(p);
+        // chunkBuf + src vão pra GC no fim da iteração
+      }
+
+      pdfBuffer = Buffer.from(await finalDoc.save());
     } else {
       pdfBuffer = await bookPdfGenerator.generate(book, chapters, coverBuffer, truncatedAt, backCoverBuffer);
     }
