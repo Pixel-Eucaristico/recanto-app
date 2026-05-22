@@ -37,6 +37,10 @@ export function LazyChapter({
   const [mounted, setMounted] = useState(forceMount);
 
   useEffect(() => {
+    if (forceMount && !mounted) setMounted(true);
+  }, [forceMount, mounted]);
+
+  useEffect(() => {
     if (mounted) return;
     const el = ref.current;
     if (!el) return;

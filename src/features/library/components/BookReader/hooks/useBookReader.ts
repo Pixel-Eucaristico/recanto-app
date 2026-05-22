@@ -33,6 +33,7 @@ export function useBookReader({ userId, bookId, chapters, initialRef }: UseBookR
   const [showExitGuard, setShowExitGuard] = useState(false);
   const [commentTarget, setCommentTarget] = useState<string | null>(null);
   const [completing, setCompleting] = useState(false);
+  const [requestedChapterMounts, setRequestedChapterMounts] = useState<Set<number>>(() => new Set());
 
   const chapterRefs = useRef<Map<number, HTMLElement>>(new Map());
   const activeRefForChapter = useRef<Map<number, string>>(new Map());
@@ -66,6 +67,19 @@ export function useBookReader({ userId, bookId, chapters, initialRef }: UseBookR
     setCompleting(false);
   }
 
+  const requestChapterMount = useCallback((order: number) => {
+    setRequestedChapterMounts(prev => {
+      if (prev.has(order)) return prev;
+      const next = new Set(prev);
+      next.add(order);
+      return next;
+    });
+  }, []);
+
+  const isChapterMountRequested = useCallback((order: number) => {
+    return requestedChapterMounts.has(order);
+  }, [requestedChapterMounts]);
+
   useEffect(() => {
     if (!progress) return;
     const hasPosition = progress.last_ref || progress.last_chapter_order > 0;
@@ -81,15 +95,26 @@ export function useBookReader({ userId, bookId, chapters, initialRef }: UseBookR
   useEffect(() => {
     if (!initialRef) return;
     const id = `ref-${initialRef.replace(':', '-')}`;
-    const t = setTimeout(() => {
+    const parsed = CanonicalRefEntity.tryParse(initialRef);
+    if (parsed) requestChapterMount(parsed.chapter);
+    const timeouts: ReturnType<typeof setTimeout>[] = [];
+    const scrollWhenReady = (attempt = 0) => {
       const el = document.getElementById(id);
       if (el) {
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
         el.classList.add('ring-2', 'ring-primary', 'ring-offset-2', 'ring-offset-base-100');
-        setTimeout(() => el.classList.remove('ring-2', 'ring-primary', 'ring-offset-2', 'ring-offset-base-100'), 2400);
+        timeouts.push(setTimeout(() => el.classList.remove('ring-2', 'ring-primary', 'ring-offset-2', 'ring-offset-base-100'), 2400));
+        return;
       }
-    }, 200);
-    return () => clearTimeout(t);
+      if (attempt >= 8) {
+        if (parsed) jumpToChapter(parsed.chapter);
+        return;
+      }
+      timeouts.push(setTimeout(() => scrollWhenReady(attempt + 1), 120));
+    };
+    timeouts.push(setTimeout(() => scrollWhenReady(), 80));
+    return () => timeouts.forEach(clearTimeout);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialRef, chapters.length]);
 
   useEffect(() => {
@@ -119,20 +144,43 @@ export function useBookReader({ userId, bookId, chapters, initialRef }: UseBookR
 
   const jumpToChapter = useCallback((order: number) => {
     setDrawerOpen(false);
+    requestChapterMount(order);
     const el = chapterRefs.current.get(order);
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, []);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    retryScroll(8, () => {
+      const mountedEl = chapterRefs.current.get(order);
+      if (!mountedEl) return false;
+      mountedEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return true;
+    });
+  }, [requestChapterMount]);
 
   const continueSaved = useCallback(() => {
     setShowContinueBanner(false);
     if (!progress) return;
     if (progress.last_ref) {
+      const parsed = CanonicalRefEntity.tryParse(progress.last_ref);
+      if (parsed) requestChapterMount(parsed.chapter);
       const id = `ref-${progress.last_ref.replace(':', '-')}`;
       const el = document.getElementById(id);
       if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+      retryScroll(8, () => {
+        const mountedEl = document.getElementById(id);
+        if (mountedEl) {
+          mountedEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          return true;
+        }
+        return false;
+      }, () => {
+        if (parsed) jumpToChapter(parsed.chapter);
+      });
+      return;
     }
     jumpToChapter(progress.last_chapter_order);
-  }, [progress, jumpToChapter]);
+  }, [progress, requestChapterMount, jumpToChapter]);
 
   // Bookmark é stale se passou > 7 dias desde última marcação manual
   const STALE_BOOKMARK_DAYS = 7;
@@ -218,6 +266,7 @@ export function useBookReader({ userId, bookId, chapters, initialRef }: UseBookR
     annotationError,
     jumpToChapter,
     continueSaved,
+    isChapterMountRequested,
     handleBack,
     handleComplete,
     handleExit,
@@ -225,4 +274,18 @@ export function useBookReader({ userId, bookId, chapters, initialRef }: UseBookR
     registerChapterRef,
     setActiveRef,
   };
+}
+
+function retryScroll(
+  attempts: number,
+  tryScroll: () => boolean,
+  onFail?: () => void,
+  delayMs = 120,
+) {
+  if (tryScroll()) return;
+  if (attempts <= 0) {
+    onFail?.();
+    return;
+  }
+  setTimeout(() => retryScroll(attempts - 1, tryScroll, onFail, delayMs), delayMs);
 }

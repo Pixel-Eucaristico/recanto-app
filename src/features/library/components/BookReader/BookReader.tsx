@@ -47,6 +47,7 @@ export function BookReader({ book, chapters, visibleUntil, truncated, initialRef
     annotationError,
     jumpToChapter,
     continueSaved,
+    isChapterMountRequested,
     handleBack,
     handleComplete,
     handleExit,
@@ -155,7 +156,9 @@ export function BookReader({ book, chapters, visibleUntil, truncated, initialRef
                 const initialChapterOrder = initialRef
                   ? Number(initialRef.split(':')[0])
                   : (progress?.last_chapter_order ?? null);
-                const forceMount = initialChapterOrder != null && ch.order === initialChapterOrder;
+                const forceMount =
+                  (initialChapterOrder != null && ch.order === initialChapterOrder) ||
+                  isChapterMountRequested(ch.order);
                 return (
                 <LazyChapter key={ch.id} chapterId={ch.id} forceMount={forceMount} estimatedHeight={Math.max(400, ch.blocks.length * 60)}>
                   <ChapterSection
