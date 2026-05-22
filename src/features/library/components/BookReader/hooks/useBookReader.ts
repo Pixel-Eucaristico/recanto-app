@@ -8,6 +8,7 @@ import { useBookAnnotations } from '@/features/library/hooks/useBookAnnotations'
 import { useBookTags } from '@/features/library/hooks/useBookTags';
 import { CanonicalRefEntity } from '@/domain/library/entities/CanonicalRef';
 import { sliderToPx } from '../utils/constants';
+import { getHeadingAnchorId } from '../utils/readerAnchors';
 
 interface UseBookReaderOptions {
   userId: string | undefined;
@@ -18,7 +19,8 @@ interface UseBookReaderOptions {
 
 type PendingScrollTarget =
   | { kind: 'chapter'; chapterOrder: number }
-  | { kind: 'ref'; chapterOrder: number; ref: string };
+  | { kind: 'ref'; chapterOrder: number; ref: string }
+  | { kind: 'heading'; chapterOrder: number; blockId: string };
 
 export function useBookReader({ userId, bookId, chapters, initialRef }: UseBookReaderOptions) {
   const router = useRouter();
@@ -89,10 +91,11 @@ export function useBookReader({ userId, bookId, chapters, initialRef }: UseBookR
     const target = pendingScrollTarget.current;
     if (!target) return;
 
-    if (target.kind === 'ref') {
-      const refEl = document.getElementById(`ref-${target.ref.replace(':', '-')}`);
-      if (refEl) {
-        refEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const elementId = getTargetElementId(target);
+    if (elementId) {
+      const targetEl = document.getElementById(elementId);
+      if (targetEl) {
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         pendingScrollTarget.current = null;
         return;
       }
@@ -164,6 +167,13 @@ export function useBookReader({ userId, bookId, chapters, initialRef }: UseBookR
     setDrawerOpen(false);
     requestChapterMount(order);
     pendingScrollTarget.current = { kind: 'chapter', chapterOrder: order };
+    runPendingScroll();
+  }, [requestChapterMount, runPendingScroll]);
+
+  const jumpToHeading = useCallback((chapterOrder: number, blockId: string) => {
+    setDrawerOpen(false);
+    requestChapterMount(chapterOrder);
+    pendingScrollTarget.current = { kind: 'heading', chapterOrder, blockId };
     runPendingScroll();
   }, [requestChapterMount, runPendingScroll]);
 
@@ -270,6 +280,7 @@ export function useBookReader({ userId, bookId, chapters, initialRef }: UseBookR
     tags, tagsForChapter, addTag, removeTag,
     annotationError,
     jumpToChapter,
+    jumpToHeading,
     continueSaved,
     isChapterMountRequested,
     handleBack,
@@ -279,4 +290,10 @@ export function useBookReader({ userId, bookId, chapters, initialRef }: UseBookR
     registerChapterRef,
     setActiveRef,
   };
+}
+
+function getTargetElementId(target: PendingScrollTarget): string | null {
+  if (target.kind === 'ref') return `ref-${target.ref.replace(':', '-')}`;
+  if (target.kind === 'heading') return getHeadingAnchorId(target.chapterOrder, target.blockId);
+  return null;
 }

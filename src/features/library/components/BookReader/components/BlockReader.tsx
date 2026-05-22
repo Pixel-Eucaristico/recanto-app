@@ -8,6 +8,7 @@ import { SelectionToolbar } from './SelectionToolbar';
 import { BlockControls } from './BlockControls';
 import { TagBadges } from './TagBadges';
 import { applyTextHighlights } from '../utils/applyTextHighlights';
+import { getHeadingAnchorId } from '../utils/readerAnchors';
 
 /**
  * Substitui markers `[^N]` por <sup> clicável + popup com conteúdo.
@@ -46,9 +47,9 @@ interface BlockReaderProps {
 }
 
 function BlockReaderImpl({
-  block, fontPx, isBookmarked, onBookmark, onVisible,
+  block, chapter, fontPx, isBookmarked, onBookmark, onVisible,
   blockHighlights, commentCount, blockTags, footnotes = [],
-  onAddHighlight, onRemoveHighlight, onAddTag, onRemoveTag, onOpenComment,
+  onAddHighlight, onAddTag, onRemoveTag, onOpenComment,
 }: BlockReaderProps) {
   const ref = block.ref;
   const anchorId = ref ? `ref-${ref.replace(':', '-')}` : undefined;
@@ -199,7 +200,14 @@ function BlockReaderImpl({
       5: 'text-sm font-semibold',
       6: 'text-xs font-semibold uppercase tracking-wide',
     };
-    return <p className={`${sizes[level]} text-base-content mt-6 mb-2`}>{block.content}</p>;
+    return (
+      <p
+        id={getHeadingAnchorId(chapter, block.id)}
+        className={`${sizes[level]} text-base-content mt-6 mb-2 scroll-mt-24`}
+      >
+        {block.content}
+      </p>
+    );
   }
 
   if (block.kind === 'paragraph') {

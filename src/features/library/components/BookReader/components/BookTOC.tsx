@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { Bookmark, BookOpen, Navigation } from 'lucide-react';
-import type { Book, BookChapter, BookTag } from '@/domain/library/types';
+import type { Book, BookBlock, BookChapter, BookTag } from '@/domain/library/types';
 import { AccordionMenu, type AccordionMenuItem } from '@/shared/components/AccordionMenu';
 
 interface BookTOCProps {
@@ -16,12 +16,13 @@ interface BookTOCProps {
   tags: BookTag[];
   tagsForChapter: (chapterOrder: number) => BookTag[];
   onJump: (order: number) => void;
+  onJumpToHeading: (chapterOrder: number, blockId: string) => void;
   onJumpToRef: () => void;
 }
 
 export function BookTOC({
   book, chapters, activeChapter, visibleUntil, readPercent,
-  lastChapterOrder, lastRef, tagsForChapter, onJump, onJumpToRef,
+  lastChapterOrder, lastRef, tagsForChapter, onJump, onJumpToHeading, onJumpToRef,
 }: BookTOCProps) {
   const menuItems = buildMenuItems({
     chapters,
@@ -30,6 +31,7 @@ export function BookTOC({
     lastRef,
     tagsForChapter,
     onJump,
+    onJumpToHeading,
     onJumpToRef,
   });
 
@@ -83,6 +85,7 @@ interface BuildMenuItemsOptions {
   lastRef: string | null;
   tagsForChapter: (chapterOrder: number) => BookTag[];
   onJump: (order: number) => void;
+  onJumpToHeading: (chapterOrder: number, blockId: string) => void;
   onJumpToRef: () => void;
 }
 
@@ -93,6 +96,7 @@ function buildMenuItems({
   lastRef,
   tagsForChapter,
   onJump,
+  onJumpToHeading,
   onJumpToRef,
 }: BuildMenuItemsOptions): AccordionMenuItem[] {
   const items: AccordionMenuItem[] = [];
@@ -119,7 +123,7 @@ function buildMenuItems({
     icon: <BookOpen className="h-4 w-4 shrink-0 opacity-70" />,
     defaultOpen: true,
     children: chapters.length > 0
-      ? chapters.map(ch => buildChapterItem(ch, activeChapter, lastChapterOrder, tagsForChapter, onJump))
+      ? chapters.map(ch => buildChapterItem(ch, activeChapter, lastChapterOrder, tagsForChapter, onJump, onJumpToHeading))
       : [{ label: <span className="text-xs text-base-content/50">Sem capítulos.</span>, disabled: true }],
   });
 
@@ -132,26 +136,65 @@ function buildChapterItem(
   lastChapterOrder: number | null,
   tagsForChapter: (chapterOrder: number) => BookTag[],
   onJump: (order: number) => void,
+  onJumpToHeading: (chapterOrder: number, blockId: string) => void,
 ): AccordionMenuItem {
   const isLast = lastChapterOrder === chapter.order;
   const chapterTags = tagsForChapter(chapter.order);
+  const headings = getHeadingBlocks(chapter);
+  const chapterLabel = (
+    <span className="flex min-w-0 items-center gap-2">
+      <span className="shrink-0 text-[10px] text-base-content/50">{chapter.order}.</span>
+      <span className="min-w-0 flex-1 truncate">{chapter.title}</span>
+      {isLast && activeChapter !== chapter.order && (
+        <Bookmark className="h-3 w-3 shrink-0 text-info" aria-label="Última posição salva" />
+      )}
+      {chapterTags.length > 0 && (
+        <span className="shrink-0 rounded-full bg-secondary px-1 text-[9px] text-secondary-content">
+          {chapterTags.length}
+        </span>
+      )}
+    </span>
+  );
+
+  if (headings.length > 0) {
+    return {
+      type: 'parent',
+      label: chapterLabel,
+      defaultOpen: activeChapter === chapter.order || isLast,
+      className: activeChapter === chapter.order ? 'menu-active' : undefined,
+      children: [
+        {
+          label: <span className="text-xs text-base-content/70">Início do capítulo</span>,
+          onClick: () => onJump(chapter.order),
+        },
+        ...headings.map(block => buildHeadingItem(chapter.order, block, onJumpToHeading)),
+      ],
+    };
+  }
 
   return {
-    label: (
-      <span className="flex min-w-0 items-center gap-2">
-        <span className="shrink-0 text-[10px] text-base-content/50">{chapter.order}.</span>
-        <span className="min-w-0 flex-1 truncate">{chapter.title}</span>
-        {isLast && activeChapter !== chapter.order && (
-          <Bookmark className="h-3 w-3 shrink-0 text-info" aria-label="Última posição salva" />
-        )}
-        {chapterTags.length > 0 && (
-          <span className="shrink-0 rounded-full bg-secondary px-1 text-[9px] text-secondary-content">
-            {chapterTags.length}
-          </span>
-        )}
-      </span>
-    ),
+    label: chapterLabel,
     active: activeChapter === chapter.order,
     onClick: () => onJump(chapter.order),
   };
+}
+
+function buildHeadingItem(
+  chapterOrder: number,
+  block: BookBlock,
+  onJumpToHeading: (chapterOrder: number, blockId: string) => void,
+): AccordionMenuItem {
+  const level = Math.min(6, Math.max(1, block.heading_level ?? 2));
+  return {
+    label: (
+      <span className="block min-w-0 truncate text-xs" style={{ paddingLeft: `${Math.max(0, level - 1) * 8}px` }}>
+        {block.content}
+      </span>
+    ),
+    onClick: () => onJumpToHeading(chapterOrder, block.id),
+  };
+}
+
+function getHeadingBlocks(chapter: BookChapter): BookBlock[] {
+  return chapter.blocks.filter(block => block.kind === 'heading' && block.content.trim().length > 0);
 }
