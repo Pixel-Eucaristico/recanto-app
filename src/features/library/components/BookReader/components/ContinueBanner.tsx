@@ -11,7 +11,7 @@ interface ContinueBannerProps {
 
 export function ContinueBanner({ progress, onDismiss, onContinue }: ContinueBannerProps) {
   return (
-    <div className="sticky top-2 z-10 mt-3 mb-3 bg-info/15 border border-info/30 rounded-md mx-3 md:mx-6 px-3 md:px-6 py-2 flex items-center justify-between gap-3 flex-wrap">
+    <div className="sticky top-4 z-10 mt-4 mb-4 bg-info/15 border border-info/30 rounded-md mx-3 md:mx-6 px-3 md:px-6 py-2 flex items-center justify-between gap-3 flex-wrap">
       <span className="text-sm text-base-content flex items-center gap-1.5">
         <BookMarked className="w-4 h-4 text-info shrink-0" />
         Última leitura: cap. {progress.last_chapter_order}
