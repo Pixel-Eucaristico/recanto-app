@@ -8,7 +8,6 @@ import { BookSpoilerVeil } from '@/features/library/components/BookSpoilerVeil';
 import { CommentModal } from '@/shared/components/CommentModal';
 import { BookReaderHeader } from './components/BookReaderHeader';
 import { ContinueBanner } from './components/ContinueBanner';
-import { BookTOC } from './components/BookTOC';
 import { BookDrawer } from './components/BookDrawer';
 import { ChapterSection } from './components/ChapterSection';
 import { LazyChapter } from './components/LazyChapter';
@@ -98,7 +97,8 @@ export function BookReader({ book, chapters, visibleUntil, truncated, initialRef
         visibleUntil={visibleUntil}
         changeFontLevel={changeFontLevel}
         onBack={handleBack}
-        onOpenDrawer={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); setDrawerOpen(true); }}
+        onOpenDrawer={() => setDrawerOpen(true)}
+        onScrollToTop={scrollReaderToTop}
       />
 
       {showContinueBanner && progress && (
@@ -110,23 +110,6 @@ export function BookReader({ book, chapters, visibleUntil, truncated, initialRef
       )}
 
       <div className="flex">
-        <aside className="hidden lg:block w-72 shrink-0 border-r border-base-300 bg-base-100 sticky top-[52px] self-start">
-          <BookTOC
-            book={book}
-            chapters={chapters}
-            activeChapter={activeChapter}
-            visibleUntil={visibleUntil}
-            readPercent={readPercent}
-            lastChapterOrder={progress?.last_chapter_order ?? null}
-            lastRef={progress?.last_ref ?? null}
-            tags={tags}
-            tagsForChapter={tagsForChapter}
-            onJump={jumpToChapter}
-            onJumpToHeading={jumpToHeading}
-            onJumpToRef={continueSaved}
-          />
-        </aside>
-
         <BookDrawer
           open={drawerOpen}
           onClose={() => setDrawerOpen(false)}
@@ -308,4 +291,13 @@ export function BookReader({ book, chapters, visibleUntil, truncated, initialRef
       <ScrollToTopButton />
     </div>
   );
+}
+
+function scrollReaderToTop() {
+  const main = document.querySelector('main');
+  if (main) {
+    main.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }

@@ -119,9 +119,9 @@ function buildMenuItems({
 
   items.push({
     type: 'parent',
-    label: <span className="text-xs font-semibold uppercase text-base-content/70">Capítulos</span>,
+    label: <span className="text-xs font-bold uppercase text-base-content">Capítulos</span>,
     icon: <BookOpen className="h-4 w-4 shrink-0 opacity-70" />,
-    defaultOpen: true,
+    defaultOpen: false,
     children: chapters.length > 0
       ? chapters.map(ch => buildChapterItem(ch, activeChapter, lastChapterOrder, tagsForChapter, onJump, onJumpToHeading))
       : [{ label: <span className="text-xs text-base-content/50">Sem capítulos.</span>, disabled: true }],
@@ -160,7 +160,7 @@ function buildChapterItem(
     return {
       type: 'parent',
       label: chapterLabel,
-      defaultOpen: activeChapter === chapter.order || isLast,
+      defaultOpen: false,
       className: activeChapter === chapter.order ? 'menu-active' : undefined,
       children: [
         {

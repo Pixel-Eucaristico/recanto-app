@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, Menu, Type } from 'lucide-react';
+import { ArrowLeft, ArrowUp, ListTree, Menu, Type } from 'lucide-react';
 import type { Book } from '@/domain/library/types';
 import { Tooltip } from '@/shared/components/Tooltip';
 import { BookExportButtons } from '@/features/library/components/BookExportButtons';
@@ -16,10 +16,11 @@ interface BookReaderHeaderProps {
   changeFontLevel: (v: number) => void;
   onBack: () => void;
   onOpenDrawer: () => void;
+  onScrollToTop: () => void;
 }
 
 export function BookReaderHeader({
-  book, fontLevel, fontPx, readPercent, truncated, visibleUntil, changeFontLevel, onBack, onOpenDrawer,
+  book, fontLevel, fontPx, readPercent, truncated, visibleUntil, changeFontLevel, onBack, onOpenDrawer, onScrollToTop,
 }: BookReaderHeaderProps) {
   return (
     <header className="book-header-fixed fixed top-0 left-0 right-0 z-30 bg-base-100/95 backdrop-blur border-b border-base-300 shadow-sm transition-[left] duration-300">
@@ -37,7 +38,7 @@ export function BookReaderHeader({
             onClick={onOpenDrawer}
             aria-label="Abrir índice"
           >
-            <Menu className="w-4 h-4" />
+            <ListTree className="w-4 h-4" />
           </button>
         </Tooltip>
         <div className="flex-1 min-w-0 overflow-hidden">
@@ -46,6 +47,16 @@ export function BookReaderHeader({
         </div>
 
         <div className="flex items-center gap-0.5 shrink-0">
+          <Tooltip tip="Voltar ao topo" position="bottom">
+            <button
+              type="button"
+              className="btn btn-ghost btn-xs btn-circle min-h-0 h-7 w-7"
+              onClick={onScrollToTop}
+              aria-label="Voltar ao topo"
+            >
+              <ArrowUp className="w-4 h-4" />
+            </button>
+          </Tooltip>
           <Tooltip tip="Fonte menor" position="bottom">
             <button
               type="button"
