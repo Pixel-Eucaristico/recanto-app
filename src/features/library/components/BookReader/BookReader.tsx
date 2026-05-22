@@ -87,8 +87,7 @@ export function BookReader({ book, chapters, visibleUntil, truncated, initialRef
   }, [chapters]);
 
   return (
-    // pt-[52px] compensa altura do header fixed pra conteúdo não ficar atrás
-    <div className="bg-base-200 pt-[52px]">
+    <div className="bg-base-200">
       <BookReaderHeader
         book={book}
         fontLevel={fontLevel}
@@ -111,7 +110,7 @@ export function BookReader({ book, chapters, visibleUntil, truncated, initialRef
       )}
 
       <div className="flex">
-        <aside className="hidden lg:block w-72 shrink-0 border-r border-base-300 bg-base-100 sticky top-[52px] self-start">
+        <aside className="hidden lg:block w-72 shrink-0 border-r border-base-300 bg-base-100 sticky top-0 self-start">
           <BookTOC
             book={book}
             chapters={chapters}

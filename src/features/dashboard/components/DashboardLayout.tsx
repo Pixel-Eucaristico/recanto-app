@@ -20,11 +20,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const isBookReader = /^\/app\/dashboard\/library\/[^/]+$/.test(pathname);
 
   return (
-    <div className="drawer lg:drawer-open">
+    <div className="drawer lg:drawer-open h-screen">
       <input id="dashboard-drawer" type="checkbox" className="drawer-toggle" defaultChecked />
 
       {/* Main content */}
-      <div className="drawer-content flex flex-col overflow-x-hidden">
+      <div className="drawer-content flex h-screen min-h-0 flex-col overflow-x-hidden">
         {/* Navbar mobile */}
         {!isBookReader && (
           <nav className="navbar bg-base-300 lg:hidden">
@@ -51,7 +51,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         )}
 
         {/* Page content. Reader = sem padding pra header sticky colar no topo do scroll do main. */}
-        <main className={`flex-1 overflow-y-auto overflow-x-hidden bg-base-100 ${isBookReader ? '' : 'p-3 md:p-6'}`}>
+        <main className={`flex-1 min-h-0 overflow-x-hidden bg-base-100 ${
+          isBookReader
+            ? 'mt-[52px] h-[calc(100vh-52px)] overflow-y-scroll [scrollbar-gutter:stable]'
+            : 'overflow-y-auto p-3 md:p-6'
+        }`}>
           {children}
         </main>
       </div>
