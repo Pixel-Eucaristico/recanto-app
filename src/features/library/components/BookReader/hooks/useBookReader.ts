@@ -16,6 +16,10 @@ interface UseBookReaderOptions {
   initialRef?: string | null;
 }
 
+type PendingScrollTarget =
+  | { kind: 'chapter'; chapterOrder: number }
+  | { kind: 'ref'; chapterOrder: number; ref: string };
+
 export function useBookReader({ userId, bookId, chapters, initialRef }: UseBookReaderOptions) {
   const router = useRouter();
 
@@ -37,6 +41,7 @@ export function useBookReader({ userId, bookId, chapters, initialRef }: UseBookR
 
   const chapterRefs = useRef<Map<number, HTMLElement>>(new Map());
   const activeRefForChapter = useRef<Map<number, string>>(new Map());
+  const pendingScrollTarget = useRef<PendingScrollTarget | null>(null);
   // Track maior ponto alcançado (não o que está visível agora) — pra modal/bookmark refletir progresso real
   const maxChapterReached = useRef<number>(0);
   const maxRefReached = useRef<string | null>(null);
@@ -80,6 +85,35 @@ export function useBookReader({ userId, bookId, chapters, initialRef }: UseBookR
     return requestedChapterMounts.has(order);
   }, [requestedChapterMounts]);
 
+  const runPendingScroll = useCallback((attempts = 18) => {
+    const target = pendingScrollTarget.current;
+    if (!target) return;
+
+    if (target.kind === 'ref') {
+      const refEl = document.getElementById(`ref-${target.ref.replace(':', '-')}`);
+      if (refEl) {
+        refEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        pendingScrollTarget.current = null;
+        return;
+      }
+    }
+
+    const chapterEl = chapterRefs.current.get(target.chapterOrder);
+    if (target.kind === 'chapter' && chapterEl) {
+      chapterEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      pendingScrollTarget.current = null;
+      return;
+    }
+
+    if (attempts <= 0) {
+      if (chapterEl) chapterEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      pendingScrollTarget.current = null;
+      return;
+    }
+
+    setTimeout(() => runPendingScroll(attempts - 1), 150);
+  }, []);
+
   useEffect(() => {
     if (!progress) return;
     const hasPosition = progress.last_ref || progress.last_chapter_order > 0;
@@ -94,28 +128,12 @@ export function useBookReader({ userId, bookId, chapters, initialRef }: UseBookR
 
   useEffect(() => {
     if (!initialRef) return;
-    const id = `ref-${initialRef.replace(':', '-')}`;
     const parsed = CanonicalRefEntity.tryParse(initialRef);
-    if (parsed) requestChapterMount(parsed.chapter);
-    const timeouts: ReturnType<typeof setTimeout>[] = [];
-    const scrollWhenReady = (attempt = 0) => {
-      const el = document.getElementById(id);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        el.classList.add('ring-2', 'ring-primary', 'ring-offset-2', 'ring-offset-base-100');
-        timeouts.push(setTimeout(() => el.classList.remove('ring-2', 'ring-primary', 'ring-offset-2', 'ring-offset-base-100'), 2400));
-        return;
-      }
-      if (attempt >= 8) {
-        if (parsed) jumpToChapter(parsed.chapter);
-        return;
-      }
-      timeouts.push(setTimeout(() => scrollWhenReady(attempt + 1), 120));
-    };
-    timeouts.push(setTimeout(() => scrollWhenReady(), 80));
-    return () => timeouts.forEach(clearTimeout);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialRef, chapters.length]);
+    if (!parsed) return;
+    requestChapterMount(parsed.chapter);
+    pendingScrollTarget.current = { kind: 'ref', chapterOrder: parsed.chapter, ref: initialRef };
+    runPendingScroll();
+  }, [initialRef, chapters.length, requestChapterMount, runPendingScroll]);
 
   useEffect(() => {
     const refs = chapterRefs.current;
@@ -145,42 +163,26 @@ export function useBookReader({ userId, bookId, chapters, initialRef }: UseBookR
   const jumpToChapter = useCallback((order: number) => {
     setDrawerOpen(false);
     requestChapterMount(order);
-    const el = chapterRefs.current.get(order);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      return;
-    }
-    retryScroll(8, () => {
-      const mountedEl = chapterRefs.current.get(order);
-      if (!mountedEl) return false;
-      mountedEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      return true;
-    });
-  }, [requestChapterMount]);
+    pendingScrollTarget.current = { kind: 'chapter', chapterOrder: order };
+    runPendingScroll();
+  }, [requestChapterMount, runPendingScroll]);
 
   const continueSaved = useCallback(() => {
     setShowContinueBanner(false);
     if (!progress) return;
     if (progress.last_ref) {
       const parsed = CanonicalRefEntity.tryParse(progress.last_ref);
-      if (parsed) requestChapterMount(parsed.chapter);
-      const id = `ref-${progress.last_ref.replace(':', '-')}`;
-      const el = document.getElementById(id);
-      if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
-      retryScroll(8, () => {
-        const mountedEl = document.getElementById(id);
-        if (mountedEl) {
-          mountedEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          return true;
-        }
-        return false;
-      }, () => {
-        if (parsed) jumpToChapter(parsed.chapter);
-      });
+      if (!parsed) {
+        jumpToChapter(progress.last_chapter_order);
+        return;
+      }
+      requestChapterMount(parsed.chapter);
+      pendingScrollTarget.current = { kind: 'ref', chapterOrder: parsed.chapter, ref: progress.last_ref };
+      runPendingScroll();
       return;
     }
     jumpToChapter(progress.last_chapter_order);
-  }, [progress, requestChapterMount, jumpToChapter]);
+  }, [progress, requestChapterMount, runPendingScroll, jumpToChapter]);
 
   // Bookmark é stale se passou > 7 dias desde última marcação manual
   const STALE_BOOKMARK_DAYS = 7;
@@ -217,6 +219,9 @@ export function useBookReader({ userId, bookId, chapters, initialRef }: UseBookR
   function registerChapterRef(order: number, el: HTMLElement | null) {
     if (el) chapterRefs.current.set(order, el);
     else chapterRefs.current.delete(order);
+    if (el && pendingScrollTarget.current?.chapterOrder === order) {
+      setTimeout(() => runPendingScroll(), 0);
+    }
   }
 
   function setActiveRef(chapterOrder: number, ref: string) {
@@ -274,18 +279,4 @@ export function useBookReader({ userId, bookId, chapters, initialRef }: UseBookR
     registerChapterRef,
     setActiveRef,
   };
-}
-
-function retryScroll(
-  attempts: number,
-  tryScroll: () => boolean,
-  onFail?: () => void,
-  delayMs = 120,
-) {
-  if (tryScroll()) return;
-  if (attempts <= 0) {
-    onFail?.();
-    return;
-  }
-  setTimeout(() => retryScroll(attempts - 1, tryScroll, onFail, delayMs), delayMs);
 }

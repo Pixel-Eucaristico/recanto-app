@@ -12,6 +12,8 @@ export interface AccordionMenuLeaf {
   icon?: ReactNode;
   /** Marcado como ativo (highlight DaisyUI). */
   active?: boolean;
+  /** Classes extras no link/botão do item. */
+  className?: string;
   /** Desabilita o item. */
   disabled?: boolean;
   /** Atributo aria-label, opcional. */
@@ -23,6 +25,8 @@ export interface AccordionMenuParent {
   type: 'parent';
   label: ReactNode;
   icon?: ReactNode;
+  /** Classes extras no `<summary>` do grupo. */
+  className?: string;
   /** Estado inicial aberto/fechado. Default: false. */
   defaultOpen?: boolean;
   children: AccordionMenuItem[];

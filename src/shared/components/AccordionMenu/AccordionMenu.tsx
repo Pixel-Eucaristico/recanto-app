@@ -66,9 +66,9 @@ function ParentItem({ item }: { item: AccordionMenuParent }) {
   return (
     <li>
       <details open={item.defaultOpen ?? false}>
-        <summary>
+        <summary className={item.className}>
           {item.icon}
-          <span>{item.label}</span>
+          <span className="min-w-0 flex-1">{item.label}</span>
         </summary>
         <ul>
           {item.children.map((child, idx) => (
@@ -84,13 +84,13 @@ function LeafItem({ item }: { item: AccordionMenuLeaf }) {
   const inner = (
     <>
       {item.icon}
-      <span>{item.label}</span>
+      <span className="min-w-0 flex-1">{item.label}</span>
     </>
   );
 
   const baseClass = item.active ? 'menu-active' : '';
   const disabledClass = item.disabled ? 'menu-disabled' : '';
-  const finalClass = `${baseClass} ${disabledClass}`.trim();
+  const finalClass = `${baseClass} ${disabledClass} ${item.className ?? ''}`.trim();
 
   if (item.disabled) {
     return (
