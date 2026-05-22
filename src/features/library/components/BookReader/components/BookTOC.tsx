@@ -4,6 +4,10 @@ import Image from 'next/image';
 import { Bookmark, BookOpen, Navigation } from 'lucide-react';
 import type { Book, BookBlock, BookChapter, BookTag } from '@/domain/library/types';
 import { AccordionMenu, type AccordionMenuItem } from '@/shared/components/AccordionMenu';
+import { RichContent } from '@/shared/components/RichContent';
+
+const TOC_MARKDOWN_CLASS =
+  '[&>p]:m-0 [&_p]:m-0 [&_strong]:font-bold [&_em]:italic [&_a]:no-underline [&_img]:hidden [&_iframe]:hidden [&_video]:hidden [&_audio]:hidden';
 
 interface BookTOCProps {
   book: Book;
@@ -144,7 +148,7 @@ function buildChapterItem(
   const chapterLabel = (
     <span className="flex min-w-0 items-center gap-2">
       <span className="shrink-0 text-[10px] text-base-content/50">{chapter.order}.</span>
-      <span className="min-w-0 flex-1 truncate">{chapter.title}</span>
+        <MarkdownLabel markdown={chapter.title} className="min-w-0 flex-1 truncate" />
       {isLast && activeChapter !== chapter.order && (
         <Bookmark className="h-3 w-3 shrink-0 text-info" aria-label="Última posição salva" />
       )}
@@ -187,8 +191,8 @@ function buildHeadingItem(
   const level = Math.min(6, Math.max(1, block.heading_level ?? 2));
   return {
     label: (
-      <span className="block min-w-0 truncate text-xs" style={{ paddingLeft: `${Math.max(0, level - 1) * 8}px` }}>
-        {block.content}
+      <span className="block min-w-0 text-xs" style={{ paddingLeft: `${Math.max(0, level - 1) * 8}px` }}>
+        <MarkdownLabel markdown={block.content} className="truncate" />
       </span>
     ),
     onClick: () => onJumpToHeading(chapterOrder, block.id),
@@ -197,4 +201,12 @@ function buildHeadingItem(
 
 function getHeadingBlocks(chapter: BookChapter): BookBlock[] {
   return chapter.blocks.filter(block => block.kind === 'heading' && block.content.trim().length > 0);
+}
+
+function MarkdownLabel({ markdown, className = '' }: { markdown: string; className?: string }) {
+  return (
+    <span className={`block min-w-0 ${className}`}>
+      <RichContent markdown={markdown} className={TOC_MARKDOWN_CLASS} />
+    </span>
+  );
 }
