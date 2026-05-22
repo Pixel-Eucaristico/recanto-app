@@ -53,7 +53,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         {/* Page content. Reader = sem padding pra header sticky colar no topo do scroll do main. */}
         <main className={`flex-1 min-h-0 overflow-x-hidden bg-base-100 ${
           isBookReader
-            ? 'mt-[52px] h-[calc(100vh-52px)] overflow-y-scroll [scrollbar-gutter:stable]'
+            ? 'mt-[54px] h-[calc(100vh-54px)] overflow-y-scroll [scrollbar-gutter:stable]'
             : 'overflow-y-auto p-3 md:p-6'
         }`}>
           {children}
