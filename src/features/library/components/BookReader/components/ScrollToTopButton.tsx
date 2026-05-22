@@ -12,7 +12,8 @@ function findScrollContainer(): HTMLElement | Window {
   const main = document.querySelector('main');
   if (main) {
     const style = getComputedStyle(main);
-    if (style.overflowY === 'auto' || style.overflowY === 'scroll') return main;
+    const canScroll = main.scrollHeight > main.clientHeight;
+    if (canScroll && (style.overflowY === 'auto' || style.overflowY === 'scroll')) return main;
   }
   return window;
 }

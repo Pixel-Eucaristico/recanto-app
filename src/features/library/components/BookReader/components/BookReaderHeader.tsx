@@ -34,7 +34,7 @@ export function BookReaderHeader({
         <Tooltip tip="Índice do livro" position="bottom">
           <button
             type="button"
-            className="btn btn-ghost btn-sm btn-circle shrink-0"
+            className="btn btn-ghost btn-sm btn-circle shrink-0 lg:hidden"
             onClick={onOpenDrawer}
             aria-label="Abrir índice"
           >

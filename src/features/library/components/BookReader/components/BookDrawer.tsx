@@ -29,8 +29,8 @@ export function BookDrawer({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-40 flex">
-      <div className="bg-base-100 w-80 max-w-[88vw] h-full shadow-xl">
+    <div className="lg:hidden fixed inset-0 z-40 flex">
+      <div className="bg-base-100 w-80 max-w-[88vw] h-full overflow-y-auto shadow-xl">
         <div className="flex items-center justify-between px-3 py-2 border-b border-base-300 sticky top-0 bg-base-100 z-10">
           <span className="text-sm font-semibold">Sumário</span>
           <div className="flex items-center gap-1">
