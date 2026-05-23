@@ -143,34 +143,78 @@ export async function GET(
     if (book.language) finalDoc.setLanguage(book.language);
 
     let pageOffset = 1;
-    let firstSuccessful = true;
     const failedChapters: { order: number; title: string; error: string }[] = [];
+    const compiledChunks: Array<{
+      chapter: typeof chapters[number];
+      buffer: Buffer;
+      pageCount: number;
+      startPageNumber: number;
+    }> = [];
+    const tocEntries: Array<{ level: number; title: string; page: number }> = [];
 
-    for (let i = 0; i < chapters.length; i++) {
-      const ch = chapters[i];
-      const isLast = i === chapters.length - 1;
+    // Primeira passagem: compila cada capítulo separadamente, já com a página
+    // inicial correta, para coletar subtítulos e contar somente páginas numeradas.
+    for (const ch of chapters) {
       try {
-        const chunkBuf = await bookPdfGeneratorTypst.generate(
+        const chunk = await bookPdfGeneratorTypst.generateWithMetadata(
           book,
           [ch],
-          firstSuccessful ? coverBuffer : undefined,
-          isLast ? truncatedAt : undefined,
-          isLast ? backCoverBuffer : undefined,
+          undefined,
+          undefined,
+          undefined,
           {
-            skipCover: !firstSuccessful,
-            skipToc: !firstSuccessful,
-            skipBackCover: !isLast,
+            skipCover: true,
+            skipToc: true,
+            skipBackCover: true,
             startPageNumber: pageOffset,
           },
         );
+        const src = await PDFDocument.load(new Uint8Array(chunk.buffer));
+        const pageCount = src.getPageCount();
+        compiledChunks.push({
+          chapter: ch,
+          buffer: chunk.buffer,
+          pageCount,
+          startPageNumber: pageOffset,
+        });
+        tocEntries.push(...chunk.tocEntries);
+        pageOffset += pageCount;
+      } catch (chErr) {
+        const msg = chErr instanceof Error ? chErr.message : String(chErr);
+        console.error(`[PDF] Falha no preflight do chapter ${ch.order} "${ch.title}":`, msg);
+        failedChapters.push({ order: ch.order, title: ch.title, error: msg });
+      }
+    }
+
+    for (let i = 0; i < compiledChunks.length; i++) {
+      const chunk = compiledChunks[i];
+      const ch = chunk.chapter;
+      const isFirst = i === 0;
+      const isLast = i === compiledChunks.length - 1;
+      try {
+        const needsRecompile = isFirst || isLast;
+        const chunkBuf = needsRecompile
+          ? await bookPdfGeneratorTypst.generate(
+              book,
+              [ch],
+              isFirst ? coverBuffer : undefined,
+              isLast ? truncatedAt : undefined,
+              isLast ? backCoverBuffer : undefined,
+              {
+                skipCover: !isFirst,
+                skipToc: !isFirst,
+                skipBackCover: !isLast,
+                startPageNumber: chunk.startPageNumber,
+                tocEntries,
+              },
+            )
+          : chunk.buffer;
         const src = await PDFDocument.load(new Uint8Array(chunkBuf));
         const pages = await finalDoc.copyPages(src, src.getPageIndices());
         for (const p of pages) finalDoc.addPage(p);
-        pageOffset += src.getPageCount();
-        firstSuccessful = false; // próximos chunks: pula capa/TOC
       } catch (chErr) {
         const msg = chErr instanceof Error ? chErr.message : String(chErr);
-        console.error(`[PDF] Falha no chapter ${ch.order} "${ch.title}":`, msg);
+        console.error(`[PDF] Falha no merge/final do chapter ${ch.order} "${ch.title}":`, msg);
         failedChapters.push({ order: ch.order, title: ch.title, error: msg });
       }
     }

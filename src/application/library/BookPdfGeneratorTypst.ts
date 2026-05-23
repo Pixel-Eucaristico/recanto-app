@@ -45,10 +45,29 @@ function escapeTypstString(text: string): string {
 }
 
 const FOOTNOTE_MARKER_RE = /\\*\[\\*\^(\d+)\\*\]/g;
+const MARKDOWN_DECORATION_RE = /(\*\*\*|\*\*|\*|__|_|~~|`)/g;
+
+export interface TypstTocEntry {
+  level: number;
+  title: string;
+  page: number;
+}
 
 /** Remove markers [^N] do texto (mantém só o conteúdo). */
 function stripFootnoteMarkers(text: string): string {
   return text.replace(FOOTNOTE_MARKER_RE, '');
+}
+
+function plainTocTitle(text: string): string {
+  return stripFootnoteMarkers(text)
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(MARKDOWN_DECORATION_RE, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function tocMetadata(level: number, title: string): string {
+  return `#context metadata((toc: true, level: ${level}, title: "${escapeTypstString(title)}", page: counter(page).get().first()))`;
 }
 
 /** Coleta footnotes citadas no texto, ordem aparição. */
@@ -145,8 +164,10 @@ function blockToTypst(block: BookBlock, footnotes?: BookFootnote[]): string {
       const lvl = Math.min(6, rawLvl + 1);
       const cleanText = stripFootnoteMarkers(block.content);
       const cleanContent = markdownInlineToTypst(cleanText);
+      const titlePlain = plainTocTitle(block.content);
       const cited = collectFootnotes(block.content, footnotes);
       let result = `\n${'='.repeat(lvl)} ${cleanContent}\n`;
+      if (titlePlain) result += `${tocMetadata(lvl, titlePlain)}\n`;
       for (const fn of cited) {
         const fnContent = markdownInlineToTypst(fn.content, footnotes);
         result += `#footnote[${fnContent}]\n`;
@@ -218,6 +239,43 @@ function creditsToTypst(credits: BookCredits): string {
   return parts.join('\n\n');
 }
 
+function manualTocToTypst(entries: TypstTocEntry[]): string {
+  const rows = entries.map(entry => {
+    const level = Math.min(6, Math.max(1, entry.level));
+    const indent = (level - 1) * 1.1;
+    const size = level === 1 ? '10pt' : '9pt';
+    const weight = level === 1 ? ', weight: "bold"' : '';
+    const title = markdownInlineToTypst(entry.title);
+    return `[ #h(${indent}em)#text(size: ${size}${weight})[${title}] ], [ #text(size: 9pt${weight})[${entry.page}] ]`;
+  });
+
+  return [
+    `#table(`,
+    `  columns: (1fr, auto),`,
+    `  stroke: none,`,
+    `  inset: (x: 0pt, y: 0.24em),`,
+    `  column-gutter: 1em,`,
+    `  ${rows.join(',\n  ')}`,
+    `)`,
+  ].join('\n');
+}
+
+function extractTocEntries(raw: unknown): TypstTocEntry[] {
+  if (!Array.isArray(raw)) return [];
+
+  return raw
+    .map(item => {
+      const value = (item as { value?: unknown })?.value as Record<string, unknown> | undefined;
+      if (!value || value.toc !== true) return null;
+      const level = typeof value.level === 'number' ? value.level : null;
+      const title = typeof value.title === 'string' ? value.title : null;
+      const page = typeof value.page === 'number' ? value.page : null;
+      if (!level || !title || !page) return null;
+      return { level, title, page };
+    })
+    .filter((entry): entry is TypstTocEntry => entry !== null);
+}
+
 // ─── Main document builder ───────────────────────────────────────────────────
 
 interface BuildArgs {
@@ -234,9 +292,11 @@ interface BuildArgs {
   skipBackCover?: boolean;
   /** Página inicial pra continuar paginação cross-chunk. Default 1. */
   startPageNumber?: number;
+  /** Sumário manual pré-calculado entre chunks. */
+  tocEntries?: TypstTocEntry[];
 }
 
-function buildTypstSource({ book, chapters, coverImage, backCoverImage, truncatedAt, skipCover, skipToc, skipBackCover, startPageNumber }: BuildArgs): string {
+function buildTypstSource({ book, chapters, coverImage, backCoverImage, truncatedAt, skipCover, skipToc, skipBackCover, startPageNumber, tocEntries }: BuildArgs): string {
   const sorted = BookEntity.sortChapters(chapters);
   // Title e author são usados em DOIS contextos: string literal (set document)
   // e markup `[...]`. Geramos as duas versões.
@@ -327,7 +387,7 @@ function buildTypstSource({ book, chapters, coverImage, backCoverImage, truncate
     out.push(`#v(2em)`);
     out.push(`#align(center)[#text(size: 18pt, weight: "bold")[Sumário]]`);
     out.push(`#v(2em)`);
-    out.push(`#outline(title: none, indent: 1em, depth: 1)`);
+    out.push(tocEntries?.length ? manualTocToTypst(tocEntries) : `#outline(title: none, indent: 1em, depth: 6)`);
   }
 
   // Prefácio + body + back: numeração ativa, todos via #heading() → entram no TOC
@@ -367,8 +427,16 @@ function buildTypstSource({ book, chapters, coverImage, backCoverImage, truncate
 
     // Pagebreak manual ANTES do heading do chapter — só primeira página do
     // capítulo vai pra ímpar. Subtítulos internos NÃO geram pagebreak.
-    out.push(`#pagebreak(weak: true, to: "odd")`);
+    const startNumber = Math.max(1, startPageNumber ?? 1);
+    if (numberedSections.length === 1 && startNumber % 2 === 0) {
+      // Em geração por chunk, Typst não conhece a paridade física do PDF final.
+      // Uma página numerada em branco mantém o próximo capítulo em página ímpar.
+      out.push(`#pagebreak()`);
+    } else {
+      out.push(`#pagebreak(weak: true, to: "odd")`);
+    }
     out.push(`#heading(level: 1)[${titleClean}]`);
+    out.push(`${tocMetadata(1, plainTocTitle(ch.title))}`);
     // Footnotes do título — emitidas após heading. TOC só pega body limpo do heading.
     for (const fn of titleFns) {
       const fnContent = markdownInlineToTypst(fn.content, ch.footnotes);
@@ -440,6 +508,13 @@ export interface TypstGenerateOptions {
   skipBackCover?: boolean;
   /** Página inicial pra continuar numeração entre chunks. */
   startPageNumber?: number;
+  /** Sumário manual pré-calculado entre chunks. */
+  tocEntries?: TypstTocEntry[];
+}
+
+export interface TypstGenerateResult {
+  buffer: Buffer;
+  tocEntries: TypstTocEntry[];
 }
 
 export class BookPdfGeneratorTypst {
@@ -451,6 +526,25 @@ export class BookPdfGeneratorTypst {
     backCoverImageBuffer?: Buffer,
     options?: TypstGenerateOptions,
   ): Promise<Buffer> {
+    const result = await this.generateWithMetadata(
+      book,
+      chapters,
+      coverImageBuffer,
+      truncatedAt,
+      backCoverImageBuffer,
+      options,
+    );
+    return result.buffer;
+  }
+
+  async generateWithMetadata(
+    book: Book,
+    chapters: BookChapter[],
+    coverImageBuffer?: Buffer,
+    truncatedAt?: string,
+    backCoverImageBuffer?: Buffer,
+    options?: TypstGenerateOptions,
+  ): Promise<TypstGenerateResult> {
     const compiler = await getCompiler();
 
     const cwd = process.cwd();
@@ -474,6 +568,7 @@ export class BookPdfGeneratorTypst {
       skipToc: options?.skipToc,
       skipBackCover: options?.skipBackCover,
       startPageNumber: options?.startPageNumber,
+      tocEntries: options?.tocEntries,
     });
 
     const result = compiler.compile({ mainFileContent: source });
@@ -491,7 +586,8 @@ export class BookPdfGeneratorTypst {
     }
 
     const pdfBuffer = compiler.pdf(result.result);
-    return Buffer.from(pdfBuffer);
+    const tocEntries = extractTocEntries(compiler.query(result.result, { selector: 'metadata' }));
+    return { buffer: Buffer.from(pdfBuffer), tocEntries };
   }
 }
 
