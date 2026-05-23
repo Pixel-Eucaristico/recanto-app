@@ -82,6 +82,7 @@ export function BookTOC({
           width="w-full"
           background="bg-base-200"
           className="max-w-none"
+          accordion={false}
         />
       </nav>
     </div>
@@ -223,9 +224,7 @@ function buildHeadingItem(
   }
 
   return {
-    label: (
-      label
-    ),
+    label,
     onClick: () => onJumpToHeading(chapterOrder, block.id),
   };
 }
