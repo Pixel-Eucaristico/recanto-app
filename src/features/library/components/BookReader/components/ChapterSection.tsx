@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import type { BookChapter, BookHighlight, BookComment, BookTag, HighlightColor, TagColor } from '@/domain/library/types';
 import { BlockReader } from './BlockReader';
 import { RichContent } from '@/shared/components/RichContent';
+import { InlineMarkdown } from '@/shared/components/InlineMarkdown';
 
 interface ChapterSectionProps {
   chapter: BookChapter;
@@ -39,9 +40,13 @@ export function ChapterSection({
     >
       <header className="mb-4 pb-3 border-b border-base-300">
         <p className="text-xs uppercase tracking-wide text-base-content/50">{chapterKindLabel(chapter.kind, chapter.order)}</p>
-        <h2 className="text-2xl md:text-3xl font-bold text-base-content mt-1">{chapter.title}</h2>
+        <h2 className="text-2xl md:text-3xl font-bold text-base-content mt-1">
+          <InlineMarkdown markdown={chapter.title} />
+        </h2>
         {chapter.subtitle && (
-          <p className="text-sm md:text-base text-base-content/70 italic mt-1">{chapter.subtitle}</p>
+          <p className="text-sm md:text-base text-base-content/70 italic mt-1">
+            <InlineMarkdown markdown={chapter.subtitle} />
+          </p>
         )}
       </header>
       <div className="space-y-3">

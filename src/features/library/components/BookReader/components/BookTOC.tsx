@@ -1,19 +1,10 @@
 'use client';
 
 import Image from 'next/image';
-import ReactMarkdown, { type Components } from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import { Bookmark, BookOpen, Navigation } from 'lucide-react';
 import type { Book, BookBlock, BookChapter, BookTag } from '@/domain/library/types';
 import { AccordionMenu, type AccordionMenuItem } from '@/shared/components/AccordionMenu';
-
-const tocMarkdownComponents: Components = {
-  p: ({ children }) => <>{children}</>,
-  strong: ({ children }) => <strong className="font-bold">{children}</strong>,
-  em: ({ children }) => <em className="italic">{children}</em>,
-  a: ({ children }) => <>{children}</>,
-  img: () => null,
-};
+import { InlineMarkdown } from '@/shared/components/InlineMarkdown';
 
 interface BookTOCProps {
   book: Book;
@@ -261,14 +252,7 @@ function buildHeadingTree(blocks: BookBlock[]): HeadingNode[] {
 function MarkdownLabel({ markdown, className = '' }: { markdown: string; className?: string }) {
   return (
     <span className={`block min-w-0 ${className}`}>
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        components={tocMarkdownComponents}
-        skipHtml
-        unwrapDisallowed
-      >
-        {markdown || ''}
-      </ReactMarkdown>
+      <InlineMarkdown markdown={markdown} />
     </span>
   );
 }

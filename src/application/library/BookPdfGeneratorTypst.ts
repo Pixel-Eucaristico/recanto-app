@@ -344,9 +344,9 @@ function buildTypstSource({ book, chapters, coverImage, backCoverImage, truncate
   function emitFrontChapter(ch: BookChapter) {
     const k = ch.kind ?? 'chapter';
     // Strip markers do título/subtítulo. Footnotes referenciadas viram #footnote[] APÓS a tag visível.
-    const titleClean = escapeTypst(stripFootnoteMarkers(ch.title));
+    const titleClean = markdownInlineToTypst(stripFootnoteMarkers(ch.title), ch.footnotes);
     const titleFns = collectFootnotes(ch.title, ch.footnotes);
-    const subtitleClean = ch.subtitle ? escapeTypst(stripFootnoteMarkers(ch.subtitle)) : '';
+    const subtitleClean = ch.subtitle ? markdownInlineToTypst(stripFootnoteMarkers(ch.subtitle), ch.footnotes) : '';
     const subtitleFns = ch.subtitle ? collectFootnotes(ch.subtitle, ch.footnotes) : [];
 
     out.push(`#pagebreak(weak: true, to: "odd")`);
@@ -395,9 +395,9 @@ function buildTypstSource({ book, chapters, coverImage, backCoverImage, truncate
   for (const ch of numberedSections) {
     const kind = ch.kind ?? 'chapter';
     // Title/subtitle: strip markers pra TOC. Footnotes emitidas após heading na página.
-    const titleClean = escapeTypst(stripFootnoteMarkers(ch.title));
+    const titleClean = markdownInlineToTypst(stripFootnoteMarkers(ch.title), ch.footnotes);
     const titleFns = collectFootnotes(ch.title, ch.footnotes);
-    const subtitleClean = ch.subtitle ? escapeTypst(stripFootnoteMarkers(ch.subtitle)) : '';
+    const subtitleClean = ch.subtitle ? markdownInlineToTypst(stripFootnoteMarkers(ch.subtitle), ch.footnotes) : '';
     const subtitleFns = ch.subtitle ? collectFootnotes(ch.subtitle, ch.footnotes) : [];
 
     if (!numberingStarted) {

@@ -3,6 +3,7 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import type { BookBlock, BookHighlight, BookTag, BookFootnote, HighlightColor, TagColor } from '@/domain/library/types';
 import { RichContent } from '@/shared/components/RichContent';
+import { InlineMarkdown } from '@/shared/components/InlineMarkdown';
 import { TagInput } from '@/shared/components/TagInput';
 import { SelectionToolbar } from './SelectionToolbar';
 import { BlockControls } from './BlockControls';
@@ -205,7 +206,7 @@ function BlockReaderImpl({
         id={getHeadingAnchorId(chapter, block.id)}
         className={`${sizes[level]} text-base-content mt-6 mb-2 scroll-mt-24`}
       >
-        {block.content}
+        <InlineMarkdown markdown={block.content} />
       </p>
     );
   }
