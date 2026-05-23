@@ -124,10 +124,8 @@ export function BookReader({ book, chapters, visibleUntil, truncated, initialRef
             highlights={highlights}
             comments={comments}
             tags={tags}
-            tagsForChapter={tagsForChapter}
             onJump={jumpToChapter}
             onJumpToHeading={jumpToHeading}
-            onJumpToRef={continueSaved}
             onJumpToQuickRef={jumpToRef}
           />
         </aside>

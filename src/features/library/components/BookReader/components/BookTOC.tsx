@@ -18,17 +18,15 @@ interface BookTOCProps {
   highlights: BookHighlight[];
   comments: BookComment[];
   tags: BookTag[];
-  tagsForChapter: (chapterOrder: number) => BookTag[];
   onJump: (order: number) => void;
   onJumpToHeading: (chapterOrder: number, blockId: string) => void;
-  onJumpToRef: () => void;
   onJumpToQuickRef: (ref: string) => void;
 }
 
 export function BookTOC({
   book, chapters, activeChapter, visibleUntil, readPercent,
   lastChapterOrder, lastRef, lastBookmarkAt, highlights, comments, tags,
-  tagsForChapter, onJump, onJumpToHeading, onJumpToRef, onJumpToQuickRef,
+  onJump, onJumpToHeading, onJumpToQuickRef,
 }: BookTOCProps) {
   const menuItems = buildMenuItems({
     chapters,
@@ -39,10 +37,8 @@ export function BookTOC({
     highlights,
     comments,
     tags,
-    tagsForChapter,
     onJump,
     onJumpToHeading,
-    onJumpToRef,
     onJumpToQuickRef,
   });
 
@@ -99,10 +95,8 @@ interface BuildMenuItemsOptions {
   highlights: BookHighlight[];
   comments: BookComment[];
   tags: BookTag[];
-  tagsForChapter: (chapterOrder: number) => BookTag[];
   onJump: (order: number) => void;
   onJumpToHeading: (chapterOrder: number, blockId: string) => void;
-  onJumpToRef: () => void;
   onJumpToQuickRef: (ref: string) => void;
 }
 
@@ -132,29 +126,11 @@ function buildMenuItems({
   highlights,
   comments,
   tags,
-  tagsForChapter,
   onJump,
   onJumpToHeading,
-  onJumpToRef,
   onJumpToQuickRef,
 }: BuildMenuItemsOptions): AccordionMenuItem[] {
   const items: AccordionMenuItem[] = [];
-
-  if (lastRef || lastChapterOrder) {
-    items.push({
-      label: (
-        <span className="block min-w-0">
-          <span className="block text-xs font-semibold text-info">Continuar leitura</span>
-          <span className="block truncate text-[10px] text-base-content/60">
-            {lastRef ? `ref. ${lastRef}` : `Cap. ${lastChapterOrder}`}
-          </span>
-        </span>
-      ),
-      icon: <Navigation className="h-4 w-4 shrink-0 text-info" />,
-      onClick: onJumpToRef,
-      className: 'bg-info/15 hover:bg-info/25',
-    });
-  }
 
   items.push({
     type: 'parent',
@@ -173,7 +149,6 @@ function buildMenuItems({
           comments,
           tags,
         }),
-        tagsForChapter,
         onJump,
         onJumpToHeading,
         onJumpToQuickRef,
@@ -189,7 +164,6 @@ function buildChapterItem({
   activeChapter,
   lastChapterOrder,
   quickMarks,
-  tagsForChapter,
   onJump,
   onJumpToHeading,
   onJumpToQuickRef,
@@ -198,13 +172,11 @@ function buildChapterItem({
   activeChapter: number | null;
   lastChapterOrder: number | null;
   quickMarks: QuickMark[];
-  tagsForChapter: (chapterOrder: number) => BookTag[];
   onJump: (order: number) => void;
   onJumpToHeading: (chapterOrder: number, blockId: string) => void;
   onJumpToQuickRef: (ref: string) => void;
 }): AccordionMenuItem {
   const isLast = lastChapterOrder === chapter.order;
-  const chapterTags = tagsForChapter(chapter.order);
   const headingTree = buildHeadingTree(chapter.blocks);
   const chapterQuickMarks = quickMarks.filter(mark => mark.blockIndex === null || !isInsideAnyHeading(mark, headingTree));
   const quickMarkCount = quickMarks.length;
@@ -214,11 +186,6 @@ function buildChapterItem({
         <MarkdownLabel markdown={chapter.title} className="min-w-0 flex-1 truncate" />
       {isLast && activeChapter !== chapter.order && (
         <Bookmark className="h-3 w-3 shrink-0 text-info" aria-label="Última posição salva" />
-      )}
-      {chapterTags.length > 0 && (
-        <span className="shrink-0 rounded-full bg-secondary px-1 text-[9px] text-secondary-content">
-          {chapterTags.length}
-        </span>
       )}
       {quickMarkCount > 0 && (
         <span className="shrink-0 rounded-full bg-info px-1 text-[9px] text-info-content">

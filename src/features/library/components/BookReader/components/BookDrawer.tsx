@@ -65,10 +65,8 @@ export function BookDrawer({
           highlights={highlights}
           comments={comments}
           tags={tags}
-          tagsForChapter={tagsForChapter}
           onJump={onJump}
           onJumpToHeading={onJumpToHeading}
-          onJumpToRef={onJumpToRef}
           onJumpToQuickRef={onJumpToQuickRef}
         />
       </div>
