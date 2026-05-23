@@ -84,11 +84,15 @@ function ParentItem({
   accordion: boolean;
 }) {
   const initialOpenKey = getInitialOpenChildKey(item, itemKey);
+  const [isOpen, setIsOpen] = useState(item.defaultOpen ?? false);
   const [openChildKey, setOpenChildKey] = useState<string | null>(initialOpenKey);
 
   return (
     <li>
-      <details open={item.defaultOpen ?? false}>
+      <details
+        open={isOpen}
+        onToggle={event => setIsOpen(event.currentTarget.open)}
+      >
         <summary className={item.className}>
           {item.icon}
           <span className="min-w-0 flex-1">{item.label}</span>
@@ -133,14 +137,23 @@ function ControlledParentItem({
   onOpenChange?: (open: boolean) => void;
 }) {
   const initialOpenKey = getInitialOpenChildKey(item, itemKey);
+  const [internalOpen, setInternalOpen] = useState(item.defaultOpen ?? false);
   const [openChildKey, setOpenChildKey] = useState<string | null>(initialOpenKey);
-  const isOpen = open ?? item.defaultOpen ?? false;
+  const isControlled = open !== undefined;
+  const isOpen = isControlled ? open : internalOpen;
 
   return (
     <li>
       <details
         open={isOpen}
-        onToggle={event => onOpenChange?.(event.currentTarget.open)}
+        onToggle={event => {
+          const nextOpen = event.currentTarget.open;
+          if (isControlled) {
+            onOpenChange?.(nextOpen);
+          } else {
+            setInternalOpen(nextOpen);
+          }
+        }}
       >
         <summary className={item.className}>
           {item.icon}
