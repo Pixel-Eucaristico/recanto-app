@@ -1,8 +1,8 @@
 'use client';
 
 import Image from 'next/image';
-import { Bookmark, BookOpen, Navigation } from 'lucide-react';
-import type { Book, BookBlock, BookChapter, BookTag } from '@/domain/library/types';
+import { Bookmark, BookOpen, Highlighter, MessageSquare, Navigation, Tag } from 'lucide-react';
+import type { Book, BookBlock, BookChapter, BookComment, BookHighlight, BookTag } from '@/domain/library/types';
 import { AccordionMenu, type AccordionMenuItem } from '@/shared/components/AccordionMenu';
 import { InlineMarkdown } from '@/shared/components/InlineMarkdown';
 
@@ -14,26 +14,36 @@ interface BookTOCProps {
   readPercent: number;
   lastChapterOrder: number | null;
   lastRef: string | null;
+  lastBookmarkAt: string | null;
+  highlights: BookHighlight[];
+  comments: BookComment[];
   tags: BookTag[];
   tagsForChapter: (chapterOrder: number) => BookTag[];
   onJump: (order: number) => void;
   onJumpToHeading: (chapterOrder: number, blockId: string) => void;
   onJumpToRef: () => void;
+  onJumpToQuickRef: (ref: string) => void;
 }
 
 export function BookTOC({
   book, chapters, activeChapter, visibleUntil, readPercent,
-  lastChapterOrder, lastRef, tagsForChapter, onJump, onJumpToHeading, onJumpToRef,
+  lastChapterOrder, lastRef, lastBookmarkAt, highlights, comments, tags,
+  tagsForChapter, onJump, onJumpToHeading, onJumpToRef, onJumpToQuickRef,
 }: BookTOCProps) {
   const menuItems = buildMenuItems({
     chapters,
     activeChapter,
     lastChapterOrder,
     lastRef,
+    lastBookmarkAt,
+    highlights,
+    comments,
+    tags,
     tagsForChapter,
     onJump,
     onJumpToHeading,
     onJumpToRef,
+    onJumpToQuickRef,
   });
 
   return (
@@ -85,15 +95,32 @@ interface BuildMenuItemsOptions {
   activeChapter: number | null;
   lastChapterOrder: number | null;
   lastRef: string | null;
+  lastBookmarkAt: string | null;
+  highlights: BookHighlight[];
+  comments: BookComment[];
+  tags: BookTag[];
   tagsForChapter: (chapterOrder: number) => BookTag[];
   onJump: (order: number) => void;
   onJumpToHeading: (chapterOrder: number, blockId: string) => void;
   onJumpToRef: () => void;
+  onJumpToQuickRef: (ref: string) => void;
 }
 
 interface HeadingNode {
   block: BookBlock;
+  blockIndex: number;
+  endIndex: number;
   children: HeadingNode[];
+}
+
+interface QuickMark {
+  ref?: string;
+  chapterOrder: number;
+  blockIndex: number | null;
+  label: string;
+  detail?: string;
+  icon: 'history' | 'bookmark' | 'highlight' | 'comment' | 'tag';
+  className?: string;
 }
 
 function buildMenuItems({
@@ -101,10 +128,15 @@ function buildMenuItems({
   activeChapter,
   lastChapterOrder,
   lastRef,
+  lastBookmarkAt,
+  highlights,
+  comments,
+  tags,
   tagsForChapter,
   onJump,
   onJumpToHeading,
   onJumpToRef,
+  onJumpToQuickRef,
 }: BuildMenuItemsOptions): AccordionMenuItem[] {
   const items: AccordionMenuItem[] = [];
 
@@ -130,24 +162,52 @@ function buildMenuItems({
     icon: <BookOpen className="h-4 w-4 shrink-0 opacity-70" />,
     defaultOpen: false,
     children: chapters.length > 0
-      ? chapters.map(ch => buildChapterItem(ch, activeChapter, lastChapterOrder, tagsForChapter, onJump, onJumpToHeading))
+      ? chapters.map(ch => buildChapterItem({
+        chapter: ch,
+        activeChapter,
+        lastChapterOrder,
+        quickMarks: buildQuickMarksForChapter(ch, {
+          lastRef,
+          lastBookmarkAt,
+          highlights,
+          comments,
+          tags,
+        }),
+        tagsForChapter,
+        onJump,
+        onJumpToHeading,
+        onJumpToQuickRef,
+      }))
       : [{ label: <span className="text-xs text-base-content/50">Sem capítulos.</span>, disabled: true }],
   });
 
   return items;
 }
 
-function buildChapterItem(
-  chapter: BookChapter,
-  activeChapter: number | null,
-  lastChapterOrder: number | null,
-  tagsForChapter: (chapterOrder: number) => BookTag[],
-  onJump: (order: number) => void,
-  onJumpToHeading: (chapterOrder: number, blockId: string) => void,
-): AccordionMenuItem {
+function buildChapterItem({
+  chapter,
+  activeChapter,
+  lastChapterOrder,
+  quickMarks,
+  tagsForChapter,
+  onJump,
+  onJumpToHeading,
+  onJumpToQuickRef,
+}: {
+  chapter: BookChapter;
+  activeChapter: number | null;
+  lastChapterOrder: number | null;
+  quickMarks: QuickMark[];
+  tagsForChapter: (chapterOrder: number) => BookTag[];
+  onJump: (order: number) => void;
+  onJumpToHeading: (chapterOrder: number, blockId: string) => void;
+  onJumpToQuickRef: (ref: string) => void;
+}): AccordionMenuItem {
   const isLast = lastChapterOrder === chapter.order;
   const chapterTags = tagsForChapter(chapter.order);
-  const headingTree = buildHeadingTree(getHeadingBlocks(chapter));
+  const headingTree = buildHeadingTree(chapter.blocks);
+  const chapterQuickMarks = quickMarks.filter(mark => mark.blockIndex === null || !isInsideAnyHeading(mark, headingTree));
+  const quickMarkCount = quickMarks.length;
   const chapterLabel = (
     <span className="flex min-w-0 items-center gap-2">
       <span className="shrink-0 text-[10px] text-base-content/50">{chapter.order}.</span>
@@ -158,6 +218,11 @@ function buildChapterItem(
       {chapterTags.length > 0 && (
         <span className="shrink-0 rounded-full bg-secondary px-1 text-[9px] text-secondary-content">
           {chapterTags.length}
+        </span>
+      )}
+      {quickMarkCount > 0 && (
+        <span className="shrink-0 rounded-full bg-info px-1 text-[9px] text-info-content">
+          {quickMarkCount}
         </span>
       )}
     </span>
@@ -174,7 +239,21 @@ function buildChapterItem(
           label: <span className="text-xs text-base-content/70">Início do capítulo</span>,
           onClick: () => onJump(chapter.order),
         },
-        ...headingTree.map(node => buildHeadingItem(chapter.order, node, onJumpToHeading)),
+        ...chapterQuickMarks.map(mark => buildQuickMarkItem(mark, onJumpToQuickRef)),
+        ...headingTree.map(node => buildHeadingItem(chapter.order, node, quickMarks, onJumpToHeading, onJumpToQuickRef)),
+      ],
+    };
+  }
+
+  if (quickMarks.length > 0) {
+    return {
+      type: 'parent',
+      label: chapterLabel,
+      defaultOpen: false,
+      className: activeChapter === chapter.order ? 'menu-active' : undefined,
+      children: [
+        { label: <span className="text-xs text-base-content/70">Início do capítulo</span>, onClick: () => onJump(chapter.order) },
+        ...quickMarks.map(mark => buildQuickMarkItem(mark, onJumpToQuickRef)),
       ],
     };
   }
@@ -189,17 +268,26 @@ function buildChapterItem(
 function buildHeadingItem(
   chapterOrder: number,
   node: HeadingNode,
+  quickMarks: QuickMark[],
   onJumpToHeading: (chapterOrder: number, blockId: string) => void,
+  onJumpToQuickRef: (ref: string) => void,
 ): AccordionMenuItem {
   const { block } = node;
   const level = Math.min(6, Math.max(1, block.heading_level ?? 2));
+  const nodeQuickMarks = quickMarks.filter(mark => isInsideHeading(mark, node) && !node.children.some(child => isInsideHeading(mark, child)));
+  const quickMarkCount = quickMarks.filter(mark => isInsideHeading(mark, node)).length;
   const label = (
-    <span className="block min-w-0 text-xs" style={{ paddingLeft: `${Math.max(0, level - 1) * 8}px` }}>
-      <MarkdownLabel markdown={block.content} className="truncate" />
+    <span className="flex min-w-0 items-center gap-1 text-xs" style={{ paddingLeft: `${Math.max(0, level - 1) * 8}px` }}>
+      <MarkdownLabel markdown={block.content} className="min-w-0 flex-1 truncate" />
+      {quickMarkCount > 0 && (
+        <span className="shrink-0 rounded-full bg-info px-1 text-[9px] text-info-content">
+          {quickMarkCount}
+        </span>
+      )}
     </span>
   );
 
-  if (node.children.length > 0) {
+  if (node.children.length > 0 || nodeQuickMarks.length > 0) {
     return {
       type: 'parent',
       label,
@@ -209,7 +297,8 @@ function buildHeadingItem(
           label: <span className="text-xs text-base-content/70">Ir para este tópico</span>,
           onClick: () => onJumpToHeading(chapterOrder, block.id),
         },
-        ...node.children.map(child => buildHeadingItem(chapterOrder, child, onJumpToHeading)),
+        ...nodeQuickMarks.map(mark => buildQuickMarkItem(mark, onJumpToQuickRef)),
+        ...node.children.map(child => buildHeadingItem(chapterOrder, child, quickMarks, onJumpToHeading, onJumpToQuickRef)),
       ],
     };
   }
@@ -220,20 +309,44 @@ function buildHeadingItem(
   };
 }
 
-function getHeadingBlocks(chapter: BookChapter): BookBlock[] {
-  return chapter.blocks.filter(block => block.kind === 'heading' && block.content.trim().length > 0);
+function buildQuickMarkItem(mark: QuickMark, onJumpToQuickRef: (ref: string) => void): AccordionMenuItem {
+  return {
+    label: (
+      <span className="block min-w-0">
+        <span className="block truncate text-xs font-medium">{mark.label}</span>
+        {mark.detail && <span className="block truncate text-[10px] text-base-content/60">{mark.detail}</span>}
+      </span>
+    ),
+    icon: quickMarkIcon(mark.icon),
+    disabled: !mark.ref,
+    onClick: mark.ref ? () => onJumpToQuickRef(mark.ref as string) : undefined,
+    className: mark.className,
+  };
+}
+
+function quickMarkIcon(icon: QuickMark['icon']) {
+  const className = 'h-3.5 w-3.5 shrink-0';
+  switch (icon) {
+    case 'history': return <Navigation className={`${className} text-info`} />;
+    case 'bookmark': return <Bookmark className={`${className} text-warning`} />;
+    case 'highlight': return <Highlighter className={`${className} text-accent`} />;
+    case 'comment': return <MessageSquare className={`${className} text-primary`} />;
+    case 'tag': return <Tag className={`${className} text-secondary`} />;
+  }
 }
 
 function buildHeadingTree(blocks: BookBlock[]): HeadingNode[] {
   const roots: HeadingNode[] = [];
   const stack: Array<{ level: number; node: HeadingNode }> = [];
 
-  for (const block of blocks) {
+  blocks.forEach((block, blockIndex) => {
+    if (block.kind !== 'heading' || block.content.trim().length === 0) return;
     const level = Math.min(6, Math.max(1, block.heading_level ?? 2));
-    const node: HeadingNode = { block, children: [] };
+    const node: HeadingNode = { block, blockIndex, endIndex: blocks.length, children: [] };
 
     while (stack.length > 0 && stack[stack.length - 1].level >= level) {
-      stack.pop();
+      const closed = stack.pop();
+      if (closed) closed.node.endIndex = blockIndex;
     }
 
     const parent = stack[stack.length - 1]?.node;
@@ -244,9 +357,111 @@ function buildHeadingTree(blocks: BookBlock[]): HeadingNode[] {
     }
 
     stack.push({ level, node });
-  }
+  });
 
   return roots;
+}
+
+function buildQuickMarksForChapter(
+  chapter: BookChapter,
+  sources: {
+    lastRef: string | null;
+    lastBookmarkAt: string | null;
+    highlights: BookHighlight[];
+    comments: BookComment[];
+    tags: BookTag[];
+  },
+): QuickMark[] {
+  const refToBlockIndex = new Map<string, number>();
+  chapter.blocks.forEach((block, index) => {
+    if (block.ref) refToBlockIndex.set(block.ref, index);
+  });
+
+  const marks: QuickMark[] = [];
+
+  if (sources.lastRef && refBelongsToChapter(sources.lastRef, chapter.order)) {
+    marks.push({
+      ref: sources.lastRef,
+      chapterOrder: chapter.order,
+      blockIndex: refToBlockIndex.get(sources.lastRef) ?? null,
+      label: 'Última leitura',
+      detail: `ref. ${sources.lastRef}`,
+      icon: 'history',
+      className: 'bg-info/10 hover:bg-info/20',
+    });
+    if (sources.lastBookmarkAt) {
+      marks.push({
+        ref: sources.lastRef,
+        chapterOrder: chapter.order,
+        blockIndex: refToBlockIndex.get(sources.lastRef) ?? null,
+        label: 'Marcador salvo',
+        detail: `ref. ${sources.lastRef}`,
+        icon: 'bookmark',
+        className: 'bg-warning/10 hover:bg-warning/20',
+      });
+    }
+  }
+
+  const highlightsByRef = groupByRef(sources.highlights.filter(h => refBelongsToChapter(h.ref, chapter.order)));
+  for (const [ref, items] of highlightsByRef) {
+    marks.push({
+      ref,
+      chapterOrder: chapter.order,
+      blockIndex: refToBlockIndex.get(ref) ?? null,
+      label: items.length === 1 ? 'Destaque' : `${items.length} destaques`,
+      detail: firstSelectedText(items),
+      icon: 'highlight',
+    });
+  }
+
+  const commentsByRef = groupByRef(sources.comments.filter(c => refBelongsToChapter(c.ref, chapter.order)));
+  for (const [ref, items] of commentsByRef) {
+    marks.push({
+      ref,
+      chapterOrder: chapter.order,
+      blockIndex: refToBlockIndex.get(ref) ?? null,
+      label: items.length === 1 ? 'Nota' : `${items.length} notas`,
+      detail: items[0]?.text,
+      icon: 'comment',
+    });
+  }
+
+  for (const tag of sources.tags.filter(t => t.chapter_order === chapter.order)) {
+    marks.push({
+      ref: tag.ref,
+      chapterOrder: chapter.order,
+      blockIndex: tag.ref ? (refToBlockIndex.get(tag.ref) ?? null) : null,
+      label: tag.text,
+      detail: tag.ref ? `Marcador em ${tag.ref}` : 'Marcador do capítulo',
+      icon: 'tag',
+    });
+  }
+
+  return marks.sort((a, b) => (a.blockIndex ?? -1) - (b.blockIndex ?? -1));
+}
+
+function groupByRef<T extends { ref: string }>(items: T[]): Map<string, T[]> {
+  const map = new Map<string, T[]>();
+  for (const item of items) {
+    map.set(item.ref, [...(map.get(item.ref) ?? []), item]);
+  }
+  return map;
+}
+
+function firstSelectedText(items: BookHighlight[]): string | undefined {
+  return items.find(item => item.selected_text)?.selected_text;
+}
+
+function refBelongsToChapter(ref: string, chapterOrder: number): boolean {
+  return Number(ref.split(':')[0]) === chapterOrder;
+}
+
+function isInsideHeading(mark: QuickMark, node: HeadingNode): boolean {
+  return mark.blockIndex !== null && mark.blockIndex > node.blockIndex && mark.blockIndex < node.endIndex;
+}
+
+function isInsideAnyHeading(mark: QuickMark, nodes: HeadingNode[]): boolean {
+  return nodes.some(node => isInsideHeading(mark, node) || isInsideAnyHeading(mark, node.children));
 }
 
 function MarkdownLabel({ markdown, className = '' }: { markdown: string; className?: string }) {

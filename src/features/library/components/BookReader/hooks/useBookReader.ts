@@ -177,6 +177,15 @@ export function useBookReader({ userId, bookId, chapters, initialRef }: UseBookR
     runPendingScroll();
   }, [requestChapterMount, runPendingScroll]);
 
+  const jumpToRef = useCallback((ref: string) => {
+    const parsed = CanonicalRefEntity.tryParse(ref);
+    if (!parsed) return;
+    setDrawerOpen(false);
+    requestChapterMount(parsed.chapter);
+    pendingScrollTarget.current = { kind: 'ref', chapterOrder: parsed.chapter, ref };
+    runPendingScroll();
+  }, [requestChapterMount, runPendingScroll]);
+
   const continueSaved = useCallback(() => {
     setShowContinueBanner(false);
     if (!progress) return;
@@ -281,6 +290,7 @@ export function useBookReader({ userId, bookId, chapters, initialRef }: UseBookR
     annotationError,
     jumpToChapter,
     jumpToHeading,
+    jumpToRef,
     continueSaved,
     isChapterMountRequested,
     handleBack,

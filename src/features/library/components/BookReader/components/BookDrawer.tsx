@@ -1,7 +1,7 @@
 'use client';
 
 import { X } from 'lucide-react';
-import type { Book, BookChapter, BookTag, BookReadingProgress } from '@/domain/library/types';
+import type { Book, BookChapter, BookComment, BookHighlight, BookTag, BookReadingProgress } from '@/domain/library/types';
 import { BookTOC } from './BookTOC';
 import { BookExportButtons } from '@/features/library/components/BookExportButtons';
 
@@ -15,16 +15,19 @@ interface BookDrawerProps {
   truncated: boolean;
   readPercent: number;
   progress: BookReadingProgress | null;
+  highlights: BookHighlight[];
+  comments: BookComment[];
   tags: BookTag[];
   tagsForChapter: (chapterOrder: number) => BookTag[];
   onJump: (order: number) => void;
   onJumpToHeading: (chapterOrder: number, blockId: string) => void;
   onJumpToRef: () => void;
+  onJumpToQuickRef: (ref: string) => void;
 }
 
 export function BookDrawer({
   open, onClose, book, chapters, activeChapter, visibleUntil, truncated,
-  readPercent, progress, tags, tagsForChapter, onJump, onJumpToHeading, onJumpToRef,
+  readPercent, progress, highlights, comments, tags, tagsForChapter, onJump, onJumpToHeading, onJumpToRef, onJumpToQuickRef,
 }: BookDrawerProps) {
   if (!open) return null;
 
@@ -58,11 +61,15 @@ export function BookDrawer({
           readPercent={readPercent}
           lastChapterOrder={progress?.last_chapter_order ?? null}
           lastRef={progress?.last_ref ?? null}
+          lastBookmarkAt={progress?.last_bookmark_at ?? null}
+          highlights={highlights}
+          comments={comments}
           tags={tags}
           tagsForChapter={tagsForChapter}
           onJump={onJump}
           onJumpToHeading={onJumpToHeading}
           onJumpToRef={onJumpToRef}
+          onJumpToQuickRef={onJumpToQuickRef}
         />
       </div>
       <div className="flex-1 bg-black/40" onClick={onClose} />

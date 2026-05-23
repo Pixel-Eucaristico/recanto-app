@@ -41,12 +41,13 @@ export function BookReader({ book, chapters, visibleUntil, truncated, initialRef
     completing,
     readPercent,
     progress, bookmarkError, saveBookmark, completeReading,
-    commentsForRef, highlightsForRef, tagsForRef,
+    highlights, comments, commentsForRef, highlightsForRef, tagsForRef,
     addHighlight, removeHighlight, addComment, updateComment, removeComment,
     tags, tagsForChapter, addTag, removeTag,
     annotationError,
     jumpToChapter,
     jumpToHeading,
+    jumpToRef,
     continueSaved,
     isChapterMountRequested,
     handleBack,
@@ -119,11 +120,15 @@ export function BookReader({ book, chapters, visibleUntil, truncated, initialRef
             readPercent={readPercent}
             lastChapterOrder={progress?.last_chapter_order ?? null}
             lastRef={progress?.last_ref ?? null}
+            lastBookmarkAt={progress?.last_bookmark_at ?? null}
+            highlights={highlights}
+            comments={comments}
             tags={tags}
             tagsForChapter={tagsForChapter}
             onJump={jumpToChapter}
             onJumpToHeading={jumpToHeading}
             onJumpToRef={continueSaved}
+            onJumpToQuickRef={jumpToRef}
           />
         </aside>
 
@@ -137,11 +142,14 @@ export function BookReader({ book, chapters, visibleUntil, truncated, initialRef
           truncated={truncated}
           readPercent={readPercent}
           progress={progress}
+          highlights={highlights}
+          comments={comments}
           tags={tags}
           tagsForChapter={tagsForChapter}
           onJump={jumpToChapter}
           onJumpToHeading={jumpToHeading}
           onJumpToRef={continueSaved}
+          onJumpToQuickRef={jumpToRef}
         />
 
         <main className="flex-1 min-w-0 px-4 md:px-8 py-6 md:py-10 pb-20 lg:pb-10">
