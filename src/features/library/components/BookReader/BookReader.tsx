@@ -110,7 +110,7 @@ export function BookReader({ book, chapters, visibleUntil, truncated, initialRef
       )}
 
       <div className="flex">
-        <aside className="hidden lg:block w-72 shrink-0 border-r border-base-300 bg-base-100 sticky top-0 self-start">
+        <aside className="hidden lg:block w-72 h-dvh shrink-0 overflow-y-auto border-r border-base-300 bg-base-100 sticky top-0 self-start">
           <BookTOC
             book={book}
             chapters={chapters}

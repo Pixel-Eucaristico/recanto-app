@@ -1,13 +1,19 @@
 'use client';
 
 import Image from 'next/image';
+import ReactMarkdown, { type Components } from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Bookmark, BookOpen, Navigation } from 'lucide-react';
 import type { Book, BookBlock, BookChapter, BookTag } from '@/domain/library/types';
 import { AccordionMenu, type AccordionMenuItem } from '@/shared/components/AccordionMenu';
-import { RichContent } from '@/shared/components/RichContent';
 
-const TOC_MARKDOWN_CLASS =
-  '[&>p]:m-0 [&_p]:m-0 [&_strong]:font-bold [&_em]:italic [&_a]:no-underline [&_img]:hidden [&_iframe]:hidden [&_video]:hidden [&_audio]:hidden';
+const tocMarkdownComponents: Components = {
+  p: ({ children }) => <>{children}</>,
+  strong: ({ children }) => <strong className="font-bold">{children}</strong>,
+  em: ({ children }) => <em className="italic">{children}</em>,
+  a: ({ children }) => <>{children}</>,
+  img: () => null,
+};
 
 interface BookTOCProps {
   book: Book;
@@ -93,6 +99,11 @@ interface BuildMenuItemsOptions {
   onJumpToRef: () => void;
 }
 
+interface HeadingNode {
+  block: BookBlock;
+  children: HeadingNode[];
+}
+
 function buildMenuItems({
   chapters,
   activeChapter,
@@ -144,7 +155,7 @@ function buildChapterItem(
 ): AccordionMenuItem {
   const isLast = lastChapterOrder === chapter.order;
   const chapterTags = tagsForChapter(chapter.order);
-  const headings = getHeadingBlocks(chapter);
+  const headingTree = buildHeadingTree(getHeadingBlocks(chapter));
   const chapterLabel = (
     <span className="flex min-w-0 items-center gap-2">
       <span className="shrink-0 text-[10px] text-base-content/50">{chapter.order}.</span>
@@ -160,7 +171,7 @@ function buildChapterItem(
     </span>
   );
 
-  if (headings.length > 0) {
+  if (headingTree.length > 0) {
     return {
       type: 'parent',
       label: chapterLabel,
@@ -171,7 +182,7 @@ function buildChapterItem(
           label: <span className="text-xs text-base-content/70">Início do capítulo</span>,
           onClick: () => onJump(chapter.order),
         },
-        ...headings.map(block => buildHeadingItem(chapter.order, block, onJumpToHeading)),
+        ...headingTree.map(node => buildHeadingItem(chapter.order, node, onJumpToHeading)),
       ],
     };
   }
@@ -185,15 +196,35 @@ function buildChapterItem(
 
 function buildHeadingItem(
   chapterOrder: number,
-  block: BookBlock,
+  node: HeadingNode,
   onJumpToHeading: (chapterOrder: number, blockId: string) => void,
 ): AccordionMenuItem {
+  const { block } = node;
   const level = Math.min(6, Math.max(1, block.heading_level ?? 2));
+  const label = (
+    <span className="block min-w-0 text-xs" style={{ paddingLeft: `${Math.max(0, level - 1) * 8}px` }}>
+      <MarkdownLabel markdown={block.content} className="truncate" />
+    </span>
+  );
+
+  if (node.children.length > 0) {
+    return {
+      type: 'parent',
+      label,
+      defaultOpen: false,
+      children: [
+        {
+          label: <span className="text-xs text-base-content/70">Ir para este tópico</span>,
+          onClick: () => onJumpToHeading(chapterOrder, block.id),
+        },
+        ...node.children.map(child => buildHeadingItem(chapterOrder, child, onJumpToHeading)),
+      ],
+    };
+  }
+
   return {
     label: (
-      <span className="block min-w-0 text-xs" style={{ paddingLeft: `${Math.max(0, level - 1) * 8}px` }}>
-        <MarkdownLabel markdown={block.content} className="truncate" />
-      </span>
+      label
     ),
     onClick: () => onJumpToHeading(chapterOrder, block.id),
   };
@@ -203,10 +234,42 @@ function getHeadingBlocks(chapter: BookChapter): BookBlock[] {
   return chapter.blocks.filter(block => block.kind === 'heading' && block.content.trim().length > 0);
 }
 
+function buildHeadingTree(blocks: BookBlock[]): HeadingNode[] {
+  const roots: HeadingNode[] = [];
+  const stack: Array<{ level: number; node: HeadingNode }> = [];
+
+  for (const block of blocks) {
+    const level = Math.min(6, Math.max(1, block.heading_level ?? 2));
+    const node: HeadingNode = { block, children: [] };
+
+    while (stack.length > 0 && stack[stack.length - 1].level >= level) {
+      stack.pop();
+    }
+
+    const parent = stack[stack.length - 1]?.node;
+    if (parent) {
+      parent.children.push(node);
+    } else {
+      roots.push(node);
+    }
+
+    stack.push({ level, node });
+  }
+
+  return roots;
+}
+
 function MarkdownLabel({ markdown, className = '' }: { markdown: string; className?: string }) {
   return (
     <span className={`block min-w-0 ${className}`}>
-      <RichContent markdown={markdown} className={TOC_MARKDOWN_CLASS} />
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={tocMarkdownComponents}
+        skipHtml
+        unwrapDisallowed
+      >
+        {markdown || ''}
+      </ReactMarkdown>
     </span>
   );
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import type { AccordionMenuItem, AccordionMenuLeaf, AccordionMenuParent, AccordionMenuSize } from './types';
 
@@ -14,6 +15,8 @@ interface AccordionMenuProps {
   background?: string;
   /** Classes extras no `<ul>` raiz. */
   className?: string;
+  /** Mantém apenas um grupo aberto por nível. Default: true. */
+  accordion?: boolean;
 }
 
 const SIZE_CLASS: Record<AccordionMenuSize, string> = {
@@ -44,25 +47,45 @@ export function AccordionMenu({
   width = 'w-56',
   background = 'bg-base-200',
   className = '',
+  accordion = true,
 }: AccordionMenuProps) {
   const sizeClass = SIZE_CLASS[size];
   return (
     <ul className={`menu ${sizeClass} ${background} ${width} rounded-box ${className}`.trim()}>
       {items.map((item, idx) => (
-        <MenuItem key={getItemKey(item, idx)} item={item} />
+        <MenuItem key={getItemKey(item, idx)} item={item} itemKey={getItemKey(item, idx)} accordion={accordion} />
       ))}
     </ul>
   );
 }
 
-function MenuItem({ item }: { item: AccordionMenuItem }) {
+function MenuItem({
+  item,
+  itemKey,
+  accordion,
+}: {
+  item: AccordionMenuItem;
+  itemKey: string;
+  accordion: boolean;
+}) {
   if (isParent(item)) {
-    return <ParentItem item={item} />;
+    return <ParentItem item={item} itemKey={itemKey} accordion={accordion} />;
   }
   return <LeafItem item={item} />;
 }
 
-function ParentItem({ item }: { item: AccordionMenuParent }) {
+function ParentItem({
+  item,
+  itemKey,
+  accordion,
+}: {
+  item: AccordionMenuParent;
+  itemKey: string;
+  accordion: boolean;
+}) {
+  const initialOpenKey = getInitialOpenChildKey(item, itemKey);
+  const [openChildKey, setOpenChildKey] = useState<string | null>(initialOpenKey);
+
   return (
     <li>
       <details open={item.defaultOpen ?? false}>
@@ -71,9 +94,78 @@ function ParentItem({ item }: { item: AccordionMenuParent }) {
           <span className="min-w-0 flex-1">{item.label}</span>
         </summary>
         <ul>
-          {item.children.map((child, idx) => (
-            <MenuItem key={getItemKey(child, idx)} item={child} />
-          ))}
+          {item.children.map((child, idx) => {
+            const childKey = `${itemKey}-${getItemKey(child, idx)}`;
+            if (isParent(child)) {
+              return (
+                <ControlledParentItem
+                  key={childKey}
+                  item={child}
+                  itemKey={childKey}
+                  accordion={accordion}
+                  open={accordion ? openChildKey === childKey : undefined}
+                  onOpenChange={open => {
+                    if (!accordion) return;
+                    setOpenChildKey(open ? childKey : null);
+                  }}
+                />
+              );
+            }
+            return <MenuItem key={childKey} item={child} itemKey={childKey} accordion={accordion} />;
+          })}
+        </ul>
+      </details>
+    </li>
+  );
+}
+
+function ControlledParentItem({
+  item,
+  itemKey,
+  accordion,
+  open,
+  onOpenChange,
+}: {
+  item: AccordionMenuParent;
+  itemKey: string;
+  accordion: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}) {
+  const initialOpenKey = getInitialOpenChildKey(item, itemKey);
+  const [openChildKey, setOpenChildKey] = useState<string | null>(initialOpenKey);
+  const isOpen = open ?? item.defaultOpen ?? false;
+
+  return (
+    <li>
+      <details
+        open={isOpen}
+        onToggle={event => onOpenChange?.(event.currentTarget.open)}
+      >
+        <summary className={item.className}>
+          {item.icon}
+          <span className="min-w-0 flex-1">{item.label}</span>
+        </summary>
+        <ul>
+          {item.children.map((child, idx) => {
+            const childKey = `${itemKey}-${getItemKey(child, idx)}`;
+            if (isParent(child)) {
+              return (
+                <ControlledParentItem
+                  key={childKey}
+                  item={child}
+                  itemKey={childKey}
+                  accordion={accordion}
+                  open={accordion ? openChildKey === childKey : undefined}
+                  onOpenChange={open => {
+                    if (!accordion) return;
+                    setOpenChildKey(open ? childKey : null);
+                  }}
+                />
+              );
+            }
+            return <MenuItem key={childKey} item={child} itemKey={childKey} accordion={accordion} />;
+          })}
         </ul>
       </details>
     </li>
@@ -132,4 +224,12 @@ function getItemKey(item: AccordionMenuItem, idx: number): string {
   if (typeof item.label === 'string') return `${item.label}-${idx}`;
   if (isParent(item) === false && item.href) return `${item.href}-${idx}`;
   return `item-${idx}`;
+}
+
+function getInitialOpenChildKey(item: AccordionMenuParent, itemKey: string): string | null {
+  const defaultOpenChild = item.children
+    .map((child, idx) => ({ child, key: `${itemKey}-${getItemKey(child, idx)}` }))
+    .find(({ child }) => isParent(child) && child.defaultOpen);
+
+  return defaultOpenChild?.key ?? null;
 }
