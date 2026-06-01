@@ -296,6 +296,29 @@ interface BuildArgs {
   tocEntries?: TypstTocEntry[];
 }
 
+function normalizeTypstLocale(language?: string): { lang: string; region?: string } {
+  const [rawLang, rawRegion] = (language ?? 'pt').replace('_', '-').split('-');
+  const lang = (rawLang || 'pt').toLowerCase();
+  const region = rawRegion ? rawRegion.toUpperCase() : undefined;
+  return /^[a-z]{2,3}$/.test(lang) ? { lang, region } : { lang: 'pt' };
+}
+
+function imageExtensionFromBuffer(buffer: Buffer): 'jpg' | 'png' | 'webp' | 'gif' {
+  if (buffer.length >= 8 && buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]))) {
+    return 'png';
+  }
+  if (buffer.length >= 3 && buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF) {
+    return 'jpg';
+  }
+  if (buffer.length >= 12 && buffer.subarray(0, 4).toString('ascii') === 'RIFF' && buffer.subarray(8, 12).toString('ascii') === 'WEBP') {
+    return 'webp';
+  }
+  if (buffer.length >= 6 && ['GIF87a', 'GIF89a'].includes(buffer.subarray(0, 6).toString('ascii'))) {
+    return 'gif';
+  }
+  return 'png';
+}
+
 function buildTypstSource({ book, chapters, coverImage, backCoverImage, truncatedAt, skipCover, skipToc, skipBackCover, startPageNumber, tocEntries }: BuildArgs): string {
   const sorted = BookEntity.sortChapters(chapters);
   // Title e author são usados em DOIS contextos: string literal (set document)
@@ -304,13 +327,13 @@ function buildTypstSource({ book, chapters, coverImage, backCoverImage, truncate
   const docTitleMd = escapeTypst(book.title);
   const docAuthorStr = book.author ? escapeTypstString(book.author) : '';
   const docAuthorMd = book.author ? escapeTypst(book.author) : '';
-  const lang = book.language ?? 'pt';
+  const locale = normalizeTypstLocale(book.language);
 
   const out: string[] = [];
 
   // Document metadata + page setup base
   out.push(`#set document(title: "${docTitleStr}"${docAuthorStr ? `, author: "${docAuthorStr}"` : ''})`);
-  out.push(`#set text(lang: "${lang}", font: ("New Computer Modern", "Liberation Serif", "Times New Roman"), size: 11pt)`);
+  out.push(`#set text(lang: "${locale.lang}"${locale.region ? `, region: "${locale.region}"` : ''}, font: ("New Computer Modern", "Liberation Serif", "Times New Roman"), size: 11pt)`);
   out.push(`#set par(justify: true, leading: 0.7em)`);
   out.push(`#set page(paper: "a5", margin: (top: 2cm, bottom: 2cm, left: 2cm, right: 2cm))`);
   out.push('');
@@ -392,6 +415,7 @@ function buildTypstSource({ book, chapters, coverImage, backCoverImage, truncate
 
   // Prefácio + body + back: numeração ativa, todos via #heading() → entram no TOC
   let numberingStarted = false;
+  let resetPageCounterBeforeNextHeading = false;
   for (const ch of numberedSections) {
     const kind = ch.kind ?? 'chapter';
     // Title/subtitle: strip markers pra TOC. Footnotes emitidas após heading na página.
@@ -402,7 +426,6 @@ function buildTypstSource({ book, chapters, coverImage, backCoverImage, truncate
 
     if (!numberingStarted) {
       out.push(`#pagebreak(weak: true, to: "odd")`);
-      out.push(`#counter(page).update(${Math.max(1, startPageNumber ?? 1)})`);
       out.push(`#set page(`);
       out.push(`  header: context {`);
       out.push(`    let n = counter(page).get().first()`);
@@ -423,17 +446,25 @@ function buildTypstSource({ book, chapters, coverImage, backCoverImage, truncate
       out.push(`  numbering: "1",`);
       out.push(`)`);
       numberingStarted = true;
+      resetPageCounterBeforeNextHeading = true;
     }
 
     // Pagebreak manual ANTES do heading do chapter — só primeira página do
     // capítulo vai pra ímpar. Subtítulos internos NÃO geram pagebreak.
     const startNumber = Math.max(1, startPageNumber ?? 1);
-    if (numberedSections.length === 1 && startNumber % 2 === 0) {
+    if (resetPageCounterBeforeNextHeading) {
+      // O primeiro conteúdo numerado já foi levado para página ímpar acima.
+      // Reinicia o contador DEPOIS dos pré-textuais e pagebreaks.
+    } else if (numberedSections.length === 1 && startNumber % 2 === 0) {
       // Em geração por chunk, Typst não conhece a paridade física do PDF final.
       // Uma página numerada em branco mantém o próximo capítulo em página ímpar.
       out.push(`#pagebreak()`);
     } else {
       out.push(`#pagebreak(weak: true, to: "odd")`);
+    }
+    if (resetPageCounterBeforeNextHeading) {
+      out.push(`#counter(page).update(${startNumber})`);
+      resetPageCounterBeforeNextHeading = false;
     }
     out.push(`#heading(level: 1)[${titleClean}]`);
     out.push(`${tocMetadata(1, plainTocTitle(ch.title))}`);
@@ -548,15 +579,17 @@ export class BookPdfGeneratorTypst {
     const compiler = await getCompiler();
 
     const cwd = process.cwd();
-    const coverImage = coverImageBuffer
-      ? { path: '/cover.jpg', ext: 'jpg' }
+    const coverExt = coverImageBuffer ? imageExtensionFromBuffer(coverImageBuffer) : undefined;
+    const backCoverExt = backCoverImageBuffer ? imageExtensionFromBuffer(backCoverImageBuffer) : undefined;
+    const coverImage = coverImageBuffer && coverExt
+      ? { path: `cover.${coverExt}`, ext: coverExt }
       : undefined;
-    const backCoverImage = backCoverImageBuffer
-      ? { path: '/back-cover.jpg', ext: 'jpg' }
+    const backCoverImage = backCoverImageBuffer && backCoverExt
+      ? { path: `back-cover.${backCoverExt}`, ext: backCoverExt }
       : undefined;
 
-    if (coverImageBuffer) compiler.mapShadow(resolve(cwd, 'cover.jpg'), coverImageBuffer);
-    if (backCoverImageBuffer) compiler.mapShadow(resolve(cwd, 'back-cover.jpg'), backCoverImageBuffer);
+    if (coverImageBuffer && coverImage) compiler.mapShadow(resolve(cwd, coverImage.path), coverImageBuffer);
+    if (backCoverImageBuffer && backCoverImage) compiler.mapShadow(resolve(cwd, backCoverImage.path), backCoverImageBuffer);
 
     const source = buildTypstSource({
       book,

@@ -178,7 +178,12 @@ export async function GET(
           pageCount,
           startPageNumber: pageOffset,
         });
-        tocEntries.push(...chunk.tocEntries);
+        tocEntries.push({
+          level: 1,
+          title: ch.title,
+          page: pageOffset,
+        });
+        tocEntries.push(...chunk.tocEntries.filter(entry => entry.title !== ch.title));
         pageOffset += pageCount;
       } catch (chErr) {
         const msg = chErr instanceof Error ? chErr.message : String(chErr);

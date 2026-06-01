@@ -3,8 +3,8 @@
 import { auth } from '@/domains/auth/services/firebaseClient';
 import { libraryService } from '@/application/library/LibraryService';
 import { bookEpubGenerator } from '@/application/library/BookEpubGenerator';
-import { BookExportEntity } from '@/domain/library/entities/BookExport';
 import { BookSpoilerEngine } from '@/application/library/BookSpoilerEngine';
+import { buildBookDownloadFilename } from '@/application/library/bookDownloadFilename';
 
 export type ExportFormat = 'pdf' | 'epub';
 
@@ -31,6 +31,13 @@ function triggerDownload(blob: Blob, filename: string): void {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+function filenameFromContentDisposition(header: string, fallback: string): string {
+  const utf8 = header.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utf8?.[1]) return decodeURIComponent(utf8[1]);
+  const quoted = header.match(/filename="([^"]+)"/i);
+  return quoted?.[1] ?? fallback;
+}
+
 /**
  * Export híbrido:
  * - PDF → API server-side com Typst chunked (rodapé/footnote correto + sem OOM)
@@ -48,10 +55,8 @@ export async function exportBookClientSide(bookId: string, format: ExportFormat)
       throw new Error(`Falha ao gerar PDF (HTTP ${res.status}). ${text}`);
     }
     const blob = await res.blob();
-    // Pega nome do header Content-Disposition se houver
     const cd = res.headers.get('Content-Disposition') ?? '';
-    const filenameMatch = cd.match(/filename="([^"]+)"/);
-    const filename = filenameMatch?.[1] ?? `${bookId}.pdf`;
+    const filename = filenameFromContentDisposition(cd, `${bookId}.pdf`);
     triggerDownload(blob, filename);
     return;
   }
@@ -63,8 +68,7 @@ export async function exportBookClientSide(bookId: string, format: ExportFormat)
   const { visible_until } = BookSpoilerEngine.compute(book, []);
   const { chapters } = BookSpoilerEngine.applyCut(allChapters, visible_until);
   const coverBuffer = await fetchCover(book.cover_url);
-  const slug = BookExportEntity.bookSlug(book);
   const buffer = await bookEpubGenerator.generate(book, chapters, coverBuffer);
   const blob = new Blob([new Uint8Array(buffer)], { type: 'application/epub+zip' });
-  triggerDownload(blob, `${slug}.epub`);
+  triggerDownload(blob, `${buildBookDownloadFilename(book)}.epub`);
 }
