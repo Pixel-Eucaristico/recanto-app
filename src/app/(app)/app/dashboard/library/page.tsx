@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Library, Plus, FolderOpen, History } from 'lucide-react';
+import { FileUp, Library, Plus, FolderOpen, History } from 'lucide-react';
 import Link from 'next/link';
-import { BookCatalogGrid, CategoryFilter, useLibraryCatalog, useBooksAdmin } from '@/features/library';
+import { BookCatalogGrid, BookEpubImportModal, CategoryFilter, useLibraryCatalog, useBooksAdmin } from '@/features/library';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 import { Book } from '@/domain/library/types';
 
@@ -26,6 +26,7 @@ export default function LibraryPage() {
   const { remove } = useBooksAdmin();
   const [deleteTarget, setDeleteTarget] = useState<Book | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   if (!user) return <div className="p-6">Faça login pra acessar a biblioteca.</div>;
 
@@ -87,6 +88,9 @@ export default function LibraryPage() {
                 <Link href="/app/dashboard/admin/library?view=categories" className="btn btn-ghost btn-sm gap-1">
                   <FolderOpen className="w-4 h-4" /> Categorias
                 </Link>
+                <button type="button" className="btn btn-ghost btn-sm gap-1" onClick={() => setImportOpen(true)}>
+                  <FileUp className="w-4 h-4" /> EPUB
+                </button>
                 <Link href="/app/dashboard/admin/library?view=form" className="btn btn-primary btn-sm gap-1">
                   <Plus className="w-4 h-4" /> Novo livro
                 </Link>
@@ -145,6 +149,14 @@ export default function LibraryPage() {
           </div>
           <div className="modal-backdrop" onClick={() => setDeleteTarget(null)} />
         </div>
+      )}
+
+      {importOpen && (
+        <BookEpubImportModal
+          userId={user.id}
+          onClose={() => setImportOpen(false)}
+          onImported={() => window.location.reload()}
+        />
       )}
     </div>
   );

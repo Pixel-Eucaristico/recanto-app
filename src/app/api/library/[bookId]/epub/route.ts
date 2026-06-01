@@ -8,7 +8,7 @@ import { adminGetBook, adminListChapters } from '@/application/library/BookAdmin
 import { BookSpoilerEngine } from '@/application/library/BookSpoilerEngine';
 import { CanonicalRefEntity } from '@/domain/library/entities/CanonicalRef';
 import { bookEpubGenerator } from '@/application/library/BookEpubGenerator';
-import { BookExportEntity } from '@/domain/library/entities/BookExport';
+import { buildAttachmentDisposition } from '@/application/library/bookDownloadFilename';
 import { canDownloadLibrary, canReadLibrary } from '@/application/library/libraryPermissions';
 import { evaluateAccess } from '@/shared/content-access/accessGate';
 import type { Role } from '@/shared/types/role';
@@ -123,11 +123,10 @@ export async function GET(
   }
 
   const epubBuffer = await bookEpubGenerator.generate(book, chapters, coverBuffer);
-  const slug = BookExportEntity.bookSlug(book);
 
   const headers = new Headers({
     'Content-Type': 'application/epub+zip',
-    'Content-Disposition': `attachment; filename="${slug}.epub"`,
+    'Content-Disposition': buildAttachmentDisposition(book, 'epub'),
     'Content-Length': String(epubBuffer.length),
   });
   if (truncatedAt && visibleUntilStr) {

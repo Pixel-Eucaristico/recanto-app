@@ -1,13 +1,15 @@
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
 import { ArrowLeft, FolderOpen, Library as LibraryIcon } from 'lucide-react';
-import { BookList, BookForm, LibraryCategoryManager, ChapterListPanel, ChapterEditor } from '@/features/library';
+import { BookList, BookEpubImportModal, BookForm, LibraryCategoryManager, ChapterListPanel, ChapterEditor } from '@/features/library';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 import { useAdminLibraryPage } from './_useAdminLibraryPage';
 
 export default function AdminLibraryPage() {
   const user = useCurrentUser();
+  const [importOpen, setImportOpen] = useState(false);
   const {
     view, setView,
     activeBook, setActiveBook,
@@ -56,6 +58,7 @@ export default function AdminLibraryPage() {
           <BookList
             books={books}
             onCreate={() => { setActiveBook(null); setView('form'); }}
+            onImportEpub={() => setImportOpen(true)}
             onEdit={b => { setActiveBook(b); setView('form'); }}
             onEditChapters={b => { setActiveBook(b); setView('chapters'); }}
             onDelete={b => setDeleteBookTarget(b)}
@@ -141,6 +144,14 @@ export default function AdminLibraryPage() {
           </div>
           <div className="modal-backdrop" onClick={() => setDeleteChapterTarget(null)} />
         </div>
+      )}
+
+      {importOpen && (
+        <BookEpubImportModal
+          userId={user.id}
+          onClose={() => setImportOpen(false)}
+          onImported={reload}
+        />
       )}
     </div>
   );

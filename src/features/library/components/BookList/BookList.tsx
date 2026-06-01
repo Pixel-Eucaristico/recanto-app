@@ -1,24 +1,30 @@
 'use client';
 
-import { BookOpen, Edit2, Trash2, Plus } from 'lucide-react';
+import { BookOpen, Edit2, FileUp, Trash2, Plus } from 'lucide-react';
 import { Book } from '@/domain/library/types';
 
 interface BookListProps {
   books: Book[];
   onCreate: () => void;
+  onImportEpub: () => void;
   onEdit: (book: Book) => void;
   onEditChapters: (book: Book) => void;
   onDelete: (book: Book) => void;
 }
 
-export function BookList({ books, onCreate, onEdit, onEditChapters, onDelete }: BookListProps) {
+export function BookList({ books, onCreate, onImportEpub, onEdit, onEditChapters, onDelete }: BookListProps) {
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <h2 className="text-base md:text-lg font-semibold">Livros</h2>
-        <button type="button" className="btn btn-primary btn-sm gap-1" onClick={onCreate}>
-          <Plus className="w-4 h-4" /> Novo livro
-        </button>
+        <div className="flex gap-2">
+          <button type="button" className="btn btn-ghost btn-sm gap-1" onClick={onImportEpub}>
+            <FileUp className="w-4 h-4" /> EPUB
+          </button>
+          <button type="button" className="btn btn-primary btn-sm gap-1" onClick={onCreate}>
+            <Plus className="w-4 h-4" /> Novo livro
+          </button>
+        </div>
       </div>
 
       {books.length === 0 ? (

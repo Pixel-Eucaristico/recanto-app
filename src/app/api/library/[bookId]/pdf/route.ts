@@ -9,6 +9,7 @@ import { adminAuth, firestore } from '@/domains/auth/services/firebaseAdmin';
 import { verifySession } from '@/domains/auth/services/sessionService';
 import { adminGetBook, adminListChapters } from '@/application/library/BookAdminLoader';
 import { BookSpoilerEngine } from '@/application/library/BookSpoilerEngine';
+import { buildAttachmentDisposition } from '@/application/library/bookDownloadFilename';
 import { canDownloadLibrary, canReadLibrary } from '@/application/library/libraryPermissions';
 import { evaluateAccess } from '@/shared/content-access/accessGate';
 import type { Role } from '@/shared/types/role';
@@ -226,19 +227,10 @@ export async function GET(
     }
 
     const pdfBuffer = Buffer.from(await finalDoc.save());
-    // Filename usa título raw (mantém acentos/Unicode) via filename*=UTF-8'' RFC 5987.
-    // Fallback ASCII pra clients antigos.
-    const rawTitle = book.title.trim() || book.id;
-    const asciiFallback = rawTitle
-      .normalize('NFD')
-      .replace(/[̀-ͯ]/g, '') // remove diacritics no fallback
-      .replace(/[^\x20-\x7E]/g, '_')   // non-ASCII vira _
-      .replace(/"/g, "'");
-    const utf8Encoded = encodeURIComponent(rawTitle);
 
     const headers = new Headers({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="${asciiFallback}.pdf"; filename*=UTF-8''${utf8Encoded}.pdf`,
+      'Content-Disposition': buildAttachmentDisposition(book, 'pdf'),
       'Content-Length': String(pdfBuffer.length),
     });
     if (truncatedAt) {

@@ -2,6 +2,7 @@ export { BookCatalogGrid } from './components/BookCatalogGrid';
 export { CategoryFilter } from './components/CategoryFilter';
 export { BookList } from './components/BookList';
 export { BookForm } from './components/BookForm';
+export { BookEpubImportModal } from './components/BookEpubImportModal';
 export type { BookFormState } from './components/BookForm';
 export { LibraryCategoryManager } from './components/LibraryCategoryManager';
 export { ChapterListPanel } from './components/ChapterListPanel';

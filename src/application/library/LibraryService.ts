@@ -10,6 +10,7 @@ import { BookEntity } from '@/domain/library/entities/Book';
 import { CanonicalRefEntity } from '@/domain/library/entities/CanonicalRef';
 import { BookSpoilerEngine, type SpoilerLessonInput } from '@/application/library/BookSpoilerEngine';
 import { libraryCategoryService, type SaveCategoryInput } from './LibraryCategoryService';
+import type { ImportedBookChapterDraft } from './BookEpubImporter';
 
 export type { SaveCategoryInput };
 
@@ -48,6 +49,12 @@ export interface SaveChapterInput {
   citation_style?: CitationStyle;
   glossary_terms?: BookGlossaryTerm[];
   credits?: BookCredits;
+}
+
+export interface ImportBookInput extends SaveBookInput {
+  chapters: ImportedBookChapterDraft[];
+  chapterConcurrency?: number;
+  onProgress?: (progress: { saved: number; total: number; book: Book }) => void;
 }
 
 export class LibraryService {
@@ -92,6 +99,71 @@ export class LibraryService {
     }
     const { id: _id, ...payload } = draft;
     return bookRepository.create(payload);
+  }
+
+  async importBook(input: ImportBookInput): Promise<{ book: Book; chapters: BookChapter[] }> {
+    const {
+      chapters: chapterDrafts,
+      chapterConcurrency = 4,
+      onProgress,
+      ...bookInput
+    } = input;
+    const book = await this.saveBook({
+      ...bookInput,
+      is_published: false,
+    });
+
+    try {
+      const savedChapters = await this.saveImportedChapters(
+        book,
+        chapterDrafts,
+        Math.max(1, Math.min(8, chapterConcurrency)),
+        onProgress,
+      );
+      return { book, chapters: savedChapters };
+    } catch (error) {
+      await this.deleteBook(book.id);
+      throw error;
+    }
+  }
+
+  private async saveImportedChapters(
+    book: Book,
+    chapters: ImportedBookChapterDraft[],
+    concurrency: number,
+    onProgress?: ImportBookInput['onProgress'],
+  ): Promise<BookChapter[]> {
+    const savedChapters: BookChapter[] = [];
+    let cursor = 0;
+    let saved = 0;
+
+    const worker = async () => {
+      while (cursor < chapters.length) {
+        const chapter = chapters[cursor++];
+        const draft: BookChapter = {
+          id: '',
+          book_id: book.id,
+          order: chapter.order,
+          title: chapter.title.trim(),
+          subtitle: chapter.subtitle,
+          kind: chapter.kind ?? 'chapter',
+          blocks: chapter.blocks,
+          footnotes: chapter.footnotes,
+          credits: chapter.credits,
+          created_at: new Date().toISOString(),
+        };
+        const errors = BookEntity.validateChapter(draft);
+        if (errors.length > 0) throw new Error(errors.join(' '));
+        const savedChapter = await bookChapterRepository.upsert(BookEntity.numberChapter(draft));
+        savedChapters.push(savedChapter);
+        saved++;
+        onProgress?.({ saved, total: chapters.length, book });
+        await new Promise(resolve => setTimeout(resolve, 0));
+      }
+    };
+
+    await Promise.all(Array.from({ length: Math.min(concurrency, chapters.length) }, worker));
+    return BookEntity.sortChapters(savedChapters);
   }
 
   async deleteBook(bookId: string): Promise<void> {
