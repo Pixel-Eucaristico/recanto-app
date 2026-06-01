@@ -180,8 +180,9 @@ function buildChapterItem({
   const headingTree = buildHeadingTree(chapter.blocks);
   const chapterQuickMarks = quickMarks.filter(mark => mark.blockIndex === null || !isInsideAnyHeading(mark, headingTree));
   const quickMarkCount = quickMarks.length;
+  const titleLevel = Math.min(6, Math.max(1, chapter.title_level ?? 1));
   const chapterLabel = (
-    <span className="flex min-w-0 items-center gap-2">
+    <span className="flex min-w-0 items-center gap-2" style={{ paddingLeft: `${Math.max(0, titleLevel - 1) * 8}px` }}>
       <span className="shrink-0 text-[10px] text-base-content/50">{chapter.order}.</span>
         <MarkdownLabel markdown={chapter.title} className="min-w-0 flex-1 truncate" />
       {isLast && activeChapter !== chapter.order && (

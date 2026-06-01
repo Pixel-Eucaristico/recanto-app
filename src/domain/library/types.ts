@@ -49,6 +49,8 @@ export interface BookChapter {
   /** Ordem 1-based dentro do livro. */
   order: number;
   title: string;
+  /** Nível hierárquico do título no sumário/importação (1-6). Default: 1. */
+  title_level?: number;
   /** Subtítulo opcional do capítulo. */
   subtitle?: string;
   /** Tipo semântico da seção. Default: 'chapter'. */

@@ -466,8 +466,9 @@ function buildTypstSource({ book, chapters, coverImage, backCoverImage, truncate
       out.push(`#counter(page).update(${startNumber})`);
       resetPageCounterBeforeNextHeading = false;
     }
-    out.push(`#heading(level: 1)[${titleClean}]`);
-    out.push(`${tocMetadata(1, plainTocTitle(ch.title))}`);
+    const headingLevel = Math.min(6, Math.max(1, ch.title_level ?? 1));
+    out.push(`#heading(level: ${headingLevel})[${titleClean}]`);
+    out.push(`${tocMetadata(headingLevel, plainTocTitle(ch.title))}`);
     // Footnotes do título — emitidas após heading. TOC só pega body limpo do heading.
     for (const fn of titleFns) {
       const fnContent = markdownInlineToTypst(fn.content, ch.footnotes);

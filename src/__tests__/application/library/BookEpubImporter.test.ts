@@ -39,8 +39,12 @@ async function buildEpub(): Promise<File> {
   <body>
     <nav epub:type="toc">
       <ol>
-        <li><a href="Text/chapter-1.xhtml">Título pelo NAV</a></li>
-        <li><a href="Text/chapter-2.xhtml">Segundo pelo NAV</a></li>
+        <li><a href="Text/chapter-1.xhtml">Introdução</a></li>
+        <li><a href="Text/chapter-2.xhtml">Primeira Parte</a>
+          <ol>
+            <li><a href="Text/chapter-2.xhtml">Capítulo Primeiro</a></li>
+          </ol>
+        </li>
       </ol>
     </nav>
   </body>
@@ -87,13 +91,14 @@ describe('BookEpubImporter', () => {
     expect(draft.coverImage?.mediaType).toBe('image/jpeg');
     expect(draft.backCoverImage?.file.name).toBe('back-cover.jpg');
     expect(draft.chapters).toHaveLength(2);
-    expect(draft.chapters[0]).toMatchObject({ title: 'Título pelo NAV', kind: 'chapter' });
-    expect(draft.chapters[0].blocks.map(block => block.kind)).toEqual(['heading', 'paragraph', 'quote']);
-    expect(draft.chapters[0].blocks[1].content).toContain('[^1]');
+    expect(draft.chapters[0]).toMatchObject({ title: 'Introdução', kind: 'introduction' });
+    expect(draft.chapters[0].blocks.map(block => block.kind)).toEqual(['paragraph', 'quote']);
+    expect(draft.chapters[0].blocks[0].content).toContain('[^1]');
     expect(draft.chapters[0].footnotes).toEqual([
       expect.objectContaining({ number: 1, content: 'Nota importada .' }),
     ]);
-    expect(draft.chapters[1].blocks.map(block => block.kind)).toEqual(['heading', 'list', 'paragraph']);
-    expect(draft.chapters[1].blocks[2].content).toContain('| Ano | Evento |');
+    expect(draft.chapters[1].blocks.map(block => block.kind)).toEqual(['list', 'paragraph']);
+    expect(draft.chapters[1].blocks[1].content).toContain('| Ano | Evento |');
+    expect(draft.chapters[1].title_level).toBe(2);
   });
 });

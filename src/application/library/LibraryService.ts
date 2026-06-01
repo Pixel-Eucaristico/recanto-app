@@ -41,6 +41,7 @@ export interface SaveChapterInput {
   book_id: string;
   order: number;
   title: string;
+  title_level?: number;
   subtitle?: string;
   kind?: BookChapter['kind'];
   blocks: BookChapter['blocks'];
@@ -145,6 +146,7 @@ export class LibraryService {
           book_id: book.id,
           order: chapter.order,
           title: chapter.title.trim(),
+          title_level: chapter.title_level,
           subtitle: chapter.subtitle,
           kind: chapter.kind ?? 'chapter',
           blocks: chapter.blocks,

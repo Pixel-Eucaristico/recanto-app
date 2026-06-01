@@ -12,6 +12,7 @@ type ManifestItem = {
 export interface ImportedBookChapterDraft {
   order: number;
   title: string;
+  title_level?: number;
   subtitle?: string;
   kind: BookSectionKind;
   blocks: BookBlock[];
@@ -319,9 +320,32 @@ function inferChapterKind(title: string, order: number): BookSectionKind {
   return 'chapter';
 }
 
-function firstHeadingTitle(blocks: BookBlock[], fallback: string): string {
+type NavigationTitle = {
+  title: string;
+  level: number;
+};
+
+function firstHeadingTitle(blocks: BookBlock[], fallback: string): NavigationTitle {
   const firstHeading = blocks.find(block => block.kind === 'heading' && block.content.trim());
-  return firstHeading?.content.trim() || fallback;
+  return {
+    title: firstHeading?.content.trim() || fallback,
+    level: firstHeading?.heading_level ?? 1,
+  };
+}
+
+function comparableTitle(value: string): string {
+  return normalizeWhitespace(value)
+    .toLocaleLowerCase('pt-BR')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim();
+}
+
+function removeDuplicatedLeadingTitle(blocks: BookBlock[], title: string): BookBlock[] {
+  const [first, ...rest] = blocks;
+  if (!first || first.kind !== 'heading') return blocks;
+  return comparableTitle(first.content) === comparableTitle(title) ? rest : blocks;
 }
 
 function hasSemanticType(doc: Document, type: string): boolean {
@@ -428,8 +452,8 @@ async function parseNavigationTitles(
   zip: JSZip,
   manifest: Map<string, ManifestItem>,
   basePath: string,
-): Promise<Map<string, string>> {
-  const titles = new Map<string, string>();
+): Promise<Map<string, NavigationTitle>> {
+  const titles = new Map<string, NavigationTitle>();
   const navItem = Array.from(manifest.values()).find(item => item.properties.includes('nav'));
   if (navItem) {
     const navPath = joinZipPath(basePath, navItem.href);
@@ -437,12 +461,23 @@ async function parseNavigationTitles(
     if (source) {
       const doc = parseXml(source, 'nav.xhtml');
       const navBase = dirname(navPath);
-      Array.from(doc.getElementsByTagName('a')).forEach(anchor => {
-        const href = attr(anchor, 'href');
-        const text = normalizeWhitespace(anchor.textContent ?? '');
-        if (!href || !text) return;
-        titles.set(stripFragment(joinZipPath(navBase, href)), text);
-      });
+      const walkList = (list: Element, level: number) => {
+        Array.from(list.children)
+          .filter(child => child.localName.toLowerCase() === 'li')
+          .forEach(li => {
+            const anchor = Array.from(li.children).find(child => child.localName.toLowerCase() === 'a');
+            const href = attr(anchor, 'href');
+            const text = normalizeWhitespace(anchor?.textContent ?? '');
+            if (href && text) titles.set(stripFragment(joinZipPath(navBase, href)), { title: text, level });
+            Array.from(li.children)
+              .filter(child => child.localName.toLowerCase() === 'ol')
+              .forEach(child => walkList(child, Math.min(6, level + 1)));
+          });
+      };
+      Array.from(doc.getElementsByTagName('nav'))
+        .filter(nav => (attr(nav, 'epub:type') ?? '').split(/\s+/).includes('toc'))
+        .flatMap(nav => Array.from(nav.children).filter(child => child.localName.toLowerCase() === 'ol'))
+        .forEach(list => walkList(list, 1));
     }
   }
 
@@ -453,12 +488,20 @@ async function parseNavigationTitles(
     if (source) {
       const doc = parseXml(source, 'toc.ncx');
       const ncxBase = dirname(ncxPath);
-      Array.from(doc.getElementsByTagName('navPoint')).forEach(point => {
+      const walkPoint = (point: Element, level: number) => {
         const src = attr(point.getElementsByTagName('content')[0], 'src');
         const text = normalizeWhitespace(point.getElementsByTagName('text')[0]?.textContent ?? '');
         if (!src || !text) return;
-        titles.set(stripFragment(joinZipPath(ncxBase, src)), text);
-      });
+        if (!titles.has(stripFragment(joinZipPath(ncxBase, src)))) {
+          titles.set(stripFragment(joinZipPath(ncxBase, src)), { title: text, level });
+        }
+        Array.from(point.children)
+          .filter(child => child.localName.toLowerCase() === 'navpoint')
+          .forEach(child => walkPoint(child, Math.min(6, level + 1)));
+      };
+      Array.from(doc.getElementsByTagName('navMap')[0]?.children ?? [])
+        .filter(child => child.localName.toLowerCase() === 'navpoint')
+        .forEach(point => walkPoint(point, 1));
     }
   }
 
@@ -539,12 +582,15 @@ export class BookEpubImporter {
 
       const order = chapters.length + 1;
       const fallbackTitle = basenameWithoutExt(path) || `Capítulo ${order}`;
-      const chapterTitle = navigationTitles.get(path) ?? firstHeadingTitle(blocks, fallbackTitle);
+      const navigationTitle = navigationTitles.get(path) ?? firstHeadingTitle(blocks, fallbackTitle);
+      const chapterTitle = navigationTitle.title;
+      const contentBlocks = removeDuplicatedLeadingTitle(blocks, chapterTitle);
       chapters.push({
         order,
         title: chapterTitle,
+        title_level: navigationTitle.level,
         kind: inferChapterKind(chapterTitle, order),
-        blocks,
+        blocks: contentBlocks,
         footnotes: footnotes.length > 0 ? footnotes : undefined,
       });
     }

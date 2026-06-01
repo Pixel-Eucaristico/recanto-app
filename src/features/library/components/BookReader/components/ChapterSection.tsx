@@ -30,6 +30,12 @@ export function ChapterSection({
   onAddHighlight, onRemoveHighlight, onAddTag, onRemoveTag, onOpenComment,
 }: ChapterSectionProps) {
   const blocks = useMemo(() => chapter.blocks, [chapter.blocks]);
+  const titleLevel = Math.min(6, Math.max(1, chapter.title_level ?? 1));
+  const titleClass = titleLevel === 1
+    ? 'text-2xl md:text-3xl font-bold'
+    : titleLevel === 2
+      ? 'text-xl md:text-2xl font-semibold'
+      : 'text-lg md:text-xl font-semibold';
 
   return (
     <section
@@ -40,7 +46,7 @@ export function ChapterSection({
     >
       <header className="mb-4 pb-3 border-b border-base-300">
         <p className="text-xs uppercase tracking-wide text-base-content/50">{chapterKindLabel(chapter.kind, chapter.order)}</p>
-        <h2 className="text-2xl md:text-3xl font-bold text-base-content mt-1">
+        <h2 className={`${titleClass} text-base-content mt-1`}>
           <InlineMarkdown markdown={chapter.title} />
         </h2>
         {chapter.subtitle && (

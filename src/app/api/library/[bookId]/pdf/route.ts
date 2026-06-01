@@ -179,7 +179,7 @@ export async function GET(
           startPageNumber: pageOffset,
         });
         tocEntries.push({
-          level: 1,
+          level: Math.min(6, Math.max(1, ch.title_level ?? 1)),
           title: ch.title,
           page: pageOffset,
         });

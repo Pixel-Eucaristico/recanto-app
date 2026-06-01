@@ -176,6 +176,8 @@ export class BookExportEntity {
   static buildChapterXhtml(chapter: BookChapter, bookTitle: string): string {
     const kind = chapter.kind ?? 'chapter';
     const epubType = EPUB_TYPE[kind];
+    const titleLevel = Math.min(6, Math.max(1, chapter.title_level ?? 1));
+    const titleTag = `h${titleLevel}`;
     const subtitle = chapter.subtitle
       ? `\n    <p class="subtitle">${escapeXml(chapter.subtitle)}</p>` : '';
 
@@ -220,7 +222,7 @@ ${items}
 </head>
 <body>
   <section epub:type="${epubType}" id="section-${chapter.order}">
-    <h1 class="chapter-title">${escapeXml(chapter.title)}</h1>${subtitle}
+    <${titleTag} class="chapter-title">${escapeXml(chapter.title)}</${titleTag}>${subtitle}
     ${body}${footnotesBlock}
   </section>
 </body>
