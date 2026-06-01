@@ -26,6 +26,10 @@ export interface SaveBookInput {
   category_ids?: string[];
   tags?: string[];
   isbn?: string;
+  source_type?: Book['source_type'];
+  source_identifier?: string;
+  source_hash?: string;
+  duplicate_key?: string;
   edition?: string;
   year?: number;
   is_published?: boolean;
@@ -75,6 +79,10 @@ export class LibraryService {
       category_ids: input.category_ids ?? [],
       tags: input.tags ?? [],
       isbn: input.isbn,
+      source_type: input.source_type,
+      source_identifier: input.source_identifier,
+      source_hash: input.source_hash,
+      duplicate_key: input.duplicate_key,
       edition: input.edition,
       year: input.year,
       is_published: input.is_published ?? false,
@@ -91,7 +99,10 @@ export class LibraryService {
       const updated = await bookRepository.update(input.id, {
         title: draft.title, subtitle: draft.subtitle, author: draft.author, language: draft.language,
         description: draft.description, cover_url: draft.cover_url, back_cover_url: draft.back_cover_url,
-        category_ids: draft.category_ids, tags: draft.tags, isbn: draft.isbn, edition: draft.edition,
+        category_ids: draft.category_ids, tags: draft.tags, isbn: draft.isbn,
+        source_type: draft.source_type, source_identifier: draft.source_identifier,
+        source_hash: draft.source_hash, duplicate_key: draft.duplicate_key,
+        edition: draft.edition,
         year: draft.year, is_published: draft.is_published, spoiler_mode: draft.spoiler_mode,
         required_roles: draft.required_roles, age_rating: draft.age_rating,
       });
@@ -109,6 +120,10 @@ export class LibraryService {
       onProgress,
       ...bookInput
     } = input;
+    const duplicate = await this.findImportDuplicate(bookInput);
+    if (duplicate) {
+      throw new Error(`Este livro já foi importado: "${duplicate.title}".`);
+    }
     const book = await this.saveBook({
       ...bookInput,
       is_published: false,
@@ -126,6 +141,26 @@ export class LibraryService {
       await this.deleteBook(book.id);
       throw error;
     }
+  }
+
+  async findImportDuplicate(input: Pick<SaveBookInput, 'source_hash' | 'source_identifier' | 'isbn' | 'duplicate_key'>): Promise<Book | null> {
+    if (input.source_hash) {
+      const [book] = await bookRepository.findBySourceHash(input.source_hash);
+      if (book) return book;
+    }
+    if (input.source_identifier) {
+      const [book] = await bookRepository.findBySourceIdentifier(input.source_identifier);
+      if (book) return book;
+    }
+    if (input.isbn) {
+      const [book] = await bookRepository.findByIsbn(input.isbn);
+      if (book) return book;
+    }
+    if (input.duplicate_key) {
+      const [book] = await bookRepository.findByDuplicateKey(input.duplicate_key);
+      if (book) return book;
+    }
+    return null;
   }
 
   private async saveImportedChapters(

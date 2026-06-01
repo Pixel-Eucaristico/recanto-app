@@ -35,7 +35,18 @@ export function BookEpubImportModal({ userId, onClose, onImported }: BookEpubImp
     if (!nextFile) return;
     setParsing(true);
     try {
-      setDraft(await bookEpubImporter.parse(nextFile));
+      const parsed = await bookEpubImporter.parse(nextFile);
+      const duplicate = await libraryService.findImportDuplicate({
+        source_hash: parsed.sourceHash,
+        source_identifier: parsed.sourceIdentifier,
+        isbn: parsed.isbn,
+        duplicate_key: parsed.duplicateKey,
+      });
+      if (duplicate) {
+        setError(`Este EPUB parece já importado como "${duplicate.title}".`);
+        return;
+      }
+      setDraft(parsed);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -66,6 +77,10 @@ export function BookEpubImportModal({ userId, onClose, onImported }: BookEpubImp
         cover_url: coverUpload?.asset.url,
         back_cover_url: backCoverUpload?.asset.url,
         isbn: draft.isbn,
+        source_type: 'epub',
+        source_identifier: draft.sourceIdentifier,
+        source_hash: draft.sourceHash,
+        duplicate_key: draft.duplicateKey,
         year: draft.year,
         category_ids: [],
         tags: ['epub-import'],

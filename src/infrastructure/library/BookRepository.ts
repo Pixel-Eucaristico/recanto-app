@@ -38,6 +38,22 @@ export class BookRepository extends BaseRepository<Book> {
     const docs = await Promise.all(ids.map(id => this.get(id)));
     return docs.filter((d): d is Book => d !== null);
   }
+
+  async findBySourceHash(hash: string): Promise<Book[]> {
+    return this.queryByFilters([{ field: 'source_hash', operator: '==', value: hash }], { limitCount: 1 });
+  }
+
+  async findBySourceIdentifier(identifier: string): Promise<Book[]> {
+    return this.queryByFilters([{ field: 'source_identifier', operator: '==', value: identifier }], { limitCount: 1 });
+  }
+
+  async findByIsbn(isbn: string): Promise<Book[]> {
+    return this.queryByFilters([{ field: 'isbn', operator: '==', value: isbn }], { limitCount: 1 });
+  }
+
+  async findByDuplicateKey(key: string): Promise<Book[]> {
+    return this.queryByFilters([{ field: 'duplicate_key', operator: '==', value: key }], { limitCount: 1 });
+  }
 }
 
 export const bookRepository = new BookRepository();

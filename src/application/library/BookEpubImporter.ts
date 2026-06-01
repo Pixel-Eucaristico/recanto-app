@@ -34,6 +34,9 @@ export interface ImportedBookDraft {
   description?: string;
   isbn?: string;
   year?: number;
+  sourceIdentifier?: string;
+  sourceHash: string;
+  duplicateKey: string;
   coverImage?: ImportedBookImageDraft;
   backCoverImage?: ImportedBookImageDraft;
   chapters: ImportedBookChapterDraft[];
@@ -404,6 +407,43 @@ function parseSpineIds(opf: Document): string[] {
     .filter((id): id is string => !!id);
 }
 
+function normalizeDuplicatePart(value: string | undefined): string {
+  return normalizeWhitespace(value ?? '')
+    .toLocaleLowerCase('pt-BR')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim();
+}
+
+function buildDuplicateKey(input: { title: string; author?: string; isbn?: string; year?: number }): string {
+  if (input.isbn) return `isbn:${normalizeDuplicatePart(input.isbn)}`;
+  return [
+    'book',
+    normalizeDuplicatePart(input.title),
+    normalizeDuplicatePart(input.author),
+    input.year ? String(input.year) : '',
+  ].join(':');
+}
+
+async function hashArrayBuffer(buffer: ArrayBuffer): Promise<string> {
+  const subtle = globalThis.crypto?.subtle;
+  if (!subtle) return fallbackFileFingerprint(buffer);
+  const digest = await subtle.digest('SHA-256', buffer);
+  const bytes = new Uint8Array(digest);
+  return `sha256:${Array.from(bytes).map(byte => byte.toString(16).padStart(2, '0')).join('')}`;
+}
+
+function fallbackFileFingerprint(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let hash = 0x811c9dc5;
+  for (const byte of bytes) {
+    hash ^= byte;
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return `fnv1a:${bytes.length}:${(hash >>> 0).toString(16).padStart(8, '0')}`;
+}
+
 function fileNameFromPath(path: string, fallback: string): string {
   return path.split('/').pop()?.trim() || fallback;
 }
@@ -514,7 +554,9 @@ export class BookEpubImporter {
       throw new Error('Selecione um arquivo .epub.');
     }
 
-    const zip = await JSZip.loadAsync(await this.readFile(file));
+    const fileBuffer = await this.readFile(file);
+    const sourceHash = await hashArrayBuffer(fileBuffer);
+    const zip = await JSZip.loadAsync(fileBuffer);
     const container = await zip.file('META-INF/container.xml')?.async('string');
     if (!container) throw new Error('EPUB sem META-INF/container.xml.');
 
@@ -537,6 +579,7 @@ export class BookEpubImporter {
     const language = textOf(opf, 'language') ?? 'pt';
     const identifiers = Array.from(opf.getElementsByTagNameNS(DC_NS, 'identifier'));
     const plainIdentifiers = identifiers.length > 0 ? identifiers : Array.from(opf.getElementsByTagName('identifier'));
+    const sourceIdentifier = plainIdentifiers.map(el => el.textContent?.trim() ?? '').find(Boolean);
     const isbn = plainIdentifiers.map(el => el.textContent?.trim() ?? '').find(value => /97[89][0-9Xx-]{10,}/.test(value));
     const dateText = textOf(opf, 'date');
     const year = dateText?.match(/\b(\d{4})\b/) ? Number(dateText.match(/\b(\d{4})\b/)![1]) : undefined;
@@ -607,6 +650,9 @@ export class BookEpubImporter {
       description: textOf(opf, 'description'),
       isbn,
       year,
+      sourceIdentifier,
+      sourceHash,
+      duplicateKey: buildDuplicateKey({ title, author: textOf(opf, 'creator'), isbn, year }),
       coverImage,
       backCoverImage,
       chapters,

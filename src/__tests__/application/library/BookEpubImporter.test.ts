@@ -87,6 +87,9 @@ describe('BookEpubImporter', () => {
     expect(draft.language).toBe('pt-BR');
     expect(draft.isbn).toBe('9781234567890');
     expect(draft.year).toBe(2024);
+    expect(draft.sourceIdentifier).toBe('9781234567890');
+    expect(draft.sourceHash).toMatch(/^(sha256:[a-f0-9]{64}|fnv1a:\d+:[a-f0-9]{8})$/);
+    expect(draft.duplicateKey).toBe('isbn:9781234567890');
     expect(draft.coverImage?.file.name).toBe('cover.jpg');
     expect(draft.coverImage?.mediaType).toBe('image/jpeg');
     expect(draft.backCoverImage?.file.name).toBe('back-cover.jpg');

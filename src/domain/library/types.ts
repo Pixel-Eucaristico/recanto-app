@@ -83,6 +83,14 @@ export interface Book {
   category_ids: string[];
   tags: string[];
   isbn?: string;
+  /** Origem de importação, quando veio de arquivo externo. */
+  source_type?: 'epub';
+  /** Identificador do arquivo fonte (ex: dc:identifier do EPUB). */
+  source_identifier?: string;
+  /** Hash SHA-256 do arquivo fonte. */
+  source_hash?: string;
+  /** Chave normalizada de deduplicação (título + autor + ano/ISBN). */
+  duplicate_key?: string;
   edition?: string;
   /** Ano de publicação. */
   year?: number;
