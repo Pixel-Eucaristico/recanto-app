@@ -40,6 +40,15 @@ export class VideoWatchSessionRepository {
     return snap.docs.map(d => ({ id: d.id, ...(d.data() as Omit<VideoWatchSession, 'id'>) }));
   }
 
+  /** Todas as sessões de vídeo do aluno — histórico do formador. */
+  async findByUser(userId: string): Promise<VideoWatchSession[]> {
+    const snap = await getDocs(
+      query(collection(db, COLLECTION), where('user_id', '==', userId)),
+    );
+    const all = snap.docs.map(d => ({ id: d.id, ...(d.data() as Omit<VideoWatchSession, 'id'>) }));
+    return all.sort((a, b) => b.started_at.localeCompare(a.started_at));
+  }
+
   async countByUserAndLesson(userId: string, lessonId: string): Promise<number> {
     const snap = await getCountFromServer(
       query(

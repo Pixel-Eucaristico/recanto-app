@@ -27,6 +27,12 @@ export class FirebaseFlashcardReviewRepository
     ]);
     return all.sort((a, b) => b.reviewed_at.localeCompare(a.reviewed_at));
   }
+
+  /** Todas as revisões do aluno — histórico do formador. */
+  async findByUser(userId: string): Promise<FlashcardReview[]> {
+    const all = await this.queryByFilters([{ field: 'user_id', operator: '==', value: userId }]);
+    return all.sort((a, b) => b.reviewed_at.localeCompare(a.reviewed_at));
+  }
 }
 
 export const flashcardReviewRepository = new FirebaseFlashcardReviewRepository();

@@ -24,6 +24,12 @@ export class FirebaseCaseRunRepository extends BaseRepository<CaseRun> implement
     ]);
     return all.sort((a, b) => b.run_at.localeCompare(a.run_at));
   }
+
+  /** Todas as execuções do aluno — histórico do formador. */
+  async findByUser(userId: string): Promise<CaseRun[]> {
+    const all = await this.queryByFilters([{ field: 'user_id', operator: '==', value: userId }]);
+    return all.sort((a, b) => b.run_at.localeCompare(a.run_at));
+  }
 }
 
 export const caseRunRepository = new FirebaseCaseRunRepository();

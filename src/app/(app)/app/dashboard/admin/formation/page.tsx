@@ -8,14 +8,14 @@ import {
   TrackTypeManager,
   useTracksAdmin, useModulesAdmin, useLessonsAdmin,
 } from '@/features/formation-admin';
-import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
+import { useAccess } from '@/shared/hooks/useAccess';
 import type { FormationTrack, FormationModule, FormationLesson } from '@/domain/formation/types';
 import { contentGrantService } from '@/application/content-access/ContentGrantService';
 
 type View = 'tracks' | 'track-form' | 'modules' | 'lessons' | 'lesson-form' | 'track-types';
 
 export default function AdminFormationPage() {
-  const user = useCurrentUser();
+  const { user, canManageFormation: canManage } = useAccess();
   const tracksAdmin = useTracksAdmin();
   const [view, setView] = useState<View>('tracks');
   const [activeTrack, setActiveTrack] = useState<FormationTrack | null>(null);
@@ -33,7 +33,6 @@ export default function AdminFormationPage() {
 
   if (!user) return <div className="p-6">Faça login.</div>;
 
-  const canManage = user.role === 'admin' || user.features.includes('manage:formation') || user.features.includes('*');
   if (!canManage) {
     return (
       <div className="p-6">

@@ -1,25 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { CheckCircle2, XCircle, Clock, Loader2, ShieldCheck } from 'lucide-react';
 import { BackButton } from '@/shared/components/BackButton';
-import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
+import { useAccess } from '@/shared/hooks/useAccess';
 import { trackEnrollmentService } from '@/application/enrollment/TrackEnrollmentService';
 import type { TrackEnrollmentRequest } from '@/domain/enrollment/types';
 
 export default function FormatorApprovalsPage() {
-  const user = useCurrentUser();
+  const { user, isAdmin, isFormatorLike: canApprove } = useAccess();
   const [requests, setRequests] = useState<TrackEnrollmentRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [decidingId, setDecidingId] = useState<string | null>(null);
   const [noteByReq, setNoteByReq] = useState<Record<string, string>>({});
-
-  const isAdmin = user?.role === 'admin' || user?.features.includes('*') || false;
-  const canApprove = isAdmin
-    || user?.features.includes('manage:formation')
-    || user?.role === 'missionario';
 
   async function reload() {
     if (!user) return;

@@ -5,6 +5,9 @@ import { progressRepository } from '@/infrastructure/formation/ProgressRepositor
 import { bookReadingProgressRepository } from '@/infrastructure/library/BookReadingProgressRepository';
 import { trackRepository } from '@/infrastructure/formation/TrackRepository';
 import { lessonRepository } from '@/infrastructure/formation/LessonRepository';
+import { formationService } from '@/application/formation/FormationService';
+import { buildTrackProgress, type TrackProgress } from '@/domain/formation/progress';
+import { computeStreak, formatDayKey } from '@/shared/utils/datetime';
 import type { FormationTrack, FormationLesson, LessonProgress } from '@/domain/formation/types';
 import type { BookReadingProgress } from '@/domain/library/types';
 
@@ -29,9 +32,8 @@ export type LastActivity =
 
 export interface TrackProgressSummary {
   track: FormationTrack;
-  completedCount: number;
-  totalLessons: number;
-  percent: number;
+  /** Concluídas / total real do currículo. `percent` é null se o total não resolveu. */
+  progress: TrackProgress;
   lastUpdated: string;
 }
 
@@ -88,20 +90,24 @@ export function useJourneyData(userId: string | undefined): JourneyData {
           if (!trackProgressMap.has(p.track_id)) trackProgressMap.set(p.track_id, []);
           trackProgressMap.get(p.track_id)!.push(p);
         }
+
+        const trackIds = Array.from(trackProgressMap.keys());
+        // Em paralelo — antes era um `await findById` dentro do for, um round-trip por trilha.
+        const [trackList, lessonCounts] = await Promise.all([
+          Promise.all(trackIds.map(id => trackRepository.findById(id).catch(() => null))),
+          formationService.getTrackLessonCounts(trackIds).catch(() => new Map<string, number>()),
+        ]);
+        if (cancelled) return;
+
         const trackSummaries: TrackProgressSummary[] = [];
-        for (const [trackId, progresses] of trackProgressMap) {
-          const track = await trackRepository.findById(trackId);
-          if (!track || cancelled) continue;
+        for (const track of trackList) {
+          if (!track) continue;
+          const progresses = trackProgressMap.get(track.id) ?? [];
           const completed = progresses.filter(p => p.status === 'completed').length;
-          // Total real seria `track.module_ids → modules → lesson_ids` — caro.
-          // Aproximação: total = total de progresses (já que só cria progress quando interage)
-          // ou usa track.module_ids.length como heurística inicial.
-          const total = Math.max(progresses.length, 1);
           trackSummaries.push({
             track,
-            completedCount: completed,
-            totalLessons: total,
-            percent: Math.round((completed / total) * 100),
+            // Denominador é o currículo inteiro, não as aulas que o aluno abriu.
+            progress: buildTrackProgress(completed, lessonCounts.get(track.id)),
             lastUpdated: progresses
               .map(p => p.updated_at ?? '')
               .filter(Boolean)
@@ -112,10 +118,14 @@ export function useJourneyData(userId: string | undefined): JourneyData {
         // Sort by lastUpdated desc
         trackSummaries.sort((a, b) => b.lastUpdated.localeCompare(a.lastUpdated));
 
-        const streakDays = computeStreak([
-          ...lessonProgress.map(p => p.updated_at ?? ''),
-          ...bookProgress.map(p => p.updated_at),
-        ].filter(Boolean));
+        // `formatDayKey` usa fuso local — a versão antiga fatiava o ISO em UTC, o que
+        // jogava atividade das 21h à meia-noite no dia seguinte.
+        const streakDays = computeStreak(
+          [
+            ...lessonProgress.map(p => p.updated_at ?? ''),
+            ...bookProgress.map(p => p.updated_at),
+          ].filter(Boolean).map(ts => formatDayKey(ts)),
+        );
 
         setData({
           loading: false,
@@ -149,20 +159,4 @@ function pickLastLessonProgress(list: LessonProgress[]): LessonProgress | null {
 
 function pickLastBookProgress(list: BookReadingProgress[]): BookReadingProgress | null {
   return [...list].sort((a, b) => b.updated_at.localeCompare(a.updated_at))[0] ?? null;
-}
-
-/** Conta dias consecutivos até hoje com pelo menos uma atividade. */
-function computeStreak(timestamps: string[]): number {
-  if (timestamps.length === 0) return 0;
-  const days = new Set(timestamps.map(t => t.slice(0, 10))); // YYYY-MM-DD
-  const today = new Date();
-  today.setUTCHours(0, 0, 0, 0);
-  let streak = 0;
-  for (let i = 0; i < 365; i++) {
-    const d = new Date(today.getTime() - i * 86400000);
-    const key = d.toISOString().slice(0, 10);
-    if (days.has(key)) streak++;
-    else if (i > 0) break; // permite hoje sem atividade ainda
-  }
-  return streak;
 }

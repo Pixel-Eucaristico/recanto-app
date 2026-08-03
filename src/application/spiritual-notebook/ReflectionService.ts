@@ -36,6 +36,7 @@ export class ReflectionService {
           plugin_kind: 'reflection',
           user_id: input.userId,
           lesson_id: input.lessonId,
+          track_id: input.trackId,
           payload: { content: existing.content, status: existing.status },
           label: 'Rascunho anterior',
         }).catch(() => {});
@@ -76,6 +77,7 @@ export class ReflectionService {
       plugin_kind: 'reflection',
       user_id: existing.user_id,
       lesson_id: existing.lesson_id,
+      track_id: existing.track_id,
       payload: { content: updated.content, status: 'submitted' },
       label: 'Submissão',
     }).catch(() => {});
@@ -88,10 +90,6 @@ export class ReflectionService {
 
   async findByLesson(userId: string, lessonId: string): Promise<Reflection | null> {
     return this.repo.findByLesson(userId, lessonId);
-  }
-
-  async listPendingReview(): Promise<Reflection[]> {
-    return this.repo.findSubmitted();
   }
 
   async addPostReviewNote(reflectionId: string, userId: string, content: string): Promise<Reflection> {

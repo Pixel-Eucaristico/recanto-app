@@ -73,6 +73,49 @@ export function hasFeature(
   return false;
 }
 
+// ─── Helpers semânticos ────────────────────────────────────────────────────
+// Use estes em vez de repetir `user.role === 'admin' || user.features.includes(...)`
+// pelas páginas. Aceitam tanto features cruas (com `dynamicPermissions`) quanto já
+// resolvidas por `getAvailableFeatures` / `useCurrentUser`.
+
+/** Fundador/admin — acesso total. */
+export function isAdminUser(user: PermissibleUser | null | undefined): boolean {
+  if (!user) return false;
+  return user.role === 'admin' || (user.features ?? []).includes('*');
+}
+
+/** Pode criar/editar trilhas, módulos e aulas. */
+export function canManageFormation(
+  user: PermissibleUser | null | undefined,
+  dynamicPermissions?: Record<string, string[]>,
+): boolean {
+  return hasFeature(user, 'manage:formation', dynamicPermissions);
+}
+
+/** Pode ver progresso e escritos dos alunos. */
+export function canReviewFormation(
+  user: PermissibleUser | null | undefined,
+  dynamicPermissions?: Record<string, string[]>,
+): boolean {
+  return hasFeature(user, 'review:formation', dynamicPermissions);
+}
+
+/**
+ * É formador DESTA trilha — definição canônica de "dono do curso".
+ *
+ * Só `formator_ids` conta. Ter `manage:formation` autoriza editar cursos, não
+ * acompanhar os alunos de um curso alheio. Admin sempre passa.
+ */
+export function isFormatorOfTrack(
+  user: (PermissibleUser & { id?: string }) | null | undefined,
+  track: { formator_ids?: string[] } | null | undefined,
+): boolean {
+  if (!user) return false;
+  if (isAdminUser(user)) return true;
+  if (!user.id) return false;
+  return Boolean(track?.formator_ids?.includes(user.id));
+}
+
 /**
  * Retorna todas as permissões efetivas do usuário (somando grupo + individuais).
  */

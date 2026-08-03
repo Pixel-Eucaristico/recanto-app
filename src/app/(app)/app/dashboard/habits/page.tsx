@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { HeartHandshake, Settings } from 'lucide-react';
 import { HabitChecklist, HabitConfig } from '@/features/habits';
-import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
+import { useAccess } from '@/shared/hooks/useAccess';
 import { progressRepository } from '@/infrastructure/formation/ProgressRepository';
 import { trackRepository } from '@/infrastructure/formation/TrackRepository';
 import type { FormationTrack } from '@/domain/formation/types';
@@ -11,7 +11,7 @@ import type { FormationTrack } from '@/domain/formation/types';
 type Scope = 'all' | 'community' | 'course' | 'mine';
 
 export default function HabitsPage() {
-  const user = useCurrentUser();
+  const { user, can } = useAccess();
   const [tab, setTab] = useState<'my' | 'admin'>('my');
   const [scope, setScope] = useState<Scope>('all');
   const [courseId, setCourseId] = useState<string>('');
@@ -29,7 +29,7 @@ export default function HabitsPage() {
 
   if (!user) return <div className="p-6">Faça login.</div>;
 
-  const isAdmin = user.role === 'admin' || user.features.includes('manage:habits') || user.features.includes('*');
+  const isAdmin = can('manage:habits');
 
   return (
     <div className="min-h-screen bg-base-200 p-3 sm:p-6 space-y-3 sm:space-y-4">

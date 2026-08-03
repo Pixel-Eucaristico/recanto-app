@@ -103,13 +103,14 @@ describe('Routes Configuration', () => {
     it('should have correct structure for login', () => {
       expect(authNavbar.login).toHaveProperty('text')
       expect(authNavbar.login).toHaveProperty('url')
-      expect(authNavbar.login.text).toBe('Log in')
+      // UI é pt-BR por convenção do projeto — ver CLAUDE.md.
+      expect(authNavbar.login.text).toBe('Entrar')
     })
 
     it('should have correct structure for signup', () => {
       expect(authNavbar.signup).toHaveProperty('text')
       expect(authNavbar.signup).toHaveProperty('url')
-      expect(authNavbar.signup.text).toBe('Sign up')
+      expect(authNavbar.signup.text).toBe('Cadastrar')
     })
   })
 })

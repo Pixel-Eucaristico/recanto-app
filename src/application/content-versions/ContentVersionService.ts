@@ -7,6 +7,8 @@ export interface RecordVersionInput {
   plugin_kind: string;
   user_id: string;
   lesson_id?: string;
+  /** Obrigatório na prática: sem ele o formador não enxerga a versão (ver rules). */
+  track_id?: string;
   payload: Record<string, unknown>;
   label?: string;
 }
@@ -19,6 +21,7 @@ export class ContentVersionService {
       plugin_kind: input.plugin_kind,
       user_id: input.user_id,
       lesson_id: input.lesson_id,
+      track_id: input.track_id,
       payload: input.payload,
       label: input.label,
       created_at: new Date().toISOString(),
@@ -30,8 +33,13 @@ export class ContentVersionService {
     return contentVersionRepository.findByTarget(target_collection, target_id);
   }
 
-  async listByUserLesson(userId: string, lessonId: string): Promise<ContentVersion[]> {
-    return contentVersionRepository.findByUserLesson(userId, lessonId);
+  /** Todas as versões de um usuário — base pra contagem de edições por escrito. */
+  async listByUser(userId: string, limitCount = 200): Promise<ContentVersion[]> {
+    return contentVersionRepository.findByUser(userId, limitCount);
+  }
+
+  async listByTargets(target_collection: string, targetIds: string[]): Promise<ContentVersion[]> {
+    return contentVersionRepository.findByTargets(target_collection, targetIds);
   }
 
   async getById(id: string): Promise<ContentVersion | null> {

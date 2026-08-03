@@ -2,17 +2,33 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
-import { Users, Search, ChevronRight, Activity, AlertTriangle, TrendingUp, Download } from 'lucide-react';
+import {
+  Users, Search, ChevronRight, Activity, AlertTriangle, TrendingUp, Download, Clock, UserX,
+} from 'lucide-react';
 import { BackButton } from '@/shared/components/BackButton';
-import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
-import { formatorService, type StudentSummary, type FormatorStats } from '@/application/formation/FormatorService';
+import { StatCard } from '@/shared/components/StatCard';
+import { EmptyState } from '@/shared/components/EmptyState';
+import { LoadingCard } from '@/shared/components/LoadingCard';
+import { TrackCompletionChart, StudentsTable } from '@/features/formator-dashboard';
+import { useAccess } from '@/shared/hooks/useAccess';
+import {
+  formatorService, activityBand, ACTIVITY_BAND_LABELS,
+  type StudentSummary, type FormatorStats, type ActivityBand,
+} from '@/application/formation/FormatorService';
 import type { FormationTrack } from '@/domain/formation/types';
 import { toCsv, downloadCsv } from '@/shared/utils/csv';
+import { formatRelative } from '@/shared/utils/datetime';
+import {
+  buildTrackProgress, formatProgressCount, formatProgressPercent, progressBadgeClass,
+} from '@/domain/formation/progress';
 
-type ActivityFilter = 'all' | 'active' | 'stale' | 'never';
+type ActivityFilter = 'all' | ActivityBand;
+
+/** Ordem das abas: da faixa que exige menos atenção para a que exige mais. */
+const BAND_TABS: ActivityBand[] = ['active', 'attention', 'stale', 'never'];
 
 export default function FormatorStudentsPage() {
-  const user = useCurrentUser();
+  const { user, isAdmin, isFormatorLike: isFormator } = useAccess();
   const [tracks, setTracks] = useState<FormationTrack[]>([]);
   const [students, setStudents] = useState<StudentSummary[]>([]);
   const [stats, setStats] = useState<FormatorStats | null>(null);
@@ -21,11 +37,6 @@ export default function FormatorStudentsPage() {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const isAdmin = user?.role === 'admin' || user?.features.includes('*') || false;
-  const isFormator = isAdmin
-    || user?.features.includes('manage:formation')
-    || user?.role === 'missionario';
 
   useEffect(() => {
     if (!user || !isFormator) { setLoading(false); return; }
@@ -39,21 +50,30 @@ export default function FormatorStudentsPage() {
       .finally(() => setLoading(false));
   }, [user?.id, isAdmin, isFormator]);
 
+  /** trackId → total de aulas do currículo, vindo das stats já calculadas. */
+  const lessonCountByTrack = useMemo(() => {
+    const mapa = new Map<string, number>();
+    for (const b of stats?.byTrack ?? []) {
+      if (b.totalLessons !== null) mapa.set(b.track.id, b.totalLessons);
+    }
+    return mapa;
+  }, [stats]);
+
+  /** trackId → título. A tabela mostra o nome; antes só a contagem chegava à UI. */
+  const trackTitleById = useMemo(
+    () => new Map(tracks.map(t => [t.id, t.title] as const)),
+    [tracks],
+  );
+
   const filtered = useMemo(() => {
     let list = students;
     if (trackFilter !== 'all') {
       list = list.filter(s => s.trackIds.includes(trackFilter));
     }
     if (activityFilter !== 'all') {
-      const now = Date.now();
-      const day = 86400000;
-      list = list.filter(s => {
-        if (!s.lastActivityAt) return activityFilter === 'never';
-        const ageDays = (now - new Date(s.lastActivityAt).getTime()) / day;
-        if (activityFilter === 'active') return ageDays <= 7;
-        if (activityFilter === 'stale') return ageDays > 14;
-        return false;
-      });
+      // Usa a mesma classificação das stats — antes o filtro tinha regras próprias
+      // e devolvia false para a faixa de 7 a 14 dias, que sumia da tela.
+      list = list.filter(s => activityBand(s.lastActivityAt) === activityFilter);
     }
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -67,22 +87,28 @@ export default function FormatorStudentsPage() {
 
   function exportCsv() {
     const trackById = new Map(tracks.map(t => [t.id, t.title] as const));
-    const rows = filtered.map(s => ({
-      nome: s.user.name ?? '',
-      email: s.user.email ?? '',
-      trilhas: s.trackIds.map(id => trackById.get(id) ?? id).join(' | '),
-      aulas_iniciadas: s.totalLessonsTouched,
-      aulas_concluidas: s.totalLessonsCompleted,
-      percentual: s.totalLessonsTouched > 0
-        ? Math.round((s.totalLessonsCompleted / s.totalLessonsTouched) * 100)
-        : 0,
-      ultima_atividade: s.lastActivityAt
-        ? new Date(s.lastActivityAt).toLocaleString('pt-BR')
-        : '',
-    }));
+    const rows = filtered.map(s => {
+      const totalDoAluno = s.trackIds.reduce<number | null>((soma, id) => {
+        const total = lessonCountByTrack.get(id);
+        return soma === null || total === undefined ? null : soma + total;
+      }, 0);
+      const progresso = buildTrackProgress(s.totalLessonsCompleted, totalDoAluno);
+      return {
+        nome: s.user.name ?? '',
+        email: s.user.email ?? '',
+        trilhas: s.trackIds.map(id => trackById.get(id) ?? id).join(' | '),
+        aulas_iniciadas: s.totalLessonsTouched,
+        aulas_concluidas: s.totalLessonsCompleted,
+        aulas_no_curriculo: progresso.total ?? '',
+        percentual: progresso.percent ?? '',
+        ultima_atividade: s.lastActivityAt
+          ? new Date(s.lastActivityAt).toLocaleString('pt-BR')
+          : '',
+      };
+    });
     const csv = toCsv(rows, [
       'nome', 'email', 'trilhas',
-      'aulas_iniciadas', 'aulas_concluidas', 'percentual',
+      'aulas_iniciadas', 'aulas_concluidas', 'aulas_no_curriculo', 'percentual',
       'ultima_atividade',
     ]);
     const date = new Date().toISOString().slice(0, 10);
@@ -102,7 +128,9 @@ export default function FormatorStudentsPage() {
 
   return (
     <div className="min-h-screen bg-base-200 p-3 sm:p-6">
-      <div className="max-w-3xl mx-auto space-y-3">
+      {/* Larga no desktop: a tabela precisa de espaço. Antes eram 768px fixos, com
+          ~670px vazios de cada lado em 1440px. */}
+      <div className="max-w-3xl lg:max-w-6xl mx-auto space-y-3">
         <div className="flex items-center gap-2">
           <BackButton fallbackHref="/app/dashboard/journey" />
           <h1 className="text-base sm:text-lg font-bold flex items-center gap-1">
@@ -123,32 +151,72 @@ export default function FormatorStudentsPage() {
         {error && <div className="alert alert-error text-sm"><span>{error}</span></div>}
 
         {tracks.length === 0 && !loading && (
-          <div className="card bg-base-100 border border-dashed border-base-300">
-            <div className="card-body p-6 text-center gap-1">
-              <p className="text-sm font-medium">
-                {isAdmin ? 'Sem trilhas cadastradas.' : 'Você não está atribuído como formador em nenhuma trilha.'}
-              </p>
-              <p className="text-xs text-base-content/60">
-                {isAdmin
-                  ? 'Crie trilhas em Admin → Formação.'
-                  : 'Peça a um admin pra te atribuir como formador na edição da trilha.'}
-              </p>
-            </div>
-          </div>
+          <EmptyState
+            icon={<Users className="w-10 h-10" />}
+            title={isAdmin
+              ? 'Sem trilhas cadastradas.'
+              : 'Você não está atribuído como formador em nenhuma trilha.'}
+            description={isAdmin
+              ? 'Crie trilhas em Admin → Formação.'
+              : 'Peça a um admin pra te atribuir como formador na edição da trilha.'}
+          />
         )}
 
         {tracks.length > 0 && stats && (
           <>
-            {/* Stats cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {/* Filtros acima de tudo que eles afetam — KPIs, gráfico e lista leem a
+                mesma fatia, então os números sempre concordam. */}
+            <div className="card bg-base-100 border border-base-300">
+              <div className="card-body p-3 gap-2">
+                <div className="flex items-center gap-2">
+                  <Search className="w-4 h-4 text-base-content/50 shrink-0" />
+                  <input
+                    type="text"
+                    className="input input-bordered input-sm flex-1"
+                    placeholder="Buscar aluno por nome ou email..."
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                  />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <select
+                    className="select select-bordered select-sm"
+                    value={trackFilter}
+                    onChange={e => setTrackFilter(e.target.value)}
+                  >
+                    <option value="all">Todas as trilhas ({tracks.length})</option>
+                    {tracks.map(t => (
+                      <option key={t.id} value={t.id}>{t.title}</option>
+                    ))}
+                  </select>
+                  {/* Select em vez de abas: 5 opções com rótulo longo estouram a
+                      linha em 320px, e `tabs` não tem rolagem nem quebra. */}
+                  <select
+                    className="select select-bordered select-sm"
+                    value={activityFilter}
+                    onChange={e => setActivityFilter(e.target.value as ActivityFilter)}
+                    aria-label="Filtrar por atividade"
+                  >
+                    <option value="all">Qualquer atividade</option>
+                    {BAND_TABS.map(band => (
+                      <option key={band} value={band}>{ACTIVITY_BAND_LABELS[band]}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* As 4 faixas cobrem todos os alunos e somam o total — clicar filtra. */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
               <StatCard
                 label="Total de alunos"
                 value={stats.totalStudents}
                 icon={<Users className="w-4 h-4" />}
                 color="text-primary"
+                hint={`${stats.totalLessonsCompleted} aulas concluídas`}
               />
               <StatCard
-                label="Ativos (7d)"
+                label={ACTIVITY_BAND_LABELS.active}
                 value={stats.activeLast7d}
                 icon={<Activity className="w-4 h-4" />}
                 color="text-success"
@@ -156,102 +224,85 @@ export default function FormatorStudentsPage() {
                 active={activityFilter === 'active'}
               />
               <StatCard
-                label="Parados (>14d)"
+                label={ACTIVITY_BAND_LABELS.attention}
+                value={stats.attention7to14d}
+                icon={<Clock className="w-4 h-4" />}
+                color="text-info"
+                onClick={() => setActivityFilter(prev => prev === 'attention' ? 'all' : 'attention')}
+                active={activityFilter === 'attention'}
+              />
+              <StatCard
+                label={ACTIVITY_BAND_LABELS.stale}
                 value={stats.staleOver14d}
                 icon={<AlertTriangle className="w-4 h-4" />}
                 color="text-warning"
                 onClick={() => setActivityFilter(prev => prev === 'stale' ? 'all' : 'stale')}
                 active={activityFilter === 'stale'}
               />
+              {/* `neverStarted` era calculado e nunca renderizado. */}
+              <StatCard
+                label={ACTIVITY_BAND_LABELS.never}
+                value={stats.neverStarted}
+                icon={<UserX className="w-4 h-4" />}
+                color="text-error"
+                onClick={() => setActivityFilter(prev => prev === 'never' ? 'all' : 'never')}
+                active={activityFilter === 'never'}
+                hint={stats.neverStarted > 0 ? 'Matriculados sem atividade' : undefined}
+              />
               <StatCard
                 label="Taxa de conclusão"
-                value={`${stats.completionRate}%`}
+                value={stats.completionRate === null ? '—' : `${stats.completionRate}%`}
                 icon={<TrendingUp className="w-4 h-4" />}
                 color="text-info"
               />
             </div>
 
-            {/* Por trilha */}
+            {/* Clicar na barra filtra a lista — antes era uma lista inerte e o
+                filtro de trilha ficava dois cards abaixo. */}
             {stats.byTrack.length > 0 && (
-              <div className="card bg-base-100 border border-base-300">
-                <div className="card-body p-3 gap-2">
-                  <h2 className="font-semibold text-sm">Conclusão por trilha</h2>
-                  <ul className="space-y-1">
-                    {stats.byTrack.map(b => (
-                      <li key={b.track.id} className="flex items-center gap-2 text-xs">
-                        <span className="flex-1 min-w-0 truncate">{b.track.title}</span>
-                        <span className="text-base-content/60">
-                          {b.studentCount} aluno{b.studentCount !== 1 ? 's' : ''} · {b.completedLessons}/{b.touchedLessons}
-                        </span>
-                        <span className={`badge badge-sm ${b.rate >= 70 ? 'badge-success' : b.rate >= 30 ? 'badge-info' : 'badge-ghost'}`}>
-                          {b.rate}%
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
+              <TrackCompletionChart
+                byTrack={stats.byTrack}
+                selectedTrackId={trackFilter === 'all' ? undefined : trackFilter}
+                onSelectTrack={id => setTrackFilter(prev => (prev === id ? 'all' : id))}
+              />
             )}
 
-          <div className="card bg-base-100 border border-base-300">
-            <div className="card-body p-3 gap-2">
-              <div className="flex items-center gap-2">
-                <Search className="w-4 h-4 text-base-content/50 shrink-0" />
-                <input
-                  type="text"
-                  className="input input-bordered input-sm flex-1"
-                  placeholder="Buscar aluno por nome ou email..."
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                />
-              </div>
-              <select
-                className="select select-bordered select-sm"
-                value={trackFilter}
-                onChange={e => setTrackFilter(e.target.value)}
-              >
-                <option value="all">Todas as trilhas ({tracks.length})</option>
-                {tracks.map(t => (
-                  <option key={t.id} value={t.id}>{t.title}</option>
-                ))}
-              </select>
-              <div role="tablist" className="tabs tabs-bordered">
-                <button role="tab" className={`tab tab-sm ${activityFilter === 'all' ? 'tab-active' : ''}`} onClick={() => setActivityFilter('all')}>Todos</button>
-                <button role="tab" className={`tab tab-sm ${activityFilter === 'active' ? 'tab-active' : ''}`} onClick={() => setActivityFilter('active')}>Ativos</button>
-                <button role="tab" className={`tab tab-sm ${activityFilter === 'stale' ? 'tab-active' : ''}`} onClick={() => setActivityFilter('stale')}>Parados</button>
-                <button role="tab" className={`tab tab-sm ${activityFilter === 'never' ? 'tab-active' : ''}`} onClick={() => setActivityFilter('never')}>Não iniciaram</button>
-              </div>
-            </div>
-          </div>
           </>
         )}
 
-        {loading && (
-          <div className="card bg-base-100 border border-base-300">
-            <div className="card-body p-4 items-center text-center gap-2">
-              <span className="loading loading-spinner loading-md text-primary" />
-              <p className="text-sm text-base-content/60">Carregando alunos...</p>
-            </div>
-          </div>
-        )}
+        {loading && <LoadingCard label="Carregando alunos..." />}
 
         {!loading && tracks.length > 0 && filtered.length === 0 && (
-          <div className="card bg-base-100 border border-dashed border-base-300">
-            <div className="card-body p-6 text-center">
-              <p className="text-sm text-base-content/60">
-                {students.length === 0
-                  ? 'Nenhum aluno começou as trilhas ainda.'
-                  : 'Nenhum aluno bate com os filtros.'}
-              </p>
-            </div>
+          <EmptyState
+            size="sm"
+            title={students.length === 0
+              ? 'Nenhum aluno começou as trilhas ainda.'
+              : 'Nenhum aluno bate com os filtros.'}
+            description={students.length > 0 ? 'Ajuste a busca ou os filtros acima.' : undefined}
+          />
+        )}
+
+        {/* Desktop: tabela ordenável — comparar alunos pede colunas alinhadas. */}
+        {filtered.length > 0 && (
+          <div className="hidden lg:block">
+            <StudentsTable
+              students={filtered}
+              lessonCountByTrack={lessonCountByTrack}
+              trackTitleById={trackTitleById}
+            />
           </div>
         )}
 
-        <ul className="space-y-2">
+        {/* Mobile: cards — tabela de 6 colunas não cabe em 320px. */}
+        <ul className="space-y-2 lg:hidden">
           {filtered.map(s => {
-            const percent = s.totalLessonsTouched > 0
-              ? Math.round((s.totalLessonsCompleted / s.totalLessonsTouched) * 100)
-              : 0;
+            // Denominador é a soma do currículo das trilhas do aluno, não as aulas
+            // que ele abriu. Sem total conhecido, não há percentual.
+            const totalDoAluno = s.trackIds.reduce<number | null>((soma, id) => {
+              const total = lessonCountByTrack.get(id);
+              return soma === null || total === undefined ? null : soma + total;
+            }, 0);
+            const progresso = buildTrackProgress(s.totalLessonsCompleted, totalDoAluno);
             return (
               <li key={s.user.id}>
                 <Link
@@ -269,7 +320,7 @@ export default function FormatorStudentsPage() {
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm truncate">{s.user.name || s.user.email}</p>
                       <p className="text-[11px] text-base-content/60 truncate">
-                        {s.totalLessonsCompleted}/{s.totalLessonsTouched} aulas · {s.trackIds.length} trilha(s)
+                        {formatProgressCount(progresso)} · {s.trackIds.length} trilha(s)
                       </p>
                       {s.lastActivityAt && (
                         <p className="text-[10px] text-base-content/40 mt-0.5">
@@ -278,8 +329,8 @@ export default function FormatorStudentsPage() {
                       )}
                     </div>
                     <div className="flex flex-col items-end gap-1">
-                      <span className={`badge badge-sm ${percent >= 100 ? 'badge-success' : percent >= 50 ? 'badge-info' : 'badge-ghost'}`}>
-                        {percent}%
+                      <span className={`badge badge-sm ${progressBadgeClass(progresso)}`}>
+                        {formatProgressPercent(progresso)}
                       </span>
                       <ChevronRight className="w-4 h-4 text-base-content/40" />
                     </div>
@@ -294,42 +345,4 @@ export default function FormatorStudentsPage() {
   );
 }
 
-function formatRelative(iso: string): string {
-  const ms = Date.now() - new Date(iso).getTime();
-  const days = Math.floor(ms / 86400000);
-  if (days === 0) return 'hoje';
-  if (days === 1) return 'ontem';
-  if (days < 7) return `${days} dias atrás`;
-  return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
-}
 
-interface StatCardProps {
-  label: string;
-  value: number | string;
-  icon: React.ReactNode;
-  color: string;
-  onClick?: () => void;
-  active?: boolean;
-}
-
-function StatCard({ label, value, icon, color, onClick, active }: StatCardProps) {
-  const content = (
-    <div className={`card bg-base-100 border ${active ? 'border-primary' : 'border-base-300'} h-full`}>
-      <div className="card-body p-3 gap-1">
-        <div className={`flex items-center gap-1 ${color}`}>
-          {icon}
-          <span className="text-[11px] text-base-content/60 truncate">{label}</span>
-        </div>
-        <span className="text-lg font-bold">{value}</span>
-      </div>
-    </div>
-  );
-  if (onClick) {
-    return (
-      <button type="button" onClick={onClick} className="text-left hover:opacity-80 transition-opacity">
-        {content}
-      </button>
-    );
-  }
-  return content;
-}

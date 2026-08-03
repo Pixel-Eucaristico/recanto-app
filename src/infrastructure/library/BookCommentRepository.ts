@@ -1,6 +1,6 @@
 import {
   doc, addDoc, updateDoc, deleteDoc,
-  collection, query, where, getDocs, serverTimestamp,
+  collection, query, where, getDocs, serverTimestamp, orderBy, limit,
 } from 'firebase/firestore';
 import { db } from '@/shared/firebase/firebaseClient';
 import { BookComment } from '@/domain/library/types';
@@ -33,8 +33,14 @@ export class BookCommentRepository {
     return snap.docs.map(d => ({ id: d.id, ...d.data() } as BookComment));
   }
 
-  async findByUser(userId: string): Promise<BookComment[]> {
-    const q = query(collection(db, COLLECTION), where('user_id', '==', userId));
+  /** Comentários do usuário, mais recentes primeiro. Ver nota de teto em BookHighlightRepository. */
+  async findByUser(userId: string, limitCount = 50): Promise<BookComment[]> {
+    const q = query(
+      collection(db, COLLECTION),
+      where('user_id', '==', userId),
+      orderBy('created_at', 'desc'),
+      limit(limitCount),
+    );
     const snap = await getDocs(q);
     return snap.docs.map(d => ({ id: d.id, ...d.data() } as BookComment));
   }

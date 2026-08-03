@@ -6,6 +6,8 @@
 import { trackRepository } from '@/infrastructure/formation/TrackRepository';
 import { progressRepository } from '@/infrastructure/formation/ProgressRepository';
 import { lessonRepository } from '@/infrastructure/formation/LessonRepository';
+import { formationService } from '@/application/formation/FormationService';
+import { trackEnrollmentRepository } from '@/infrastructure/enrollment/TrackEnrollmentRepository';
 import { userService } from '@/services/firebase';
 import type { FormationTrack, LessonProgress } from '@/domain/formation/types';
 import type { FirebaseUser } from '@/types/firebase-entities';
@@ -25,27 +27,58 @@ export interface FormatorScope {
   stats: FormatorStats;
 }
 
+/**
+ * Faixa de atividade do aluno. Exaustiva e sem lacuna — todo aluno cai em exatamente
+ * uma. A versão anterior classificava só `<=7d` e `>14d`, então quem estava no meio
+ * não aparecia em nenhum contador.
+ */
+export type ActivityBand = 'active' | 'attention' | 'stale' | 'never';
+
+export const ACTIVITY_BAND_LABELS: Record<ActivityBand, string> = {
+  active: 'Ativos (7d)',
+  attention: 'Atenção (7-14d)',
+  stale: 'Parados (+14d)',
+  never: 'Não começaram',
+};
+
+/** Classifica pela última atividade. `null` = nunca registrou nada. */
+export function activityBand(lastActivityAt: string | null | undefined): ActivityBand {
+  if (!lastActivityAt) return 'never';
+  const dias = (Date.now() - new Date(lastActivityAt).getTime()) / 86_400_000;
+  if (dias <= 7) return 'active';
+  if (dias <= 14) return 'attention';
+  return 'stale';
+}
+
 export interface FormatorStats {
   totalStudents: number;
   /** Atividade nos últimos 7 dias. */
   activeLast7d: number;
+  /** Entre 7 e 14 dias sem atividade — a faixa que antes desaparecia. */
+  attention7to14d: number;
   /** Sem atividade há mais de 14 dias. */
   staleOver14d: number;
-  /** Sem atividade nenhuma registrada. */
+  /** Matriculado sem nenhuma atividade registrada. */
   neverStarted: number;
   /** Total agregado de aulas concluídas (pra todas trilhas + alunos). */
   totalLessonsCompleted: number;
   /** Total agregado de aulas iniciadas. */
   totalLessonsTouched: number;
-  /** Taxa de conclusão = completed / touched. */
-  completionRate: number;
-  /** Por trilha: completion rate. */
+  /**
+   * Média das taxas por trilha. `null` quando nenhuma trilha teve o total de aulas
+   * resolvido — melhor não mostrar nada do que mostrar um número inflado.
+   */
+  completionRate: number | null;
+  /** Por trilha: conclusão sobre o currículo inteiro. */
   byTrack: Array<{
     track: FormationTrack;
     studentCount: number;
     completedLessons: number;
     touchedLessons: number;
-    rate: number;
+    /** Aulas da trilha. `null` se o currículo não resolveu. */
+    totalLessons: number | null;
+    /** 0–100 sobre o currículo × alunos. `null` sem total. */
+    rate: number | null;
   }>;
 }
 
@@ -70,15 +103,20 @@ export class FormatorService {
         tracks: [],
         students: [],
         stats: {
-          totalStudents: 0, activeLast7d: 0, staleOver14d: 0, neverStarted: 0,
-          totalLessonsCompleted: 0, totalLessonsTouched: 0, completionRate: 0,
+          totalStudents: 0, activeLast7d: 0, attention7to14d: 0, staleOver14d: 0, neverStarted: 0,
+          totalLessonsCompleted: 0, totalLessonsTouched: 0, completionRate: null,
           byTrack: [],
         },
       };
     }
 
     const trackIds = tracks.map(t => t.id);
-    const progresses = await progressRepository.findByTracks(trackIds);
+    const [progresses, enrollments] = await Promise.all([
+      progressRepository.findByTracks(trackIds),
+      // Falha silenciosa aceitável: sem matrículas a lista cai no comportamento
+      // antigo (só quem tem progresso) em vez de ficar vazia.
+      trackEnrollmentRepository.findApprovedByTracks(trackIds).catch(() => []),
+    ]);
 
     // Agrega por user_id
     const byUser = new Map<string, LessonProgress[]>();
@@ -87,56 +125,86 @@ export class FormatorService {
       byUser.get(p.user_id)!.push(p);
     }
 
+    // Matriculado aprovado que nunca abriu aula entra com lista vazia — antes ele
+    // simplesmente não aparecia, e a aba "Não iniciaram" ficava sempre em zero.
+    const enrolledTracksByUser = new Map<string, Set<string>>();
+    for (const e of enrollments) {
+      if (!byUser.has(e.user_id)) byUser.set(e.user_id, []);
+      if (!enrolledTracksByUser.has(e.user_id)) enrolledTracksByUser.set(e.user_id, new Set());
+      enrolledTracksByUser.get(e.user_id)!.add(e.track_id);
+    }
+
+    // Em paralelo — antes era um `await userService.get` dentro do for, o que
+    // serializava uma leitura por aluno e travava a tela com turmas grandes.
+    const uids = Array.from(byUser.keys());
+    const users = await Promise.all(uids.map(uid => userService.get(uid).catch(() => null)));
+
     const students: StudentSummary[] = [];
-    for (const [uid, list] of byUser) {
-      const user = await userService.get(uid).catch(() => null);
-      if (!user) continue;
+    users.forEach((user, i) => {
+      if (!user) return;
+      const list = byUser.get(uids[i]) ?? [];
       const completed = list.filter(p => p.status === 'completed').length;
       const lastUpdated = list
         .map(p => p.updated_at ?? '')
         .filter(Boolean)
         .sort()
         .pop() ?? null;
+      // Trilhas do aluno = onde tem progresso ∪ onde está matriculado.
+      const doProgresso = list.map(p => p.track_id);
+      const daMatricula = Array.from(enrolledTracksByUser.get(uids[i]) ?? []);
+
       students.push({
         user,
-        trackIds: Array.from(new Set(list.map(p => p.track_id))),
+        trackIds: Array.from(new Set([...doProgresso, ...daMatricula])),
         totalLessonsTouched: list.length,
         totalLessonsCompleted: completed,
         lastActivityAt: lastUpdated,
       });
-    }
+    });
     students.sort((a, b) => (b.lastActivityAt ?? '').localeCompare(a.lastActivityAt ?? ''));
 
-    // Stats agregados
-    const now = Date.now();
-    const day = 86400000;
-    let activeLast7d = 0, staleOver14d = 0, neverStarted = 0;
+    // Stats agregados. As faixas cobrem TODOS os alunos — antes quem estava entre 7
+    // e 14 dias parado não era contado em nenhuma delas e desaparecia do painel.
+    let activeLast7d = 0, attention7to14d = 0, staleOver14d = 0, neverStarted = 0;
     for (const s of students) {
-      if (!s.lastActivityAt) { neverStarted++; continue; }
-      const ageDays = (now - new Date(s.lastActivityAt).getTime()) / day;
-      if (ageDays <= 7) activeLast7d++;
-      else if (ageDays > 14) staleOver14d++;
+      const faixa = activityBand(s.lastActivityAt);
+      if (faixa === 'never') neverStarted++;
+      else if (faixa === 'active') activeLast7d++;
+      else if (faixa === 'attention') attention7to14d++;
+      else staleOver14d++;
     }
     const totalLessonsCompleted = students.reduce((acc, s) => acc + s.totalLessonsCompleted, 0);
     const totalLessonsTouched = students.reduce((acc, s) => acc + s.totalLessonsTouched, 0);
-    const completionRate = totalLessonsTouched > 0
-      ? Math.round((totalLessonsCompleted / totalLessonsTouched) * 100)
-      : 0;
 
-    // Por trilha
+    // Total real do currículo por trilha — o denominador honesto.
+    const lessonCounts = await formationService
+      .getTrackLessonCounts(trackIds)
+      .catch(() => new Map<string, number>());
+
+    // Por trilha: conclusão = aulas concluídas ÷ (alunos × aulas da trilha).
+    // Antes era ÷ aulas que os alunos abriram, o que dava 100% para uma turma que
+    // mal começou.
     const byTrack = tracks.map(t => {
       const trackProgresses = progresses.filter(p => p.track_id === t.id);
       const studentCount = new Set(trackProgresses.map(p => p.user_id)).size;
       const completed = trackProgresses.filter(p => p.status === 'completed').length;
-      const touched = trackProgresses.length;
+      const lessonsPerStudent = lessonCounts.get(t.id) ?? null;
+      const possible = lessonsPerStudent !== null ? lessonsPerStudent * studentCount : null;
       return {
         track: t,
         studentCount,
         completedLessons: completed,
-        touchedLessons: touched,
-        rate: touched > 0 ? Math.round((completed / touched) * 100) : 0,
+        touchedLessons: trackProgresses.length,
+        totalLessons: lessonsPerStudent,
+        rate: possible && possible > 0 ? Math.min(100, Math.round((completed / possible) * 100)) : null,
       };
     });
+
+    // Média das trilhas que têm total conhecido — sem inventar quando nenhuma tem.
+    const trilhasComTaxa = byTrack.filter(b => b.rate !== null);
+    const completionRate = trilhasComTaxa.length > 0
+      ? Math.round(trilhasComTaxa.reduce((acc, b) => acc + (b.rate ?? 0), 0) / trilhasComTaxa.length)
+      : null;
 
     return {
       tracks,
@@ -144,6 +212,7 @@ export class FormatorService {
       stats: {
         totalStudents: students.length,
         activeLast7d,
+        attention7to14d,
         staleOver14d,
         neverStarted,
         totalLessonsCompleted,
@@ -165,10 +234,15 @@ export class FormatorService {
     student: FirebaseUser | null;
     tracks: FormationTrack[];
     progressesByTrack: Map<string, LessonProgress[]>;
+    /** trackId → total real de aulas do currículo. Ausente = não resolveu. */
+    lessonCounts: Map<string, number>;
   }> {
     const tracks = await this.getMyTracks(formatorId, isAdmin);
     const trackIds = new Set(tracks.map(t => t.id));
-    const all = await progressRepository.findByUser(studentId);
+    const [all, student] = await Promise.all([
+      progressRepository.findByUser(studentId),
+      userService.get(studentId).catch(() => null),
+    ]);
     const filtered = all.filter(p => trackIds.has(p.track_id));
 
     const grouped = new Map<string, LessonProgress[]>();
@@ -177,12 +251,12 @@ export class FormatorService {
       grouped.get(p.track_id)!.push(p);
     }
 
-    const student = await userService.get(studentId).catch(() => null);
-    return {
-      student,
-      tracks: tracks.filter(t => grouped.has(t.id)),
-      progressesByTrack: grouped,
-    };
+    const visibleTracks = tracks.filter(t => grouped.has(t.id));
+    const lessonCounts = await formationService
+      .getTrackLessonCounts(visibleTracks.map(t => t.id))
+      .catch(() => new Map<string, number>());
+
+    return { student, tracks: visibleTracks, progressesByTrack: grouped, lessonCounts };
   }
 
   /** Resolve título das aulas pra um set de progresses. */

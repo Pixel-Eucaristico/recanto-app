@@ -5,10 +5,10 @@ import Link from 'next/link';
 import { GraduationCap, Settings } from 'lucide-react';
 import { useFormationTracks } from '@/features/formation/hooks/useFormationTracks';
 import { TracksList } from '@/features/formation/components/TracksList';
-import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
+import { useAccess } from '@/shared/hooks/useAccess';
 
 export default function FormationPage() {
-  const user = useCurrentUser();
+  const { user, canManageFormation } = useAccess();
   const { tracks, loading, error } = useFormationTracks();
 
   const progressMap = useMemo(() => new Map<string, { completed: number; total: number }>(), []);
@@ -36,7 +36,7 @@ export default function FormationPage() {
               </p>
             </div>
           </div>
-          {user && (user.role === 'admin' || user.features.includes('manage:formation') || user.features.includes('*')) && (
+          {canManageFormation && (
             <Link href="/app/dashboard/admin/formation" className="btn btn-primary btn-sm gap-1">
               <Settings className="w-4 h-4" /> Gerenciar
             </Link>

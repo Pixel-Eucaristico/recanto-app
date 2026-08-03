@@ -51,6 +51,12 @@ const MindMapPlugin: LessonComponent<MindMapConfig> = {
 
   summary() { return { label: 'Mapa mental', description: 'Salvar versão própria' }; },
 
+  /**
+   * TODO: hoje sempre retorna [] — nada grava versões de `student_mind_maps`
+   * (`studentMindMapRepository.upsert` não tem chamador e não registra
+   * `contentVersionService.record`). Quando o editor de mapa mental for ligado,
+   * gravar a versão anterior no save, como ReflectionService faz.
+   */
   async getHistory(config, ctx) {
     let templateId = config.template_id;
     if (!templateId) {

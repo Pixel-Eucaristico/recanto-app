@@ -51,6 +51,12 @@ export class FirebaseWordSearchResultRepository
     ]);
     return all.sort((a, b) => b.completed_at.localeCompare(a.completed_at));
   }
+
+  /** Todos os resultados do aluno — histórico do formador. */
+  async findByUser(userId: string): Promise<WordSearchResult[]> {
+    const all = await this.queryByFilters([{ field: 'user_id', operator: '==', value: userId }]);
+    return all.sort((a, b) => b.completed_at.localeCompare(a.completed_at));
+  }
 }
 
 export const wordSearchRepository = new FirebaseWordSearchRepository();

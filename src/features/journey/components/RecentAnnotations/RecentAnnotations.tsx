@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Highlighter, MessageCircle } from 'lucide-react';
 import { bookHighlightRepository } from '@/infrastructure/library/BookHighlightRepository';
 import { bookCommentRepository } from '@/infrastructure/library/BookCommentRepository';
+import { formatRelative } from '@/shared/utils/datetime';
 import type { BookHighlight, BookComment } from '@/domain/library/types';
 
 interface RecentAnnotationsProps {
@@ -75,10 +76,3 @@ export function RecentAnnotations({ userId }: RecentAnnotationsProps) {
   );
 }
 
-function formatRelative(iso: string): string {
-  const ms = Date.now() - new Date(iso).getTime();
-  const days = Math.floor(ms / 86400000);
-  if (days === 0) return 'hoje';
-  if (days === 1) return 'ontem';
-  return `${days} dias atrás`;
-}

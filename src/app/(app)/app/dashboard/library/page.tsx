@@ -5,15 +5,15 @@ import { useRouter } from 'next/navigation';
 import { FileUp, Library, Plus, FolderOpen, History } from 'lucide-react';
 import Link from 'next/link';
 import { BookCatalogGrid, BookEpubImportModal, CategoryFilter, useLibraryCatalog, useBooksAdmin } from '@/features/library';
-import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
+import { useAccess } from '@/shared/hooks/useAccess';
 import { Book } from '@/domain/library/types';
 
 export default function LibraryPage() {
-  const user = useCurrentUser();
+  const { user, can } = useAccess();
   const router = useRouter();
-  const isManager = user?.role === 'admin' || user?.features.includes('manage:library') || user?.features.includes('*');
-  const hasReadLibrary = isManager || (user?.features.includes('read:library') ?? false);
-  const hasDownloadLibrary = isManager || (user?.features.includes('download:library') ?? false);
+  const isManager = can('manage:library');
+  const hasReadLibrary = isManager || can('read:library');
+  const hasDownloadLibrary = isManager || can('download:library');
 
   // Progress gate: when user lacks `read:library`, show only books unlocked via courses
   const { books, categories, loading, error, search, setSearch, activeCategoryId, setActiveCategoryId, progressGated, unlockedCount } = useLibraryCatalog({

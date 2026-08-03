@@ -1,6 +1,9 @@
 'use client';
 
-import { GraduationCap, Library, CheckCircle2, BookOpen } from 'lucide-react';
+import { useState } from 'react';
+import { GraduationCap, CheckCircle2, BookOpen } from 'lucide-react';
+import { Timeline, TimelineItem } from '@/shared/components/Timeline';
+import { formatRelative } from '@/shared/utils/datetime';
 import type { JourneyData } from '../../hooks/useJourneyData';
 
 interface ActivityHistoryProps {
@@ -14,16 +17,20 @@ interface Event {
   subtitle?: string;
 }
 
+const PAGE_SIZE = 8;
+
 export function ActivityHistory({ data }: ActivityHistoryProps) {
+  const [visible, setVisible] = useState(PAGE_SIZE);
+
   // Eventos derivados: tracks com lessons completos + livros começados/concluídos
   const events: Event[] = [];
 
   for (const t of data.tracksInProgress) {
-    if (t.completedCount > 0 && t.lastUpdated) {
+    if (t.progress.completed > 0 && t.lastUpdated) {
       events.push({
         kind: 'lesson_completed',
         date: t.lastUpdated,
-        title: `${t.completedCount} aulas concluídas`,
+        title: `${t.progress.completed} aulas concluídas`,
         subtitle: t.track.title,
       });
     }
@@ -47,31 +54,38 @@ export function ActivityHistory({ data }: ActivityHistoryProps) {
   }
 
   events.sort((a, b) => b.date.localeCompare(a.date));
-  const recent = events.slice(0, 8);
+  const shown = events.slice(0, visible);
 
-  if (recent.length === 0) return null;
+  if (events.length === 0) return null;
 
   return (
     <section>
       <h2 className="font-semibold text-sm sm:text-base mb-2">Histórico de atividades</h2>
 
-      <ol className="relative border-l-2 border-base-300 ml-2 pl-4 space-y-3">
-        {recent.map((e, i) => (
-          <li key={i} className="relative">
-            <span className="absolute -left-[22px] top-0.5 w-3 h-3 rounded-full bg-base-100 border-2 border-primary" />
-            <div className="flex items-start gap-2">
-              <EventIcon kind={e.kind} />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-base-content">{e.title}</p>
-                {e.subtitle && <p className="text-xs text-base-content/60 mt-0.5">{e.subtitle}</p>}
-                <p className="text-[10px] text-base-content/40 mt-0.5">
-                  {formatDate(e.date)}
-                </p>
-              </div>
-            </div>
-          </li>
+      <Timeline>
+        {shown.map((e, i) => (
+          <TimelineItem
+            key={`${e.kind}_${e.date}_${i}`}
+            tone={e.kind === 'book_finished' ? 'success' : 'primary'}
+            icon={<EventIcon kind={e.kind} />}
+          >
+            <p className="text-sm text-base-content">{e.title}</p>
+            {e.subtitle && <p className="text-xs text-base-content/60 mt-0.5">{e.subtitle}</p>}
+            <p className="text-[10px] text-base-content/40 mt-0.5">{formatRelative(e.date)}</p>
+          </TimelineItem>
         ))}
-      </ol>
+      </Timeline>
+
+      {/* Antes cortava em 8 sem dizer que havia mais. */}
+      {events.length > shown.length && (
+        <button
+          type="button"
+          className="btn btn-ghost btn-sm w-full mt-2"
+          onClick={() => setVisible(v => v + PAGE_SIZE)}
+        >
+          Ver mais ({events.length - shown.length} restantes)
+        </button>
+      )}
     </section>
   );
 }
@@ -80,13 +94,4 @@ function EventIcon({ kind }: { kind: Event['kind'] }) {
   if (kind === 'lesson_completed') return <GraduationCap className="w-4 h-4 text-primary shrink-0 mt-0.5" />;
   if (kind === 'book_finished') return <CheckCircle2 className="w-4 h-4 text-success shrink-0 mt-0.5" />;
   return <BookOpen className="w-4 h-4 text-info shrink-0 mt-0.5" />;
-}
-
-function formatDate(iso: string): string {
-  const ms = Date.now() - new Date(iso).getTime();
-  const days = Math.floor(ms / 86400000);
-  if (days === 0) return 'hoje';
-  if (days === 1) return 'ontem';
-  if (days < 7) return `${days} dias atrás`;
-  return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
 }

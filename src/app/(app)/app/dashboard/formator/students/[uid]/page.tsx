@@ -1,11 +1,20 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { BookOpen, GraduationCap, CheckCircle2, Clock, BookMarked } from 'lucide-react';
 import { BackButton } from '@/shared/components/BackButton';
-import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
+import { useAccess } from '@/shared/hooks/useAccess';
+import { StudentWritingsSection, StudentActivityTimeline } from '@/features/formator-writings';
+import { formatRelative } from '@/shared/utils/datetime';
+import { LoadingCard } from '@/shared/components/LoadingCard';
+import { EmptyState } from '@/shared/components/EmptyState';
+import { StudentSummaryHeader } from '@/features/formator-dashboard';
+import type { ActivityCounts } from '@/domain/formation/activity';
+import type { WritingsCounts } from '@/domain/formation/writings';
+import {
+  buildTrackProgress, formatProgressCount, formatProgressPercent, progressBadgeClass,
+} from '@/domain/formation/progress';
 import { formatorService } from '@/application/formation/FormatorService';
 import { bookReadingProgressRepository } from '@/infrastructure/library/BookReadingProgressRepository';
 import { lessonRepository } from '@/infrastructure/formation/LessonRepository';
@@ -18,10 +27,12 @@ interface TrackBlock {
   track: FormationTrack;
   progresses: LessonProgress[];
   lessonTitles: Map<string, string>;
+  /** Total real de aulas da trilha. `null` quando o currículo não resolveu. */
+  totalLessons: number | null;
 }
 
 export default function FormatorStudentDetailPage() {
-  const user = useCurrentUser();
+  const { user, isAdmin } = useAccess();
   const params = useParams();
   const studentId = String(params?.uid ?? '');
 
@@ -30,8 +41,9 @@ export default function FormatorStudentDetailPage() {
   const [books, setBooks] = useState<Array<{ progress: BookReadingProgress; book: Book | null }>>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const isAdmin = user?.role === 'admin' || user?.features.includes('*') || false;
+  // Vêm dos blocos abaixo via callback — evita repetir as ~13 queries da timeline.
+  const [activityCounts, setActivityCounts] = useState<ActivityCounts | null>(null);
+  const [writingsCounts, setWritingsCounts] = useState<WritingsCounts | null>(null);
 
   useEffect(() => {
     if (!user || !studentId) return;
@@ -46,28 +58,36 @@ export default function FormatorStudentDetailPage() {
         }
         setStudent(detail.student);
 
-        // Resolve títulos das aulas por trilha
-        const blockList: TrackBlock[] = [];
-        for (const track of detail.tracks) {
+        // Uma única leitura de aulas para tudo. Antes eram dois loops sequenciais
+        // sobre as MESMAS aulas: um para títulos, outro para book_citations.
+        const todasLessonIds = Array.from(new Set(
+          detail.tracks.flatMap(t =>
+            (detail.progressesByTrack.get(t.id) ?? []).map(p => p.lesson_id)),
+        ));
+        const lessons = await lessonRepository.findByIds(todasLessonIds);
+        const lessonById = new Map(lessons.map(l => [l.id, l] as const));
+
+        const blockList: TrackBlock[] = detail.tracks.map(track => {
           const progresses = detail.progressesByTrack.get(track.id) ?? [];
-          const lessonTitles = await formatorService.resolveLessonTitles(progresses);
-          blockList.push({ track, progresses, lessonTitles });
-        }
+          const lessonTitles = new Map<string, string>();
+          for (const p of progresses) {
+            const titulo = lessonById.get(p.lesson_id)?.title;
+            if (titulo) lessonTitles.set(p.lesson_id, titulo);
+          }
+          return {
+            track,
+            progresses,
+            lessonTitles,
+            totalLessons: detail.lessonCounts.get(track.id) ?? null,
+          };
+        });
         setBlocks(blockList);
 
-        // Livros vinculados às trilhas (citações nas aulas) — filtra só esses
+        // Livros citados pelas aulas que o aluno já tocou.
         const bookIds = new Set<string>();
-        for (const track of detail.tracks) {
-          // pra cada lesson da trilha, ler citations
-          // module_ids → modules → lessons → book_citations
-          // simplificação: pega lessons das progresses (já interagidas)
-          const progresses = detail.progressesByTrack.get(track.id) ?? [];
-          const lessonIds = Array.from(new Set(progresses.map(p => p.lesson_id)));
-          const lessons = await lessonRepository.findByIds(lessonIds);
-          for (const l of lessons) {
-            for (const c of l.book_citations ?? []) {
-              if (c.book_id) bookIds.add(c.book_id);
-            }
+        for (const l of lessons) {
+          for (const c of l.book_citations ?? []) {
+            if (c.book_id) bookIds.add(c.book_id);
           }
         }
 
@@ -88,42 +108,57 @@ export default function FormatorStudentDetailPage() {
     })();
   }, [user?.id, isAdmin, studentId]);
 
+  /**
+   * Progresso somado das trilhas no escopo. `total` é `null` se QUALQUER trilha não
+   * resolveu o currículo — somar parcialmente daria um percentual inflado.
+   */
+  const resumo = useMemo(() => {
+    let concluidas = 0;
+    let total: number | null = 0;
+    for (const b of blocks) {
+      concluidas += b.progresses.filter(p => p.status === 'completed').length;
+      total = total === null || b.totalLessons === null ? null : total + b.totalLessons;
+    }
+    return { concluidas, total };
+  }, [blocks]);
+
   if (!user) return <div className="p-6">Faça login.</div>;
 
   return (
     <div className="min-h-screen bg-base-200 p-3 sm:p-6">
-      <div className="max-w-3xl mx-auto space-y-3">
+      <div className="max-w-3xl lg:max-w-6xl mx-auto space-y-3">
         <div className="flex items-center gap-2">
           <BackButton fallbackHref="/app/dashboard/formator/students" />
-          <h1 className="text-base sm:text-lg font-bold truncate">
-            {student?.name || student?.email || 'Aluno'}
-          </h1>
         </div>
+
+        {/* Resumo antes das listas — o formador precisa do quadro geral em segundos. */}
+        <StudentSummaryHeader
+          name={student?.name || student?.email || 'Aluno'}
+          email={student?.name ? student?.email : undefined}
+          completedLessons={resumo.concluidas}
+          totalLessons={resumo.total}
+          lastActivityAt={activityCounts?.lastAt ?? null}
+          activeDays={activityCounts?.activeDays ?? 0}
+          pendingReviews={writingsCounts?.pendingReview ?? 0}
+          loading={loading || !activityCounts}
+        />
 
         {error && <div className="alert alert-error text-sm"><span>{error}</span></div>}
 
-        {loading && (
-          <div className="card bg-base-100 border border-base-300">
-            <div className="card-body p-4 items-center text-center gap-2">
-              <span className="loading loading-spinner loading-md text-primary" />
-              <p className="text-sm text-base-content/60">Carregando jornada do aluno...</p>
-            </div>
-          </div>
-        )}
+        {loading && <LoadingCard label="Carregando jornada do aluno..." />}
 
         {!loading && blocks.length === 0 && (
-          <div className="card bg-base-100 border border-dashed border-base-300">
-            <div className="card-body p-6 text-center">
-              <p className="text-sm text-base-content/60">
-                Aluno não tem progresso nas trilhas que você acompanha.
-              </p>
-            </div>
-          </div>
+          <EmptyState
+            size="sm"
+            title="Aluno não tem progresso nas trilhas que você acompanha."
+            description="Se ele foi matriculado recentemente, pode ainda não ter aberto nenhuma aula."
+          />
         )}
 
-        {blocks.map(({ track, progresses, lessonTitles }) => {
+        {blocks.map(({ track, progresses, lessonTitles, totalLessons }) => {
           const completed = progresses.filter(p => p.status === 'completed').length;
-          const percent = progresses.length > 0 ? Math.round((completed / progresses.length) * 100) : 0;
+          // Total do currículo, não das aulas abertas.
+          const progresso = buildTrackProgress(completed, totalLessons);
           return (
             <section key={track.id} className="card bg-base-100 border border-base-300">
               <div className="card-body p-3 sm:p-4 gap-2">
@@ -131,8 +166,8 @@ export default function FormatorStudentDetailPage() {
                   <h2 className="font-semibold text-sm sm:text-base flex items-center gap-1">
                     <GraduationCap className="w-4 h-4 text-primary" /> {track.title}
                   </h2>
-                  <span className={`badge badge-sm ${percent >= 100 ? 'badge-success' : 'badge-info'}`}>
-                    {completed}/{progresses.length} · {percent}%
+                  <span className={`badge badge-sm ${progressBadgeClass(progresso)}`}>
+                    {formatProgressCount(progresso)} · {formatProgressPercent(progresso)}
                   </span>
                 </div>
 
@@ -160,6 +195,14 @@ export default function FormatorStudentDetailPage() {
             </section>
           );
         })}
+
+        {!loading && (
+          <StudentActivityTimeline studentId={studentId} onCountsChange={setActivityCounts} />
+        )}
+
+        {!loading && (
+          <StudentWritingsSection studentId={studentId} onCountsChange={setWritingsCounts} />
+        )}
 
         {books.length > 0 && (
           <section className="card bg-base-100 border border-base-300">
@@ -196,11 +239,3 @@ function StatusIcon({ status }: { status: LessonProgress['status'] }) {
   return <BookOpen className="w-3.5 h-3.5 text-base-content/40 shrink-0 mt-0.5" />;
 }
 
-function formatRelative(iso: string): string {
-  const ms = Date.now() - new Date(iso).getTime();
-  const days = Math.floor(ms / 86400000);
-  if (days === 0) return 'hoje';
-  if (days === 1) return 'ontem';
-  if (days < 7) return `${days} dias atrás`;
-  return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
-}

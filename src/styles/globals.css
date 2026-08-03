@@ -133,11 +133,40 @@
 
   --radius: 0.625rem;
 
-  --chart-1: oklch(0.75 0.22 85);        /* dourado da logo */
-  --chart-2: oklch(0.3 0.03 40);         /* marrom escuro */
-  --chart-3: oklch(0.88 0.01 95);        /* fundo claro/bege */
-  --chart-4: oklch(0.64 0.12 55);        /* areia/quente */
-  --chart-5: oklch(0.9 0.15 85);         /* dourado claro */ 
+  /*
+   * Paleta de gráficos — exceção autorizada às cores semânticas do DaisyUI.
+   *
+   * Por que não usar primary/secondary/accent: neste tema primary e accent são os
+   * dois dourado (hue 85 e 90), distância perceptual 10.9 num piso de 15; warning
+   * fica a 10.4 de primary; e secondary fica a 3 da cor do texto no modo escuro.
+   * Séries desenhadas com esses tokens seriam indistinguíveis.
+   *
+   * Estes 8 hues foram validados (bandas de luminosidade e croma, separação para
+   * daltonismo e contraste) contra as superfícies REAIS do projeto: #f9f8f5 no
+   * claro e #231714 no escuro. A ORDEM é o mecanismo de segurança — não reordenar
+   * nem inserir hue novo sem revalidar.
+   *
+   * Os dois conjuntos existem sempre; `useChartTheme` escolhe pelo `color-scheme`
+   * que o DaisyUI declara em cada tema. Isso funciona para qualquer um dos temas
+   * (o projeto carrega `themes: all`), sem precisar enumerá-los.
+   */
+  --chart-light-1: #2a78d6; /* azul */
+  --chart-light-2: #eb6834; /* laranja */
+  --chart-light-3: #1baf7a; /* água */
+  --chart-light-4: #eda100; /* amarelo */
+  --chart-light-5: #e87ba4; /* magenta */
+  --chart-light-6: #008300; /* verde */
+  --chart-light-7: #4a3aa7; /* violeta */
+  --chart-light-8: #e34948; /* vermelho */
+
+  --chart-dark-1: #3987e5;
+  --chart-dark-2: #d95926;
+  --chart-dark-3: #199e70;
+  --chart-dark-4: #c98500;
+  --chart-dark-5: #d55181;
+  --chart-dark-6: #008300;
+  --chart-dark-7: #9085e9;
+  --chart-dark-8: #e66767;
 }
 
 .dark {
@@ -168,11 +197,15 @@
   --sidebar-border: var(--color-base-200);
   --sidebar-ring: var(--color-primary); */
 
-  --chart-1: oklch(0.75 0.22 85);        /* dourado permanece */
-  --chart-2: oklch(0.18 0.015 30);       /* fundo marrom escuro */
-  --chart-3: oklch(0.95 0.01 95);        /* texto claro */
-  --chart-4: oklch(0.6 0.05 60);         /* neutro quente */
-  --chart-5: oklch(0.7 0.1 80);          /* dourado escurecido */
+  /*
+   * A paleta de gráficos NÃO é redefinida aqui de propósito.
+   *
+   * Esta classe `.dark` vem do next-themes com `attribute: "class"`, aplicada só no
+   * layout raiz. O dashboard usa `attribute: 'data-theme'`, então `.dark` nunca é
+   * aplicada lá — era por isso que as antigas `--chart-*` ficavam travadas nos
+   * valores claros dentro do dashboard. Ver `--chart-light-*` / `--chart-dark-*`
+   * em `:root`.
+   */
 }
 
 

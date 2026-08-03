@@ -2,17 +2,14 @@
 
 import { useState } from 'react';
 import { Heart } from 'lucide-react';
-import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
+import { useAccess } from '@/shared/hooks/useAccess';
 import { PrayerCenterModal } from '../PrayerCenterModal/PrayerCenterModal';
 
 export function PrayerCenterButton() {
-  const user = useCurrentUser();
+  const { user, can } = useAccess();
   const [open, setOpen] = useState(false);
   if (!user) return null;
-  const canRead = user.role === 'admin'
-    || user.features.includes('read:prayer')
-    || user.features.includes('*');
-  if (!canRead) return null;
+  if (!can('read:prayer')) return null;
 
   return (
     <>

@@ -40,6 +40,28 @@ service cloud.firestore {
              );
     }
 
+    // Verifica se o usuário é formador DESTA trilha (está em formator_ids).
+    //
+    // Definição canônica de "dono do curso". `review:formation` sozinha autoriza
+    // acompanhar alunos, mas não diz de QUAIS trilhas — sem este recorte, qualquer
+    // missionário leria as reflexões de todos os cursos.
+    //
+    // ⚠️ CUSTO: cada trilha distinta consultada gasta 2 access-calls (exists + get).
+    // O Firestore permite 20 por query, então o cliente precisa consultar UMA trilha
+    // por query quando não for admin. Ver `batchSizeFor` em StudentWritingsService.
+    function isTrackFormator(trackId) {
+      return isAuthenticated() &&
+             trackId is string && trackId != '' &&
+             exists(/databases/$(database)/documents/formation_tracks/$(trackId)) &&
+             get(/databases/$(database)/documents/formation_tracks/$(trackId))
+               .data.get('formator_ids', []).hasAny([request.auth.uid]);
+    }
+
+    // Atalho: pode acompanhar os alunos desta trilha específica.
+    function canReviewTrack(trackId) {
+      return isAdmin() || (hasFeature('review:formation') && isTrackFormator(trackId));
+    }
+
     // ===========================
     // Users Collection
     // ===========================
@@ -374,9 +396,12 @@ service cloud.firestore {
     // Formation Progress Collection
     // ===========================
     match /formation_progress/{progressId} {
-      // Leitura: próprio progresso ou quem tem review:formation
-      allow read: if hasFeature('review:formation') ||
-                    (isAuthenticated() && resource.data.user_id == request.auth.uid);
+      // Leitura: dono, admin, ou formador DESTA trilha.
+      // Ordem importa: `isAdmin()` primeiro faz short-circuit e evita o get da trilha.
+      allow read: if isAuthenticated() && (
+                    resource.data.user_id == request.auth.uid ||
+                    canReviewTrack(resource.data.get('track_id', ''))
+                  );
       // Criação/atualização: próprio usuário
       allow create: if isAuthenticated() &&
                       request.resource.data.user_id == request.auth.uid;
@@ -537,17 +562,8 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // ===========================
-    // Video Watch Sessions (log append-only de visualizações)
-    // ===========================
-    match /video_watch_sessions/{sessionId} {
-      allow read: if hasFeature('review:formation') ||
-                    (isAuthenticated() && resource.data.user_id == request.auth.uid);
-      allow create: if isAuthenticated() &&
-                      request.resource.data.user_id == request.auth.uid;
-      allow update: if isAuthenticated() && resource.data.user_id == request.auth.uid;
-      allow delete: if isAdmin();
-    }
+    // Nota: `video_watch_sessions` é declarada mais abaixo, junto das demais
+    // coleções de acompanhamento. Havia um bloco duplicado aqui.
 
     // ===========================
     // Habits (admin CRUD, todos leem)
@@ -673,16 +689,20 @@ service cloud.firestore {
     // Spiritual Reflections Collection (Caderno Espiritual)
     // ===========================
     match /spiritual_reflections/{reflectionId} {
-      // Leitura: dono ou quem revisa (review:formation)
-      allow read: if hasFeature('review:formation') ||
-                    (isAuthenticated() && resource.data.user_id == request.auth.uid);
+      // Leitura: dono, admin, ou formador DESTA trilha.
+      allow read: if isAuthenticated() && (
+                    resource.data.user_id == request.auth.uid ||
+                    canReviewTrack(resource.data.get('track_id', ''))
+                  );
       // Criação: próprio usuário com complete:formation
       allow create: if isAuthenticated() &&
                       hasFeature('complete:formation') &&
                       request.resource.data.user_id == request.auth.uid;
-      // Atualização: dono (editar rascunho / enviar) OU quem revisa (adicionar comentário)
-      allow update: if (isAuthenticated() && resource.data.user_id == request.auth.uid) ||
-                      hasFeature('review:formation');
+      // Atualização: dono (editar rascunho / enviar) OU formador da trilha (comentar)
+      allow update: if isAuthenticated() && (
+                      resource.data.user_id == request.auth.uid ||
+                      canReviewTrack(resource.data.get('track_id', ''))
+                    );
       // Deleção: só admin
       allow delete: if isAdmin();
     }
@@ -691,11 +711,15 @@ service cloud.firestore {
     // Content Versions (histórico append-only de edições)
     // ===========================
     match /content_versions/{versionId} {
-      // Leitura: dono OU quem revisa (formador)
+      // Leitura: dono, admin, ou formador DESTA trilha.
+      //
+      // O `track_id` é denormalizado na gravação porque uma rule não consegue seguir
+      // a referência até o doc alvo sem estourar o limite de access-calls. Versões
+      // legadas (sem o campo) ficam visíveis só ao dono e ao admin até rodar
+      // `npm run backfill:versions`.
       allow read: if isAuthenticated() && (
         resource.data.user_id == request.auth.uid ||
-        hasFeature('review:formation') ||
-        isAdmin()
+        canReviewTrack(resource.data.get('track_id', ''))
       );
       // Criação: próprio usuário (plugin grava no save)
       allow create: if isAuthenticated() &&
@@ -791,8 +815,7 @@ service cloud.firestore {
     match /video_watch_sessions/{sessionId} {
       allow read: if isAuthenticated() && (
         resource.data.user_id == request.auth.uid ||
-        hasFeature('review:formation') ||
-        isAdmin()
+        canReviewTrack(resource.data.get('track_id', ''))
       );
       allow create: if isAuthenticated() &&
                       request.resource.data.user_id == request.auth.uid;

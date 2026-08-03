@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { MessageCircle, MessageSquare } from 'lucide-react';
 import { communityPostRepository } from '@/infrastructure/community/CommunityPostRepository';
 import { communityReplyRepository } from '@/infrastructure/community/CommunityReplyRepository';
+import { formatRelative } from '@/shared/utils/datetime';
 import type { CommunityPost, CommunityReply } from '@/domain/community/types';
 
 interface ForumActivityProps {
@@ -100,11 +101,3 @@ export function ForumActivity({ userId }: ForumActivityProps) {
   );
 }
 
-function formatRelative(iso: string): string {
-  const ms = Date.now() - new Date(iso).getTime();
-  const days = Math.floor(ms / 86400000);
-  if (days === 0) return 'hoje';
-  if (days === 1) return 'ontem';
-  if (days < 7) return `${days} dias atrás`;
-  return new Date(iso).toLocaleDateString('pt-BR');
-}

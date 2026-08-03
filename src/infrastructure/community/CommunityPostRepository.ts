@@ -55,6 +55,48 @@ export class CommunityPostRepository extends BaseRepository<CommunityPost> {
     return sortByCreatedDesc(list);
   }
 
+  /** Resolve posts por id (batches de 10 — limite do operador `in` com documentId). */
+  async findByIds(ids: string[]): Promise<CommunityPost[]> {
+    const unique = Array.from(new Set(ids.filter(Boolean)));
+    if (unique.length === 0) return [];
+    const results: CommunityPost[] = [];
+    for (let i = 0; i < unique.length; i += 10) {
+      const batch = unique.slice(i, i + 10);
+      const found = await Promise.all(batch.map(id => this.get(id).catch(() => null)));
+      results.push(...found.filter((p): p is CommunityPost => p !== null));
+    }
+    return results;
+  }
+
+  /**
+   * Posts de várias trilhas (todos os alunos, qualquer escopo não-global).
+   * Ver nota sobre `batchSize` em `ReflectionRepository.TrackQueryOptions`.
+   */
+  async findByTrackIds(
+    trackIds: string[],
+    opts?: { batchSize?: number; limitCount?: number },
+  ): Promise<CommunityPost[]> {
+    if (trackIds.length === 0) return [];
+    const batchSize = Math.max(1, Math.min(opts?.batchSize ?? 30, 30));
+
+    const results: CommunityPost[] = [];
+    for (let i = 0; i < trackIds.length; i += batchSize) {
+      const batch = trackIds.slice(i, i + batchSize);
+      const filter = batch.length === 1
+        ? { field: 'visibility.track_id', operator: '==' as const, value: batch[0] }
+        : { field: 'visibility.track_id', operator: 'in' as const, value: batch };
+      const page = await this.queryByFilters([filter], {
+        orderByField: 'created_at',
+        direction: 'desc',
+        limitCount: opts?.limitCount,
+      });
+      results.push(...page);
+    }
+
+    const sorted = sortByCreatedDesc(results);
+    return opts?.limitCount ? sorted.slice(0, opts.limitCount) : sorted;
+  }
+
   /** Busca TODOS os posts independente do escopo — usado no fórum global pra agregar tudo. */
   async findAll(): Promise<CommunityPost[]> {
     const list = await this.list();

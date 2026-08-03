@@ -4,11 +4,11 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { ArrowLeft, FolderOpen, Library as LibraryIcon } from 'lucide-react';
 import { BookList, BookEpubImportModal, BookForm, LibraryCategoryManager, ChapterListPanel, ChapterEditor } from '@/features/library';
-import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
+import { useAccess } from '@/shared/hooks/useAccess';
 import { useAdminLibraryPage } from './_useAdminLibraryPage';
 
 export default function AdminLibraryPage() {
-  const user = useCurrentUser();
+  const { user, can } = useAccess();
   const [importOpen, setImportOpen] = useState(false);
   const {
     view, setView,
@@ -26,7 +26,7 @@ export default function AdminLibraryPage() {
 
   if (!user) return <div className="p-6">Faça login.</div>;
 
-  const canManage = user.role === 'admin' || user.features.includes('manage:library') || user.features.includes('*');
+  const canManage = can('manage:library');
   if (!canManage) {
     return <div className="p-6"><div className="alert alert-error"><span>Sem permissão pra gerenciar a biblioteca.</span></div></div>;
   }

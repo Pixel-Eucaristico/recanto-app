@@ -17,6 +17,10 @@ interface AuthContextProps {
   logout: () => Promise<void>;
   can: (feature: string) => boolean;
   loading: boolean;
+  /** Features por role vindas de `permissions_config` (Firestore). Sobrepõem os defaults. */
+  dynamicPermissions: Record<string, string[]>;
+  /** False enquanto `permissions_config` ainda não respondeu — evita flash de "sem acesso". */
+  permissionsLoaded: boolean;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);

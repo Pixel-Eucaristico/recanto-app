@@ -2,14 +2,14 @@
 
 import { MessageCircle } from 'lucide-react';
 import { ForumHome } from '@/features/community';
-import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
+import { useAccess } from '@/shared/hooks/useAccess';
 
 export default function ForumPage() {
-  const user = useCurrentUser();
+  const { user, can } = useAccess();
 
   if (!user) return <div className="p-6">Faça login para entrar no fórum.</div>;
 
-  const isAdmin = user.role === 'admin' || user.features.includes('manage:community') || user.features.includes('*');
+  const isAdmin = can('manage:community');
 
   return (
     <div className="min-h-screen bg-base-200 p-6 space-y-6">

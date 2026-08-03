@@ -11,9 +11,13 @@ interface LessonHistoryDrawerProps {
   open: boolean;
   onClose: () => void;
   onRestored?: () => void;
+  /** Off pra visões de terceiros — ninguém reverte o texto de outra pessoa. */
+  canRestore?: boolean;
 }
 
-export function LessonHistoryDrawer({ instance, ctx, open, onClose, onRestored }: LessonHistoryDrawerProps) {
+export function LessonHistoryDrawer({
+  instance, ctx, open, onClose, onRestored, canRestore = true,
+}: LessonHistoryDrawerProps) {
   const plugin = getLessonComponent(instance.kind);
   const [versions, setVersions] = useState<VersionEntry[]>([]);
   const [loading, setLoading] = useState(false);
@@ -102,11 +106,11 @@ export function LessonHistoryDrawer({ instance, ctx, open, onClose, onRestored }
                 </div>
                 <details className="text-xs">
                   <summary className="cursor-pointer text-base-content/60">Conteúdo</summary>
-                  <pre className="mt-1 text-[11px] bg-base-200 p-2 rounded overflow-x-auto max-h-40">
-                    {JSON.stringify(v.payload, null, 2)}
-                  </pre>
+                  <p className="mt-1 text-[11px] bg-base-200 p-2 rounded max-h-40 overflow-y-auto whitespace-pre-wrap">
+                    {versionText(v.payload)}
+                  </p>
                 </details>
-                {plugin.restoreVersion && (
+                {canRestore && plugin.restoreVersion && (
                   <button
                     type="button"
                     className="btn btn-warning btn-xs gap-1 self-end"
@@ -125,6 +129,40 @@ export function LessonHistoryDrawer({ instance, ctx, open, onClose, onRestored }
       <div className="modal-backdrop" onClick={onClose} />
     </div>
   );
+}
+
+/**
+ * Texto legível do payload de uma versão.
+ *
+ * O payload é opaco (cada plugin define o formato), mas quem lê é o aluno — nunca
+ * despejar JSON na tela. Campos desconhecidos viram um aviso curto.
+ */
+function versionText(payload: unknown): string {
+  if (typeof payload === 'string') return payload;
+  if (!payload || typeof payload !== 'object') return '(sem conteúdo)';
+
+  const record = payload as Record<string, unknown>;
+  for (const field of ['content', 'body', 'text']) {
+    const value = record[field];
+    if (typeof value === 'string' && value.trim()) {
+      const title = typeof record.title === 'string' ? record.title : '';
+      return title ? `${title}\n\n${value}` : value;
+    }
+  }
+
+  const nodes = record.nodes;
+  if (Array.isArray(nodes)) {
+    const labels = nodes
+      .map(n => {
+        const node = n as { label?: unknown; data?: { label?: unknown } };
+        const label = node.label ?? node.data?.label;
+        return typeof label === 'string' ? label : null;
+      })
+      .filter((l): l is string => Boolean(l));
+    if (labels.length > 0) return labels.join(' · ');
+  }
+
+  return '(conteúdo não textual)';
 }
 
 function formatDate(iso: string): string {

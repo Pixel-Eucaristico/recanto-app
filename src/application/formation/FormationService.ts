@@ -56,6 +56,9 @@ async function evaluatePrevHabitGate(
 }
 
 export class FormationService {
+  /** trackId → total de aulas. Currículo muda pouco; evita reler módulos por render. */
+  private readonly lessonCountCache = new Map<string, number>();
+
   constructor(
     private readonly tracks: ITrackRepository,
     private readonly modules: IModuleRepository,
@@ -69,6 +72,51 @@ export class FormationService {
 
   async getAllTracks(): Promise<FormationTrack[]> {
     return this.tracks.findAll();
+  }
+
+  /**
+   * Total REAL de aulas por trilha: `module_ids` → módulos → soma de `lesson_ids`.
+   *
+   * Existe porque as listas mostravam progresso como `concluídas ÷ aulas abertas`.
+   * Quem abria 3 de 40 aulas e concluía as 3 via 100%. `getTrackWithProgress`
+   * calcula o total certo, mas avalia gate de hábito e completude por aula — caro
+   * demais para uma lista de trilhas ou de alunos.
+   *
+   * Só lê `formation_modules`, não `formation_lessons`: `lesson_ids.length` basta
+   * para contar. Resultado é memoizado por instância do serviço.
+   */
+  async getTrackLessonCounts(trackIds: string[]): Promise<Map<string, number>> {
+    const unicos = Array.from(new Set(trackIds.filter(Boolean)));
+    const resultado = new Map<string, number>();
+
+    const faltando = unicos.filter(id => {
+      const cache = this.lessonCountCache.get(id);
+      if (cache !== undefined) resultado.set(id, cache);
+      return cache === undefined;
+    });
+    if (faltando.length === 0) return resultado;
+
+    const trilhas = await Promise.all(faltando.map(id => this.tracks.findById(id).catch(() => null)));
+
+    // Um único fetch de módulos para todas as trilhas que faltam.
+    const moduleIds = trilhas.flatMap(t => t?.module_ids ?? []);
+    const modulos = await this.modules.findByIds(Array.from(new Set(moduleIds)));
+    const contagemPorModulo = new Map(modulos.map(m => [m.id, m.lesson_ids?.length ?? 0] as const));
+
+    for (const trilha of trilhas) {
+      if (!trilha) continue;
+      const total = (trilha.module_ids ?? [])
+        .reduce((soma, moduleId) => soma + (contagemPorModulo.get(moduleId) ?? 0), 0);
+      this.lessonCountCache.set(trilha.id, total);
+      resultado.set(trilha.id, total);
+    }
+
+    return resultado;
+  }
+
+  /** Invalida o cache de contagem — chamar após editar módulos/aulas. */
+  clearLessonCountCache(): void {
+    this.lessonCountCache.clear();
   }
 
   async getTrackWithProgress(trackId: string, userId: string, userHabitsBlocked: boolean): Promise<TrackWithProgress> {

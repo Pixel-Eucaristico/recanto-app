@@ -19,10 +19,12 @@ export function JourneyHero({ userName, streakDays, lessonsCompleted, booksRead 
         {greeting}, {firstName}
       </h1>
 
-      <div className="grid grid-cols-3 gap-2 mt-4">
+      {/* 3 colunas fixas davam ~96px por stat em 320px, com label em 10px —
+          ilegível. Empilha em duas linhas no telefone estreito. */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-4">
         <Stat icon={<Flame className="w-4 h-4" />} value={streakDays} label="dias seguidos" highlight={streakDays > 0} />
-        <Stat icon={<GraduationCap className="w-4 h-4" />} value={lessonsCompleted} label="aulas" />
-        <Stat icon={<Library className="w-4 h-4" />} value={booksRead} label="livros" />
+        <Stat icon={<GraduationCap className="w-4 h-4" />} value={lessonsCompleted} label="aulas concluídas" />
+        <Stat icon={<Library className="w-4 h-4" />} value={booksRead} label="livros lidos" />
       </div>
     </div>
   );

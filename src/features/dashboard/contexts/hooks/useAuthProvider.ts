@@ -7,6 +7,9 @@ import { FirebaseUser } from "@/types/firebase-entities";
 import { hasFeature } from "@/lib/permissions";
 import { permissionsConfigService } from "@/entities/PermissionsConfig";
 
+/** Tempo máximo esperando `permissions_config` antes de cair nos defaults de role. */
+const FALLBACK_PERMISSIONS_MS = 3000;
+
 const DEV_LOG = process.env.NODE_ENV !== 'production';
 const devLog = (...args: unknown[]) => { if (DEV_LOG) console.log(...args); };
 const devWarn = (...args: unknown[]) => { if (DEV_LOG) console.warn(...args); };
@@ -15,6 +18,7 @@ export function useAuthProvider() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [authProviders, setAuthProviders] = useState<string[]>([]);
   const [dynamicPermissions, setDynamicPermissions] = useState<Record<string, string[]>>({});
+  const [permissionsLoaded, setPermissionsLoaded] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -64,11 +68,19 @@ export function useAuthProvider() {
 
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
+
+    // Rede de segurança: se o listener demorar ou a coleção estiver vazia, libera a UI
+    // com os defaults de DEFAULT_ROLE_PERMISSIONS em vez de travar em "carregando".
+    const fallbackTimer = setTimeout(() => setPermissionsLoaded(true), FALLBACK_PERMISSIONS_MS);
+
     const timer = setTimeout(() => {
       try {
         devLog('🔐 [AuthContext] Iniciando listener de permissões...');
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         unsubscribe = permissionsConfigService.onValueChange((configs: any[]) => {
+          // Marca carregado mesmo sem configs — a ausência de permissions_config é um
+          // estado válido (cai nos defaults), não um estado pendente.
+          setPermissionsLoaded(true);
           if (!configs || configs.length === 0) { devWarn('⚠️ Nenhuma configuração de permissão encontrada.'); return; }
           const map: Record<string, string[]> = {};
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -78,9 +90,15 @@ export function useAuthProvider() {
         });
       } catch (error) {
         console.error('❌ [AuthContext] Falha ao iniciar listener de permissões:', error);
+        setPermissionsLoaded(true);
       }
     }, 500);
-    return () => { clearTimeout(timer); if (unsubscribe) unsubscribe(); };
+
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(fallbackTimer);
+      if (unsubscribe) unsubscribe();
+    };
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -123,5 +141,9 @@ export function useAuthProvider() {
 
   const can = (feature: string) => hasFeature(user, feature, dynamicPermissions);
 
-  return { user, authProviders, login, register, loginWithProvider, linkGoogleAccount, createLocalPassword, loginAs, logout, can, loading };
+  return {
+    user, authProviders, login, register, loginWithProvider, linkGoogleAccount,
+    createLocalPassword, loginAs, logout, can, loading,
+    dynamicPermissions, permissionsLoaded,
+  };
 }

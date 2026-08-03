@@ -6,7 +6,7 @@ import { ArrowLeft, GraduationCap, Lock, Loader2, CheckCircle2, XCircle } from '
 import { useFormationTrack } from '@/features/formation/hooks/useFormationTrack';
 import { ModuleAccordion } from '@/features/formation/components/ModuleAccordion';
 import { Track } from '@/domain/formation/entities/Track';
-import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
+import { useAccess } from '@/shared/hooks/useAccess';
 import { trackEnrollmentService } from '@/application/enrollment/TrackEnrollmentService';
 import type { TrackEnrollmentRequest } from '@/domain/enrollment/types';
 
@@ -17,12 +17,8 @@ interface Props {
 export default function TrackPage({ params }: Props) {
   const { trackId } = use(params);
   const { data, loading, error } = useFormationTrack(trackId);
-  const user = useCurrentUser();
-  const isAdminLike = user?.role === 'admin'
-    || user?.features.includes('manage:formation')
-    || user?.features.includes('*')
-    || (user?.id ? data?.track.formator_ids?.includes(user.id) : false)
-    || false;
+  const { user, canManageFormation, isFormatorOfTrack } = useAccess();
+  const isAdminLike = canManageFormation || isFormatorOfTrack(data?.track);
 
   const [enrollment, setEnrollment] = useState<TrackEnrollmentRequest | null>(null);
   const [prerequisitesMet, setPrerequisitesMet] = useState<boolean>(true);

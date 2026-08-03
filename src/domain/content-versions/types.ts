@@ -19,6 +19,15 @@ export interface ContentVersion {
   user_id: string;
   /** Aula relacionada (pra filtrar no drawer). */
   lesson_id?: string;
+  /**
+   * Trilha relacionada — denormalizada do doc alvo.
+   *
+   * As Firestore rules autorizam o formador por `formation_tracks/{track_id}.formator_ids`,
+   * e uma rule não consegue seguir a referência até o doc alvo sem estourar o limite de
+   * access-calls. Docs legados sem esse campo só são visíveis ao dono e ao admin até o
+   * backfill (`npm run backfill:versions`).
+   */
+  track_id?: string;
   /** Conteúdo serializado completo da versão (pra restore). */
   payload: Record<string, unknown>;
   /** Resumo curto pra exibir no drawer. */

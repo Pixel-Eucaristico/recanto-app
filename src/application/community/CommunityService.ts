@@ -15,6 +15,19 @@ import { CommunityCategoryEntity } from '@/domain/community/entities/CommunityCa
 import { PollEntity } from '@/domain/community/entities/Poll';
 import { contentVersionService } from '@/application/content-versions/ContentVersionService';
 
+/**
+ * Extrai `track_id`/`lesson_id` de uma visibilidade de post pra denormalizar em
+ * `content_versions`. Escopo global não tem trilha — a versão fica visível só ao
+ * dono e ao admin, que é o comportamento correto.
+ */
+function scopeRefs(visibility?: CommunityVisibility): { track_id?: string; lesson_id?: string } {
+  if (!visibility || visibility.scope === 'global') return {};
+  return {
+    track_id: visibility.track_id,
+    lesson_id: visibility.scope === 'lesson' ? visibility.lesson_id : undefined,
+  };
+}
+
 export interface CreatePostInput {
   kind: CommunityPost['kind'];
   title: string;
@@ -159,7 +172,7 @@ export class CommunityService {
       target_id: postId,
       plugin_kind: 'forum_ask',
       user_id: userId,
-      lesson_id: existing.visibility?.scope === 'lesson' ? (existing.visibility as { lesson_id: string }).lesson_id : undefined,
+      ...scopeRefs(existing.visibility),
       payload: { title: existing.title, body: existing.body },
       label: 'Versão anterior do post',
     }).catch(() => {});
@@ -181,11 +194,16 @@ export class CommunityService {
     const trimmed = body.trim();
     if (trimmed === existing.body) return existing;
 
+    // Reply não carrega escopo — herda do post pai pra que a versão fique visível
+    // ao formador da trilha (ver `scopeRefs` e as rules de content_versions).
+    const parent = await communityPostRepository.get(existing.post_id).catch(() => null);
+
     contentVersionService.record({
       target_collection: 'community_replies',
       target_id: replyId,
       plugin_kind: 'forum_reply',
       user_id: userId,
+      ...scopeRefs(parent?.visibility),
       payload: { body: existing.body },
       label: 'Versão anterior da resposta',
     }).catch(() => {});

@@ -8,53 +8,54 @@ import { Role } from '@/features/auth/types/user';
 interface RoleProtectedRouteProps {
   children: React.ReactNode;
   allowedRoles: Role[];
+  /**
+   * Quando definida, basta ter essa feature — mesmo que o role não esteja em
+   * `allowedRoles`. Cobre permissões concedidas individualmente ou via
+   * `permissions_config`, que a checagem por role sozinha não enxerga.
+   */
+  requiredFeature?: string;
   fallbackPath?: string;
 }
 
 export default function RoleProtectedRoute({
   children,
   allowedRoles,
+  requiredFeature,
   fallbackPath = '/app/dashboard'
 }: RoleProtectedRouteProps) {
-  const { user } = useAuth();
+  const { user, can, loading, permissionsLoaded } = useAuth();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
 
+  // Estabiliza a dependência: o array literal vindo do JSX muda de identidade a
+  // cada render e reexecutaria o efeito em loop.
+  const rolesKey = allowedRoles.map(r => r ?? 'null').join(',');
+  const isAdmin = user?.role === 'admin' || (user?.features ?? []).includes('*');
+  const featureOk = requiredFeature ? can(requiredFeature) : false;
+
   useEffect(() => {
-    // Verificar autenticação e permissão de cargo
-    const checkAuthAndRole = () => {
-      if (!user) {
-        // Redirecionar para login se não estiver autenticado
-        router.push('/app/login');
-        return;
-      }
+    // Não decide nada enquanto auth/permissões carregam — negar aqui causaria
+    // redirect indevido de quem tem acesso.
+    if (loading || !permissionsLoaded) return;
 
-      // Verificar se o usuário tem um dos cargos permitidos
-      let userHasPermission = false;
+    if (!user) {
+      router.push('/app/login');
+      return;
+    }
 
-      // Se allowedRoles incluir null, qualquer usuário autenticado tem acesso
-      if (allowedRoles.includes(null)) {
-        userHasPermission = true;
-      } else {
-        // Verificar se o cargo do usuário está na lista de permitidos
-        userHasPermission = allowedRoles.includes(user.role ?? null);
-      }
+    const roleOk = allowedRoles.includes(null) || allowedRoles.includes(user.role ?? null);
 
-      if (!userHasPermission) {
-        // Redirecionar se não tiver permissão
-        router.push(fallbackPath);
-        return;
-      }
+    if (!isAdmin && !roleOk && !featureOk) {
+      router.push(fallbackPath);
+      return;
+    }
 
-      setHasAccess(true);
-      setIsLoading(false);
-    };
+    setHasAccess(true);
+    setIsLoading(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, router, rolesKey, fallbackPath, loading, permissionsLoaded, isAdmin, featureOk]);
 
-    checkAuthAndRole();
-  }, [user, router, allowedRoles, fallbackPath]);
-
-  // Mostrar estado de carregamento enquanto verifica autenticação e permissão
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -63,6 +64,5 @@ export default function RoleProtectedRoute({
     );
   }
 
-  // Renderizar o conteúdo protegido apenas se tiver acesso
   return hasAccess ? <>{children}</> : null;
 }
