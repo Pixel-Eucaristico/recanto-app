@@ -10,6 +10,13 @@ import { z } from 'zod';
  */
 export const env = createEnv({
   server: {
+    // Backend provider
+    BACKEND_PROVIDER: z.enum(['firebase', 'directus']).default('firebase'),
+
+    // Directus
+    DIRECTUS_URL: z.string().url('DIRECTUS_URL deve ser URL valida').optional(),
+    DIRECTUS_ADMIN_TOKEN: z.string().min(1, 'DIRECTUS_ADMIN_TOKEN ausente').optional(),
+
     // Firebase Admin SDK — credenciais server-side
     FIREBASE_PROJECT_ID: z.string().min(1, 'FIREBASE_PROJECT_ID ausente'),
     FIREBASE_CLIENT_EMAIL: z
@@ -57,6 +64,10 @@ export const env = createEnv({
   },
 
   client: {
+    // Backend provider exposed to client-side feature code
+    NEXT_PUBLIC_BACKEND_PROVIDER: z.enum(['firebase', 'directus']).default('firebase'),
+    NEXT_PUBLIC_DIRECTUS_URL: z.string().url('NEXT_PUBLIC_DIRECTUS_URL deve ser URL valida').optional(),
+
     // Firebase Web SDK
     NEXT_PUBLIC_FIREBASE_API_KEY: z.string().min(1, 'NEXT_PUBLIC_FIREBASE_API_KEY ausente'),
     NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: z
@@ -109,6 +120,11 @@ export const env = createEnv({
     GOOGLE_OAUTH_CALLBACK_URL: process.env.GOOGLE_OAUTH_CALLBACK_URL,
     GOOGLE_REDIRECT_URI: process.env.GOOGLE_REDIRECT_URI,
     PDF_ENGINE: process.env.PDF_ENGINE,
+    BACKEND_PROVIDER: process.env.BACKEND_PROVIDER,
+    DIRECTUS_URL: process.env.DIRECTUS_URL,
+    DIRECTUS_ADMIN_TOKEN: process.env.DIRECTUS_ADMIN_TOKEN,
+    NEXT_PUBLIC_BACKEND_PROVIDER: process.env.NEXT_PUBLIC_BACKEND_PROVIDER,
+    NEXT_PUBLIC_DIRECTUS_URL: process.env.NEXT_PUBLIC_DIRECTUS_URL,
     NEXT_PUBLIC_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
     NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
     NEXT_PUBLIC_FIREBASE_PROJECT_ID: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,

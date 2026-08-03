@@ -1,0 +1,69 @@
+{
+  "permissions": [
+    {
+      "role": "admin",
+      "collection": "*",
+      "actions": ["create", "read", "update", "delete"]
+    },
+    {
+      "role": "formador",
+      "collection": "formation_tracks",
+      "actions": ["read"]
+    },
+    {
+      "role": "formador",
+      "collection": "formation_modules",
+      "actions": ["read"]
+    },
+    {
+      "role": "formador",
+      "collection": "formation_lessons",
+      "actions": ["read"]
+    },
+    {
+      "role": "formador",
+      "collection": "lesson_progress",
+      "actions": ["read", "update"]
+    },
+    {
+      "role": "membro",
+      "collection": "content_pages",
+      "actions": ["read"]
+    },
+    {
+      "role": "membro",
+      "collection": "events",
+      "actions": ["read"]
+    },
+    {
+      "role": "membro",
+      "collection": "books",
+      "actions": ["read"]
+    },
+    {
+      "role": "membro",
+      "collection": "book_chapters",
+      "actions": ["read"]
+    },
+    {
+      "role": "membro",
+      "collection": "community_posts",
+      "actions": ["create", "read"]
+    },
+    {
+      "role": "membro",
+      "collection": "community_replies",
+      "actions": ["create", "read"]
+    },
+    {
+      "role": "visitante",
+      "collection": "content_pages",
+      "actions": ["read"]
+    },
+    {
+      "role": "visitante",
+      "collection": "events",
+      "actions": ["read"]
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "roles": [
+    {
+      "key": "admin",
+      "name": "Admin",
+      "description": "Administradores do Recanto."
+    },
+    {
+      "key": "formador",
+      "name": "Formador",
+      "description": "Formadores com acesso de gestao pedagogica."
+    },
+    {
+      "key": "missionario",
+      "name": "Missionario",
+      "description": "Missionarios responsaveis por acompanhamento."
+    },
+    {
+      "key": "recantiano",
+      "name": "Recantiano",
+      "description": "Recantianos em formacao."
+    },
+    {
+      "key": "pai",
+      "name": "Pai",
+      "description": "Pais ou responsaveis."
+    },
+    {
+      "key": "colaborador",
+      "name": "Colaborador",
+      "description": "Colaboradores da comunidade."
+    },
+    {
+      "key": "benfeitor",
+      "name": "Benfeitor",
+      "description": "Benfeitores da comunidade."
+    },
+    {
+      "key": "membro",
+      "name": "Membro",
+      "description": "Membros autenticados."
+    },
+    {
+      "key": "visitante",
+      "name": "Visitante",
+      "description": "Usuarios autenticados com acesso inicial."
+    }
+  ]
+}

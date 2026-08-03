@@ -1,0 +1,23 @@
+{
+  "items": [
+    {
+      "collection": "menu_config",
+      "id": "main_menu",
+      "data": {
+        "id": "main_menu",
+        "items": [],
+        "is_published": false
+      }
+    },
+    {
+      "collection": "app_config",
+      "id": "global",
+      "data": {
+        "id": "global",
+        "dashboard_theme_light": "recanto-light",
+        "dashboard_theme_dark": "recanto-dark",
+        "updated_at": "2026-01-01T00:00:00.000Z"
+      }
+    }
+  ]
+}

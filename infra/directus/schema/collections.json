@@ -1,0 +1,767 @@
+{
+  "collections": [
+    {
+      "collection": "app_users",
+      "meta": {
+        "icon": "group",
+        "note": "Perfil de usuario da aplicacao, separado de directus_users para compatibilidade com FirebaseUser."
+      },
+      "fields": [
+        { "field": "id", "type": "uuid", "interface": "input", "primary": true },
+        { "field": "name", "type": "string", "interface": "input" },
+        { "field": "email", "type": "string", "interface": "input" },
+        { "field": "role", "type": "string", "interface": "select-dropdown" },
+        { "field": "features", "type": "json", "interface": "tags" },
+        { "field": "phone", "type": "string", "interface": "input" },
+        { "field": "photo_url", "type": "string", "interface": "input" },
+        { "field": "theme_light", "type": "string", "interface": "input" },
+        { "field": "theme_dark", "type": "string", "interface": "input" },
+        { "field": "missionario_responsavel_id", "type": "string", "interface": "input" },
+        { "field": "filho_recantiano_id", "type": "string", "interface": "input" },
+        { "field": "birthdate", "type": "date", "interface": "datetime" },
+        { "field": "created_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "updated_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "content_pages",
+      "meta": {
+        "icon": "article",
+        "note": "Paginas do CMS modular."
+      },
+      "fields": [
+        { "field": "id", "type": "uuid", "interface": "input", "primary": true },
+        { "field": "slug", "type": "string", "interface": "input" },
+        { "field": "title", "type": "string", "interface": "input" },
+        { "field": "description", "type": "text", "interface": "input-multiline" },
+        { "field": "blocks", "type": "json", "interface": "list" },
+        { "field": "is_published", "type": "boolean", "interface": "boolean" },
+        { "field": "target_audience", "type": "json", "interface": "tags" },
+        { "field": "seo", "type": "json", "interface": "input-code" },
+        { "field": "show_in_menu", "type": "boolean", "interface": "boolean" },
+        { "field": "menu_order", "type": "integer", "interface": "input" },
+        { "field": "menu_parent_id", "type": "string", "interface": "input" },
+        { "field": "menu_icon", "type": "string", "interface": "input" },
+        { "field": "menu_description", "type": "text", "interface": "input-multiline" },
+        { "field": "menu_url_type", "type": "string", "interface": "select-dropdown" },
+        { "field": "menu_external_url", "type": "string", "interface": "input" },
+        { "field": "is_menu_container", "type": "boolean", "interface": "boolean" },
+        { "field": "theme_light", "type": "string", "interface": "input" },
+        { "field": "theme_dark", "type": "string", "interface": "input" },
+        { "field": "font_family", "type": "string", "interface": "input" },
+        { "field": "bg_color", "type": "string", "interface": "input" },
+        { "field": "created_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "updated_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "menu_config",
+      "meta": {
+        "icon": "menu",
+        "note": "Configuracao singleton do menu principal.",
+        "singleton": true
+      },
+      "fields": [
+        { "field": "id", "type": "string", "interface": "input", "primary": true },
+        { "field": "items", "type": "json", "interface": "list" },
+        { "field": "is_published", "type": "boolean", "interface": "boolean" },
+        { "field": "created_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "updated_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "app_config",
+      "meta": {
+        "icon": "settings",
+        "note": "Configuracao global da aplicacao.",
+        "singleton": true
+      },
+      "fields": [
+        { "field": "id", "type": "string", "interface": "input", "primary": true },
+        { "field": "dashboard_theme_light", "type": "string", "interface": "input" },
+        { "field": "dashboard_theme_dark", "type": "string", "interface": "input" },
+        { "field": "updated_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "mods_configs",
+      "meta": {
+        "icon": "extension",
+        "note": "Configuracoes dos mods do CMS."
+      },
+      "fields": [
+        { "field": "id", "type": "string", "interface": "input", "primary": true },
+        { "field": "name", "type": "string", "interface": "input" },
+        { "field": "description", "type": "text", "interface": "input-multiline" },
+        { "field": "icon", "type": "string", "interface": "input" },
+        { "field": "category", "type": "string", "interface": "select-dropdown" },
+        { "field": "props", "type": "json", "interface": "list" },
+        { "field": "defaultProps", "type": "json", "interface": "input-code" },
+        { "field": "preview", "type": "string", "interface": "input" }
+      ]
+    },
+    {
+      "collection": "events",
+      "meta": {
+        "icon": "event",
+        "note": "Agenda e sincronizacao com Google Calendar."
+      },
+      "fields": [
+        { "field": "id", "type": "uuid", "interface": "input", "primary": true },
+        { "field": "title", "type": "string", "interface": "input" },
+        { "field": "description", "type": "text", "interface": "input-multiline" },
+        { "field": "type", "type": "string", "interface": "select-dropdown" },
+        { "field": "start", "type": "dateTime", "interface": "datetime", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "end", "type": "dateTime", "interface": "datetime" },
+        { "field": "location", "type": "string", "interface": "input" },
+        { "field": "target_audience", "type": "json", "interface": "tags" },
+        { "field": "is_public", "type": "boolean", "interface": "boolean", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "google_calendar_id", "type": "string", "interface": "input" },
+        { "field": "last_synced_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "created_by", "type": "string", "interface": "input" },
+        { "field": "created_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "updated_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "media_registry",
+      "meta": {
+        "icon": "perm_media",
+        "note": "Registro de arquivos R2 com dedupe por hash."
+      },
+      "fields": [
+        { "field": "id", "type": "uuid", "interface": "input", "primary": true },
+        { "field": "hash", "type": "string", "interface": "input" },
+        { "field": "url", "type": "string", "interface": "input" },
+        { "field": "kind", "type": "string", "interface": "select-dropdown" },
+        { "field": "mime", "type": "string", "interface": "input" },
+        { "field": "size", "type": "integer", "interface": "input" },
+        { "field": "name", "type": "string", "interface": "input" },
+        { "field": "uploaded_by", "type": "string", "interface": "input" },
+        { "field": "created_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "content_grants",
+      "meta": {
+        "icon": "verified_user",
+        "note": "Liberacoes manuais de conteudo."
+      },
+      "fields": [
+        { "field": "id", "type": "uuid", "interface": "input", "primary": true },
+        { "field": "user_id", "type": "string", "interface": "input" },
+        { "field": "content_id", "type": "string", "interface": "input" },
+        { "field": "content_type", "type": "string", "interface": "select-dropdown" },
+        { "field": "granted_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "granted_by", "type": "string", "interface": "input" },
+        { "field": "expires_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "books",
+      "meta": { "icon": "auto_stories", "note": "Biblioteca: livros/apostilas." },
+      "fields": [
+        { "field": "id", "type": "uuid", "interface": "input", "primary": true },
+        { "field": "title", "type": "string", "interface": "input" },
+        { "field": "subtitle", "type": "string", "interface": "input" },
+        { "field": "author", "type": "string", "interface": "input" },
+        { "field": "language", "type": "string", "interface": "input" },
+        { "field": "description", "type": "text", "interface": "input-multiline" },
+        { "field": "cover_url", "type": "string", "interface": "input" },
+        { "field": "back_cover_url", "type": "string", "interface": "input" },
+        { "field": "category_ids", "type": "json", "interface": "tags" },
+        { "field": "tags", "type": "json", "interface": "tags" },
+        { "field": "isbn", "type": "string", "interface": "input" },
+        { "field": "source_type", "type": "string", "interface": "input" },
+        { "field": "source_identifier", "type": "string", "interface": "input" },
+        { "field": "source_hash", "type": "string", "interface": "input" },
+        { "field": "duplicate_key", "type": "string", "interface": "input" },
+        { "field": "edition", "type": "string", "interface": "input" },
+        { "field": "year", "type": "integer", "interface": "input" },
+        { "field": "is_published", "type": "boolean", "interface": "boolean" },
+        { "field": "spoiler_mode", "type": "string", "interface": "select-dropdown" },
+        { "field": "required_roles", "type": "json", "interface": "tags" },
+        { "field": "age_rating", "type": "string", "interface": "select-dropdown" },
+        { "field": "created_by", "type": "string", "interface": "input" },
+        { "field": "created_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "updated_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "book_chapters",
+      "meta": { "icon": "format_list_numbered", "note": "Capitulos e secoes de livros." },
+      "fields": [
+        { "field": "id", "type": "uuid", "interface": "input", "primary": true },
+        { "field": "book_id", "type": "string", "interface": "input" },
+        { "field": "order", "type": "integer", "interface": "input" },
+        { "field": "title", "type": "string", "interface": "input" },
+        { "field": "title_level", "type": "integer", "interface": "input" },
+        { "field": "subtitle", "type": "string", "interface": "input" },
+        { "field": "kind", "type": "string", "interface": "select-dropdown" },
+        { "field": "blocks", "type": "json", "interface": "list" },
+        { "field": "footnotes", "type": "json", "interface": "list" },
+        { "field": "references", "type": "json", "interface": "list" },
+        { "field": "citation_style", "type": "string", "interface": "select-dropdown" },
+        { "field": "glossary_terms", "type": "json", "interface": "list" },
+        { "field": "credits", "type": "json", "interface": "input-code" },
+        { "field": "created_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "updated_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "book_categories",
+      "meta": { "icon": "category", "note": "Categorias da biblioteca." },
+      "fields": [
+        { "field": "id", "type": "uuid", "interface": "input", "primary": true },
+        { "field": "slug", "type": "string", "interface": "input" },
+        { "field": "name", "type": "string", "interface": "input" },
+        { "field": "description", "type": "text", "interface": "input-multiline" },
+        { "field": "order", "type": "integer", "interface": "input" },
+        { "field": "created_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "book_reading_progress",
+      "meta": { "icon": "trending_up", "note": "Progresso de leitura por usuario/livro." },
+      "fields": [
+        { "field": "id", "type": "string", "interface": "input", "primary": true },
+        { "field": "user_id", "type": "string", "interface": "input", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "book_id", "type": "string", "interface": "input", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "last_chapter_order", "type": "integer", "interface": "input" },
+        { "field": "last_ref", "type": "string", "interface": "input" },
+        { "field": "percent", "type": "integer", "interface": "input" },
+        { "field": "updated_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "started_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "completed_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "last_bookmark_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "book_title", "type": "string", "interface": "input" },
+        { "field": "book_cover_url", "type": "string", "interface": "input" },
+        { "field": "highlights_count", "type": "integer", "interface": "input" },
+        { "field": "notes_count", "type": "integer", "interface": "input" }
+      ]
+    },
+    {
+      "collection": "book_highlights",
+      "meta": { "icon": "highlight", "note": "Marcacoes de leitura." },
+      "fields": [
+        { "field": "id", "type": "uuid", "interface": "input", "primary": true },
+        { "field": "user_id", "type": "string", "interface": "input", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "book_id", "type": "string", "interface": "input", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "ref", "type": "string", "interface": "input" },
+        { "field": "selected_text", "type": "text", "interface": "input-multiline" },
+        { "field": "occurrence_index", "type": "integer", "interface": "input" },
+        { "field": "color", "type": "string", "interface": "select-dropdown" },
+        { "field": "created_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "book_comments",
+      "meta": { "icon": "notes", "note": "Notas de leitura." },
+      "fields": [
+        { "field": "id", "type": "uuid", "interface": "input", "primary": true },
+        { "field": "user_id", "type": "string", "interface": "input", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "book_id", "type": "string", "interface": "input", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "ref", "type": "string", "interface": "input" },
+        { "field": "text", "type": "text", "interface": "input-multiline" },
+        { "field": "created_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "updated_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "book_tags",
+      "meta": { "icon": "sell", "note": "Etiquetas pessoais de leitura." },
+      "fields": [
+        { "field": "id", "type": "uuid", "interface": "input", "primary": true },
+        { "field": "user_id", "type": "string", "interface": "input", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "book_id", "type": "string", "interface": "input", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "chapter_order", "type": "integer", "interface": "input" },
+        { "field": "ref", "type": "string", "interface": "input" },
+        { "field": "text", "type": "string", "interface": "input" },
+        { "field": "color", "type": "string", "interface": "select-dropdown" },
+        { "field": "created_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "formation_track_types",
+      "meta": { "icon": "label", "note": "Tipos/categorias de trilha configuraveis." },
+      "fields": [
+        { "field": "id", "type": "uuid", "interface": "input", "primary": true },
+        { "field": "slug", "type": "string", "interface": "input" },
+        { "field": "label", "type": "string", "interface": "input" },
+        { "field": "description", "type": "text", "interface": "input-multiline" },
+        { "field": "order", "type": "integer", "interface": "input" },
+        { "field": "created_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "updated_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "formation_tracks",
+      "meta": { "icon": "route", "note": "Trilhas de formacao." },
+      "fields": [
+        { "field": "id", "type": "uuid", "interface": "input", "primary": true },
+        { "field": "title", "type": "string", "interface": "input" },
+        { "field": "description", "type": "text", "interface": "input-multiline" },
+        { "field": "type", "type": "string", "interface": "select-dropdown" },
+        { "field": "required_roles", "type": "json", "interface": "tags" },
+        { "field": "order", "type": "integer", "interface": "input" },
+        { "field": "is_published", "type": "boolean", "interface": "boolean" },
+        { "field": "module_ids", "type": "json", "interface": "tags" },
+        { "field": "thumbnail_url", "type": "string", "interface": "input" },
+        { "field": "gallery_images", "type": "json", "interface": "tags" },
+        { "field": "requires_track_ids", "type": "json", "interface": "tags" },
+        { "field": "requires_formator_approval", "type": "boolean", "interface": "boolean" },
+        { "field": "formator_ids", "type": "json", "interface": "tags" },
+        { "field": "lesson_visibility", "type": "string", "interface": "select-dropdown" },
+        { "field": "age_rating", "type": "string", "interface": "select-dropdown" },
+        { "field": "created_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "updated_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "formation_modules",
+      "meta": { "icon": "view_module", "note": "Modulos de trilhas." },
+      "fields": [
+        { "field": "id", "type": "uuid", "interface": "input", "primary": true },
+        { "field": "title", "type": "string", "interface": "input" },
+        { "field": "description", "type": "text", "interface": "input-multiline" },
+        { "field": "track_id", "type": "string", "interface": "input" },
+        { "field": "order", "type": "integer", "interface": "input" },
+        { "field": "lesson_ids", "type": "json", "interface": "tags" },
+        { "field": "thumbnail_url", "type": "string", "interface": "input" },
+        { "field": "created_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "updated_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "formation_lessons",
+      "meta": { "icon": "school", "note": "Aulas e componentes." },
+      "fields": [
+        { "field": "id", "type": "uuid", "interface": "input", "primary": true },
+        { "field": "title", "type": "string", "interface": "input" },
+        { "field": "description", "type": "text", "interface": "input-multiline" },
+        { "field": "module_id", "type": "string", "interface": "input" },
+        { "field": "order", "type": "integer", "interface": "input" },
+        { "field": "video_url", "type": "string", "interface": "input" },
+        { "field": "video_duration_seconds", "type": "integer", "interface": "input" },
+        { "field": "min_watch_percent", "type": "integer", "interface": "input" },
+        { "field": "unlock_after_hours", "type": "integer", "interface": "input" },
+        { "field": "requirements", "type": "json", "interface": "input-code" },
+        { "field": "activity_order", "type": "json", "interface": "tags" },
+        { "field": "apostila_content", "type": "text", "interface": "input-rich-text-html" },
+        { "field": "material_ids", "type": "json", "interface": "tags" },
+        { "field": "quiz_id", "type": "string", "interface": "input" },
+        { "field": "highlight_quotes", "type": "json", "interface": "list" },
+        { "field": "thumbnail_url", "type": "string", "interface": "input" },
+        { "field": "book_citations", "type": "json", "interface": "list" },
+        { "field": "forum_prompt", "type": "text", "interface": "input-multiline" },
+        { "field": "practical_activity", "type": "text", "interface": "input-multiline" },
+        { "field": "components", "type": "json", "interface": "list" },
+        { "field": "created_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "updated_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "lesson_progress",
+      "meta": { "icon": "task_alt", "note": "Progresso dos alunos nas aulas." },
+      "fields": [
+        { "field": "id", "type": "string", "interface": "input", "primary": true },
+        { "field": "user_id", "type": "string", "interface": "input" },
+        { "field": "lesson_id", "type": "string", "interface": "input" },
+        { "field": "module_id", "type": "string", "interface": "input" },
+        { "field": "track_id", "type": "string", "interface": "input" },
+        { "field": "status", "type": "string", "interface": "select-dropdown" },
+        { "field": "video_watch_percent", "type": "integer", "interface": "input" },
+        { "field": "video_watch_seconds", "type": "integer", "interface": "input" },
+        { "field": "video_last_position_seconds", "type": "integer", "interface": "input" },
+        { "field": "activity_flags", "type": "json", "interface": "input-code" },
+        { "field": "unlocked_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "completed_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "created_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "updated_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "community_categories",
+      "meta": { "icon": "category", "note": "Categorias da comunidade/forum." },
+      "fields": [
+        { "field": "id", "type": "uuid", "interface": "input", "primary": true },
+        { "field": "slug", "type": "string", "interface": "input" },
+        { "field": "name", "type": "string", "interface": "input" },
+        { "field": "description", "type": "text", "interface": "input-multiline" },
+        { "field": "icon", "type": "string", "interface": "input" },
+        { "field": "order", "type": "integer", "interface": "input" },
+        { "field": "course_track_id", "type": "string", "interface": "input" },
+        { "field": "course_lesson_id", "type": "string", "interface": "input" },
+        { "field": "is_locked", "type": "boolean", "interface": "boolean" },
+        { "field": "created_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "created_by", "type": "string", "interface": "input" },
+        { "field": "updated_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "community_posts",
+      "meta": { "icon": "forum", "note": "Forum, enquetes e mural." },
+      "fields": [
+        { "field": "id", "type": "uuid", "interface": "input", "primary": true },
+        { "field": "kind", "type": "string", "interface": "select-dropdown" },
+        { "field": "title", "type": "string", "interface": "input" },
+        { "field": "body", "type": "text", "interface": "input-multiline" },
+        { "field": "visibility", "type": "json", "interface": "input-code" },
+        { "field": "category_id", "type": "string", "interface": "input" },
+        { "field": "poll_options", "type": "json", "interface": "list" },
+        { "field": "poll_closes_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "is_pinned", "type": "boolean", "interface": "boolean" },
+        { "field": "is_locked", "type": "boolean", "interface": "boolean" },
+        { "field": "created_by", "type": "string", "interface": "input" },
+        { "field": "created_by_name", "type": "string", "interface": "input" },
+        { "field": "created_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "updated_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "community_replies",
+      "meta": { "icon": "comment", "note": "Respostas da comunidade." },
+      "fields": [
+        { "field": "id", "type": "uuid", "interface": "input", "primary": true },
+        { "field": "post_id", "type": "string", "interface": "input" },
+        { "field": "body", "type": "text", "interface": "input-multiline" },
+        { "field": "parent_reply_id", "type": "string", "interface": "input" },
+        { "field": "created_by", "type": "string", "interface": "input" },
+        { "field": "created_by_name", "type": "string", "interface": "input" },
+        { "field": "created_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "updated_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "community_poll_votes",
+      "meta": { "icon": "how_to_vote", "note": "Votos de enquetes da comunidade." },
+      "fields": [
+        { "field": "id", "type": "string", "interface": "input", "primary": true },
+        { "field": "poll_id", "type": "string", "interface": "input", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "option_id", "type": "string", "interface": "input" },
+        { "field": "user_id", "type": "string", "interface": "input", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "voted_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "activities",
+      "meta": { "icon": "extension", "note": "Atividades plugaveis normalizadas por tipo." },
+      "fields": [
+        { "field": "id", "type": "uuid", "interface": "input", "primary": true },
+        { "field": "kind", "type": "string", "interface": "select-dropdown" },
+        { "field": "lesson_id", "type": "string", "interface": "input" },
+        { "field": "title", "type": "string", "interface": "input" },
+        { "field": "description", "type": "text", "interface": "input-multiline" },
+        { "field": "payload", "type": "json", "interface": "input-code" },
+        { "field": "created_by", "type": "string", "interface": "input" },
+        { "field": "created_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "updated_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "activity_results",
+      "meta": { "icon": "fact_check", "note": "Resultados de atividades por aluno." },
+      "fields": [
+        { "field": "id", "type": "uuid", "interface": "input", "primary": true },
+        { "field": "kind", "type": "string", "interface": "select-dropdown" },
+        { "field": "activity_id", "type": "string", "interface": "input" },
+        { "field": "user_id", "type": "string", "interface": "input" },
+        { "field": "lesson_id", "type": "string", "interface": "input" },
+        { "field": "payload", "type": "json", "interface": "input-code" },
+        { "field": "score", "type": "integer", "interface": "input" },
+        { "field": "passed", "type": "boolean", "interface": "boolean" },
+        { "field": "completed_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "quizzes",
+      "meta": { "icon": "quiz", "note": "Quizzes de aulas." },
+      "fields": [
+        { "field": "id", "type": "uuid", "interface": "input", "primary": true },
+        { "field": "lesson_id", "type": "string", "interface": "input", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "title", "type": "string", "interface": "input" },
+        { "field": "description", "type": "text", "interface": "input-multiline" },
+        { "field": "questions", "type": "json", "interface": "list" },
+        { "field": "passing_score", "type": "integer", "interface": "input" },
+        { "field": "max_attempts", "type": "integer", "interface": "input" },
+        { "field": "created_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "created_by", "type": "string", "interface": "input" },
+        { "field": "updated_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "quiz_attempts",
+      "meta": { "icon": "fact_check", "note": "Tentativas de quiz." },
+      "fields": [
+        { "field": "id", "type": "uuid", "interface": "input", "primary": true },
+        { "field": "user_id", "type": "string", "interface": "input", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "quiz_id", "type": "string", "interface": "input", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "lesson_id", "type": "string", "interface": "input" },
+        { "field": "answers", "type": "json", "interface": "input-code" },
+        { "field": "question_order", "type": "json", "interface": "tags" },
+        { "field": "score", "type": "integer", "interface": "input" },
+        { "field": "passed", "type": "boolean", "interface": "boolean" },
+        { "field": "attempted_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "flashcard_decks",
+      "meta": { "icon": "style", "note": "Decks de flashcards." },
+      "fields": [
+        { "field": "id", "type": "uuid", "interface": "input", "primary": true },
+        { "field": "lesson_id", "type": "string", "interface": "input", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "title", "type": "string", "interface": "input" },
+        { "field": "description", "type": "text", "interface": "input-multiline" },
+        { "field": "cards", "type": "json", "interface": "list" },
+        { "field": "created_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "created_by", "type": "string", "interface": "input" },
+        { "field": "updated_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "flashcard_reviews",
+      "meta": { "icon": "grading", "note": "Revisoes de flashcards." },
+      "fields": [
+        { "field": "id", "type": "uuid", "interface": "input", "primary": true },
+        { "field": "user_id", "type": "string", "interface": "input", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "deck_id", "type": "string", "interface": "input", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "lesson_id", "type": "string", "interface": "input" },
+        { "field": "answers", "type": "json", "interface": "input-code" },
+        { "field": "correct_count", "type": "integer", "interface": "input" },
+        { "field": "total_count", "type": "integer", "interface": "input" },
+        { "field": "score", "type": "integer", "interface": "input" },
+        { "field": "reviewed_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "habits",
+      "meta": { "icon": "checklist", "note": "Habitos pessoais, de curso e comunidade." },
+      "fields": [
+        { "field": "id", "type": "uuid", "interface": "input", "primary": true },
+        { "field": "title", "type": "string", "interface": "input" },
+        { "field": "description", "type": "text", "interface": "input-multiline" },
+        { "field": "icon", "type": "string", "interface": "input" },
+        { "field": "category", "type": "string", "interface": "select-dropdown" },
+        { "field": "required_for_roles", "type": "json", "interface": "tags" },
+        { "field": "order", "type": "integer", "interface": "input" },
+        { "field": "grace_days", "type": "integer", "interface": "input" },
+        { "field": "source", "type": "string", "interface": "select-dropdown", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "course_id", "type": "string", "interface": "input" },
+        { "field": "lesson_id", "type": "string", "interface": "input" },
+        { "field": "duration_days", "type": "integer", "interface": "input" },
+        { "field": "required_completion_percent", "type": "integer", "interface": "input" },
+        { "field": "owner_user_id", "type": "string", "interface": "input" },
+        { "field": "created_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "created_by", "type": "string", "interface": "input" },
+        { "field": "updated_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "habit_logs",
+      "meta": { "icon": "event_available", "note": "Registros diarios de habitos." },
+      "fields": [
+        { "field": "id", "type": "string", "interface": "input", "primary": true },
+        { "field": "user_id", "type": "string", "interface": "input", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "habit_id", "type": "string", "interface": "input", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "log_date", "type": "date", "interface": "datetime" },
+        { "field": "logged_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "case_studies",
+      "meta": { "icon": "account_tree", "note": "Estudos de caso interativos." },
+      "fields": [
+        { "field": "id", "type": "uuid", "interface": "input", "primary": true },
+        { "field": "lesson_id", "type": "string", "interface": "input", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "title", "type": "string", "interface": "input" },
+        { "field": "description", "type": "text", "interface": "input-multiline" },
+        { "field": "start_node_id", "type": "string", "interface": "input" },
+        { "field": "nodes", "type": "json", "interface": "input-code" },
+        { "field": "positions", "type": "json", "interface": "input-code" },
+        { "field": "created_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "created_by", "type": "string", "interface": "input" },
+        { "field": "updated_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "case_runs",
+      "meta": { "icon": "timeline", "note": "Execucoes de estudos de caso." },
+      "fields": [
+        { "field": "id", "type": "uuid", "interface": "input", "primary": true },
+        { "field": "user_id", "type": "string", "interface": "input", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "case_id", "type": "string", "interface": "input", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "lesson_id", "type": "string", "interface": "input" },
+        { "field": "path", "type": "json", "interface": "list" },
+        { "field": "ended_at_node_id", "type": "string", "interface": "input" },
+        { "field": "run_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "crosswords",
+      "meta": { "icon": "grid_on", "note": "Palavras cruzadas." },
+      "fields": [
+        { "field": "id", "type": "uuid", "interface": "input", "primary": true },
+        { "field": "lesson_id", "type": "string", "interface": "input", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "title", "type": "string", "interface": "input" },
+        { "field": "description", "type": "text", "interface": "input-multiline" },
+        { "field": "size", "type": "integer", "interface": "input" },
+        { "field": "grid", "type": "json", "interface": "input-code" },
+        { "field": "entries", "type": "json", "interface": "list" },
+        { "field": "created_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "created_by", "type": "string", "interface": "input" },
+        { "field": "updated_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "crossword_results",
+      "meta": { "icon": "done_all", "note": "Resultados de palavras cruzadas." },
+      "fields": [
+        { "field": "id", "type": "uuid", "interface": "input", "primary": true },
+        { "field": "user_id", "type": "string", "interface": "input", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "puzzle_id", "type": "string", "interface": "input", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "lesson_id", "type": "string", "interface": "input" },
+        { "field": "correct_entries", "type": "json", "interface": "tags" },
+        { "field": "score", "type": "integer", "interface": "input" },
+        { "field": "completed_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "word_searches",
+      "meta": { "icon": "search", "note": "Caca-palavras." },
+      "fields": [
+        { "field": "id", "type": "uuid", "interface": "input", "primary": true },
+        { "field": "lesson_id", "type": "string", "interface": "input", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "title", "type": "string", "interface": "input" },
+        { "field": "description", "type": "text", "interface": "input-multiline" },
+        { "field": "size", "type": "integer", "interface": "input" },
+        { "field": "grid", "type": "json", "interface": "input-code" },
+        { "field": "placements", "type": "json", "interface": "list" },
+        { "field": "words", "type": "json", "interface": "tags" },
+        { "field": "clues", "type": "json", "interface": "tags" },
+        { "field": "created_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "created_by", "type": "string", "interface": "input" },
+        { "field": "updated_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "word_search_results",
+      "meta": { "icon": "done_all", "note": "Resultados de caca-palavras." },
+      "fields": [
+        { "field": "id", "type": "uuid", "interface": "input", "primary": true },
+        { "field": "user_id", "type": "string", "interface": "input", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "puzzle_id", "type": "string", "interface": "input", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "lesson_id", "type": "string", "interface": "input" },
+        { "field": "found", "type": "json", "interface": "tags" },
+        { "field": "score", "type": "integer", "interface": "input" },
+        { "field": "completed_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "mind_map_templates",
+      "meta": { "icon": "hub", "note": "Templates de mapa mental." },
+      "fields": [
+        { "field": "id", "type": "uuid", "interface": "input", "primary": true },
+        { "field": "lesson_id", "type": "string", "interface": "input", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "title", "type": "string", "interface": "input" },
+        { "field": "description", "type": "text", "interface": "input-multiline" },
+        { "field": "nodes", "type": "json", "interface": "input-code" },
+        { "field": "edges", "type": "json", "interface": "input-code" },
+        { "field": "positions", "type": "json", "interface": "input-code" },
+        { "field": "created_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "created_by", "type": "string", "interface": "input" },
+        { "field": "updated_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "student_mind_maps",
+      "meta": { "icon": "hub", "note": "Mapas mentais de alunos." },
+      "fields": [
+        { "field": "id", "type": "string", "interface": "input", "primary": true },
+        { "field": "user_id", "type": "string", "interface": "input", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "template_id", "type": "string", "interface": "input", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "lesson_id", "type": "string", "interface": "input" },
+        { "field": "nodes", "type": "json", "interface": "input-code" },
+        { "field": "edges", "type": "json", "interface": "input-code" },
+        { "field": "positions", "type": "json", "interface": "input-code" },
+        { "field": "updated_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "created_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "spiritual_reflections",
+      "meta": { "icon": "menu_book", "note": "Reflexoes do caderno espiritual." },
+      "fields": [
+        { "field": "id", "type": "uuid", "interface": "input", "primary": true },
+        { "field": "user_id", "type": "string", "interface": "input", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "lesson_id", "type": "string", "interface": "input", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "lesson_title", "type": "string", "interface": "input" },
+        { "field": "module_title", "type": "string", "interface": "input" },
+        { "field": "track_id", "type": "string", "interface": "input" },
+        { "field": "track_title", "type": "string", "interface": "input" },
+        { "field": "content", "type": "text", "interface": "input-multiline" },
+        { "field": "status", "type": "string", "interface": "select-dropdown" },
+        { "field": "submitted_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "reviewed_by", "type": "string", "interface": "input" },
+        { "field": "review_notes", "type": "text", "interface": "input-multiline" },
+        { "field": "post_review_notes", "type": "json", "interface": "list" },
+        { "field": "created_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "updated_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "prayer_intentions",
+      "meta": { "icon": "favorite", "note": "Intencoes de oracao." },
+      "fields": [
+        { "field": "id", "type": "uuid", "interface": "input", "primary": true },
+        { "field": "body", "type": "text", "interface": "input-multiline" },
+        { "field": "kind", "type": "string", "interface": "select-dropdown" },
+        { "field": "anonymous", "type": "boolean", "interface": "boolean" },
+        { "field": "created_by", "type": "string", "interface": "input", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "created_by_name", "type": "string", "interface": "input" },
+        { "field": "prayed_count", "type": "integer", "interface": "input" },
+        { "field": "answered", "type": "boolean", "interface": "boolean" },
+        { "field": "answered_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "created_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "updated_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "prayer_logs",
+      "meta": { "icon": "volunteer_activism", "note": "Logs de eu orei." },
+      "fields": [
+        { "field": "id", "type": "uuid", "interface": "input", "primary": true },
+        { "field": "intention_id", "type": "string", "interface": "input", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "user_id", "type": "string", "interface": "input", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "prayed_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    },
+    {
+      "collection": "video_watch_sessions",
+      "meta": { "icon": "play_circle", "note": "Sessoes de visualizacao de video." },
+      "fields": [
+        { "field": "id", "type": "uuid", "interface": "input", "primary": true },
+        { "field": "user_id", "type": "string", "interface": "input", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "lesson_id", "type": "string", "interface": "input", "directus": { "schema": { "is_indexed": true } } },
+        { "field": "module_id", "type": "string", "interface": "input" },
+        { "field": "track_id", "type": "string", "interface": "input" },
+        { "field": "started_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "ended_at", "type": "dateTime", "interface": "datetime" },
+        { "field": "max_position_seconds", "type": "integer", "interface": "input" },
+        { "field": "seconds_watched", "type": "integer", "interface": "input" },
+        { "field": "is_rewatch", "type": "boolean", "interface": "boolean" }
+      ]
+    },
+    {
+      "collection": "notifications",
+      "meta": { "icon": "notifications", "note": "Notificacoes da aplicacao." },
+      "fields": [
+        { "field": "id", "type": "uuid", "interface": "input", "primary": true },
+        { "field": "user_id", "type": "string", "interface": "input" },
+        { "field": "title", "type": "string", "interface": "input" },
+        { "field": "body", "type": "text", "interface": "input-multiline" },
+        { "field": "read", "type": "boolean", "interface": "boolean" },
+        { "field": "created_at", "type": "dateTime", "interface": "datetime" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+export type * from './activities/ActivityRepositories';
+export type * from './auth/AuthRepository';
+export type * from './cms/CmsRepositories';
+export type * from './community/CommunityRepositories';
+export type * from './events/EventRepository';
+export type * from './formation/FormationRepositories';
+export type * from './library/LibraryRepositories';
+export type * from './media/MediaRepository';
+export type * from './permissions/PermissionsRepository';
+export type * from './shared/Repository';
+export type * from './users/UserRepository';
