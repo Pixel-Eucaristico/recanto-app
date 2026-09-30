@@ -147,6 +147,10 @@ export class LessonProgressReconciler {
     }
 
     // 10. Auto-complete: obrigatórias feitas → status=completed (desbloqueia próxima aula)
+    // Mapa mental fica de fora: é atividade exploratória, sempre opcional (ver
+    // ActivityManager `canBeRequired: false`). O builder liga `requires_mind_map`
+    // só pra indicar que a aula TEM mapa — tratá-lo como obrigatório travava a
+    // conclusão da aula até o aluno salvar o mapa.
     const merged = { ...current, ...patch };
     const videoOk = (lesson.min_watch_percent ?? 0) === 0 || (merged.video_watch_percent ?? 0) >= (lesson.min_watch_percent ?? 0);
     const reflectionOk = !lesson.requires_reflection || !!merged.reflection_submitted;
@@ -156,8 +160,7 @@ export class LessonProgressReconciler {
     const wordSearchOk = !lesson.requires_word_search || !!merged.word_search_passed;
     const flashcardsOk = !lesson.requires_flashcards || !!merged.flashcards_passed;
     const caseStudyOk = !lesson.requires_case_study || !!merged.case_study_passed;
-    const mindMapOk = !lesson.requires_mind_map || !!merged.mind_map_passed;
-    const allRequiredOk = videoOk && reflectionOk && quizOk && forumOk && crosswordOk && wordSearchOk && flashcardsOk && caseStudyOk && mindMapOk;
+    const allRequiredOk = videoOk && reflectionOk && quizOk && forumOk && crosswordOk && wordSearchOk && flashcardsOk && caseStudyOk;
 
     if (allRequiredOk && merged.status !== 'completed') {
       patch.status = 'completed';

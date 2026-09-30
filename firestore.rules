@@ -398,7 +398,14 @@ service cloud.firestore {
     match /formation_progress/{progressId} {
       // Leitura: dono, admin, ou formador DESTA trilha.
       // Ordem importa: `isAdmin()` primeiro faz short-circuit e evita o get da trilha.
+      //
+      // `resource == null`: o cliente lê o doc por id determinístico
+      // ({uid}_{lessonId}) ANTES de criá-lo (getOrCreate + onSnapshot). Sem doc,
+      // `resource.data` dá erro e a leitura era negada — aluno sem permissão de
+      // formador na trilha via "Missing or insufficient permissions" ao abrir a
+      // primeira aula. Ler um doc inexistente não expõe dado nenhum.
       allow read: if isAuthenticated() && (
+                    resource == null ||
                     resource.data.user_id == request.auth.uid ||
                     canReviewTrack(resource.data.get('track_id', ''))
                   );
@@ -497,8 +504,10 @@ service cloud.firestore {
     // Student Mind Maps Collection (snapshot por aluno)
     // ===========================
     match /student_mind_maps/{mapId} {
+      // `resource == null`: lido por id determinístico ({uid}_{templateId}) antes
+      // do primeiro save — sem isso, aluno sem review:formation não abria o mapa.
       allow read: if hasFeature('review:formation') ||
-                    (isAuthenticated() && resource.data.user_id == request.auth.uid);
+                    (isAuthenticated() && (resource == null || resource.data.user_id == request.auth.uid));
       allow create: if isAuthenticated() &&
                       hasFeature('complete:formation') &&
                       request.resource.data.user_id == request.auth.uid;
@@ -577,8 +586,9 @@ service cloud.firestore {
     // Habit Logs (id determinístico {habitId}_{userId}_{YYYY-MM-DD})
     // ===========================
     match /habit_logs/{logId} {
+      // `resource == null`: `checkLogged` lê por id determinístico antes do log existir.
       allow read: if hasFeature('manage:habits') ||
-                    (isAuthenticated() && resource.data.user_id == request.auth.uid);
+                    (isAuthenticated() && (resource == null || resource.data.user_id == request.auth.uid));
       allow write: if isAuthenticated() &&
                      hasFeature('log:habits') &&
                      request.resource.data.user_id == request.auth.uid;
@@ -654,7 +664,9 @@ service cloud.firestore {
 
     match /book_reading_progress/{progressId} {
       // Leitura: dono, admin ou quem tem review:formation (formadores/missionários acompanhando alunos).
+      // `resource == null`: lido por id determinístico ({uid}_{bookId}) antes de existir.
       allow read: if isAuthenticated() && (
+        resource == null ||
         resource.data.user_id == request.auth.uid ||
         isAdmin() ||
         hasFeature('review:formation')

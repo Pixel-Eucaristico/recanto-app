@@ -65,7 +65,7 @@ function buildComponentsFromFlags(lesson) {
   if (lesson.requires_case_study) out.push({ id: instanceId('case_study'), kind: 'case_study', required: true, order: order++, config: {} });
   if (lesson.requires_word_search) out.push({ id: instanceId('word_search'), kind: 'word_search', required: true, order: order++, config: { min_score: 100 } });
   if (lesson.requires_crossword) out.push({ id: instanceId('crossword'), kind: 'crossword', required: true, order: order++, config: { min_score: 100 } });
-  if (lesson.requires_mind_map) out.push({ id: instanceId('mind_map'), kind: 'mind_map', required: true, order: order++, config: {} });
+  if (lesson.requires_mind_map) out.push({ id: instanceId('mind_map'), kind: 'mind_map', required: false, order: order++, config: {} });
 
   for (const habitId of lesson.habit_ids ?? []) {
     out.push({

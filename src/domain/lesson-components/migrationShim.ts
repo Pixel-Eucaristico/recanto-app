@@ -114,11 +114,12 @@ export function flagsToComponents(lesson: FormationLesson): LessonComponentInsta
     });
   }
 
+  // Mapa mental é sempre opcional: `requires_mind_map` só indica que a aula tem mapa.
   if (lesson.requires_mind_map) {
     out.push({
       id: instanceId('mind_map'),
       kind: 'mind_map',
-      required: true,
+      required: false,
       order: order++,
       config: {},
     });
