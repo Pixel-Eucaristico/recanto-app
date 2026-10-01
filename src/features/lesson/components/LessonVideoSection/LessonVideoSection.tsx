@@ -62,7 +62,7 @@ export function LessonVideoSection({ lesson, moduleId, trackId, userId, onProgre
           )}
         </div>
 
-        <div className="aspect-video bg-black">
+        <div>
           <LockedVideoPlayer
             videoUrl={lesson.video_url}
             session={session}

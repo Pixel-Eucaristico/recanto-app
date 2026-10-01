@@ -2,9 +2,25 @@
 
 import { useEffect, useRef, useState } from 'react';
 import YouTube, { YouTubeEvent, YouTubePlayer } from 'react-youtube';
-import { Play, Pause, Lock, CheckCircle2, Volume2, VolumeX, Volume1 } from 'lucide-react';
+import {
+  Play,
+  Pause,
+  Lock,
+  CheckCircle2,
+  Volume2,
+  VolumeX,
+  Volume1,
+  Maximize,
+  Minimize,
+  Captions,
+  CaptionsOff,
+} from 'lucide-react';
 import { VideoSession } from '@/domain/video-player/types';
 import { VideoSessionEntity } from '@/domain/video-player/entities/VideoSession';
+import { useAutoHideControls } from '../../hooks/useAutoHideControls';
+import { usePlayerFullscreen } from '../../hooks/usePlayerFullscreen';
+import { useYouTubeCaptions } from '../../hooks/useYouTubeCaptions';
+import { useScreenWakeLock } from '../../hooks/useScreenWakeLock';
 
 interface LockedYouTubePlayerProps {
   videoId: string;
@@ -14,12 +30,18 @@ interface LockedYouTubePlayerProps {
 
 export function LockedYouTubePlayer({ videoId, session, onTick }: LockedYouTubePlayerProps) {
   const playerRef = useRef<YouTubePlayer | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const lastPointerTypeRef = useRef<string>('mouse');
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(100);
   const [muted, setMuted] = useState(false);
   const lockState = VideoSessionEntity.lockState(session);
+  const controls = useAutoHideControls({ enabled: playing });
+  const fullscreen = usePlayerFullscreen(containerRef);
+  const captions = useYouTubeCaptions(playerRef);
+  useScreenWakeLock(playing);
 
   function applyVolume(v: number) {
     const p = playerRef.current;
@@ -78,8 +100,22 @@ export function LockedYouTubePlayer({ videoId, session, onTick }: LockedYouTubeP
 
   function handleStateChange(e: YouTubeEvent<number>) {
     // 1 = playing, 2 = paused, 0 = ended
-    if (e.data === 1) setPlaying(true);
-    else setPlaying(false);
+    if (e.data === 1) {
+      setPlaying(true);
+      captions.syncOnPlay();
+    } else setPlaying(false);
+  }
+
+  // Touch: a tap only toggles the controls (like native mobile players); the
+  // play/pause button handles playback. Mouse: click toggles playback.
+  function handleOverlayClick() {
+    if (lastPointerTypeRef.current === 'mouse') {
+      togglePlay();
+      controls.show();
+      return;
+    }
+    if (controls.visible) controls.hide();
+    else controls.show();
   }
 
   function togglePlay() {
@@ -96,7 +132,20 @@ export function LockedYouTubePlayer({ videoId, session, onTick }: LockedYouTubeP
 
   return (
     <div className="space-y-3">
-      <div className="relative rounded-2xl overflow-hidden bg-black aspect-video">
+      <div
+        ref={containerRef}
+        className={`overflow-hidden bg-black select-none [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none] ${
+          fullscreen.isPseudo
+            ? 'fixed inset-0 z-[9999] w-screen h-[100dvh]'
+            : fullscreen.isFullscreen
+              ? 'relative w-full h-full'
+              : 'relative rounded-2xl aspect-video'
+        }`}
+        onPointerMove={e => {
+          if (e.pointerType === 'mouse') controls.show();
+        }}
+        onMouseLeave={controls.hide}
+      >
         <YouTube
           videoId={videoId}
           opts={{
@@ -110,6 +159,9 @@ export function LockedYouTubePlayer({ videoId, session, onTick }: LockedYouTubeP
               disablekb: 1,
               fs: 0,
               playsinline: 1,
+              cc_load_policy: 0,
+              cc_lang_pref: 'pt',
+              hl: 'pt-BR',
               origin: typeof window !== 'undefined' ? window.location.origin : undefined,
             },
           }}
@@ -120,19 +172,59 @@ export function LockedYouTubePlayer({ videoId, session, onTick }: LockedYouTubeP
         />
 
         {/* Overlay transparente bloqueia clicks no iframe (impede link "Watch on YouTube") */}
-        <div className="absolute inset-0 pointer-events-auto" style={{ cursor: 'pointer' }} onClick={togglePlay} />
+        <div
+          className={`absolute inset-0 pointer-events-auto touch-manipulation ${controls.visible ? 'cursor-pointer' : 'cursor-none'}`}
+          onPointerDown={e => {
+            lastPointerTypeRef.current = e.pointerType;
+          }}
+          onClick={handleOverlayClick}
+          onDoubleClick={() => {
+            if (lastPointerTypeRef.current === 'mouse') fullscreen.toggle();
+          }}
+        />
+
+        {/* Botão central de play/pause (mobile sempre; desktop só pausado) */}
+        <div
+          className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-300 ${
+            controls.visible ? 'opacity-100' : 'opacity-0'
+          } ${playing ? 'md:hidden' : ''}`}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              togglePlay();
+              controls.show();
+            }}
+            className={`btn btn-circle btn-lg bg-black/50 hover:bg-black/70 text-white border-0 backdrop-blur-sm ${
+              controls.visible ? 'pointer-events-auto' : 'pointer-events-none'
+            }`}
+            aria-label={playing ? 'Pausar' : 'Reproduzir'}
+            tabIndex={-1}
+          >
+            {playing ? <Pause className="w-7 h-7" /> : <Play className="w-7 h-7 ml-1" />}
+          </button>
+        </div>
 
         {/* Custom controls */}
-        <div className="absolute bottom-0 inset-x-0 p-3 bg-gradient-to-t from-black/70 to-transparent flex items-center gap-3">
+        <div
+          className={`absolute bottom-0 inset-x-0 pt-6 bg-gradient-to-t from-black/70 to-transparent flex items-center gap-2 sm:gap-3 transition-opacity duration-300 ${
+            controls.visible ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          } ${
+            fullscreen.isFullscreen
+              ? 'pb-[max(0.75rem,env(safe-area-inset-bottom))] px-[max(0.75rem,env(safe-area-inset-left))]'
+              : 'px-2 pb-2 sm:px-3 sm:pb-3'
+          }`}
+          onPointerDown={controls.show}
+        >
           <button
             onClick={togglePlay}
-            className="btn btn-circle btn-sm bg-white/90 hover:bg-white text-black border-0"
+            className="btn btn-circle btn-sm bg-white/90 hover:bg-white text-black border-0 shrink-0"
             aria-label={playing ? 'Pausar' : 'Reproduzir'}
           >
             {playing ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
           </button>
           <div
-            className={`relative flex-1 h-2 group ${VideoSessionEntity.isMinimumReached(session) ? 'cursor-pointer' : ''}`}
+            className={`relative flex-1 min-w-0 h-8 md:h-2 touch-none group ${VideoSessionEntity.isMinimumReached(session) ? 'cursor-pointer' : ''}`}
             onClick={e => e.stopPropagation()}
             onPointerDown={e => {
               if (!VideoSessionEntity.isMinimumReached(session)) return;
@@ -145,6 +237,7 @@ export function LockedYouTubePlayer({ videoId, session, onTick }: LockedYouTubeP
                 const rect = bar.getBoundingClientRect();
                 const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
                 setCurrentTime(ratio * duration);
+                controls.show();
                 try { p.seekTo(ratio * duration, true); } catch {}
               };
               seekFromEvent(e.clientX);
@@ -179,10 +272,10 @@ export function LockedYouTubePlayer({ videoId, session, onTick }: LockedYouTubeP
               />
             )}
           </div>
-          <div className="text-xs text-white/80 whitespace-nowrap font-mono">
+          <div className="text-[10px] sm:text-xs text-white/80 whitespace-nowrap font-mono shrink-0">
             {formatTime(currentTime)} / {formatTime(duration)}
           </div>
-          <div className="flex items-center gap-1 group" onClick={e => e.stopPropagation()}>
+          <div className="flex items-center gap-1 group shrink-0" onClick={e => e.stopPropagation()}>
             <button
               type="button"
               onClick={toggleMute}
@@ -201,11 +294,34 @@ export function LockedYouTubePlayer({ videoId, session, onTick }: LockedYouTubeP
               aria-label="Volume"
             />
           </div>
+          <button
+            type="button"
+            onClick={captions.toggle}
+            className={`btn btn-ghost btn-xs btn-circle text-white hover:bg-white/20 shrink-0 ${captions.enabled ? 'bg-white/20' : ''}`}
+            aria-label={captions.enabled ? 'Desativar legendas' : 'Ativar legendas'}
+            aria-pressed={captions.enabled}
+            title={captions.enabled ? 'Desativar legendas' : 'Ativar legendas'}
+          >
+            {captions.enabled ? <Captions className="w-4 h-4" /> : <CaptionsOff className="w-4 h-4" />}
+          </button>
+          <button
+            type="button"
+            onClick={fullscreen.toggle}
+            className="btn btn-ghost btn-xs btn-circle text-white hover:bg-white/20 shrink-0"
+            aria-label={fullscreen.isFullscreen ? 'Sair da tela cheia' : 'Tela cheia'}
+            title={fullscreen.isFullscreen ? 'Sair da tela cheia' : 'Tela cheia'}
+          >
+            {fullscreen.isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+          </button>
         </div>
 
         {/* Badge lock */}
         {lockState !== 'unlocked' && (
-          <div className="absolute top-3 right-3 flex items-center gap-1 bg-base-100/90 px-3 py-1 rounded-full text-xs font-medium shadow">
+          <div
+            className={`absolute top-2 right-2 sm:top-3 sm:right-3 flex items-center gap-1 bg-base-100/90 px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-medium shadow pointer-events-none transition-opacity duration-300 ${
+              controls.visible ? 'opacity-100' : 'opacity-0'
+            }`}
+          >
             {lockState === 'unlockable' ? (
               <>
                 <CheckCircle2 className="w-4 h-4 text-success" />
