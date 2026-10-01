@@ -56,7 +56,7 @@ writeFileSync(tmpFile, sa, { mode: 0o600 });
 try {
   console.log(`[deploy-firebase] Deploying rules + indexes to project: ${projectId}`);
   execSync(
-    `npx --yes firebase-tools deploy --only firestore:rules,firestore:indexes --project ${projectId} --non-interactive`,
+    `npx --yes --loglevel=error firebase-tools deploy --only firestore:rules,firestore:indexes --project ${projectId} --non-interactive`,
     {
       stdio: 'inherit',
       env: { ...process.env, GOOGLE_APPLICATION_CREDENTIALS: tmpFile }
